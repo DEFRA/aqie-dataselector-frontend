@@ -3,11 +3,23 @@
  * Provided as an example, remove or modify as required.
  * @satisfies {Partial<ServerRoute>}
  */
+import { english } from '~/src/server/data/en/homecontent.js'
+
 export const homeController = {
-  handler(_request, h) {
+  handler(request, h) {
+    const { home } = english
+    request.yar.set('searchQuery', null)
+    request.yar.set('fullSearchQuery', null)
+    request.yar.set('searchLocation', '')
+    request.yar.set('osnameapiresult', '')
+    request.yar.set('selectedLocation', '')
     return h.view('home/index', {
-      pageTitle: 'Home',
-      heading: 'Home'
+      pageTitle: home.pageTitle,
+      heading: home.heading,
+      text: home.texts,
+      links: home.links,
+      buttontxt: home.buttonText,
+      subheading: home.subheading
     })
   }
 }
