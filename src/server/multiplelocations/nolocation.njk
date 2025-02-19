@@ -1,0 +1,21 @@
+{% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% set title = "We could not find" + " " + data['q'] %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-l odd-page">{{paragraph.a}} '{{ searchLocation }}'</h1>
+    <p class="govuk-body">{{paragraph.b}}</p>
+
+    <ul class="govuk-list govuk-list--bullet">
+      <li>{{paragraph.c}}</li>
+      <li>{{paragraph.d}}</li>
+      <li>{{paragraph.e}}</li>
+    </ul>
+    {% set queryhref %}/search-location?lang=en{% endset %}
+    <p class="govuk-body">{{paragraph.f}}</p>
+    <p class="govuk-body"><a href='/search-location'>{{paragraph.g}}</a></p>
+  </div>
+</div>
+{% endblock %}

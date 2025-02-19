@@ -1,0 +1,40 @@
+{% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+          <h1 class="govuk-heading-xl govuk-!-margin-bottom-1">Birmingham A4540 Roadside</h1>   
+          <strong class="govuk-tag govuk-tag--green" style="margin-top: 0px; padding: 6px 12px 6px 12px;">
+            Active
+          </strong>
+          <p class="govuk-body govuk-!-margin-top-3" style="margin-left: 5px; display: inline-block; color: #505a5f;">Latest at 11:00am on 25 November 2024</p>
+</div>
+</div>
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+          <dl class="defra-aq-features__list govuk-!-margin-top-3" style="gap: 40px; padding-bottom: 0px;">
+            <div class="defra-aq-features__item" style="width: 35%">
+              <dt class="defra-aq-features__key govuk-caption-m" style="font-size: 19px;">Monitoring network</dt>
+              <dd class="defra-aq-features__value govuk-body" style="margin-top: 5px; font-size: 22px;">Automatic Urban and Rural</dd>
+            </div>
+            <div class="defra-aq-features__item" style="width: 40%">
+              <dt class="defra-aq-features__key govuk-caption-m" style="font-size: 19px;">Local authority</dt>
+              <dd class="defra-aq-features__value govuk-body" style="margin-top: 5px; font-size: 22px;">Birmingham City Council</dd>
+            </div>
+            <div class="defra-aq-features__item" style="width: 25%">
+              <dt class="defra-aq-features__key govuk-caption-m" style="font-size: 19px;">Site type</dt>
+              <dd class="defra-aq-features__value govuk-body" style="margin-top: 5px; font-size: 22px;">
+                <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about urban traffic" data-toggletip-content="This monitoring site is in a city or town close to roads, motorways or highways.">
+                  Urban traffic
+                  </div>
+                  <p class="govuk-body govuk-!-margin-top-1"><a href="https://www.google.co.uk/maps?q=52.476145,-1.874978" class="govuk-link" target="_blank" >View on Google Maps (opens in a new tab)</a></p>
+                </dd>
+             
+            </div>
+            </dl>
+            </div>
+            </div>
+{% endblock %}
