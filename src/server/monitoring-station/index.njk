@@ -1,0 +1,63 @@
+{% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+  <div class="govuk-grid-column-two-thirds">
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-6">{{title.title1}} {{title.title2}} {{ locationMiles }} miles {{title.title3}} {{searchLocation}}</h1>
+   
+    <p class="govuk-body"><a href="/search-location">{{paragraphs.a}}</a></p>
+     </div>
+<table class="govuk-table">  
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th class="govuk-table__header govuk-!-width-one-half" scope="col">{{paragraphs.b}}</th>
+      <th  class="govuk-table__header govuk-!-width-one-quarter"scope="col">{{paragraphs.c}}</th>
+      <th class="govuk-table__header govuk-table__header--numeric govuk-!-width-one-quarter" scope="col">{{paragraphs.d}}</th>
+    </tr>
+  </thead>
+
+  <tbody class="govuk-table__body">
+        {% for item in monitoring_station %}
+    
+        <tr class="govuk-table__header">
+
+          <th class="govuk-table__cell"> 
+          <strong>
+          <a href=  {{['/stationdetails/',item.id] | join}} >  {{item.name}} </a>
+          </strong>
+           <p class="govuk-body">{{item.distance}} miles away</p>
+          </th>
+         <td class="govuk-table_cell">
+          <p class="govuk-body">{{item.siteType}}</p>
+         </td>
+         
+          <td class = "govuk-table__cell govuk-table__cell--numeric">
+         {% set pollutantTime = pollmap.get(item.name) %}
+          <ul class="govuk-list">  
+            {% for item1 in pollutantTime %}
+            {% if item1 == 'NO2' %}
+            <li>nitrodioxide </li> 
+            {% elseif item1 == 'SO2' %}
+            <li>sulphurdioxide </li>                 
+            {% elseif item1 == 'O3' %}
+            <li> ozone </li>
+             {% else %}
+          <li>{{item1}} </li> 
+          {% endif %}
+           {% endfor %}
+</ul>
+          </td>
+        
+          
+
+          {% endfor %}
+      </tbody>
+  
+</table>
+   
+  </div>
+</div>
+{% endblock %}
