@@ -40,7 +40,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'aqie-dataselector-frontend'
+    default: 'Get air pollution data'
   },
   root: {
     doc: 'Project root',
@@ -68,6 +68,7 @@ export const config = convict({
     format: Boolean,
     default: isTest
   },
+
   log: {
     enabled: {
       doc: 'Is logging enabled',
@@ -100,7 +101,14 @@ export const config = convict({
     format: String,
     nullable: true,
     default: null,
-    env: 'HTTP_PROXY'
+    env: 'CDP_HTTP_PROXY'
+  }),
+  httpsProxy: /** @type {SchemaObj<string | null>} */ ({
+    doc: 'HTTPS Proxy',
+    format: String,
+    nullable: true,
+    default: null,
+    env: 'CDP_HTTPS_PROXY'
   }),
   isSecureContextEnabled: {
     doc: 'Enable Secure Context',
@@ -180,7 +188,7 @@ export const config = convict({
     keyPrefix: {
       doc: 'Redis cache key prefix name used to isolate the cached results across multiple clients',
       format: String,
-      default: 'aqie-dataselector-frontend:',
+      default: 'cdp-node-frontend-template:',
       env: 'REDIS_KEY_PREFIX'
     },
     useSingleInstanceCache: {
@@ -188,6 +196,31 @@ export const config = convict({
       format: Boolean,
       default: !isProduction,
       env: 'USE_SINGLE_INSTANCE_CACHE'
+    },
+    backendApiUrl: {
+      doc: 'Backend api url',
+      format: String,
+      default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
+      env: 'BACKEND_API_URL'
+    },
+    OS_NAMES_API_URL: {
+      doc: 'Osname api url',
+      format: String,
+      default: `https://aiqe-dataservice-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+
+      env: 'Osname api url'
+    },
+    //   OS_NAMES_API_URL: {
+    //     doc: 'Osname api url',
+    //     format: String,
+    //     default: `https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+    //     env: 'Osname api url'
+    //  },
+    OS_NAMES_API_URL_1: {
+      doc: 'Osname api url',
+      format: String,
+      default: `https://aqie-data-service-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
+      env: 'Osname api url'
     },
     useTLS: {
       doc: 'Connect to redis using TLS',

@@ -1,0 +1,48 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    paragraphs: "",
+    caption: ""
+  }) }}
+<!-- Paragraph A -->
+   <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds-from-desktop">
+<h1 class="govuk-heading-xl odd-page">{{ title }}</h1>
+<p class="govuk-body">{{ paragraphs.a }}</p>
+
+<!-- Paragraph B with Link -->
+<p class="govuk-body">
+  {{ paragraphs.b }} 
+  <a href="/"> Get air pollution data </a> service.
+</p>
+
+<!-- Heading A -->
+<h2 class="govuk-heading-m">{{ headings.a }}</h2>
+
+<!-- Paragraph C -->
+<p class="govuk-body">{{ paragraphs.c }}</p>
+
+<!-- Heading B -->
+<h2 class="govuk-heading-m">{{ headings.b }}</h2>
+
+<!-- Paragraphs D, E, F -->
+<p class="govuk-body">The 'Get air pollution data' {{ paragraphs.d }} </p>
+<p class="govuk-body">{{ paragraphs.e }}</p>
+<p class="govuk-body">{{ paragraphs.f }}</p>
+
+<h2 class="govuk-heading-m">{{ headings.c }}</h2>
+
+<!-- Paragraphs D, E, F -->
+<p class="govuk-body">{{ paragraphs.g }} 
+ <a href="mailto:accessibility@defra.gov.uk"> accessibility@defra.gov.uk.</a>
+</p>
+<h2 class="govuk-heading-m">{{ headings.d }}</h2>
+
+<!-- Paragraphs D, E, F -->
+<p class="govuk-body">{{ paragraphs.h }}</p>
+<p class="govuk-body">{{ paragraphs.i }} <a href="https://www.equalityadvisoryservice.com/"> {{ paragraphs.i1 }}</a> </p>
+</div>
+</div>
+
+{% endblock %}

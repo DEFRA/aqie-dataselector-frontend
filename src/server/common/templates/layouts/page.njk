@@ -21,7 +21,7 @@
     serviceUrl: serviceUrl,
     useTudorCrown: true
   }) }}
-  {% include "partials/navigation/navigation.njk" %}
+  {# {% include "partials/navigation/navigation.njk" %} #}
 {% endblock %}
 
 {% block pageTitle %}
@@ -29,29 +29,47 @@
 {% endblock %}
 
 {% block beforeContent %}
-  {% if breadcrumbs.length > 1 %}
-    {{ govukBreadcrumbs({
-      items: breadcrumbs
-    }) }}
-  {% endif %}
-{% endblock %}
+  {% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+
+{{ govukPhaseBanner({
+  tag: {
+    text: "Beta"
+  },
+  html: 'This is a new service. Help us improve it and <a class="govuk-link" href="#">give your feedback (opens in new tab)</a>.'
+}) }}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+  {% if displayBacklink %}
+  <div class='top-nav'>  
+    {{ govukBackLink({
+    text: "Back",
+    href: hrefq
+  }) }}
+  </div>
+{%endif%}
+ {% endblock %}
+ 
+
+
+
+
 
 {% block content %}{% endblock %}
-
 {% block footer %}
+
   {{ govukFooter({
     meta: {
       items: [
         {
-          href: "https://www.gov.uk/help/privacy-notice",
+          href: "/privacy",
           text: "Privacy"
         },
         {
-          href: "https://www.gov.uk/help/cookies",
+          href: "/cookies",
           text: "Cookies"
         },
         {
-          href: "https://www.gov.uk/help/accessibility-statement",
+          href: "/accessibility",
           text: "Accessibility statement"
         }
       ]
@@ -61,4 +79,5 @@
 
 {% block bodyEnd %}
   <script type="module" src="{{ getAssetPath('application.js') }}"></script>
+   <script type="module" src="src/client/javascripts/toggletip.js"></script>
 {% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
+
+{% block content %}
+  {{ appHeading({
+    paragraphs: "",
+    caption: ""
+  }) }}
+<!-- Paragraph A -->
+<div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds-from-desktop">
+<h1 class="govuk-heading-xl odd-page">{{ title }}</h1>
+<p class="govuk-body"> <a href="/" class="govuk-link">{{ paragraphs.a }}</a> {{ paragraphs.b }}</p>
+<p class="govuk-body">{{ paragraphs.c }}</p>
+<p class="govuk-body">{{ paragraphs.d }}</p>
+<p class="govuk-body">{{ paragraphs.e }} <a href="https://ico.org.uk/for-the-public/online/cookies" class="govuk-link">{{ paragraphs.f }}</a> {{ paragraphs.g }}</p>
+
+<!-- Form -->
+<form class="js-cookies-page-form">
+  <h2 class="govuk-heading-m">{{ headings.a }}</h2>
+  <p class="govuk-body">{{ paragraphs.h }}</p>
+
+  <!-- Table -->
+  {{ govukTable({
+    firstCellIsHeader: true,
+    caption: table1.title,
+    head: [
+      { text: table1.text1 },
+      { text: table1.text2 },
+      { text: table1.text3 }
+    ],
+    rows: [
+      [
+        { text: table1.text4 },
+        { text: table1.text5 },
+        { text: table1.text6 }
+      ],
+      [
+        { text: "_ga" },
+        { text: table2.text4 },
+        { text: table2.text5 }
+      ],
+      [
+        { text: "_gat_UA-[G-8CMZBTDQBC]" },
+        { text: table2.text9 },
+        { text: table2.text10 }
+      ],
+      [
+        { text: "session" },
+        { text: table2.text11 },
+        { text: table2.text12 }
+      ]
+    ]
+  }) }}
+ <p class="govuk-body">{{ paragraphs.u }}</p>
+
+ <h2 class="govuk-heading-m">{{ headings. b }}</h2>
+  <p class="govuk-body">{{ paragraphs.v }}</p>
+  <ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
+  <li>{{ paragraphs.v1 }} </li>
+  <li>{{ paragraphs.v2 }} </li>
+ </ul>
+    <p class="govuk-body">{{ paragraphs.w}}</p>
+      <p class="govuk-body">{{ paragraphs.x }}</p>
+        <p class="govuk-body">{{ paragraphs.y }}</p>
+<ul class="govuk-list govuk-list--bullet govuk-!-margin-bottom-6">
+        <li>{{ paragraphs.z1 }}</li>
+        <li>{{ paragraphs.z2 }}</li>
+         <li>{{ paragraphs.z3 }}</li>
+          <li>{{ paragraphs.z4 }}</li>
+          <li>{{ paragraphs.z5 }}</li>
+          </ul>
+  <!-- Radios -->
+
+
+
+{{ govukRadios({
+  name: "whereDoYouLive",
+  fieldset: {
+    legend: {
+      text: headings.d,
+      isPageHeading: true,
+      classes: "govuk-fieldset__legend--l"
+    }
+  },
+  items: [
+    {
+      value: "Yes",
+      text: paragraphs.r
+    },
+    {
+      value: "No",
+      text: paragraphs.s,
+       checked:true
+    }
+  ]
+}) }}
+
+
+
+
+  
+
+  <!-- Button -->
+  {{ govukButton({
+    text: paragraphs.buttonText,
+    classes: "js-cookies-form-button",
+    attributes: {
+      hidden: ""
+    }
+  }) }}
+</form>
+</div>
+</div>
+{% endblock %}
