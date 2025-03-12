@@ -44,22 +44,22 @@
   margin-top: 0;
   padding: 6px 12px;
 }
+
 .aq-button-secondary {
   position: relative;
   display: inline-block;  
   width: auto;
-  margin: 0px 0px 5px;
-  border: 1px solid ;
+  margin: 0px 0px 5px; 
   box-shadow: none;
   background-color: white;
   border: 1px solid govuk-colour('mid-grey');
   padding: 9px 10px 10px;
   outline: 3px solid transparent;
   cursor: pointer;
-  color: $govuk-text-colour !important;
+  color: $govuk-text-colour;
   text-decoration: none;
   &:visited {
-      color: $govuk-text-colour;
+  color: $govuk-text-colour;
   }
   &:hover {
       background-color: #dbdad9;
@@ -412,7 +412,7 @@
     font-weight: 400;
     font-size: 14px;
     font-size: 0.875rem;
-    line-height: 1.1428571429;
+    line-height: 1.1429;
     margin: 0;
     padding: 0;
     list-style-type: none;
@@ -508,29 +508,15 @@
     padding-right: 25px;
   }
   
-  .gem-c-contents-list__list-item--dashed:before {
-    content: "—";
-    position: absolute;
-    left: 0;
-    width: 20px;
-    overflow: hidden;
-  }
   
-  .direction-rtl .gem-c-contents-list__list-item--dashed:before {
-    left: auto;
-    right: 0;
-  }
   
   .lte-ie8 .gem-c-contents-list__list-item--dashed .gem-c-contents-list__link {
     display: inline-block;
     vertical-align: top;
-  }
-  
-//@use "../../vendor/govuk-frontend/base" as *;
+  }  
 
-/* ==========================================================================
-   #SECONDARY NAV
-   ========================================================================== */
+
+
 
 .moj-sub-navigation {
   margin-bottom: govuk-spacing(7);
