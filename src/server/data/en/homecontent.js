@@ -102,6 +102,17 @@ export const english = {
       g: 'Go back to search a location'
     }
   },
+  noStation: {
+    heading: 'Get air pollution data',
+    paragraphs: {
+      a: 'There are no monitoring stations within',
+      b: 'miles of',
+      d: 'You should either:',
+      e: 'choose a different search area',
+      f: 'choose a different location',
+      g: 'Go back to search a location'
+    }
+  },
   notFoundUrl: {
     heading: 'We could not find that page',
     paragraphs: {

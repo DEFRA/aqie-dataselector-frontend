@@ -1,5 +1,5 @@
 import inert from '@hapi/inert'
-
+import { fileURLToPath } from 'node:url'
 import { health } from '~/src/server/health/index.js'
 import { home } from '~/src/server/home/index.js'
 
@@ -13,10 +13,34 @@ import { stationDetails } from '~/src/server/stationdetails/index.js'
 import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
 import { about } from '~/src/server/about/index.js'
 import { locationId } from '~/src/server/locationId/index.js'
-
+import path from 'path'
+import { yearId } from '~/src/server/year_pollutiondetails/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
+
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+export const moj = {
+  plugin: {
+    name: 'moj',
+    register(server) {
+      server.route({
+        method: 'GET',
+        path: '/assets/{param*}',
+        handler: {
+          directory: {
+            path: path.join(
+              dirname,
+              'node_modules/@ministryofjustice/frontend/moj/assets'
+            ),
+            redirectToSlash: true,
+            index: false
+          }
+        }
+      })
+    }
+  }
+}
 export const router = {
   plugin: {
     name: 'router',
@@ -37,7 +61,9 @@ export const router = {
         multiplelocations,
         monitoringStation,
         stationDetails,
-        locationId
+        locationId,
+        moj,
+        yearId
       ])
 
       // Static assets

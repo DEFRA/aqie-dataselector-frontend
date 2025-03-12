@@ -11,6 +11,11 @@ const getLocationDetailsController = {
     const fullSearchQuery = request.yar.get('fullSearchQuery').value
     request.yar.set('locationID', request.params.id)
     const locationMiles = request.yar.get('locationMiles')
+    const hrefq =
+      '/multiplelocations?fullSearchQuery=' +
+      fullSearchQuery +
+      '&locationMiles=' +
+      locationMiles
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
     let userLocation = ''
@@ -39,9 +44,10 @@ const getLocationDetailsController = {
       }
       const MonitoringstResult = await InvokeMonitstnAPI()
       request.yar.set('MonitoringstResult', MonitoringstResult)
+
       const map1 = new Map()
 
-      if (MonitoringstResult.length !== 0) {
+      if (MonitoringstResult.getmonitoringstation.length !== 0) {
         for (const ar of MonitoringstResult.getmonitoringstation) {
           const poll = ar.pollutants
           const poll1 = Object.keys(poll)
@@ -62,27 +68,33 @@ const getLocationDetailsController = {
           )
           map1.set(ar.name, pollkeys)
         }
-      }
-      const hrefq =
-        '/multiplelocations?fullSearchQuery=' +
-        fullSearchQuery +
-        '&locationMiles=' +
-        locationMiles
-      if (userLocation) {
-        return h.view('monitoring-station/index', {
-          pageTitle: english.monitoringStation.pageTitle,
-          title: english.monitoringStation.title,
-          serviceName: english.monitoringStation.serviceName,
-          paragraphs: english.monitoringStation.paragraphs,
-          searchLocation: userLocation,
+
+        if (userLocation) {
+          return h.view('monitoring-station/index', {
+            pageTitle: english.monitoringStation.pageTitle,
+            title: english.monitoringStation.title,
+            serviceName: english.monitoringStation.serviceName,
+            paragraphs: english.monitoringStation.paragraphs,
+            searchLocation: userLocation,
+            locationMiles,
+            monitoring_station: MonitoringstResult.getmonitoringstation,
+            pollmap: map1,
+            displayBacklink: true,
+            fullSearchQuery,
+            hrefq
+          })
+        }
+      } else {
+        return h.view('multiplelocations/nostation', {
           locationMiles,
-          monitoring_station: MonitoringstResult.getmonitoringstation,
-          pollmap: map1,
+          serviceName: english.noStation.heading,
+          paragraph: english.noStation.paragraphs,
+          searchLocation: userLocation,
           displayBacklink: true,
-          fullSearchQuery,
           hrefq
         })
       }
+
       //   const x = query
       // const invalidSearchEntry = false
     }

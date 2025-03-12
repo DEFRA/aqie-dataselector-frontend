@@ -1,0 +1,7 @@
+@forward "pkg:@ministryofjustice" with (
+  $moj-assets-path: "/frontend/moj/assets",
+  $moj-new-organisation-colours: true,
+  $moj-global-styles: true,
+ 
+);
+@warn "The font size is moj"; 
