@@ -87,7 +87,7 @@ const multipleLocationsController = {
         }
 
         if (locations !== undefined && locations.length > 0) {
-          if (MonitoringstResult.length !== 0) {
+          if (MonitoringstResult.getmonitoringstation.length !== 0) {
             for (const ar of MonitoringstResult.getmonitoringstation) {
               const poll = ar.pollutants
               const poll1 = Object.keys(poll)
@@ -142,19 +142,30 @@ const multipleLocationsController = {
           request.yar.set('errors', '')
           request.yar.set('errorMessage', '')
           request.yar.set('nooflocation', 'single')
-          return h.view('monitoring-station/index', {
-            pageTitle: english.monitoringStation.pageTitle,
-            title: english.monitoringStation.title,
-            serviceName: english.monitoringStation.serviceName,
-            paragraphs: english.monitoringStation.paragraphs,
-            searchLocation: searchValue,
-            locationMiles,
-            monitoring_station: MonitoringstResult.getmonitoringstation,
-            pollmap: map1,
+          if (MonitoringstResult.getmonitoringstation.length === 0) {
+            return h.view('multiplelocations/nostation', {
+              locationMiles,
+              serviceName: english.noStation.heading,
+              paragraph: english.noStation.paragraphs,
+              searchLocation: searchValue,
+              displayBacklink: true,
+              hrefq: '/search-location'
+            })
+          } else {
+            return h.view('monitoring-station/index', {
+              pageTitle: english.monitoringStation.pageTitle,
+              title: english.monitoringStation.title,
+              serviceName: english.monitoringStation.serviceName,
+              paragraphs: english.monitoringStation.paragraphs,
+              searchLocation: searchValue,
+              locationMiles,
+              monitoring_station: MonitoringstResult.getmonitoringstation,
+              pollmap: map1,
 
-            displayBacklink: true,
-            hrefq: '/search-location'
-          })
+              displayBacklink: true,
+              hrefq: '/search-location'
+            })
+          }
         } else {
           request.yar.set('errors', '')
           request.yar.set('errorMessage', '')

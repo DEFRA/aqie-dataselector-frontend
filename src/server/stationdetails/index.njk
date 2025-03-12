@@ -1,7 +1,18 @@
 {% extends 'layouts/page.njk' %}
 {% set displayBreadcrumbs = false %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/tabs/macro.njk" import govukTabs %}
 
+<script src="/path/to/govuk-frontend/govuk/all.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      window.GOVUKFrontend.initAll();
+    });
+    
+       
+        
+    
+  </script>
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
@@ -34,16 +45,105 @@
              
             </div>
             </dl>
+           
 
+ <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in 2025</h2>
+          <p class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
+          <nav class="moj-sub-navigation" aria-label="Sub navigation">
 
- 
-
-
-            
+            <ul class="moj-sub-navigation__list">
              
-
-        
-
+              <li class="moj-sub-navigation__item">
+              
+                <a class="moj-sub-navigation__link" name ="year_selected" value="2018" href="javascript:void(0)"  onclick="updateYear(2018)">2018</a>
+              </li>
+         
+              <li class="moj-sub-navigation__item">
+                <a class="moj-sub-navigation__link" href="javascript:void(0)" name ="year_selected" value="2019" onclick="updateYear(2019)">2019</a>
+              </li>
+          
+              <li class="moj-sub-navigation__item">
+                <a class="moj-sub-navigation__link" href="javascript:void(0)" name ="year_selected" value="2020" onclick="updateYear(2020)">2020</a>
+              </li>
+      
+              <li class="moj-sub-navigation__item">
+                <a class="moj-sub-navigation__link" href="javascript:void(0)"name ="year_selected" value="2021" onclick="updateYear(2021)">2021</a>
+              </li>
+      
+              <li class="moj-sub-navigation__item">
+                <a class="moj-sub-navigation__link" href="javascript:void(0)" name ="year_selected" value="2022" onclick="updateYear(2022)">2022</a>
+              </li>
+      
+              <li class="moj-sub-navigation__item">
+                <a class="moj-sub-navigation__link" href="javascript:void(0)"  name ="year_selected" value="2023" onclick="updateYear(2023)">2023</a>
+              </li>
+      
+             <li class="moj-sub-navigation__item">
+         
+            <a class="moj-sub-navigation__link" href="javascript:void(0)" name ="year_selected" value="2024" onclick="updateYear(2024)">2024</a>
+        </li>
        
-
+        <li class="moj-sub-navigation__item">        
+            <a class="moj-sub-navigation__link" href="javascript:void(0)" aria-current="page" name ="year_selected" value="2025" onclick="updateYear(2025)">2025</a>
+        </li>
+        
+    </ul>
+          
+          </nav>
+          
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download datas for 2025</h2> 
+ <details class="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      Approximate file sizes (CSV)
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  <ul class="govuk-list govuk-list--bullet">
+      <li>hourly data: less than 15MB</li>
+      <li>daily average data: less than 5MB</li>
+      <li>annual average data: less than 1MB</li>
+    </ul>  </div>
+</details>
+             
+      
+     
+      
+                 <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+ 
+                    <a id="download-link" href="{{downloadresult}}" onclick = fetchDownloadAPI() role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+                        </div>
+                        </div>
+                </div>
+               <script>
+        function updateYear(year) {
+            document.getElementById('year-heading').textContent = `Download datas for ${year}`; 
+             document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;           
+              const response = fetch('/year/'+year)
+                const links = document.querySelectorAll('.moj-sub-navigation__link');
+    links.forEach(link => {
+        if (link.getAttribute('value') === year.toString()) {
+            link.setAttribute('aria-current', 'page');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+            
+        }
+        
+    </script>
 {% endblock %}

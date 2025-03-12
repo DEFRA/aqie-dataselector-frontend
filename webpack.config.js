@@ -14,6 +14,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 const govukFrontendPath = path.dirname(
   require.resolve('govuk-frontend/package.json')
 )
+const MOJFrontendPath = path.dirname(
+  require.resolve('@ministryofjustice/frontend/package.json')
+)
+// const pathjoin = path.join(MOJFrontendPath, 'moj/assets')
 
 const ruleTypeAssetResource = 'asset/resource'
 
@@ -54,9 +58,11 @@ export default {
   },
   resolve: {
     alias: {
-      '/public/assets': path.join(govukFrontendPath, 'dist/govuk/assets')
+      '/public/assets': path.join(govukFrontendPath, 'dist/govuk/assets'),
+      '/moj/assets': path.join(MOJFrontendPath, 'moj/assets')
     }
   },
+
   module: {
     rules: [
       {
@@ -64,10 +70,11 @@ export default {
         loader: 'source-map-loader',
         enforce: 'pre'
       },
+
       {
         test: /\.js$/,
         loader: 'babel-loader',
-        exclude: /node_modules/,
+
         options: {
           browserslistEnv: 'javascripts',
           cacheDirectory: true,
@@ -109,6 +116,7 @@ export default {
             options: {
               sassOptions: {
                 loadPaths: [
+                  path.join(dirname, 'node_modules'),
                   path.join(dirname, 'src/client/stylesheets'),
                   path.join(dirname, 'src/server/common/components'),
                   path.join(dirname, 'src/server/common/templates/partials')
@@ -180,6 +188,10 @@ export default {
       patterns: [
         {
           from: path.join(govukFrontendPath, 'dist/govuk/assets'),
+          to: 'assets'
+        },
+        {
+          from: path.join(MOJFrontendPath, 'moj/assets'),
           to: 'assets'
         }
       ]

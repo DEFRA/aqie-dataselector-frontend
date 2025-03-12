@@ -13,8 +13,25 @@ const nunjucksEnvironment = nunjucks.configure(
   [
     'node_modules/govuk-frontend/dist/',
     path.resolve(dirname, '../../server/common/templates'),
-    path.resolve(dirname, '../../server/common/components')
+    path.resolve(dirname, '../../server/common/components'),
+    'node_modules/@ministryofjustice/frontend/moj/all',
+    path.normalize(
+      path.resolve(
+        dirname,
+        '..',
+        '..',
+        '..',
+        '..',
+        '..',
+        'node_modules',
+        '@ministryofjustice',
+        'frontend',
+        'moj',
+        'all'
+      )
+    )
   ],
+
   {
     autoescape: true,
     throwOnUndefined: false,
