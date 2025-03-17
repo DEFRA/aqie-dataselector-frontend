@@ -506,7 +506,7 @@ export const english = {
         a: 'Get air pollution data',
         b: 'puts small files (known as ‘cookies’) on your computer.',
         c: "These cookies are used across the 'get air pollution data' service.",
-        d: 'We only set cookies when JavaScript is running in your browser and you have accepted them. If you choose not to run Javascript, the information on this page will not apply to you.',
+        d: 'We only set cookies when Javascript is running in your browser and you have accepted them. If you choose not to run Javascript, the information on this page will not apply to you.',
         e: 'Find out',
         f: 'how to manage cookies',
         g: 'from the Information Commissioner‘s Office.',

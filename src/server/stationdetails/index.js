@@ -7,6 +7,16 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/stationdetails/{id}',
       ...stationDetailsController
+    },
+    {
+      method: 'GET',
+      path: '/stationdetails/year/{year}',
+      ...stationDetailsController
+    },
+    {
+      method: 'GET',
+      path: '/stationdetails/download/{download}',
+      ...stationDetailsController
     }
   ])
 }

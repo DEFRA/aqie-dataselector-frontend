@@ -1,12 +1,23 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import axios from 'axios'
 
 const stationDetailsController = {
-  handler: (request, h) => {
+  handler: async (request, h) => {
     // const { query } = request
 
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
+    request.yar.set('selectedYear', '')
+    request.yar.set('downloadresult', '')
 
+    if (request.params.download) {
+      request.yar.set('selectedYear', request.params.download)
+    }
+
+    // else
+    // {
+    //   request.yar.set('selectedYear','2024')
+    // }
     if (request != null) {
       const MonitoringstResult = request.yar.get('MonitoringstResult')
       if (MonitoringstResult !== null) {
@@ -49,17 +60,42 @@ const stationDetailsController = {
 
     const locationMiles = request?.yar?.get('locationMiles')
     const multiplelocID = request?.yar?.get('locationID')
-    if (request.yar.get('nooflocation') === 'single') {
-      return h.view('stationdetails/index', {
+    const apiparams = {
+      region: stndetails.region,
+      siteType: stndetails.siteType,
+      sitename: stndetails.name,
+      siteId: stndetails.localSiteID,
+      latitude: stndetails.location.coordinates[0].toString(),
+      longitude: stndetails.location.coordinates[1].toString(),
+      year: request.yar.get('selectedYear')
+    }
+    if (request.params.download) {
+      const downloadresult = await Invokedownload(apiparams)
+
+      request.yar.set('downloadresult', downloadresult)
+      async function Invokedownload() {
+        try {
+          const response = await axios.post(
+            'https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/',
+            apiparams
+          )
+          // logger.info(`response data ${JSON.stringify(response.data)}`)
+          return response.data
+        } catch (error) {
+          return error // Rethrow the error so it can be handled appropriately
+        }
+      }
+      return h.view('home/index', {
         pageTitle: english.monitoringStation.pageTitle,
         title: english.monitoringStation.title,
         serviceName: english.monitoringStation.serviceName,
         stationdetails: request.yar.get('stationdetails'),
         maplocation,
         updatedTime,
-        displayBacklink: true,
+        displayBacklink: false,
         fullSearchQuery,
-        years,
+        apiparams,
+        selectedYear: request.yar.get('selectedYear'),
         downloadresult: request.yar.get('downloadresult'),
         hrefq:
           '/multiplelocations?fullSearchQuery=' +
@@ -68,19 +104,42 @@ const stationDetailsController = {
           locationMiles
       })
     } else {
-      return h.view('stationdetails/index', {
-        pageTitle: english.monitoringStation.pageTitle,
-        title: english.monitoringStation.title,
-        serviceName: english.monitoringStation.serviceName,
-        stationdetails: request.yar.get('stationdetails'),
-        maplocation,
-        updatedTime,
-        displayBacklink: true,
-        fullSearchQuery,
-        downloadresult: request.yar.get('downloadresult'),
-        years,
-        hrefq: '/location/' + multiplelocID
-      })
+      if (request.yar.get('nooflocation') === 'single') {
+        return h.view('stationdetails/index', {
+          pageTitle: english.monitoringStation.pageTitle,
+          title: english.monitoringStation.title,
+          serviceName: english.monitoringStation.serviceName,
+          stationdetails: request.yar.get('stationdetails'),
+          maplocation,
+          updatedTime,
+          displayBacklink: true,
+          fullSearchQuery,
+          apiparams,
+          selectedYear: request.yar.get('selectedYear'),
+          downloadresult: request.yar.get('downloadresult'),
+          hrefq:
+            '/multiplelocations?fullSearchQuery=' +
+            fullSearchQuery +
+            '&locationMiles=' +
+            locationMiles
+        })
+      } else {
+        return h.view('stationdetails/index', {
+          pageTitle: english.monitoringStation.pageTitle,
+          title: english.monitoringStation.title,
+          serviceName: english.monitoringStation.serviceName,
+          stationdetails: request.yar.get('stationdetails'),
+          maplocation,
+          updatedTime,
+          selectedYear: request.yar.get('selectedYear'),
+          displayBacklink: true,
+          fullSearchQuery,
+          apiparams,
+          downloadresult: request.yar.get('downloadresult'),
+          years,
+          hrefq: '/location/' + multiplelocID
+        })
+      }
     }
   }
 }

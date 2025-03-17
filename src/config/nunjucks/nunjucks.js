@@ -29,6 +29,9 @@ const nunjucksEnvironment = nunjucks.configure(
         'moj',
         'all'
       )
+    ),
+    path.normalize(
+      path.resolve(dirname, '..', '..', 'server', 'common', 'helpers')
     )
   ],
 
