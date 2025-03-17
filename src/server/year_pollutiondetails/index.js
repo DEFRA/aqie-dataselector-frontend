@@ -7,6 +7,14 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/year/{id}',
       ...getpollutantsDetailsController
+    },
+    {
+      method: 'GET',
+      path: '/some-path',
+      handler: (request, h) => {
+        // console.log('Redirecting to /invalid-path')
+        return h.redirect('/invalid-path')
+      }
     }
   ])
 }
