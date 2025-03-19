@@ -7,7 +7,7 @@ const stationDetailsController = {
 
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
-    request.yar.set('selectedYear', '')
+
     request.yar.set('downloadresult', '')
     // console.log("Selectedyear", request.yar.get('selectedYear'))
     if (request.params.download) {
@@ -93,9 +93,10 @@ const stationDetailsController = {
         stationdetails: request.yar.get('stationdetails'),
         maplocation,
         updatedTime,
-        displayBacklink: false,
+        displayBacklink: true,
         fullSearchQuery,
         apiparams,
+        years,
         selectedYear: request.yar.get('selectedYear'),
         downloadresult: request.yar.get('downloadresult'),
         hrefq:
@@ -116,6 +117,7 @@ const stationDetailsController = {
           displayBacklink: true,
           fullSearchQuery,
           apiparams,
+          years,
           selectedYear: request.yar.get('selectedYear'),
           downloadresult: request.yar.get('downloadresult'),
           hrefq:
@@ -136,8 +138,8 @@ const stationDetailsController = {
           displayBacklink: true,
           fullSearchQuery,
           apiparams,
-          downloadresult: request.yar.get('downloadresult'),
           years,
+          downloadresult: request.yar.get('downloadresult'),
           hrefq: '/location/' + multiplelocID
         })
       }
