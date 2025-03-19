@@ -33,34 +33,34 @@ const config = convict({
     default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
     env: 'BACKEND_API_URL'
   },
-  OS_NAMES_API_URL: {
-    doc: 'Osname api url',
-    format: String,
-    default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
-    env: 'Osname api url'
-  },
-  OS_NAMES_API_URL_1: {
-    doc: 'Osname api url',
-    format: String,
-    default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
-    env: 'Osname api url'
-  },
-  // https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=london
-  // https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=da161lt&miles=5
   // OS_NAMES_API_URL: {
   //   doc: 'Osname api url',
   //   format: String,
-
-  //   default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
-
+  //   default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
   //   env: 'Osname api url'
   // },
   // OS_NAMES_API_URL_1: {
   //   doc: 'Osname api url',
   //   format: String,
-  //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
+  //   default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
   //   env: 'Osname api url'
   // },
+  // https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=london
+  // https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=da161lt&miles=5
+  OS_NAMES_API_URL: {
+    doc: 'Osname api url',
+    format: String,
+
+    default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+
+    env: 'Osname api url'
+  },
+  OS_NAMES_API_URL_1: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
+    env: 'Osname api url'
+  },
 
   assetPath: {
     doc: 'Asset path',

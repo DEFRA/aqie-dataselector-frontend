@@ -15,6 +15,7 @@ export const homeController = {
     request.yar.set('selectedLocation', '')
     request.yar.set('nooflocation', '')
     request.yar.set('yearselected', '2024')
+    request.yar.set('selectedYear', '2025')
     return h.view('home/index', {
       pageTitle: home.pageTitle,
       heading: home.heading,

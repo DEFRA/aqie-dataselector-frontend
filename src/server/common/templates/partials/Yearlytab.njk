@@ -1,0 +1,112 @@
+<h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
+          <p class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
+          <nav class="moj-sub-navigation" aria-label="Sub navigation">
+
+          
+          
+          
+  
+  <ul class="moj-sub-navigation__list">
+  {% for year in years %}
+    <li class="moj-sub-navigation__item">
+ <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" name="year_selected" value="{{ year }}" onclick="updateYear({{ year }})" {% if year == selectedYear %}aria-current="page"{% endif %}>{{ year }}</a>
+    </li>
+  {% endfor %}
+
+</ul>
+          
+          </nav>
+          <span id="selectedYear" style="display:none;">{{selectedYear}}</span>
+          
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download datas for {{selectedYear}}</h2> 
+ <details class="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      Approximate file sizes (CSV)
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  <ul class="govuk-list govuk-list--bullet">
+      <li>hourly data: less than 15MB</li>
+      <li>daily average data: less than 5MB</li>
+      <li>annual average data: less than 1MB</li>
+    </ul>  </div>
+</details>
+             
+      {% set year_selected = selectedYear %}
+    
+     
+                 <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+ 
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+                        </div>
+                        </div>
+                </div>
+           
+
+    
+               <script> 
+              let selyear;
+        function updateYear(year) {
+    selyear = year;
+    document.getElementById('year-heading').textContent = `Download datas for ${year}`;
+    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
+
+     var links = document.querySelectorAll('.moj-sub-navigation__link');
+  links.forEach(function(link) {
+    link.removeAttribute('aria-current');
+  });
+
+  // Set aria-current to the clicked link
+  var selectedLink = document.getElementById('link-' + year);
+  selectedLink.setAttribute('aria-current', 'page');
+
+  // Your existing code to handle the year selection
+  console.log('Year selected:', year);
+}
+
+// Check if there is already a selected year and set aria-current
+document.addEventListener('DOMContentLoaded', () => {
+    const selectedYearElement = document.getElementById('selectedYear');
+    const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
+    if (selectedYear) {
+        updateYear(selectedYear);
+    }
+});
+       
+
+      
+           async function getAPIstn_details1() {
+      window.location.href = `/stationdetails/download/${selyear}`
+           
+
+       
+        
+}
+    </script>
+    {% if downloadresult %}
+  <script>
+    // Your JavaScript code here
+   
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
+   // alert("downloadresult: " + url);
+    console.log("downloadresult in script",url)
+   window.location.href = url;
+  </script>
+{% endif %} 
