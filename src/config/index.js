@@ -45,8 +45,7 @@ const config = convict({
     default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
     env: 'Osname api url'
   },
-  // https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=london
-  // https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=da161lt&miles=5
+
   // OS_NAMES_API_URL: {
   //   doc: 'Osname api url',
   //   format: String,
