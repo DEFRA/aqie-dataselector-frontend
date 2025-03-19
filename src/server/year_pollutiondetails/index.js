@@ -5,7 +5,7 @@ const configureRoutes = (server) => {
   server.route([
     {
       method: 'GET',
-      path: '/year/{id}',
+      path: '/year',
       ...getpollutantsDetailsController
     },
     {

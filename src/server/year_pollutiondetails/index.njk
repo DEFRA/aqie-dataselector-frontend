@@ -1,0 +1,41 @@
+ {% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/tabs/macro.njk" import govukTabs %}
+   
+<script src="/path/to/govuk-frontend/govuk/all.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      window.GOVUKFrontend.initAll();
+    });
+    
+       
+        
+    
+  </script>
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+ 
+ <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+ 
+                    <a id="download-link" href="javascript:void(0)" onclick = "getAPIstn_details()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+                        </div>
+                        </div>
+                        </div>
+                        </div>

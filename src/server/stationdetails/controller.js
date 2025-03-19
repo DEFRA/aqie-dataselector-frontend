@@ -9,7 +9,7 @@ const stationDetailsController = {
     request.yar.set('errorMessage', '')
     request.yar.set('selectedYear', '')
     request.yar.set('downloadresult', '')
-
+    // console.log("Selectedyear", request.yar.get('selectedYear'))
     if (request.params.download) {
       request.yar.set('selectedYear', request.params.download)
     }
@@ -85,7 +85,8 @@ const stationDetailsController = {
           return error // Rethrow the error so it can be handled appropriately
         }
       }
-      return h.view('home/index', {
+
+      return h.view('stationdetails/index', {
         pageTitle: english.monitoringStation.pageTitle,
         title: english.monitoringStation.title,
         serviceName: english.monitoringStation.serviceName,

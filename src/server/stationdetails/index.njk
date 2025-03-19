@@ -18,6 +18,9 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
 <h1 class="govuk-heading-xl govuk-!-margin-bottom-1">{{stationdetails.name}}</h1>   
+
+
+
          <strong class="govuk-tag status-tag govuk-tag--green">
             Active
           </strong>
@@ -109,12 +112,13 @@
              
       {% set year_selected = selectedYear %}
      
-       <input aria-label ="hostRef" id="hostRef" name="hostRef" style="display: none;" value={{downloadresult}}></input>
+     
                  <div class="govuk-grid-row">
                   <div class="govuk-grid-column-full">
                     <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
  
-                    <a id="download-link" href="javascript:void(0)" onclick = "getAPIstn_details()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
                         <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
@@ -130,30 +134,16 @@
                         </div>
                         </div>
                 </div>
-               <a id="downloadBtn" href="#">Download</a>
+           
 
-    {# <script>
-        async function fetchDownloadUrl() {
-            try {
-                const response = await fetch('/stationdetails/download/dwn');
-                const data = await response.json();
-                const downloadBtn = document.getElementById('downloadBtn');
-                downloadBtn.setAttribute('href', data.downloadUrl);
-                downloadBtn.innerText = 'Download File';
-            } catch (error) {
-                console.error('Error fetching download URL:', error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchDownloadUrl);
-    </script> #}
+    
                <script> 
               let selyear;
         function updateYear(year) {
         selyear=year;
             document.getElementById('year-heading').textContent = `Download datas for ${year}`; 
              document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;           
-             // const response = fetch('/stationdetails/year/'+year)
+           
                 const links = document.querySelectorAll('.moj-sub-navigation__link');
     links.forEach(link => {
         if (link.getAttribute('value') === year.toString()) {
@@ -166,13 +156,24 @@
         }
        
 
-         async function getAPIstn_details() {
-           const response = await fetch('/stationdetails/download/'+selyear)
-           console.log("response of API",response.data)
-            const downloadBtn = document.getElementById('download-link');
-             downloadBtn.setAttribute('href', response);
-            const downloadresult= document.getElementById('hostRef').value
-            console.log("downloadresult",downloadresult)
-         }
+      
+           async function getAPIstn_details1() {
+      window.location.href = `/stationdetails/download/${selyear}`
+           
+
+       
+        
+}
     </script>
+    {% if downloadresult %}
+  <script>
+    // Your JavaScript code here
+   
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
+   // alert("downloadresult: " + url);
+    console.log("downloadresult in script",url)
+   window.location.href = url;
+  </script>
+{% endif %} 
 {% endblock %}
