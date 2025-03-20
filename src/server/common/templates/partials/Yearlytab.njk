@@ -1,15 +1,22 @@
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
-          <p class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
-          <nav class="moj-sub-navigation" aria-label="Sub navigation">
+    
+     
+     
+{% if selectedYear == 2025 %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
+{% else %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
+{% endif %}       
 
-          
-          
-          
-  
+{# <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p> #}
+<nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list">
   {% for year in years %}
     <li class="moj-sub-navigation__item">
- <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" name="year_selected" value="{{ year }}" onclick="updateYear({{ year }})" {% if year == selectedYear %}aria-current="page"{% endif %}>{{ year }}</a>
+ <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
+ name="year_selected" value="{{ year }}" 
+ onclick="updateYear({{ year }})" {% if year == selectedYear %}aria-current="page"{% endif %}>
+ {{ year }}</a>
     </li>
   {% endfor %}
 
@@ -18,7 +25,7 @@
           </nav>
           <span id="selectedYear" style="display:none;">{{selectedYear}}</span>
           
- <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download datas for {{selectedYear}}</h2> 
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download data for {{selectedYear}}</h2> 
  <details class="govuk-details">
   <summary class="govuk-details__summary">
     <span class="govuk-details__summary-text">
@@ -61,32 +68,46 @@
 
     
                <script> 
+              
               let selyear;
-        function updateYear(year) {
+       function updateYear(year) {
     selyear = year;
-    document.getElementById('year-heading').textContent = `Download datas for ${year}`;
+    document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
+  
+    if( year === '2025' || year === 2025)
+    {
+ document.getElementById('duration_current').textContent = '1 January to ' + formattedDate;
+ }else
+ {
+  document.getElementById('duration_current').textContent = '1 January to 31 December';
+ }
+    var links = document.querySelectorAll('.moj-sub-navigation__link');
+    links.forEach(function(link) {
+        link.removeAttribute('aria-current');
+    });
 
-     var links = document.querySelectorAll('.moj-sub-navigation__link');
-  links.forEach(function(link) {
-    link.removeAttribute('aria-current');
-  });
+    // Set aria-current to the clicked link
+    var selectedLink = document.getElementById('link-' + year);
+    if (selectedLink) {
+        selectedLink.setAttribute('aria-current', 'page');
+    }
 
-  // Set aria-current to the clicked link
-  var selectedLink = document.getElementById('link-' + year);
-  selectedLink.setAttribute('aria-current', 'page');
-
-  // Your existing code to handle the year selection
-  console.log('Year selected:', year);
-}
+    // Your existing code to handle the year selection
+   
+   }
 
 // Check if there is already a selected year and set aria-current
 document.addEventListener('DOMContentLoaded', () => {
+
     const selectedYearElement = document.getElementById('selectedYear');
     const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
     if (selectedYear) {
         updateYear(selectedYear);
     }
+   
 });
        
 
@@ -106,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     var downloadresult = "{{ downloadresult | safe }}";
     var url = downloadresult;
    // alert("downloadresult: " + url);
-    console.log("downloadresult in script",url)
+   
    window.location.href = url;
   </script>
 {% endif %} 

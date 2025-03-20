@@ -32,6 +32,25 @@ const stationDetailsController = {
     const stndetails = request.yar.get('stationdetails')
     const updatedTime = ParseDateformat(stndetails.updated)
     const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    const date = new Date()
+    const day = date.getDate()
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ]
+    const month = monthNames[date.getMonth()]
+
+    const currentdate = `${day} ${month}`
 
     function ParseDateformat(Apidate) {
       const originalDate = Apidate
@@ -67,7 +86,8 @@ const stationDetailsController = {
       siteId: stndetails.localSiteID,
       latitude: stndetails.location.coordinates[0].toString(),
       longitude: stndetails.location.coordinates[1].toString(),
-      year: request.yar.get('selectedYear')
+      year: request.yar.get('selectedYear'),
+      currentdate
     }
     if (request.params.download) {
       const downloadresult = await Invokedownload(apiparams)
@@ -97,6 +117,7 @@ const stationDetailsController = {
         fullSearchQuery,
         apiparams,
         years,
+        currentdate,
         selectedYear: request.yar.get('selectedYear'),
         downloadresult: request.yar.get('downloadresult'),
         hrefq:
@@ -118,6 +139,7 @@ const stationDetailsController = {
           fullSearchQuery,
           apiparams,
           years,
+          currentdate,
           selectedYear: request.yar.get('selectedYear'),
           downloadresult: request.yar.get('downloadresult'),
           hrefq:
@@ -139,6 +161,7 @@ const stationDetailsController = {
           fullSearchQuery,
           apiparams,
           years,
+          currentdate,
           downloadresult: request.yar.get('downloadresult'),
           hrefq: '/location/' + multiplelocID
         })
