@@ -58,7 +58,7 @@ const config = convict({
     env: 'Osname api url'
   },
 
-  //dev//
+  // dev //
   // OS_NAMES_API_URL: {
   //   doc: 'Osname api url',
   //   format: String,
