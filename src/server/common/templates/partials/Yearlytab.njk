@@ -19,55 +19,18 @@
  {{ year }}</a>
     </li>
   {% endfor %}
-
+   
 </ul>
           
           </nav>
-          <span id="selectedYear" style="display:none;">{{selectedYear}}</span>
-          
- <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download data for {{selectedYear}}</h2> 
- <details class="govuk-details">
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text">
-      Approximate file sizes (CSV)
-    </span>
-  </summary>
-  <div class="govuk-details__text">
-  <ul class="govuk-list govuk-list--bullet">
-      <li>hourly data: less than 15MB</li>
-      <li>daily average data: less than 5MB</li>
-      <li>annual average data: less than 1MB</li>
-    </ul>  </div>
-</details>
-             
-      {% set year_selected = selectedYear %}
-    
-     
-                 <div class="govuk-grid-row">
-                  <div class="govuk-grid-column-full">
-                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
- 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download hourly data 
-          
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
-                    </a>
-                        </div>
-                        </div>
-                </div>
-           
-
-    
-               <script> 
+            <div id="yearlytable-container">
+    {% include "partials/yearlytable.njk" %}
+</div>
+       <div id="download-container">
+    {% include "partials/downloads.njk" %}  
+</div>
+       
+         <script> 
               
               let selyear;
        function updateYear(year) {
@@ -94,7 +57,14 @@
     if (selectedLink) {
         selectedLink.setAttribute('aria-current', 'page');
     }
-
+const selectedy = year;
+    fetch(`/rendertable/${selectedy}`)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('yearlytable-container').innerHTML = data;
+            console.log("dataresponse", data);
+        })
+        .catch(error => console.error('Error fetching partial content:', error));
     // Your existing code to handle the year selection
    
    }
@@ -109,25 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
    
 });
-       
 
-      
-           async function getAPIstn_details1() {
-      window.location.href = `/stationdetails/download/${selyear}`
-           
 
-       
-        
+ function updateYear1(year) {
+    console.log("year", year);
+    
 }
-    </script>
-    {% if downloadresult %}
-  <script>
-    // Your JavaScript code here
-   
-    var downloadresult = "{{ downloadresult | safe }}";
-    var url = downloadresult;
-   // alert("downloadresult: " + url);
-   
-   window.location.href = url;
-  </script>
-{% endif %} 
+       </script>
+      
