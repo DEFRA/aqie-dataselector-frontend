@@ -1,0 +1,150 @@
+  <span id="selectedYear" style="display: none;" >{{selectedYear}}</span>
+          
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download data for {{selectedYear}}</h2> 
+ <details class="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      Approximate file sizes (CSV)
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  <ul class="govuk-list govuk-list--bullet">
+      <li>Hourly data: less than 15MB</li>
+      <li>Daily average data: less than 5MB</li>
+      <li>annual average data: less than 1MB</li>
+    </ul>  </div>
+</details>
+             
+      {% set year_selected = selectedYear %}
+    
+     
+                 <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+ 
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+<br>
+
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download daily average data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+ {% for pollutant in pollutantKeys %}
+<h2 class="govuk-heading-m" id="all-p">{{pollutant}}</h2>
+ 
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+<br>
+
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download daily average data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+ {% endfor%}
+
+
+
+                        </div>
+                        </div>
+                </div>
+           
+
+    
+              <script>
+      
+           async function getAPIstn_details1(pollutants,freq) {
+            const selectedYearElement = document.getElementById('selectedYear');
+    const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
+           console.log("come sinside download.",pollutants,freq)
+     // window.location.href = `/downloaddata/${selectedYear}/${pollutants}/${freq}` 
+
+      fetch(`/downloaddata/${selectedYear}/${pollutants}/${freq}`)
+        .then(response => response.text())
+        .then(data => {
+           // alert("datafromdownlaodcontroller: " + JSON.stringify(data));
+            console.log("dataresponse", data);
+            window.location.href =data
+        })
+        .catch(error => console.error('Error fetching partial content:', error));
+           {# fetch(`/downloaddata/${selectedYear}/${pollutants}/${freq}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+       // alert("datafromdownlaodcontroller: " + JSON.stringify(data));
+        console.log("datafromdownload,", data);
+        // Update the partial content
+        document.getElementById('download-container').innerHTML = data.partialContent;
+    })
+    .catch(error => {
+        console.error('Error fetching data:', error);
+       // alert('Error fetching data: ' + error.message);
+    }); #}
+
+       
+        
+}
+    </script>
+    {% if downloadresult %}
+  <script>
+    // Your JavaScript code here
+   
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
+   // alert("downloadresult: " + url);
+   
+   window.location.href = url;
+  </script>
+{% endif %} 

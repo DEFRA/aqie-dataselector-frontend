@@ -5,6 +5,7 @@ import CopyPlugin from 'copy-webpack-plugin'
 import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import WebpackAssetsManifest from 'webpack-assets-manifest'
+// import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const { NODE_ENV = 'development' } = process.env
 

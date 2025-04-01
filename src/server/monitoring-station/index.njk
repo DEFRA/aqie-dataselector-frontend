@@ -37,16 +37,10 @@
           <td class = "govuk-table__cell govuk-table__cell--numeric">
          {% set pollutantTime = pollmap.get(item.name) %}
           <ul class="govuk-list">  
-            {% for item1 in pollutantTime %}
-            {% if item1 == 'NO2' %}
-            <li>nitrodioxide </li> 
-            {% elseif item1 == 'SO2' %}
-            <li>sulphurdioxide </li>                 
-            {% elseif item1 == 'O3' %}
-            <li> ozone </li>
-             {% else %}
+            {% for item1 in item.pollutants %}
+            
           <li>{{item1}} </li> 
-          {% endif %}
+        
            {% endfor %}
 </ul>
           </td>

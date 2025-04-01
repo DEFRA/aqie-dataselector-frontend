@@ -15,6 +15,8 @@ import { about } from '~/src/server/about/index.js'
 import { locationId } from '~/src/server/locationId/index.js'
 import path from 'path'
 import { yearId } from '~/src/server/year_pollutiondetails/index.js'
+import { renderTable } from '~/src/server/renderTable/index.js'
+import { download } from '~/src/server/download/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -63,7 +65,9 @@ export const router = {
         stationDetails,
         locationId,
         moj,
-        yearId
+        yearId,
+        renderTable,
+        download
       ])
 
       // Static assets

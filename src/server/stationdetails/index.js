@@ -15,7 +15,7 @@ const configureRoutes = (server) => {
     },
     {
       method: 'GET',
-      path: '/stationdetails/download/{download}',
+      path: '/stationdetails/download/{download}/{pollutant}/{frequency}',
       ...stationDetailsController
     }
   ])

@@ -45,7 +45,20 @@ const config = convict({
     default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
     env: 'Osname api url'
   },
+  Download_URL: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+    env: 'Osname api url'
+  },
+  Table_URL: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+    env: 'Osname api url'
+  },
 
+  //dev//
   // OS_NAMES_API_URL: {
   //   doc: 'Osname api url',
   //   format: String,
@@ -58,6 +71,18 @@ const config = convict({
   //   doc: 'Osname api url',
   //   format: String,
   //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
+  //   env: 'Osname api url'
+  // },
+  // Download_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+  //   env: 'Osname api url'
+  // },
+  // Table_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
   //   env: 'Osname api url'
   // },
 
