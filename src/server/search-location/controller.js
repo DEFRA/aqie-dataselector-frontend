@@ -6,7 +6,11 @@ const searchLocationController = {
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
     request.yar.get('osnameapiresult', '')
+    if (request.url.pathname === '/search-location/searchagain') {
+      request.yar.set('fullSearchQuery', '')
+    }
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')
+
     if (request != null) {
       //   const x = query
       // const invalidSearchEntry = false

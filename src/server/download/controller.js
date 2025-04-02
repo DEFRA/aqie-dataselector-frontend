@@ -15,9 +15,8 @@ const downloadcontroller = {
         year: request.yar.get('selectedYear'),
         downloadpollutant: request.params.poll,
         downloadpollutanttype: request.params.freq,
-        stationreaddate: stndetails.updated
+        stationreaddate: request.yar.get('latesttime')
       }
-
       const downloadresult = await Invokedownload(apiparams)
 
       request.yar.set('downloadresult', downloadresult)

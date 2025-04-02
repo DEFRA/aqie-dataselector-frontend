@@ -37,7 +37,11 @@ const stationDetailsController = {
 
     // const pollutants = stndetails.pollutants
     //  const pollutantKeys = Object.keys(stndetails.pollutants)
-    const updatedTime = ParseDateformat(stndetails.updated)
+    const cd = new Date()
+    cd.setDate(cd.getDate() - 1)
+    const formattedDat = cd.toISOString().split('.')[0] + 'Z'
+    request.yar.set('latesttime', formattedDat)
+    const updatedTime = ParseDateformat(formattedDat)
     const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
     const date = new Date()
     const day = date.getDate()
@@ -78,6 +82,7 @@ const stationDetailsController = {
 
       return finalFormattedDate
     }
+
     const lat = request.yar.get('stationdetails').location.coordinates[0]
     const longitude1 = request.yar.get('stationdetails').location.coordinates[1]
     const maplocation =
