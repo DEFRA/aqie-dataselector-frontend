@@ -550,8 +550,23 @@
   border-bottom: 1px solid #b1b4b6;
   font-family: "GDS Transport", arial, sans-serif;
 }
+@mixin visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  -webkit-clip-path: inset(50%) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+  display: none !important;
+  // @include defra-visually-hidden();
+}
 .defra-aq-levels-table {
-  @extend %govuk-table;
+ // @extend %govuk-table;
   position: relative;
   margin-top: -1px;
   margin-bottom: 0px;
@@ -571,11 +586,12 @@
     }
   }
   &__head &__cell {
-    text-align: left;
+   
     padding-top: 10px;
     padding-bottom: 10px;
     &--pollutant {
       @include mq ($until: tablet) {
+        @include visually-hidden;
        // @include defra-visually-hidden();
       }
     }
@@ -596,7 +612,7 @@
     }
   }
   &__cell {
-    @extend %govuk-table-cell;
+  //  @extend %govuk-table-cell;
     border-bottom: 0px;
     vertical-align: middle;
     text-align: left;
@@ -632,13 +648,16 @@
     }
     &__cell--average-title {
       padding-bottom: 10px;
+      text-align: right; 
       
     }
     &__cell--daily-title {
       padding-bottom: 10px;
+      text-align: right; 
     }
     &__cell--hourly-title {
       padding-bottom: 10px;
+      text-align: right; 
     }
   &__cell--average {
     width: 15%;

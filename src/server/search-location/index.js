@@ -9,6 +9,11 @@ export const searchLocation = {
           method: 'GET',
           path: '/search-location',
           ...searchLocationController
+        },
+        {
+          method: 'GET',
+          path: '/search-location/searchagain',
+          ...searchLocationController
         }
       ])
     }

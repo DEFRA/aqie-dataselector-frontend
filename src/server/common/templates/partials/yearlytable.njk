@@ -1,36 +1,36 @@
   <div id="yeartabble">
  
-  <h3 class="govuk-heading-s">Data has not been  <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about what verified means" data-toggletip-content="Data is verified when it has been checked for anomalies.">
+  {# <h3 class="govuk-heading-s">Data has not been  <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about what verified means" data-toggletip-content="Data is verified when it has been checked for anomalies.">
             verified
-             </div></h3>
+             </div></h3> #}
              
 
-<table id="aqitable" class="govuk-table">
+<table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
 
 <h1 class="govuk-heading-s" >{{url}} </h1>
-              <thead class="govuk-table__head">
-                <tr class="govuk-table__row">
+              <thead class="defra-aq-levels-table__head">
+<tr class="defra-aq-levels-table__row">
+  <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
                 
-                  <th scope="col"  class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px">Pollutant</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Average</th>
                 
-                  <th scope="col"  class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px" >Average</th>
-                
-                  <th scope="col" class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px" >Daily exceedances</th>
+         <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">Daily exceedances</th>
 
-                  <th scope="col" class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px">Hourly exceedances</th>
+             <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
                  
+                
                 
                 </tr>
               </thead>
               
              
       {% for data in tabledata %}
-       <tbody class="govuk-table__body">
-      <tr class="govuk-table__row" >
-        <td class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px;padding-top:20px">{{ data.pollutantName }}</td>
-        <td  class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px;padding-top:20px">  n/a </td>
-        <td class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px;padding-top:20px" >n/a</td>
-        <td class="govuk-table__cell" style="padding-bottom:20px;padding-right:20px;padding-top:20px">{{ data.hourlyexceedancesCount }}</td>
+        <tbody class="defra-aq-levels-table__body">
+                    <tr class="defra-aq-levels-table__row">
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}</td>
+        <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> </td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > </td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">{{ data.hourlyexceedancesCount }}</td>
       </tr>
       {% endfor %}
     </tbody>
