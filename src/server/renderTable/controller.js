@@ -13,6 +13,7 @@ const rendertablecontroller = {
       }
 
       const tabledata = await Invoketable(apiparams)
+
       request.yar.set('tabledata', tabledata)
       async function Invoketable() {
         try {

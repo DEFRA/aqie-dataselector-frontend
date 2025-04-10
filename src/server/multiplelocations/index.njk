@@ -12,7 +12,7 @@
       <div class="govuk-grid-column-two-thirds-from-desktop">
         <h1 class="govuk-heading-l govuk-!-margin-top-6">{{title}} '{{searchLocation}}'</h1>
         <p class="govuk-body">{{params.a}} </p>
-        <ul class="govuk-list govuk-!-margin-bottom-2 odd-page">
+        <ul class="govuk-list odd-page">
       {% for item in results %}
         <li>
           <a href=  {{['/location/',item.GAZETTEER_ENTRY.ID] | join}}   >
