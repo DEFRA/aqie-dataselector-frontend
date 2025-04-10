@@ -91,6 +91,7 @@ const stationDetailsController = {
 
     const locationMiles = request?.yar?.get('locationMiles')
     const multiplelocID = request?.yar?.get('locationID')
+
     // const apiparams = {
     //   region: stndetails.region,
     //   siteType: stndetails.siteType,
