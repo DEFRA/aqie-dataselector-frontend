@@ -14,7 +14,6 @@ const rendertablecontroller = {
 
       const tabledata = await Invoketable(apiparams)
       request.yar.set('tabledata', tabledata)
-
       async function Invoketable() {
         try {
           const response = await axios.post(config.get('Table_URL'), apiparams)
