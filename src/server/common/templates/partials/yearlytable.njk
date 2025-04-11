@@ -1,5 +1,6 @@
+  <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   <div id="yeartabble">
- 
+
   <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }}<div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about what verified means" data-toggletip-content="Data is verified when it has been checked for anomalies.">
            
              </div></h3>
@@ -36,3 +37,125 @@
     </tbody>
             </table>
             </div>
+              <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
+          
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download data for {{finalyear}}</h2> 
+ <details class="govuk-details">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      Approximate file sizes (CSV)
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+  <ul class="govuk-list govuk-list--bullet">
+      <li>Hourly data: less than 15MB</li>
+      <li>Daily average data: less than 5MB</li>
+      <li>annual average data: less than 1MB</li>
+    </ul>  </div>
+</details>
+             
+      {% set year_selected = finalyear %}
+    
+     
+                 <div class="govuk-grid-row">
+                  <div class="govuk-grid-column-full">
+                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+ 
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+<br>
+
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download daily average data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+ {% for pollutant in tabledata %}
+<h2 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h2>
+ 
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+<br>
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download daily average data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+
+ {% endfor%}                       
+  </div>
+                        </div>
+                </div>
+              <script>
+      
+           async function getAPIstn_details1(pollutants,freq) {          
+      fetch(`/downloaddata/${pollutants}/${freq}`)
+        .then(response => response.text())
+        .then(data => {           
+           
+            window.location.href =data
+        })
+        .catch(error => console.error('Error fetching partial content:', error));        
+}
+document.addEventListener('DOMContentLoaded', () => {
+
+  
+      console.log("document.getElementById('year-heading').textContent in152",document.getElementById('year-heading').textContent)
+    //document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
+    
+   
+});
+    </script>
+    {% if downloadresult %}
+  <script>
+  
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
+   window.location.href = url;
+  </script>
+{% endif %} 

@@ -53,7 +53,7 @@
                         (Visual only)
                       </span>
                     </a>
-
+{{tabledata}}
  {% for pollutant in pollutantKeys %}
 <h2 class="govuk-heading-m" id="all-p">{{pollutant}}</h2>
  
@@ -123,7 +123,7 @@
         return response.json();
     })
     .then(data => {
-       // alert("datafromdownlaodcontroller: " + JSON.stringify(data));
+       alert("datafromdownlaodcontroller: " + JSON.stringify(data));
         console.log("datafromdownload,", data);
         // Update the partial content
         document.getElementById('download-container').innerHTML = data.partialContent;
@@ -136,6 +136,24 @@
        
         
 }
+{# document.addEventListener('DOMContentLoaded', () => {
+
+    const selectedYearElement = document.getElementById('selectedYear');
+    const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
+    fetch(`/rendertable/${selectedYear}`)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('download-container').innerHTML = data;
+            console.log("dataresponseindownload", data);
+            
+        })
+        .catch(error => console.error('Error fetching partial content:', error));
+    // Your existing code to handle the year selection
+   
+   }
+
+   
+}); #}
     </script>
     {% if downloadresult %}
   <script>

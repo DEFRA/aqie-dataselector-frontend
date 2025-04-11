@@ -7,7 +7,7 @@ export const download = {
       server.route([
         {
           method: 'GET',
-          path: '/downloaddata/{year}/{poll}/{freq}',
+          path: '/downloaddata/{poll}/{freq}',
           ...downloadcontroller
         }
       ])

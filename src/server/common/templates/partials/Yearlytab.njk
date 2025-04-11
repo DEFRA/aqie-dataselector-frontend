@@ -9,6 +9,7 @@
 {% endif %}       
 
 {# <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p> #}
+ <span id="selectedYear" style="display: none;" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list">
   {% for year in years %}
@@ -26,16 +27,13 @@
             <div id="yearlytable-container">
     {% include "partials/yearlytable.njk" %}
 </div>
-       <div id="download-container">
-    {% include "partials/downloads.njk" %}  
-</div>
-       
+      
          <script> 
               
               let selyear;
        function updateYear(year) {
     selyear = year;
-    document.getElementById('year-heading').textContent = `Download data for ${year}`;
+    //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
     const currentDate = new Date();
     const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
@@ -58,14 +56,15 @@
         selectedLink.setAttribute('aria-current', 'page');
     }
 const selectedy = year;
+console.log("selectedy",selectedy)
     fetch(`/rendertable/${selectedy}`)
         .then(response => response.text())
         .then(data => {
-            document.getElementById('yearlytable-container').innerHTML = data;
+            document.getElementById('yearlytable-container').innerHTML = data;             
             console.log("dataresponse", data);
         })
         .catch(error => console.error('Error fetching partial content:', error));
-    // Your existing code to handle the year selection
+    
    
    }
 
@@ -74,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const selectedYearElement = document.getElementById('selectedYear');
     const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
+      document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
+      console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
+    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
+    console.log("selectedyearim78",selectedYear)
     if (selectedYear) {
         updateYear(selectedYear);
     }
