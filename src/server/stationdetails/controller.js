@@ -92,15 +92,6 @@ const stationDetailsController = {
     const locationMiles = request?.yar?.get('locationMiles')
     const multiplelocID = request?.yar?.get('locationID')
 
-    // const apiparams = {
-    //   region: stndetails.region,
-    //   siteType: stndetails.siteType,
-    //   sitename: stndetails.name,
-    //   siteId: stndetails.localSiteID,
-    //   latitude: stndetails.location.coordinates[0].toString(),
-    //   longitude: stndetails.location.coordinates[1].toString(),
-    //   year: request.yar.get('selectedYear'),
-    // currentdate
     // }
     // NewApi
     const apiparams = {

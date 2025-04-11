@@ -13,7 +13,7 @@ const rendertablecontroller = {
       }
 
       const tabledata = await Invoketable(apiparams)
-
+      const finalyear = request.yar.get('selectedYear')
       request.yar.set('tabledata', tabledata)
       async function Invoketable() {
         try {
@@ -26,10 +26,10 @@ const rendertablecontroller = {
       }
       // Render the partial template with the URL data
       const partialContent1 = nunjucks.render('partials/yearlytable.njk', {
-        tabledata
+        tabledata,
+        finalyear
       })
-      // const partialContent2 = nunjucks.render('partials/downloads.njk', { tabledata });
-      // const combinedContent = partialContent1 + partialContent2;
+
       return h.response(partialContent1).code(200)
     } catch (error) {
       return h.response('Error rendering partial content').code(500)
