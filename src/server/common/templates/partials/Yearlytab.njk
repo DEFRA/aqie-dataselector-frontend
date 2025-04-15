@@ -1,3 +1,14 @@
+{% from "toggletip/macro.njk" import toggletip %}
+{% set mapToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'This monitoring site is in a city or town close to roads, motorways or highways.
+    ',
+    'Trend'
+  )}}
+{% endset %}
+
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
     
      
@@ -25,6 +36,7 @@
           
           </nav>
             <div id="yearlytable-container">
+            
     {% include "partials/yearlytable.njk" %}
 </div>
       

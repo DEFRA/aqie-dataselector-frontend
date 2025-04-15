@@ -1,9 +1,56 @@
+  
+  {% from "toggletip/macro.njk" import toggletip %}
+  {% set dataToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Data is verified when it has been checked for anomalies.
+    ',
+    'Trend'
+  )}}
+{% endset %}
+
+{% set PM10Toggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Daily average PM10 levels must not go above 50 micrograms per cubic metre (µg/m³) more than 35 times in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set SO2_dailyToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set NO2_hourlyToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Hourly nitrogen dioxide levels must not go above 200 micrograms per cubic metre (µg/m³) more than 18 times in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set SO2_hourlyToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Hourly sulphur dioxide levels must not go above 350 micrograms per cubic metre (µg/m³) more than 24 times in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   <div id="yeartabble">
 
-  <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }}<div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about what verified means" data-toggletip-content="Data is verified when it has been checked for anomalies.">
-           
-             </div></h3>
+  <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
+  {{ dataToggletip | safe }} </h3>
              
 
 <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
@@ -30,8 +77,25 @@
                     <tr class="defra-aq-levels-table__row">
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}</td>
         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> </td>
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > {{ data.dailyCount }}</td>
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">{{ data.hourlyCount }}</td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > 
+        {{ data.dailyCount }}  
+        {% if data.pollutantName == "PM10" %}
+         {{ PM10Toggletip | safe }}           
+{% elif data.pollutantName == "Sulphur dioxide" %}
+  {{ SO2_dailyToggletip | safe }}   
+         {% endif %}
+
+         </td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        
+        {{ data.hourlyCount }}
+         {% if data.pollutantName == "Nitrogen dioxide" %}
+         {{ NO2_hourlyToggletip | safe }}           
+{% elif data.pollutantName == "Sulphur dioxide" %}
+  {{ SO2_hourlyToggletip | safe }}   
+         {% endif %}
+        
+        </td>
       </tr>
       {% endfor %}
     </tbody>

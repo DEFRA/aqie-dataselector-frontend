@@ -15,6 +15,16 @@
     
   </script>
 {% block content %}
+
+ {% set mapToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'This monitoring site is in a city or town close to roads, motorways or highways.
+    ',
+    'Trend'
+  )}}
+{% endset %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
 <h1 class="govuk-heading-xl govuk-!-margin-bottom-1">{{stationdetails.name}}</h1>   
@@ -41,10 +51,15 @@
             <div class="defra-aq-features__item" style="width: 25%">
               <dt class="defra-aq-features__key govuk-caption-m" style="font-size: 19px;">Site type</dt>
               <dd class="defra-aq-features__value govuk-body" style="margin-top: 5px; font-size: 22px;">
-                <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about urban traffic" data-toggletip-content="This monitoring site is in a city or town close to roads, motorways or highways.">
-                 {{stationdetails.siteType}}
-                  </div>
+                {# <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about urban traffic" data-toggletip-content="This monitoring site is in a city or town close to roads, motorways or highways.">
+              
+                 
+                  </div> #}
+                  {{stationdetails.siteType}}
+                  {{ mapToggletip | safe }}
                   <p class="govuk-body govuk-!-margin-top-1"><a href={{maplocation}} class="govuk-link" target="_blank" >View on Google Maps (opens in a new tab)</a></p>
+              
+
                 </dd>
              
             </div>
