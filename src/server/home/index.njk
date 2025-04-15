@@ -39,16 +39,7 @@
             verified
              </div> #}
 
-{# {% set trendToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'The trend is taken from the last 3 readings which are updated hourly
-    ',
-    'Trend'
-  )}}
-{% endset %}
-<h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ trendToggletip | safe }}</h3> #}
+
   {% from "govuk/components/button/macro.njk" import govukButton %}
             {{ 
           govukButton({
