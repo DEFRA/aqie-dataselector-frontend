@@ -471,14 +471,14 @@
     }
     
 		&:hover {
-			& ~ span {
-				&.defra-toggletip__info {
+		
+				& ~ .defra-toggletip__info {
 					opacity: 1; 
 					text-decoration: none;
 					visibility: visible; 
           margin-left: -87px;
         }
-      }
+      
     }
 
 		span {
@@ -506,7 +506,7 @@
   }
 
 
-#tipfix ~ span {
+.tipfix ~ span {
 	color: #000000;
 	margin-top: -5px;
 }
