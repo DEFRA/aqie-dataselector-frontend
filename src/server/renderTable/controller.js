@@ -15,7 +15,7 @@ const rendertablecontroller = {
       const tabledata = await Invoketable(apiparams)
       const finalyear = request.yar.get('selectedYear')
       request.yar.set('tabledata', tabledata)
-     // console.log('tabledata', tabledata)
+      // console.log('tabledata', tabledata)
       async function Invoketable() {
         try {
           const response = await axios.post(config.get('Table_URL'), apiparams)
