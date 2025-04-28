@@ -40,7 +40,7 @@
   }
 
   &__value {
-  margin: 0 5px 0 0;
+  margin: 0 5px 0 -24px;
   font-size: 19px;
   }
 }
@@ -98,43 +98,48 @@
 	&:first-child {
 		display: inline-block;
 	}
-
   display: inline-block;
   position: relative;
-
 	&:not(.defra-toggletip-target) {
 		padding-right: 26px;
 	}
-
 	&--open {
 		z-index: 99;
 	}
-
 	&__container {
 		position: absolute;
 		top: -3px;
 		@include mq ($from: tablet) {
-			top: -1px;
+			top: -23px;
 		}
-		right: 0;
+		right: 0px;
 		width: 26px;
 		height: 26px;
 	}
-
 	&__button {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 26px;
-		height: 26px;
-		background-color: #ffffff;
-		border: 0px;
-		padding: 0px;
-		text-align: center;
-		color: $govuk-text-colour;
-		cursor: help;
-		
-    &-icon {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 26px;
+    height: 26px;
+    background-color: white;
+    border: 0px;
+    padding: 0px;
+    text-align: center;
+    color: #0b0c0c;
+    cursor: help;
+		// position: absolute;
+		// top: 0px;
+		// left: 0px;
+		// width: 26px;
+		// height: 26px;
+		// background-color: white;
+		// border: 0px;
+		// padding: 0px;
+		// text-align: center;
+		// color: $govuk-text-colour;
+		// cursor: help;
+		&-icon {
 			pointer-events: none;
 			position: absolute;
 			overflow: visible;
@@ -144,67 +149,64 @@
 			height: 16px;
 			border-radius: 100%;
 		}
-
 		&-text {
-		//	@include defra-visually-hidden;
+			position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            clip: rect(0 0 0 0) !important;
+            clip-path: inset(50%) !important;
+            border: 0 !important;
+            white-space: nowrap !important;
+           
+            
 		}
-
 		svg {
 			position: relative;
-			margin:  -18px 0 16px -1px;
+			margin: -1px 0px 0px -1px;
 		}
-    // svga {
-		// 	position: relative;
-		// 	margin:  -18px 0 16px -1px;
-		// }
-
 		&:hover, &:focus {
 			color: govuk-colour('black');
 		}
-
 		&:hover span {
 			box-shadow: 0 0 0 5px govuk-colour('light-grey');
 		}
-
 		&:focus {
 			outline: 3px solid transparent;
-
 			span {
 				box-shadow: 0 0 0 1px govuk-colour('black'), 0 0 0 5px $govuk-focus-colour;
 			}
 		}
 	}
-
 	&__info {
 		@include govuk-font($size: 16);
 		cursor: auto;
 		position:absolute;
-		width:0;
+		width:0px;
 		overflow: hidden;
 		box-sizing: border-box;
 		visibility: hidden;
 		top: auto;
 		bottom: 100%;
-		left: 0;
+		left: 0px;
 		padding-bottom: 10px;
 		text-align: left;
 	}
-
 	&__text {
 		position: relative;
 		display:block;
 		box-sizing: border-box;
 		padding: 7.5px 10px;
-		color: #ffffff;
-		background: #000000;
-		border: 0 solid currentcolor;
+		color: white;
+		background: black;    
+		border: 2px solid currentcolor;
 		z-index: 2;
-
 		span {
-			color: #ffffff;
+			color: white;
 		}
 	}
-
 	&__arrow {
 		position: absolute;
 		box-sizing: border-box;
@@ -214,7 +216,7 @@
 		left: 50%;
 		bottom: auto;
 		top: 100%;
-		margin: -15px 0 0 -5px;
+		margin: -15px 0px 0px -5px;
 		color: govuk-colour('black');
 		border: 5px solid currentcolor;
 		-webkit-transform: rotate(135deg);
@@ -222,51 +224,216 @@
 		-o-transform: rotate(135deg);
 		transform: rotate(135deg);
 	}
-
 	&--bottom &__info {
 		bottom: auto;
 		top: 100%;
 		padding-top: 10px;
-		padding-bottom: 0;
+		padding-bottom: 0px;
 	}
-
 	&--bottom &__arrow {
 		bottom: 100%;
 		top: auto;
-		margin: 0 0 -15px -5px;
+		margin: 0px 0px -15px -5px;
 	}
-
 	&--open &__info {
 		visibility: visible;
 		width:200px;
 		overflow: visible;
 	}
-
 	&.defra-toggletip-target {
 		cursor: help;
 		border-bottom: 1px dashed govuk-colour('black');
 		padding-bottom: 1px;
 		outline: 3px solid transparent;
-
 		&:focus, &:hover:focus-visible {
 			border-bottom: 1px solid govuk-colour('black');
 			box-shadow: 0 2px 0 govuk-colour('black'), 0 6px 0 govuk-colour('yellow');
 		}
-
 		&:focus:not(:focus-visible):not(:hover) {
 			border-bottom: 1px dashed govuk-colour('black');
 			box-shadow: none;
 		}
-    
 		&:hover {
 			border-bottom: 1px solid govuk-colour('black');
 			box-shadow: 0 2px 0 govuk-colour('black');
 		}
 	}
 }
+// .defra-toggletip {
+// 	// height: 1rem;
+// 	&:first-child {
+// 		display: inline-block;
+// 	}
 
-button {
-	&.tooltip {
+//   display: inline-block;
+//   position: relative;
+
+// 	&:not(.defra-toggletip-target) {
+// 		padding-right: 26px;
+// 	}
+
+// 	&--open {
+// 		z-index: 99;
+// 	}
+
+// 	&__container {
+// 		position: absolute;
+// 		top: -3px;
+// 		@include mq ($from: tablet) {
+// 			top: -1px;
+// 		}
+// 		right: 0;
+// 		width: 26px;
+// 		height: 26px;
+// 	}
+
+// 	&__button {
+// 		position: absolute;
+// 		top: 0;
+// 		left: 0;
+// 		width: 26px;
+// 		height: 26px;
+// 		 background-color: #ffffff;
+// 		border: 0px;
+// 		padding: 0px;
+// 		text-align: center;
+// 		color: $govuk-text-colour;
+// 		cursor: help;
+		
+//     &-icon {
+// 			pointer-events: none;
+// 			position: absolute;
+// 			overflow: visible;
+// 			top: 5px;
+// 			left: 5px;
+// 			width: 16px;
+// 			height: 16px;
+// 			border-radius: 100%;
+// 		}
+
+// 		&-text {
+// 		//	@include defra-visually-hidden;
+// 		}
+
+// 		svg {
+// 			position: relative;
+//      // margin: -1px 0 0 -1px;
+//   	margin:   20px 0 -4px -1px;
+//     //margin: -2px 0 -4px -1px;
+// 		}
+//     // svga {
+// 		// 	position: relative;
+// 		// 	margin:  -18px 0 16px -1px;
+// 		// }
+
+// 		&:hover, &:focus {
+// 			color: govuk-colour('black');
+// 		}
+
+// 		&:hover span {
+// 			box-shadow: 0 0 0 5px govuk-colour('light-grey');
+// 		}
+
+// 		&:focus {
+// 			outline: 3px solid transparent;
+
+// 			span {
+// 				box-shadow: 0 0 0 1px govuk-colour('black'), 0 0 0 5px $govuk-focus-colour;
+// 			}
+// 		}
+// 	}
+
+// 	&__info {
+// 		@include govuk-font($size: 16);
+// 		cursor: auto;
+// 		position:absolute;
+// 		width:0;
+// 		overflow: hidden;
+// 		box-sizing: border-box;
+// 		visibility: hidden;
+// 		top: auto;
+// 		bottom: 100%;
+// 		left: 0;
+// 		padding-bottom: 10px;
+// 		text-align: left;
+// 	}
+
+// 	&__text {
+// 		position: relative;
+// 		display:block;
+// 		box-sizing: border-box;
+// 		padding: 7.5px 10px;
+// 		color: #ffffff;
+// 		background: #000000;
+// 		border: 0 solid currentcolor;
+// 		z-index: 2;
+
+// 		span {
+// 			color: #ffffff;
+// 		}
+// 	}
+
+// 	&__arrow {
+// 		position: absolute;
+// 		box-sizing: border-box;
+// 		z-index: 1;
+// 		width: 10px;
+// 		height: 10px;
+// 		left: 50%;
+// 		bottom: auto;
+// 		top: 100%;
+// 		margin: -15px 0 0 -5px;
+// 		color: govuk-colour('black');
+// 		border: 5px solid currentcolor;
+// 		-webkit-transform: rotate(135deg);
+// 		-moz-transform: rotate(135deg);
+// 		-o-transform: rotate(135deg);
+// 		transform: rotate(135deg);
+// 	}
+
+// 	&--bottom &__info {
+// 		bottom: auto;
+// 		top: 100%;
+// 		padding-top: 10px;
+// 		padding-bottom: 0;
+// 	}
+
+// 	&--bottom &__arrow {
+// 		bottom: 100%;
+// 		top: auto;
+// 		margin: 0 0 -15px -5px;
+// 	}
+
+// 	&--open &__info {
+// 		visibility: visible;
+// 		width:200px;
+// 		overflow: visible;
+// 	}
+
+// 	&.defra-toggletip-target {
+// 		cursor: help;
+// 		border-bottom: 1px dashed govuk-colour('black');
+// 		padding-bottom: 1px;
+// 		outline: 3px solid transparent;
+
+// 		&:focus, &:hover:focus-visible {
+// 			border-bottom: 1px solid govuk-colour('black');
+// 			box-shadow: 0 2px 0 govuk-colour('black'), 0 6px 0 govuk-colour('yellow');
+// 		}
+
+// 		&:focus:not(:focus-visible):not(:hover) {
+// 			border-bottom: 1px dashed govuk-colour('black');
+// 			box-shadow: none;
+// 		}
+    
+// 		&:hover {
+// 			border-bottom: 1px solid govuk-colour('black');
+// 			box-shadow: 0 2px 0 govuk-colour('black');
+// 		}
+// 	}
+// }
+
+	.tooltip {
 		strong {
 			line-height: 30px; 
     }
@@ -295,7 +462,7 @@ button {
 			transition-duration: 0.4s, 0.3s, 0.4s, 0.3s; 
 			transition-timing-function: ease-in-out, ease-in-out, ease-in-out, ease-in-out; 
 			
-      &.defra-toggletip__info {
+      & ~ .defra-toggletip__info {
 				color: #ffffff; 
 				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#F0F0F0', endColorstr='#FFFFFF',GradientType=0 ); 
         margin-left: -87px;
@@ -337,7 +504,7 @@ button {
       }
     }
   }
-}
+
 
 #tipfix ~ span {
 	color: #000000;

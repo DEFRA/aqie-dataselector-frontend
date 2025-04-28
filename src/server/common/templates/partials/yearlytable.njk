@@ -103,7 +103,7 @@
             </div>
               <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
           
- <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-3">Download data for {{finalyear}}</h2> 
+ <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-6">Download data for {{finalyear}}</h2> 
  <details class="govuk-details">
   <summary class="govuk-details__summary">
     <span class="govuk-details__summary-text">
@@ -111,21 +111,23 @@
     </span>
   </summary>
   <div class="govuk-details__text">
-  <ul class="govuk-list govuk-list--bullet">
-      <li>Hourly data: less than 15MB</li>
-      <li>Daily average data: less than 5MB</li>
-      <li>annual average data: less than 1MB</li>
+   <p>File sizes for a year of data:</p>
+  <ul class="govuk-body govuk-list--bullet">
+      <li>hourly data - usually less than 1</li>
+      <li>daily average data - usually less than 500KB</li>
+      <li>annual average data - usually less than 100KB</li>
     </ul>  </div>
 </details>
-             
+              
       {% set year_selected = finalyear %}
     
-     
+      
                  <div class="govuk-grid-row">
                   <div class="govuk-grid-column-full">
-                    <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
+                    <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
  
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+   <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Hourly')" role="button" 
+   class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -135,9 +137,7 @@
                 <span class="aq-button-secondary__text">
                     Download hourly data 
           
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
+                      
                     </a>
 
 <br>
@@ -152,9 +152,7 @@
                 <span class="aq-button-secondary__text">
                     Download daily average data 
           
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
+                       
                     </a>
 
  {% for pollutant in tabledata %}

@@ -50,13 +50,14 @@
             </div>
             <div class="defra-aq-features__item" style="width: 25%">
               <dt class="defra-aq-features__key govuk-caption-m" style="font-size: 19px;">Site type</dt>
+             
               <dd class="defra-aq-features__value govuk-body" style="margin-top: 5px; font-size: 22px;">
-                {# <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about urban traffic" data-toggletip-content="This monitoring site is in a city or town close to roads, motorways or highways.">
+                {# <div style="margin-left:172px"> #}
               
-                 
-                  </div> #}
+                  {# </div> #}
+                  
                   {{stationdetails.siteType}}
-                  {{ mapToggletip | safe }}
+                      {{ mapToggletip | safe }}
                   <p class="govuk-body govuk-!-margin-top-1"><a href={{maplocation}} class="govuk-link" target="_blank" >View on Google Maps (opens in a new tab)</a></p>
               
 

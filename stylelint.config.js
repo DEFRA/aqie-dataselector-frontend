@@ -11,13 +11,13 @@ export default {
     'declaration-block-no-duplicate-properties': null,
     'color-named': null,
     'declaration-no-important': null,
-    'shorthand-property-no-redundant-values': null,
-    'selector-no-qualifying-type': null,
-    'max-nesting-depth': [
-      3,
-      { ignore: ['blockless-at-rules', 'pseudo-classes'] }
-    ],
-    'selector-max-id': null
+    'shorthand-property-no-redundant-values': null
+    // 'selector-no-qualifying-type': null,
+    // 'max-nesting-depth': [
+    //   3,
+    //   { ignore: ['blockless-at-rules', 'pseudo-classes'] }
+    // ],
+    // 'selector-max-id': null
   }
 }
 
