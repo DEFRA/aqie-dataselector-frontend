@@ -48,9 +48,9 @@
 {% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   <div id="yeartabble">
-
   <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
-  {{ dataToggletip | safe }} </h3>
+   
+  </h3>
              
 
 <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
@@ -75,7 +75,7 @@
       {% for data in tabledata %}
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}</td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> </td>
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > 
         {{ data.dailyCount }}  
@@ -86,16 +86,27 @@
          {% endif %}
 
          </td>
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        
-        {{ data.hourlyCount }}
-         {% if data.pollutantName == "Nitrogen dioxide" %}
-         {{ NO2_hourlyToggletip | safe }}           
-{% elif data.pollutantName == "Sulphur dioxide" %}
-  {{ SO2_hourlyToggletip | safe }}   
-         {% endif %}
-        
-        </td>
+       {% if data.pollutantName == "Nitrogen dioxide" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+ {{ data.hourlyCount }}
+ {{ NO2_hourlyToggletip | safe }}
+    </td>
+
+{% endif %}
+
+{% if (data.pollutantName != "Nitrogen dioxide") and (data.pollutantName != "Sulphur dioxide") %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        {{ data.hourlyCount }}
+    </td>
+{% endif %}
+
+ {% if data.pollutantName == "Sulphur dioxide" %}
+<td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+
+ {{ data.hourlyCount }}
+ {{ SO2_hourlyToggletip | safe }}
+ </td>
+ {% endif %}
       </tr>
       {% endfor %}
     </tbody>
