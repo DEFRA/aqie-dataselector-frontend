@@ -4,7 +4,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-dataselector-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-dataselector-frontend)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DEFRA_aqie-dataselector-frontend&metric=coverage)](https://sonarcloud.io/summary/new_code?id=DEFRA_aqie-dataselector-frontend)
 
-Core delivery platform Node.js Frontend Template.
+This service is to find air quality monitoring stations for the location provided by the user and also provide the details of pollutants in the area and also the users can download the details.
 
 - [Requirements](#requirements)
   - [Node.js](#nodejs)
