@@ -2,7 +2,7 @@ import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
-import { config } from '~/src/config/config.js'
+import { config } from '~/src/config/index.js'
 
 const mockLoggerInfo = jest.fn()
 const mockLoggerError = jest.fn()

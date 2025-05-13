@@ -11,7 +11,8 @@ export default {
     'declaration-block-no-duplicate-properties': null,
     'color-named': null,
     'declaration-no-important': null,
-    'shorthand-property-no-redundant-values': null
+    'shorthand-property-no-redundant-values': null,
+    'no-new': 0
   }
 }
 

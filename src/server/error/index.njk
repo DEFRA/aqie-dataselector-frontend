@@ -1,13 +1,13 @@
 {% extends 'layouts/page.njk' %}
 
-{% block content %}
-  {{ appHeading({
-    text: heading
-  }) }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <p>{{ message }}</p>
-    </div>
-  </div>
+{% block content %}
+{{statusCode}}
+  {# {% if statusCode == '500' %}
+    {% include 'partials/error-500.njk' %}
+  {% elif statusCode == '404' or statusCode == '400' %}   
+      {% include 'partials/error-404-en.njk' %}   
+   
+    {% endif %}  #}
+ 
 {% endblock %}

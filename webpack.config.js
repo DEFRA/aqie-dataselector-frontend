@@ -32,6 +32,13 @@ export default {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     }
   },
+
+  // resolve: {
+  //   fallback: {
+  //     fs: false
+  //   }
+  // },
+
   experiments: {
     outputModule: true
   },

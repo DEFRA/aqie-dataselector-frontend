@@ -1,6 +1,6 @@
 import { Cluster, Redis } from 'ioredis'
 
-import { config } from '~/src/config/config.js'
+import { config } from '~/src/config/index.js'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 
 jest.mock('ioredis', () => ({

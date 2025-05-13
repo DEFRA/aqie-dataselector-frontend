@@ -95,7 +95,7 @@ class CookiesPage {
     //   '_ga_HVF94VF4NZ',
     //   '_gid',
     //   '_ga',
-    //   'phi_cookies_analytics'
+    //   'airaqie_cookies_analytics'
     // ]) {
     //   Cookie(UACookie, null)
     // }
