@@ -104,7 +104,7 @@ to avoid a high cumulative layout shift (CLS) score https://web.dev/cls/ #}
     if (window.location.pathname !== "/cookies/") {
       // Show the banner if there is no consent cookie or if it is outdated
       console.log("currentConsentCookie",currentConsentCookie)
-     var currentConsentCookie = document.cookie.match(new RegExp('(^| )airaqie_cookies_analytics=([^;]+)'))
+     var currentConsentCookie = document.cookie.match(new RegExp('(^| )aqie_cookies_analytics=([^;]+)'))
       console.log("currentConsentCookie",currentConsentCookie)
       if (!currentConsentCookie) {
         var cookieBanner = document.querySelector("[data-module='govuk-cookie-banner']")

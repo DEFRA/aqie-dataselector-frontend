@@ -91,7 +91,7 @@ export async function createServer() {
   const cookiePassword = config.get('cookiePassword')
   server.auth.strategy('login', 'cookie', {
     cookie: {
-      name: 'airaqie_cookies_analytics',
+      name: 'airaqie_cookies_analytics_session',
       path: '/',
       password: cookiePassword,
       isSecure: isProduction

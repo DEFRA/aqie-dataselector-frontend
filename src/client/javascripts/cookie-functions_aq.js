@@ -13,9 +13,8 @@
  */
 
 /* Name of the cookie to save users cookie preferences to. */
-import { config } from '~/src/config/index.js'
-const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
-const isProduction = config.get('isProduction')
+const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+
 const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ'
 const tagID = 'G-HVF94VF4NZ'
 const previewID = 'HVF94VF4NZ'
@@ -32,7 +31,7 @@ const COOKIE_CATEGORIES = {
    * only allow adding cookies that are documented in this object, so they need
    * to be added here.
    */
-  essential: ['aqie_cookies_analytics']
+  essential: ['airaqie_cookies_analytics']
 }
 
 /*
@@ -113,7 +112,7 @@ export function getConsentCookie() {
  */
 export function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
-  return options && options.version >= window.PHI_CONSENT_COOKIE_VERSION
+  return options && options.version >= window.AQIE_CONSENT_COOKIE_VERSION
 }
 
 /**
@@ -135,7 +134,7 @@ export function setConsentCookie(options) {
   delete cookieConsent.essential
 
   // @ts-expect-error Property does not exist on window
-  cookieConsent.version = window.PHI_CONSENT_COOKIE_VERSION
+  cookieConsent.version = window.AQIE_CONSENT_COOKIE_VERSION
 
   // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
@@ -172,9 +171,7 @@ export function resetCookies() {
       window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
 
       if (options[cookieType] === true) {
-        if (isProduction) {
-          loadGoogleAnalytics()
-        }
+        loadGoogleAnalytics()
       } else {
         // Unset UA cookies if they've been set by GTM
         removeUACookies()
