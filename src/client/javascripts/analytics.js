@@ -30,13 +30,13 @@ export default function loadAnalytics() {
         iframe.setAttribute("width", "0")
         iframe.setAttribute("style", "display:none;visibility:hidden")
         iframe.async = true
-        iframe.src = "https://www.googletagmanager.com/ns.html?id=G-HVF94VF4NZ"
+        iframe.src = "https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3%22"
         noscript.appendChild(iframe)
         document.body.appendChild(noscript)
         ///
         const k = d.createElement(s)
         k.async = true
-        k.src = "https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ"
+        k.src = "https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3%22"
         document.body.appendChild(k)
       //  const urlParams = new URLSearchParams(window.location.search);
        // const userId = urlParams.get('userId');
@@ -49,14 +49,14 @@ export default function loadAnalytics() {
         const j = d.createElement(s); 
       //  const dl = l != 'dataLayer' ? '&l=' + l : ''
         j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ' 
+        j.src = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3' 
         f.parentNode.insertBefore(j, f)
         window.dataLayer.push('js', new Date())
-        // window.dataLayer.push('config', 'G-HVF94VF4NZ',{
+        // window.dataLayer.push('config', 'GTM-5ZWS27T3',{
         //   'user_id': utm_source
         // })
         
-      })(window, document, 'script', 'dataLayer', 'G-HVF94VF4NZ')
+      })(window, document, 'script', 'dataLayer', 'GTM-5ZWS27T3')
   }
 }
 // window.dataLayer = window.dataLayer || [];
@@ -64,4 +64,4 @@ export default function loadAnalytics() {
 // dataLayer.push(arguments);
 // }
 // gtag('js', new Date());
-//  gtag('config', 'G-HVF94VF4NZ');
+//  gtag('config', 'GTM-5ZWS27T3');
