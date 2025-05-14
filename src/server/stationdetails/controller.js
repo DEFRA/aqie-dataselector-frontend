@@ -1,6 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
-import { config } from '~/src/config/index.js'
+import { config } from '~/src/config/config.js'
 const stationDetailsController = {
   handler: async (request, h) => {
     // const { query } = request

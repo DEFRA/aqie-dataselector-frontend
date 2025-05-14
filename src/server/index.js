@@ -1,7 +1,7 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import hapiCookie from '@hapi/cookie'
-import { config } from '~/src/config/index.js'
+import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'

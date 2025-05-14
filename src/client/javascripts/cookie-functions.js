@@ -13,9 +13,9 @@
  */
 
 /* Name of the cookie to save users cookie preferences to. */
-import { config } from '~/src/config/index.js'
+// import { config } from '~/src/config/config.js'
 const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
-const isProduction = config.get('isProduction')
+// const isProduction = config.get('isProduction')
 const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ'
 const tagID = 'G-HVF94VF4NZ'
 const previewID = 'HVF94VF4NZ'
@@ -172,9 +172,7 @@ export function resetCookies() {
       window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
 
       if (options[cookieType] === true) {
-        if (isProduction) {
-          loadGoogleAnalytics()
-        }
+        loadGoogleAnalytics()
       } else {
         // Unset UA cookies if they've been set by GTM
         removeUACookies()

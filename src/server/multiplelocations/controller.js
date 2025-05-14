@@ -1,6 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-import { config } from '~/src/config/index.js'
+import { config } from '~/src/config/config.js'
 import axios from 'axios'
 
 const multipleLocationsController = {
