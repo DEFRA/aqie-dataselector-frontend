@@ -12,18 +12,12 @@
  * The consent cookie version is defined in cookie-banner.njk
  */
 
-// import Analytics from './analytics.js'
-
-// import {config}  from '../../../../src/config/index.js'
-
 /* Name of the cookie to save users cookie preferences to. */
-const CONSENT_COOKIE_NAME = 'phi_cookies_analytics'
-// const ganalytics =config.get('analytics')
+// import { config } from '~/src/config/config.js'
+const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
+// const isProduction = config.get('isProduction')
 const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ'
-// const tagID = config.get('gtagID')
 const tagID = 'G-HVF94VF4NZ'
-// const previewIDs= tagID.split('-');
-// const previewID=previewIDs[1]
 const previewID = 'HVF94VF4NZ'
 /* Google Analytics tracking IDs for preview and live environments. */
 const TRACKING_PREVIEW_ID = previewID
@@ -38,7 +32,7 @@ const COOKIE_CATEGORIES = {
    * only allow adding cookies that are documented in this object, so they need
    * to be added here.
    */
-  essential: ['phi_cookies_analytics']
+  essential: ['aqie_cookies_analytics']
 }
 
 /*
@@ -70,7 +64,7 @@ const DEFAULT_COOKIE_CONSENT = {
  */
 export function Cookie(name, value, options) {
   if (typeof value !== 'undefined') {
-    if (value === false || value === null) {
+    if (value === false ?? value === null) {
       deleteCookie(name)
     } else {
       // Default expiry date of 30 days
@@ -203,12 +197,12 @@ export function resetCookies() {
       script.src = ganalytics
       script.async = true
       document.head.appendChild(script)
-      window.dataLayer = window.dataLayer || []
+      window.dataLayer = window.dataLayer ?? []
       function gtag() {
         window.dataLayer.push(arguments)
       }
       gtag('js', new Date())
-      gtag('config', tagID)
+      gtag('config', tagID, { page_path: window.location.pathname })
     }
   }
 }

@@ -4,20 +4,22 @@ import { statusCodes } from '~/src/server/common/constants/status-codes.js'
  * @param {number} statusCode
  */
 function statusCodeMessage(statusCode) {
-  switch (statusCode) {
-    case statusCodes.notFound:
+  switch (true) {
+    case statusCode === 404:
       return 'Page not found'
-    case statusCodes.forbidden:
+    case statusCode === 403:
       return 'Forbidden'
-    case statusCodes.unauthorized:
+    case statusCode === 401:
       return 'Unauthorized'
-    case statusCodes.badRequest:
+    case statusCode === 400:
       return 'Bad Request'
+    case statusCode === 500:
+      return 'Sorry, there is a problem with the service'
     default:
-      return 'Something went wrong'
+      return 'Sorry, there is a problem with the service'
   }
 }
-
+// console.log('Comes to errorjs', statusCodes)
 /**
  * @param { Request } request
  * @param { ResponseToolkit } h
@@ -39,7 +41,7 @@ export function catchAll(request, h) {
   return h
     .view('error/index', {
       pageTitle: errorMessage,
-      heading: statusCode,
+      statusCode,
       message: errorMessage
     })
     .code(statusCode)

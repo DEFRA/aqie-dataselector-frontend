@@ -5,6 +5,8 @@ import CopyPlugin from 'copy-webpack-plugin'
 import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import WebpackAssetsManifest from 'webpack-assets-manifest'
+import NodePolyfillPlugin from 'node-polyfill-webpack-plugin'
+
 // import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const { NODE_ENV = 'development' } = process.env
@@ -32,6 +34,13 @@ export default {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     }
   },
+
+  // resolve: {
+  //   fallback: {
+  //     fs: false
+  //   }
+  // },
+
   experiments: {
     outputModule: true
   },
@@ -61,6 +70,12 @@ export default {
     alias: {
       '/public/assets': path.join(govukFrontendPath, 'dist/govuk/assets'),
       '/moj/assets': path.join(MOJFrontendPath, 'moj/assets')
+    },
+
+    fallback: {
+      fs: false,
+      path: require.resolve('path-browserify'),
+      url: require.resolve('url/')
     }
   },
 
@@ -185,6 +200,7 @@ export default {
   plugins: [
     new CleanWebpackPlugin(),
     new WebpackAssetsManifest(),
+    new NodePolyfillPlugin(),
     new CopyPlugin({
       patterns: [
         {

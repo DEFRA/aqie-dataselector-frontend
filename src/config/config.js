@@ -203,25 +203,7 @@ export const config = convict({
       default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
       env: 'BACKEND_API_URL'
     },
-    OS_NAMES_API_URL: {
-      doc: 'Osname api url',
-      format: String,
-      default: `https://aiqe-dataservice-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
 
-      env: 'Osname api url'
-    },
-    //   OS_NAMES_API_URL: {
-    //     doc: 'Osname api url',
-    //     format: String,
-    //     default: `https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
-    //     env: 'Osname api url'
-    //  },
-    OS_NAMES_API_URL_1: {
-      doc: 'Osname api url',
-      format: String,
-      default: `https://aqie-data-service-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
-      env: 'Osname api url'
-    },
     useTLS: {
       doc: 'Connect to redis using TLS',
       format: Boolean,
@@ -248,6 +230,80 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  // prod
+  OS_NAMES_API_URL: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+    env: 'Osname api url'
+  },
+  OS_NAMES_API_URL_1: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
+    env: 'Osname api url'
+  },
+  Download_URL: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+    env: 'Osname api url'
+  },
+  Table_URL: {
+    doc: 'Osname api url',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+    env: 'Osname api url'
+  },
+
+  // dev //
+  // OS_NAMES_API_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+
+  //   default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+
+  //   env: 'Osname api url'
+  // },
+  // OS_NAMES_API_URL_1: {
+  //   doc: 'Osname api url',
+  //   format: String,
+  //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
+  //   env: 'Osname api url'
+  // },
+  // Download_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+  //   env: 'Osname api url'
+  // },
+  // Table_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+  //   env: 'Osname api url'
+  // },
+  aqiePassword: {
+    doc: 'password for daqie',
+    format: '*',
+    default: 'airqualitydataset',
+    sensitive: true,
+    env: 'AQIE_PASSWORD'
+  },
+  cookiePassword: {
+    doc: 'password for  cookie',
+    format: '*',
+    default: 'the-password-must-be-at-least-32-characters-long',
+    sensitive: true,
+    env: 'COOKIE_PASSWORD'
+  },
+  sessionCookiePassword: {
+    doc: 'session password for  cookie',
+    format: '*',
+    default: 'the-password-must-be-at-least-32-characters-long',
+    sensitive: true,
+    env: 'SESSION_COOKIE_PASSWORD'
   }
 })
 

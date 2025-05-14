@@ -1,5 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import { config } from '~/src/config/index.js'
+import { config } from '~/src/config/config.js'
 import axios from 'axios'
 const getLocationDetailsController = {
   handler: async (request, h) => {

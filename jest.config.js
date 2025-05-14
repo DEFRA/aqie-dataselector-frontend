@@ -30,6 +30,7 @@ export default {
     '<rootDir>/src/server/accessibility/controller.js',
     '<rootDir>/src/server/common/helpers/errors.js',
     '<rootDir>/src/server/common/helpers/errors_message.js',
+    '<rootDir>/src/server/common/helpers/errors_message.js',
     'index.js'
   ],
   coverageDirectory: '<rootDir>/coverage',
