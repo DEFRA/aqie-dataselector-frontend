@@ -16,9 +16,9 @@
 // import { config } from '~/src/config/config.js'
 const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
 // const isProduction = config.get('isProduction')
-const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=G-HVF94VF4NZ'
-const tagID = 'G-HVF94VF4NZ'
-const previewID = 'HVF94VF4NZ'
+const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3'
+const tagID = 'GTM-5ZWS27T3'
+const previewID = 'GTM-5ZWS27T3'
 /* Google Analytics tracking IDs for preview and live environments. */
 const TRACKING_PREVIEW_ID = previewID
 const TRACKING_LIVE_ID = previewID
