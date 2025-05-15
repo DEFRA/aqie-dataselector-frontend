@@ -47,6 +47,9 @@
   )}}
 {% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
+  
+{% if tabledata !== null %}
+
   <div id="yeartabble">
   <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
    
@@ -76,7 +79,7 @@
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
-        <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> </td>
+        <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> n/a </td>
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > 
         {{ data.dailyCount }}  
         {% if data.pollutantName == "PM10" %}
@@ -204,7 +207,15 @@
   </div>
                         </div>
                 </div>
+                {% else %}
+                <div class="govuk-inset-text">
+  There is no data available for this year.
+</div>
+               {% endif%}      
+              
+              
               <script>
+
       
            async function getAPIstn_details1(pollutants,freq) {          
       fetch(`/downloaddata/${pollutants}/${freq}`)

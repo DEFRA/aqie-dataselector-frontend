@@ -2,12 +2,15 @@
 
 
 {% block content %}
-{{statusCode}}
-  {# {% if statusCode == '500' %}
-    {% include 'partials/error-500.njk' %}
+
+   {% if statusCode == '500' %}
+   {% include 'partials/error-500.njk' %}   
   {% elif statusCode == '404' or statusCode == '400' %}   
       {% include 'partials/error-404-en.njk' %}   
-   
-    {% endif %}  #}
+   {% elif statusCode == '401' %} 
+   {% include 'partials/error-401.njk' %}
+   {% elif statusCode == '403' %} 
+   {% include 'partials/error-403.njk' %} 
+    {% endif %}  
  
 {% endblock %}

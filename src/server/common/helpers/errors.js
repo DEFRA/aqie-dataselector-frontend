@@ -1,8 +1,8 @@
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
-
+import { english } from '~/src/server/data/en/homecontent.js'
 /**
  * @param {number} statusCode
- */
+ */ const content = english.errorpages
 function statusCodeMessage(statusCode) {
   switch (true) {
     case statusCode === 404:
@@ -42,7 +42,8 @@ export function catchAll(request, h) {
     .view('error/index', {
       pageTitle: errorMessage,
       statusCode,
-      message: errorMessage
+      message: errorMessage,
+      content
     })
     .code(statusCode)
 }

@@ -36,7 +36,7 @@
           
           </nav>
             <div id="yearlytable-container">
-            
+       
     {% include "partials/yearlytable.njk" %}
 </div>
       
@@ -73,7 +73,7 @@ console.log("selectedy",selectedy)
         .then(response => response.text())
         .then(data => {
             document.getElementById('yearlytable-container').innerHTML = data;             
-            console.log("dataresponse", data);
+            console.log("dataresponse", data.tabledata);
         })
         .catch(error => console.error('Error fetching partial content:', error));
     
