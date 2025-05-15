@@ -175,6 +175,45 @@ export const english = {
       buttonText: 'Hide cookie message'
     }
   },
+  errorpages: {
+    title: 'Cookies on Get air pollution data',
+    texts_404: {
+      a: 'Page not found',
+      b: 'If you typed the web address, check it is correct.',
+      c: 'If you pasted the web address, check you copied the entire address. ',
+      d: 'Contact the ',
+      e: 'air quality team ',
+      f: 'if you continue to get this error message'
+    },
+    texts_401: {
+      a: 'Unauthorised access',
+      b: 'Try again later.',
+      c: 'You can go to',
+      d: 'UK AIR',
+      e: 'to get air pollution data.'
+    },
+    texts_403: {
+      a: 'Forbidden',
+      b: 'Try again later.',
+      c: 'You can go to',
+      d: 'UK AIR',
+      e: 'to get air pollution data.'
+    },
+    texts_500: {
+      a: 'Sorry, there is a problem with the service',
+      b: 'Try again later.',
+      c: 'You can go to',
+      d: 'UK AIR',
+      e: 'to get air pollution data.'
+    },
+    hideCookieMsg: {
+      text0: 'You’ve accepted analytics cookies. You can ',
+      text1: 'You’ve rejected analytics cookies. You can',
+      text2: 'change your cookie settings',
+      text3: ' at any time.',
+      buttonText: 'Hide cookie message'
+    }
+  },
   footerTxt: {
     cookies: 'Cookies',
     privacy: 'Privacy',

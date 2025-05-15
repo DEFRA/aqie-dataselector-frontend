@@ -14,7 +14,6 @@ const rendertablecontroller = {
 
       const tabledata = await Invoketable(apiparams)
       const finalyear = request.yar.get('selectedYear')
-      request.yar.set('tabledata', tabledata)
 
       async function Invoketable() {
         try {
@@ -25,9 +24,22 @@ const rendertablecontroller = {
           return error // Rethrow the error so it can be handled appropriately
         }
       }
+
+      if (
+        !tabledata || // null or undefined
+        (Array.isArray(tabledata) && tabledata.length === 0) || // empty array
+        (typeof tabledata === 'object' &&
+          !Array.isArray(tabledata) &&
+          Object.keys(tabledata).length === 0) // empty object
+      ) {
+        request.yar.set('tabledata', null)
+      } else {
+        request.yar.set('tabledata', tabledata)
+      }
+      // console.log("request.yar.get('tabledata')",request.yar.get('tabledata'))
       // Render the partial template with the URL data
       const partialContent1 = nunjucks.render('partials/yearlytable.njk', {
-        tabledata,
+        tabledata: request.yar.get('tabledata'),
         finalyear
       })
 

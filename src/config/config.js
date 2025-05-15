@@ -262,26 +262,26 @@ export const config = convict({
   //   doc: 'Osname api url',
   //   format: String,
 
-  //   default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+  //   default: `https://aqie-location-backend.test.cdp-int.defra.cloud/osnameplaces/userLocation=`,
 
   //   env: 'Osname api url'
   // },
   // OS_NAMES_API_URL_1: {
   //   doc: 'Osname api url',
   //   format: String,
-  //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
+  //   default: `https://aqie-monitoringstation-backend.test.cdp-int.defra.cloud/monitoringstation/location=`,
   //   env: 'Osname api url'
   // },
   // Download_URL: {
   //   doc: 'Osname api url',
   //   format: String,
-  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+  //   default: `https://aqie-historicaldata-backend.test.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
   //   env: 'Osname api url'
   // },
   // Table_URL: {
   //   doc: 'Osname api url',
   //   format: String,
-  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+  //   default: `https://aqie-historicaldata-backend.test.cdp-int.defra.cloud/AtomHistoryexceedence/`,
   //   env: 'Osname api url'
   // },
   aqiePassword: {

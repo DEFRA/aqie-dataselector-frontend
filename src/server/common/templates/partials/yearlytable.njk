@@ -47,6 +47,9 @@
   )}}
 {% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
+  
+{% if tabledata !== null %}
+
   <div id="yeartabble">
   <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
    
@@ -204,7 +207,15 @@
   </div>
                         </div>
                 </div>
+                {% else %}
+                <div class="govuk-inset-text">
+  There is no data available for this year.
+</div>
+               {% endif%}      
+              
+              
               <script>
+
       
            async function getAPIstn_details1(pollutants,freq) {          
       fetch(`/downloaddata/${pollutants}/${freq}`)
