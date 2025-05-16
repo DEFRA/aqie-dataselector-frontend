@@ -166,6 +166,12 @@ export const config = convict({
     }
   },
   redis: /** @type {Schema<RedisConfig>} */ ({
+    enabled: {
+      doc: 'Enable Redis on your Frontend. Before you enable Redis, contact the CDP platform team as we need to set up config so you can run Redis in CDP environments',
+      format: Boolean,
+      default: false,
+      env: 'REDIS_ENABLED'
+    },
     host: {
       doc: 'Redis cache host',
       format: String,
