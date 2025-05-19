@@ -237,7 +237,7 @@ export const config = convict({
       env: 'TRACING_HEADER'
     }
   },
-  prod
+  //prod
   OS_NAMES_API_URL: {
     doc: 'Osname api url',
     format: String,
