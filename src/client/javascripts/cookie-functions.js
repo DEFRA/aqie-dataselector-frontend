@@ -16,16 +16,16 @@
 // import { config } from '~/src/config/config.js'
 const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
 // const isProduction = config.get('isProduction')
-const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
+// const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3'
+// const tagID = 'GTM-5ZWS27T3'
+// const previewID = 'GTM-5ZWS27T3'
 /* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
+// const TRACKING_PREVIEW_ID = previewID
+// const TRACKING_LIVE_ID = previewID
 
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
+  // analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
   /* Essential cookies
    *
    * Essential cookies cannot be deselected, but we want our cookie code to
@@ -113,7 +113,7 @@ export function getConsentCookie() {
  */
 export function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
-  return options && options.version >= window.PHI_CONSENT_COOKIE_VERSION
+  return options && options.version >= window.AQIE_CONSENT_COOKIE_VERSION
 }
 
 /**
@@ -135,7 +135,7 @@ export function setConsentCookie(options) {
   delete cookieConsent.essential
 
   // @ts-expect-error Property does not exist on window
-  cookieConsent.version = window.PHI_CONSENT_COOKIE_VERSION
+  cookieConsent.version = window.AQIE_CONSENT_COOKIE_VERSION
 
   // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
@@ -166,22 +166,22 @@ export function resetCookies() {
     }
 
     // Initialise analytics if allowed
-    if (cookieType === 'analytics' && options[cookieType]) {
-      // Enable GA if allowed
-      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
+    // if (cookieType === 'analytics' && options[cookieType]) {
+    //   // Enable GA if allowed
+    //   window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
+    //   window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
 
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
-      }
-    } else {
-      // Disable GA if not allowed
-      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    }
+    //   if (options[cookieType] === true) {
+    //     //  loadGoogleAnalytics()
+    //   } else {
+    //     // Unset UA cookies if they've been set by GTM
+    //     removeUACookies()
+    //   }
+    // } else {
+    //   // Disable GA if not allowed
+    //   window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
+    //   window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
+    // }
 
     if (!options[cookieType]) {
       // Fetch the cookies in that category
@@ -192,18 +192,18 @@ export function resetCookies() {
         Cookie(cookie, null)
       })
     }
-    function loadGoogleAnalytics() {
-      const script = document.createElement('script')
-      script.src = ganalytics
-      script.async = true
-      document.head.appendChild(script)
-      window.dataLayer = window.dataLayer ?? []
-      function gtag() {
-        window.dataLayer.push(arguments)
-      }
-      gtag('js', new Date())
-      gtag('config', tagID, { page_path: window.location.pathname })
-    }
+    // function loadGoogleAnalytics() {
+    //   const script = document.createElement('script')
+    //   script.src = ganalytics
+    //   script.async = true
+    //   document.head.appendChild(script)
+    //   window.dataLayer = window.dataLayer ?? []
+    //   function gtag() {
+    //     window.dataLayer.push(arguments)
+    //   }
+    //   gtag('js', new Date())
+    //   gtag('config', tagID, { page_path: window.location.pathname })
+    // }
   }
 }
 
