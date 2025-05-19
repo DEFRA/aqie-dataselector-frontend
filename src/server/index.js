@@ -42,24 +42,24 @@ export async function createServer() {
     router: {
       stripTrailingSlash: true
     },
-    cache: [
-      {
-        name: 'session',
-        engine: redisEnabled
-          ? new CatboxRedis({
-              client: buildRedisClient()
-            })
-          : new CatboxMemory()
-      }
-    ],
     // cache: [
     //   {
-    //     name: config.get('session.cache.name'),
-    //     engine: getCacheEngine(
-    //       /** @type {Engine} */ (config.get('session.cache.engine'))
-    //     )
+    //     name: 'session',
+    //     engine: redisEnabled
+    //       ? new CatboxRedis({
+    //           client: buildRedisClient()
+    //         })
+    //       : new CatboxMemory()
     //   }
     // ],
+    cache: [
+      {
+        name: config.get('session.cache.name'),
+        engine: getCacheEngine(
+          /** @type {Engine} */ (config.get('session.cache.engine'))
+        )
+      }
+    ],
     state: {
       strictHeader: false
     }
