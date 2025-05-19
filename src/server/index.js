@@ -14,42 +14,6 @@ import { Engine as CatboxRedis } from '@hapi/catbox-redis'
 import { Engine as CatboxMemory } from '@hapi/catbox-memory'
 import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 
-// function catchAll(request, h) {
-//   const { response } = request
-
-//   if (!response.isBoom) {
-//     response.header(
-//       'Strict-Transport-Security',
-//       'max-age=31536000; includeSubDomains'
-//     )
-//     response.header('X-Content-Type-Options', 'nosniff')
-//     response.header('X-Frame-Options', 'DENY')
-//     response.header('X-XSS-Protection', '1; mode=block')
-//     response.header('Referrer-Policy', 'no-referrer')
-//     response.header(
-//       'Content-Security-Policy',
-//       "default-src 'self' 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=' 'sha256-r5X1+PpkARiIVqqcQ0RDzcx7PYvuO6QoyiWpRaUuS2M=' 'sha256-W+lIm8NzGKSAA+hPYBnTTi9FPX4RS+5f+vn77dO32ko=' 'sha256-pvukEGssf3w6u5+mxgVHnbiZCYAGJG7vMcjE29hkcKs='  https://www.googletagmanager.com; connect-src 'self' https://region1.google-analytics.com  https://www.googletagmanager.com; script-src 'self' 'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw=' 'sha256-r5X1+PpkARiIVqqcQ0RDzcx7PYvuO6QoyiWpRaUuS2M=' 'sha256-W+lIm8NzGKSAA+hPYBnTTi9FPX4RS+5f+vn77dO32ko=' 'sha256-pvukEGssf3w6u5+mxgVHnbiZCYAGJG7vMcjE29hkcKs='  https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'"
-//     )
-//     // COOP (Cross-Origin Opener Policy)
-//     response.header('Cross-Origin-Opener-Policy', 'same-origin')
-
-//     // COEP (Cross-Origin Embedder Policy)
-//     response.header('Cross-Origin-Embedder-Policy', 'require-corp')
-
-//     // CORP (Cross-Origin Resource Policy)
-//     response.header('Cross-Origin-Resource-Policy', 'cross-origin')
-
-//     return h.continue
-//   }
-//   request.logger.info(response)
-//   request.logger.info(response?.stack)
-//   // return  response.output
-//   return h.redirect(
-//     '/problem-with-service?statusCode=' +
-//       response.output.statusCode
-//   )
-// }
-
 const isProduction = config.get('isProduction')
 const redisEnabled = config.get('redis.enabled')
 export async function createServer() {
