@@ -18,14 +18,14 @@ const CONSENT_COOKIE_NAME = 'aqie_cookies_analytics'
 // const isProduction = config.get('isProduction')
 // const ganalytics = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3'
 // const tagID = 'GTM-5ZWS27T3'
-// const previewID = 'GTM-5ZWS27T3'
+const previewID = 'GTM-5ZWS27T3'
 /* Google Analytics tracking IDs for preview and live environments. */
-// const TRACKING_PREVIEW_ID = previewID
-// const TRACKING_LIVE_ID = previewID
+const TRACKING_PREVIEW_ID = previewID
+const TRACKING_LIVE_ID = previewID
 
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  // analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
+  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
   /* Essential cookies
    *
    * Essential cookies cannot be deselected, but we want our cookie code to
@@ -166,27 +166,27 @@ export function resetCookies() {
     }
 
     // Initialise analytics if allowed
-    // if (cookieType === 'analytics' && options[cookieType]) {
-    //   // Enable GA if allowed
-    //   window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-    //   window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
+    if (cookieType === 'analytics' && options[cookieType]) {
+      // Enable GA if allowed
+      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
+      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
 
-    //   if (options[cookieType] === true) {
-    //     //  loadGoogleAnalytics()
-    //   } else {
-    //     // Unset UA cookies if they've been set by GTM
-    //     removeUACookies()
-    //   }
-    // } else {
-    //   // Disable GA if not allowed
-    //   window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-    //   window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    // }
+      if (options[cookieType] === true) {
+        //  loadGoogleAnalytics()
+      } else {
+        // Unset UA cookies if they've been set by GTM
+        removeUACookies()
+      }
+    } else {
+      // Disable GA if not allowed
+      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
+      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
+    }
 
     if (!options[cookieType]) {
       // Fetch the cookies in that category
       const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-
+      // console.log("cookiesInCategory",cookiesInCategory)
       cookiesInCategory.forEach((cookie) => {
         // Delete cookie
         Cookie(cookie, null)
