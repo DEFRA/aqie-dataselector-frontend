@@ -10,12 +10,13 @@ import { secureContext } from '~/src/server/common/helpers/secure-context/index.
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
-import { Engine as CatboxRedis } from '@hapi/catbox-redis'
-import { Engine as CatboxMemory } from '@hapi/catbox-memory'
-import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
+import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
+// import { Engine as CatboxRedis } from '@hapi/catbox-redis'
+// import { Engine as CatboxMemory } from '@hapi/catbox-memory'
+// import { buildRedisClient } from '~/src/server/common/helpers/redis-client.js'
 
 const isProduction = config.get('isProduction')
-const redisEnabled = config.get('redis.enabled')
+// const redisEnabled = config.get('redis.enabled')
 export async function createServer() {
   const server = hapi.server({
     port: config.get('port'),
@@ -42,24 +43,24 @@ export async function createServer() {
     router: {
       stripTrailingSlash: true
     },
-    cache: [
-      {
-        name: 'session',
-        engine: redisEnabled
-          ? new CatboxRedis({
-              client: buildRedisClient()
-            })
-          : new CatboxMemory()
-      }
-    ],
     // cache: [
     //   {
-    //     name: config.get('session.cache.name'),
-    //     engine: getCacheEngine(
-    //       /** @type {Engine} */ (config.get('session.cache.engine'))
-    //     )
+    //     name: 'session',
+    //     engine: redisEnabled
+    //       ? new CatboxRedis({
+    //           client: buildRedisClient()
+    //         })
+    //       : new CatboxMemory()
     //   }
     // ],
+    cache: [
+      {
+        name: config.get('session.cache.name'),
+        engine: getCacheEngine(
+          /** @type {Engine} */ (config.get('session.cache.engine'))
+        )
+      }
+    ],
     state: {
       strictHeader: false
     }
