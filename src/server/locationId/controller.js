@@ -1,8 +1,10 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 const getLocationDetailsController = {
   handler: async (request, h) => {
+    const logger = createLogger()
     // const { query } = request
 
     const locationID = request.params.id
@@ -36,13 +38,14 @@ const getLocationDetailsController = {
               '&miles=' +
               locationMiles
           )
-
+          logger.info('response of OSNAMEURL1', response)
           return response.data
         } catch (error) {
           return error // Rethrow the error so it can be handled appropriately
         }
       }
       const MonitoringstResult = await InvokeMonitstnAPI()
+      logger.info('MonitoringstResult', MonitoringstResult)
       request.yar.set('MonitoringstResult', MonitoringstResult)
 
       const map1 = new Map()

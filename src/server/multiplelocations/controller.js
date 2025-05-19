@@ -1,10 +1,12 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 
 const multipleLocationsController = {
   handler: async (request, h) => {
+    const logger = createLogger()
     if (request != null) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
@@ -45,6 +47,7 @@ const multipleLocationsController = {
         locationdetails.length === undefined
       ) {
         const result = await invokeosnameAPI()
+        logger.info('Result of OSNAMEAPI', result)
         if (result != null) {
           request.yar.set('osnameapiresult', result)
         }
@@ -53,7 +56,7 @@ const multipleLocationsController = {
             const response = await axios.get(
               config.get('OS_NAMES_API_URL') + searchValue
             )
-
+            logger.info('repsonse of osnameAPI', response)
             return response.data
           } catch (error) {
             return error // Rethrow the error so it can be handled appropriately
