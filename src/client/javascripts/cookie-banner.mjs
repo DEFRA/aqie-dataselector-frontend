@@ -1,4 +1,4 @@
-import * as CookieFunctions from './cookie-functions.js'
+import * as CookieFunctions from './cookie-functions.mjs'
 
 const cookieBannerAcceptSelector = '.js-cookie-banner-accept'
 const cookieBannerRejectSelector = '.js-cookie-banner-reject'
@@ -88,7 +88,6 @@ class CookieBanner {
    */
   acceptCookies() {
     // Do actual cookie consent bit
-    // console.log('cookies output Accept cookies')
     CookieFunctions.setConsentCookie({ analytics: true })
 
     // Hide banner and show confirmation message
@@ -101,7 +100,6 @@ class CookieBanner {
    */
   rejectCookies() {
     // Do actual cookie consent bit
-    // console.log('cookies output Reject cookies')
     CookieFunctions.setConsentCookie({ analytics: false })
 
     // Hide banner and show confirmation message
@@ -111,6 +109,7 @@ class CookieBanner {
 
   /**
    * Reveal confirmation message
+   *
    * @param {HTMLElement} confirmationMessage - Confirmation message
    */
   revealConfirmationMessage(confirmationMessage) {
@@ -130,6 +129,7 @@ class CookieBanner {
 
   /**
    * Check if on the Cookies page
+   *
    * @returns {boolean} Returns true if on the Cookies page
    */
   onCookiesPage() {

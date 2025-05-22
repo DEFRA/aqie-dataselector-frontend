@@ -4,7 +4,7 @@
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "toggletip/macro.njk" import toggletip %}
-
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
 {% from "cookie-banner/macro.njk" import govukCookieBanner %}
@@ -45,7 +45,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   tag: {
     text: "Beta"
   },
-  html: 'This is a new service. Help us improve it and <a class="govuk-link" href="https://defragroup.eu.qualtrics.com/jfe/form/SV_cGUbgnwHQnx28Qu">give your feedback (opens in new tab)</a>.'
+  html: 'This is a new service. Help us improve it and <a class="govuk-link" href="https://defragroup.eu.qualtrics.com/jfe/form/SV_cGUbgnwHQnx28Qu">give your feedback</a>.'
 }) }}
 
 {% from "govuk/components/back-link/macro.njk" import govukBackLink %}

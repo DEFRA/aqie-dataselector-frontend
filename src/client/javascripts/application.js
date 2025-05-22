@@ -7,15 +7,15 @@ import {
   Radios,
   SkipLink
 } from 'govuk-frontend'
-import CookieBanner from './cookie-banner.js'
+import CookieBanner from './cookie-banner.mjs'
 import Analytics from './analytics.js'
 // import config from '~/src/config'
 import {
   getConsentCookie,
   isValidConsentCookie,
   removeUACookies
-} from './cookie-functions.js'
-// import CookiesPage from './cookies-page.js'
+} from './cookie-functions.mjs'
+import CookiesPage from './cookies-page.mjs'
 
 // import 'src/client/javascripts/toggletip.js'
 createAll(Button)
@@ -25,12 +25,10 @@ createAll(Header)
 createAll(Radios)
 createAll(SkipLink)
 
+// Initialise cookie banner
 const $cookieBanner = document.querySelector(
   '[data-module="govuk-cookie-banner"]'
 )
-
-// eslint-disable-next-line no-new
-
 if ($cookieBanner) {
   const cb = new CookieBanner($cookieBanner)
   cb.init()
@@ -49,17 +47,8 @@ if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
 // Initialise cookie page
 const $cookiesPage = document.querySelector('[data-module="app-cookies-page"]')
 if ($cookiesPage) {
-  const cb1 = new CookieBanner($cookieBanner)
-  cb1.init()
+  const cp = new CookiesPage($cookiesPage)
+  cp.init()
 }
-// Initialise cookie page
 
-// function compareNames(a, b) {
-//   if (a.text < b.text) {
-//     return -1
-//   }
-//   if (a.text > b.text) {
-//     return 1
-//   }
-//   return 0
-// }
+// initAll()

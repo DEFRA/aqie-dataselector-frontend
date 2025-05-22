@@ -3,16 +3,28 @@
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
-
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% block content %}
-  {{ appHeading({
-    paragraphs: "",
-    caption: ""
-  }) }}
+
+{% set successNotificationBannerHtml %}
+  <p class="govuk-notification-banner__heading">You’ve set your cookie preferences.</p>
+{% endset %}
+  
 <!-- Paragraph A -->
 <div class="govuk-grid-row">
       <div class="govuk-grid-column-two-thirds-from-desktop">
+ <div class="app-cookies-page" data-module="app-cookies-page">
+      {{ govukNotificationBanner({
+        type: "success",
+        html: successNotificationBannerHtml,
+        classes: "js-cookies-page-success",
+        attributes: {
+          hidden: ""
+        }
+      }) }}
 <h1 class="govuk-heading-xl odd-page">{{ title }}</h1>
+
+
 <p class="govuk-body"> <a href="/" class="govuk-link">{{ paragraphs.a }}</a> {{ paragraphs.b }}</p>
 <p class="govuk-body">{{ paragraphs.c }}</p>
 <p class="govuk-body">{{ paragraphs.d }}</p>
@@ -78,14 +90,20 @@
 
 
 {{ govukRadios({
-  name: "whereDoYouLive",
-  fieldset: {
-    legend: {
-      text: headings.d,
-      isPageHeading: true,
-      classes: "govuk-fieldset__legend--l"
-    }
-  },
+   
+     name: "cookies[analytics]",
+          idPrefix: "cookies-analytics",
+          fieldset: {
+            legend: {
+              text: "Do you want to accept analytics cookies?",
+              classes: "govuk-fieldset__legend--s"
+            },
+            classes: "js-cookies-page-form-fieldset",
+            attributes: {
+              "data-cookie-type": 'analytics'
+              
+            }
+          },
   items: [
     {
       value: "Yes",
@@ -113,6 +131,7 @@
     }
   }) }}
 </form>
+</div>
 </div>
 </div>
 {% endblock %}

@@ -7,11 +7,12 @@ import { buildNavigation } from '~/src/config/nunjucks/context/build-navigation.
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
+// console.log('assetPath', assetPath)
 const manifestPath = path.join(
   config.get('root'),
   '.public/assets-manifest.json'
 )
-
+// console.log('${assetPath}/assets', `${assetPath}/assets`)
 /** @type {Record<string, string> | undefined} */
 let webpackManifest
 

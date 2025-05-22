@@ -12,15 +12,14 @@
  * The consent cookie version is defined in cookie-banner.njk
  */
 
+import Analytics from './analytics.mjs'
+
 /* Name of the cookie to save users cookie preferences to. */
 const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
 
-const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
 /* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
+const TRACKING_PREVIEW_ID = '8F2EMQL51V'
+const TRACKING_LIVE_ID = 'GHT8W0QGD9'
 
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
@@ -48,14 +47,15 @@ const DEFAULT_COOKIE_CONSENT = {
 /**
  * Set, get, and delete cookies.
  *
- * Setting a cookie:
- * Cookie('hobnob', 'tasty', { days: 30 })
+ *   Setting a cookie:
+ *   Cookie('hobnob', 'tasty', { days: 30 })
  *
- * Reading a cookie:
- * Cookie('hobnob')
+ *   Reading a cookie:
+ *   Cookie('hobnob')
  *
- * Deleting a cookie:
- * Cookie('hobnob', null)
+ *   Deleting a cookie:
+ *   Cookie('hobnob', null)
+ *
  * @param {string} name - Cookie name
  * @param {string | false | null} [value] - Cookie value
  * @param {{ days?: number }} [options] - Cookie options
@@ -63,7 +63,7 @@ const DEFAULT_COOKIE_CONSENT = {
  */
 export function Cookie(name, value, options) {
   if (typeof value !== 'undefined') {
-    if (value === false ?? value === null) {
+    if (value === false || value === null) {
       deleteCookie(name)
     } else {
       // Default expiry date of 30 days
@@ -82,6 +82,7 @@ export function Cookie(name, value, options) {
  *
  * If the consent cookie is malformed, or not present,
  * returns null.
+ *
  * @returns {ConsentPreferences | null} Consent preferences
  */
 export function getConsentCookie() {
@@ -97,6 +98,7 @@ export function getConsentCookie() {
   } else {
     return null
   }
+
   return consentCookieObj
 }
 
@@ -107,21 +109,23 @@ export function getConsentCookie() {
  * returns false, otherwise returns true.
  *
  * This is also duplicated in cookie-banner.njk - the two need to be kept in sync
+ *
  * @param {ConsentPreferences | null} options - Consent preferences
  * @returns {boolean} True if consent cookie is valid
  */
 export function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
-  return options && options.version >= window.AQIE_CONSENT_COOKIE_VERSION
+  return options && options.version >= window.AQ_CONSENT_COOKIE_VERSION
 }
 
 /**
  * Update the user's cookie preferences.
+ *
  * @param {ConsentPreferences} options - Consent options to parse
  */
 export function setConsentCookie(options) {
   const cookieConsent =
-    getConsentCookie() ??
+    getConsentCookie() ||
     // If no preferences or old version use the default
     JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
 
@@ -134,7 +138,7 @@ export function setConsentCookie(options) {
   delete cookieConsent.essential
 
   // @ts-expect-error Property does not exist on window
-  cookieConsent.version = window.AQIE_CONSENT_COOKIE_VERSION
+  cookieConsent.version = window.AQ_CONSENT_COOKIE_VERSION
 
   // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
@@ -150,7 +154,7 @@ export function setConsentCookie(options) {
  */
 export function resetCookies() {
   const options =
-    getConsentCookie() ??
+    getConsentCookie() ||
     // If no preferences or old version use the default
     JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
 
@@ -169,13 +173,9 @@ export function resetCookies() {
       // Enable GA if allowed
       window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
       window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
-
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
-      }
+      Analytics()
+      // Unset UA cookies if they've been set by GTM
+      removeUACookies()
     } else {
       // Disable GA if not allowed
       window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
@@ -191,18 +191,6 @@ export function resetCookies() {
         Cookie(cookie, null)
       })
     }
-    function loadGoogleAnalytics() {
-      const script = document.createElement('script')
-      script.src = ganalytics
-      script.async = true
-      document.head.appendChild(script)
-      window.dataLayer = window.dataLayer ?? []
-      function gtag() {
-        window.dataLayer.push(arguments)
-      }
-      gtag('js', new Date())
-      gtag('config', tagID, { page_path: window.location.pathname })
-    }
   }
 }
 
@@ -215,14 +203,19 @@ export function resetCookies() {
  * entirely deleted, GTM is still setting UA cookies.
  */
 export function removeUACookies() {
-  // const removeID = '_ga_' + previewID
-  for (const UACookie of ['_gid', '_ga']) {
+  for (const UACookie of [
+    '_ga_8CMZBTDQBC',
+    '_gid',
+    '_gat_UA-26179049-17',
+    '_gat_UA-116229859-1'
+  ]) {
     Cookie(UACookie, null)
   }
 }
 
 /**
  * Check if user allows cookie category
+ *
  * @param {string} cookieCategory - Cookie type
  * @param {ConsentPreferences} cookiePreferences - Consent preferences
  * @returns {string | boolean} Cookie type value
@@ -245,6 +238,7 @@ function userAllowsCookieCategory(cookieCategory, cookiePreferences) {
 
 /**
  * Check if user allows cookie
+ *
  * @param {string} cookieName - Cookie name
  * @returns {string | boolean} Cookie type value
  */
@@ -276,6 +270,7 @@ function userAllowsCookie(cookieName) {
 
 /**
  * Get cookie by name
+ *
  * @param {string} name - Cookie name
  * @returns {string | null} Cookie value
  */
@@ -284,10 +279,10 @@ function getCookie(name) {
   const cookies = document.cookie.split(';')
   for (let i = 0, len = cookies.length; i < len; i++) {
     let cookie = cookies[i]
-    while (cookie.startsWith(' ')) {
+    while (cookie.charAt(0) === ' ') {
       cookie = cookie.substring(1, cookie.length)
     }
-    if (cookie.startsWith(nameEQ)) {
+    if (cookie.indexOf(nameEQ) === 0) {
       return decodeURIComponent(cookie.substring(nameEQ.length))
     }
   }
@@ -296,6 +291,7 @@ function getCookie(name) {
 
 /**
  * Set cookie by name, value and options
+ *
  * @param {string} name - Cookie name
  * @param {string} value - Cookie value
  * @param {{ days?: number }} [options] - Cookie options
@@ -320,6 +316,7 @@ function setCookie(name, value, options) {
 
 /**
  * Delete cookie by name
+ *
  * @param {string} name - Cookie name
  */
 function deleteCookie(name) {
@@ -328,7 +325,6 @@ function deleteCookie(name) {
     // If a cookie was set with a specified domain, it needs to be specified when deleted
     // If a cookie wasn't set with the domain attribute, it shouldn't be there when deleted
     // You can't tell if a cookie was set with a domain attribute or not, so try both options
-
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${window.location.hostname};path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${window.location.hostname};path=/`
@@ -339,5 +335,5 @@ function deleteCookie(name) {
  * @typedef {object} ConsentPreferences
  * @property {boolean} [analytics] - Accept analytics cookies
  * @property {boolean} [essential] - Accept essential cookies
- *  @property {string} [version] - Content cookie version
+ *  * @property {string} [version] - Content cookie version
  */
