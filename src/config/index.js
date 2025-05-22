@@ -28,7 +28,7 @@ export const config = convict({
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3000,
+    default: 3001,
     env: 'PORT'
   },
   staticCacheTimeout: {
@@ -166,6 +166,12 @@ export const config = convict({
     }
   },
   redis: /** @type {Schema<RedisConfig>} */ ({
+    enabled: {
+      doc: 'Enable Redis on your Frontend. Before you enable Redis, contact the CDP platform team as we need to set up config so you can run Redis in CDP environments',
+      format: Boolean,
+      default: false,
+      env: 'REDIS_ENABLED'
+    },
     host: {
       doc: 'Redis cache host',
       format: String,
@@ -231,7 +237,7 @@ export const config = convict({
       env: 'TRACING_HEADER'
     }
   },
-  // prod
+
   OS_NAMES_API_URL: {
     doc: 'Osname api url',
     format: String,

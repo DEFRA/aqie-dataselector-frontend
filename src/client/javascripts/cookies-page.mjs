@@ -1,4 +1,4 @@
-import { getConsentCookie, setConsentCookie } from './cookie-functions.js'
+import { getConsentCookie, setConsentCookie } from './cookie-functions.mjs'
 
 /**
  * Website cookies page
@@ -66,11 +66,13 @@ class CookiesPage {
 
   /**
    * Save preferences
+   *
    * @param {SubmitEvent} event - Form submit event
    */
   savePreferences(event) {
     // Stop default form submission behaviour
     event.preventDefault()
+
     const preferences = {}
 
     this.$cookieFormFieldsets.forEach(($cookieFormFieldset) => {
@@ -90,27 +92,14 @@ class CookiesPage {
 
     // Save preferences to cookie and show success notification
     setConsentCookie(preferences)
-
-    // for (const UACookie of [
-    //   '_ga_HVF94VF4NZ',
-    //   '_gid',
-    //   '_ga',
-    //   'airaqie_cookies_analytics'
-    // ]) {
-    //   Cookie(UACookie, null)
-    // }
-
     this.showSuccessNotification()
-    const cookieBanner = document.querySelector(
-      "[data-module='govuk-cookie-banner']"
-    )
-    cookieBanner.setAttribute('hidden', 'true')
   }
 
   /**
    * Show user preference
+   *
    * @param {HTMLFieldSetElement} $cookieFormFieldset - Cookie form fieldset
-   * @param {import('./cookie-functions.js').ConsentPreferences | null} preferences - Consent preferences
+   * @param {import('./cookie-functions.mjs').ConsentPreferences | null} preferences - Consent preferences
    */
   showUserPreference($cookieFormFieldset, preferences) {
     const cookieType = this.getCookieType($cookieFormFieldset)
@@ -158,6 +147,7 @@ class CookiesPage {
 
   /**
    * Get cookie type
+   *
    * @param {HTMLFieldSetElement} $cookieFormFieldset - Cookie form fieldset
    * @returns {string | null} Cookie type
    */

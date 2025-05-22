@@ -27,7 +27,7 @@
     <li class="moj-sub-navigation__item">
  <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
  name="year_selected" value="{{ year }}" 
- onclick="updateYear({{ year }})" {% if year == selectedYear %}aria-current="page"{% endif %}>
+ onclick="updateYear({{ year }})"  {% if year == selectedYear %}aria-current="page" aria-selected="true"{% endif %}>
  {{ year }}</a>
     </li>
   {% endfor %}
