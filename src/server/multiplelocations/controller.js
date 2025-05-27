@@ -31,8 +31,10 @@ const multipleLocationsController = {
 
     if (searchValue !== '' || searchValue !== null) {
       request.yar.set('searchLocation', searchValue)
+      request.yar.set('searchValue', searchValue)
     } else {
       request.yar.set('searchLocation', '')
+      request.yar.set('searchValue', '')
     }
     if (searchInput) {
       request.yar.set('errors', '')
@@ -121,7 +123,7 @@ const multipleLocationsController = {
             results: locations,
             serviceName: english.notFoundLocation.heading,
             paragraph: english.notFoundLocation.paragraphs,
-            searchLocation: searchValue,
+            searchLocation: request.yar.get('searchLocation'),
             displayBacklink: true,
             hrefq: '/search-location'
           })
@@ -137,7 +139,7 @@ const multipleLocationsController = {
             results: locations,
             serviceName: english.notFoundLocation.heading,
             paragraph: english.notFoundLocation.paragraphs,
-            searchLocation: searchValue,
+            searchLocation: request.yar.get('searchLocation'),
             displayBacklink: true,
             hrefq: '/search-location'
           })
@@ -150,7 +152,7 @@ const multipleLocationsController = {
               locationMiles,
               serviceName: english.noStation.heading,
               paragraph: english.noStation.paragraphs,
-              searchLocation: searchValue,
+              searchLocation: request.yar.get('searchLocation'),
               displayBacklink: true,
               hrefq: '/search-location'
             })
@@ -160,7 +162,7 @@ const multipleLocationsController = {
               title: english.monitoringStation.title,
               serviceName: english.monitoringStation.serviceName,
               paragraphs: english.monitoringStation.paragraphs,
-              searchLocation: searchValue,
+              searchLocation: request.yar.get('searchLocation'),
               locationMiles,
               monitoring_station: MonitoringstResult.getmonitoringstation,
               pollmap: map1,
@@ -183,7 +185,7 @@ const multipleLocationsController = {
             params: english.multipleLocations.paragraphs,
             button: english.multipleLocations.button,
             locationMiles,
-            searchLocation: searchValue,
+            searchLocation: request.yar.get('searchLocation'),
             monitoring_station: MonitoringstResult.getmonitoringstation,
             displayBacklink: true,
             hrefq: '/search-location'
