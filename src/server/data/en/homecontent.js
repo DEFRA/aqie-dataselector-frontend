@@ -1,6 +1,6 @@
 export const english = {
   home: {
-    pageTitle: 'Get air pollution data',
+    pageTitle: 'Get air pollution data - GOV.UK',
     heading: 'This is a private beta',
     subheading: ' Related content',
     buttonText: 'Start now',
@@ -50,7 +50,7 @@ export const english = {
     button: 'Start now'
   },
   searchLocation: {
-    pageTitle: 'Get air pollution data',
+    pageTitle: 'Find monitoring stations by location',
     heading: 'Get air pollution data',
     page: 'search-location',
     serviceName: 'Get air pollution data',
@@ -120,7 +120,7 @@ export const english = {
     }
   },
   multipleLocations: {
-    pageTitle: 'Get air pollution data',
+    pageTitle: 'Multiplelocations',
     title: 'Locations matching',
     serviceName: 'Get air pollution data',
     paragraphs: {
@@ -130,7 +130,7 @@ export const english = {
     }
   },
   monitoringStation: {
-    pageTitle: 'Get air pollution data',
+    pageTitle: 'Monitoring stations',
     title: {
       title1: 'Monitoring stations',
       title2: 'within ',
