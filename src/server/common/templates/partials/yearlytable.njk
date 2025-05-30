@@ -10,7 +10,7 @@
   )}}
 {% endset %}
 
-{% set PM10Toggletip %}
+{% set PM10_dailyToggletip %}
   {{ toggletip(
     '',
     'More information about the trend',
@@ -80,17 +80,29 @@
                     <tr class="defra-aq-levels-table__row">
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> {{ data.annualcount }} </td>
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily" > 
-        {{ data.dailyCount }}  
 
-        {% if data.pollutantName == "PM10" %}        
-         {{ PM10Toggletip | safe }}      
-              
-{% elif data.pollutantName == "Sulphur dioxide" %}
-  {{ SO2_dailyToggletip | safe }}   
-         {% endif %}
+{% if data.pollutantName == "PM10" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+ {{ data.dailyCount }}
+ {{ PM10_dailyToggletip | safe }}
+    </td>
 
-         </td>
+{% endif %}
+
+{% if (data.pollutantName != "PM10") and (data.pollutantName != "Sulphur dioxide") %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+        {{ data.dailyCount }}
+    </td>
+{% endif %}
+
+ {% if data.pollutantName == "Sulphur dioxide" %}
+<td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+
+ {{ data.dailyCount }}
+ {{ SO2_dailyToggletip | safe }}
+ </td>
+ {% endif %}
+
        {% if data.pollutantName == "Nitrogen dioxide" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
  {{ data.hourlyCount }}
