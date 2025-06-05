@@ -1,6 +1,6 @@
 export const english = {
   home: {
-    pageTitle: 'Get air pollution data - GOV.UK',
+    pageTitle: 'Get air pollution data',
     heading: 'This is a private beta',
     subheading: ' Related content',
     buttonText: 'Start now',
