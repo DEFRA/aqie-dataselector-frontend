@@ -46,6 +46,51 @@
     'Trend'
   )}}
 {% endset %}
+{% set PM25_annualToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set PM10_annualToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average PM10 levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set NO2_annualToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average nitrogen dioxide levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set O3_annualToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'There is no annual average limit value for ozone.
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set SO2_annualToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'There is no annual average limit value for sulphur dioxide.
+    ',
+    'Trend'
+  )}}
+{% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   
 {% if tabledata !== null %}
