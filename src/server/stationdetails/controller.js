@@ -132,9 +132,9 @@ const stationDetailsController = {
       // });
 
       return h.view('stationdetails/index', {
-        pageTitle: english.monitoringStation.pageTitle,
-        title: english.monitoringStation.title,
-        serviceName: english.monitoringStation.serviceName,
+        pageTitle: english.stationdetails.pageTitle,
+        title: english.stationdetails.title,
+        serviceName: english.stationdetails.serviceName,
         stationdetails: request.yar.get('stationdetails'),
         maplocation,
         updatedTime,
@@ -155,9 +155,9 @@ const stationDetailsController = {
     } else {
       if (request.yar.get('nooflocation') === 'single') {
         return h.view('stationdetails/index', {
-          pageTitle: english.monitoringStation.pageTitle,
-          title: english.monitoringStation.title,
-          serviceName: english.monitoringStation.serviceName,
+          pageTitle: english.stationdetails.pageTitle,
+          title: english.stationdetails.title,
+          serviceName: english.stationdetails.serviceName,
           stationdetails: request.yar.get('stationdetails'),
           maplocation,
           updatedTime,
@@ -177,9 +177,9 @@ const stationDetailsController = {
         })
       } else {
         return h.view('stationdetails/index', {
-          pageTitle: english.monitoringStation.pageTitle,
-          title: english.monitoringStation.title,
-          serviceName: english.monitoringStation.serviceName,
+          pageTitle: english.stationdetails.pageTitle,
+          title: english.stationdetails.title,
+          serviceName: english.stationdetails.serviceName,
           stationdetails: request.yar.get('stationdetails'),
           maplocation,
           updatedTime,
