@@ -145,6 +145,22 @@ export const english = {
       d: 'Pollutants'
     }
   },
+  stationdetails: {
+    pageTitle: 'Stations summary details',
+    title: {
+      title1: 'Stations summary details',
+      title2: 'within ',
+      title3: 'of'
+    },
+
+    serviceName: 'Get air pollution data',
+    paragraphs: {
+      a: 'Change search area',
+      b: 'Monitoring station',
+      c: 'Site type',
+      d: 'Pollutants'
+    }
+  },
   phaseBanner: {
     paragraphs: {
       a: 'Beta',
