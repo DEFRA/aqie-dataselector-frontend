@@ -12,9 +12,9 @@
 
 {% set PM10_dailyToggletip %}
   {{ toggletip(
-    '',
+   '',
     'More information about the trend',
-    'Daily average PM10 levels must not go above 50 micrograms per cubic metre (µg/m³) more than 35 times in a calendar year (when rounded to a whole number).
+    'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
   )}}
@@ -124,7 +124,8 @@
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
-         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> {{ data.annualcount }} </td>
+         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
+          {{ data.annualcount }} {% if data.pollutantName == "PM10" %}{{ PM10_dailyToggletip | safe }}{% endif %} {% if data.pollutantName == "PM2.5" %} {{ SO2_dailyToggletip | safe }}{% endif %}</td>
 
 {% if data.pollutantName == "PM10" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
