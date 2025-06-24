@@ -15,34 +15,59 @@
 
 .defra-aq-features {
   &__list {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      margin: 0 0 15px;
-      padding-bottom: 20px;
-      box-shadow: inset 0 -1px 0 #b1b4b6;
-      width: 100%;
-  }
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 80px;
+    @media (max-width: 640px) {
+        gap: 30px;
+    }
+    @media (max-width: 370px) {
+        flex-wrap: wrap;
+    }
+    margin: 0 0 15px 0;
+    padding-bottom: 0px;
+    box-shadow: inset 0 -1px 0 #b1b4b6;
+    width: 100%;
+}
 
-  &__item {
+
+&__item {
   width: 33.33%;
   box-sizing: border-box;
-  padding: 15px 0;
-
+  padding: 15px 0 15px 0;
   float: left;
   min-width: 6em;
   }
 
-  &__key {
-  margin: 0;
-  font-size: 16px;
-  color: #505a5f;
-  }
 
-  &__value {
-  margin: 0 5px 0 0px;
-  font-size: 19px;
-  }
+  &__key {
+    margin: 0;
+    font-size: 19px;
+    color: #505a5f;
+    @media (max-width: 640px) {
+        font-size: 16px;
+    }
+    @media (max-width: 370px) {
+        font-size: 14px;
+    }
+    }
+
+    &__value {
+    margin: 5px 0 0 0;
+    font-size: 22px;
+    @media (max-width: 640px) {
+        font-size: 16px;
+    }
+   
+    }
+
+    &__link {
+        font-size: 19px;
+        @media (max-width: 640px) {
+            font-size: 16px;
+        }
+        }
 }
 
 .status-tag {
@@ -236,7 +261,7 @@
 		margin: 0px 0px -15px -5px;
 	}
 	&--open &__info {
-		visibility: visible;
+		visibility: hidden;
 		width:200px;
 		overflow: visible;
 	}
