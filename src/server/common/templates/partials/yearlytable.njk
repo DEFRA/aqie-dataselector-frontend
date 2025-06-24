@@ -12,9 +12,9 @@
 
 {% set PM10_dailyToggletip %}
   {{ toggletip(
-    '',
+   '',
     'More information about the trend',
-    'Daily average PM10 levels must not go above 50 micrograms per cubic metre (µg/m³) more than 35 times in a calendar year (when rounded to a whole number).
+    'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
   )}}
@@ -73,6 +73,15 @@
     'Trend'
   )}}
 {% endset %}
+{% set examplett %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
 {% set O3_annualToggletip %}
   {{ toggletip(
     '',
@@ -88,6 +97,47 @@
     'More information about the trend',
     'There is no annual average limit value for sulphur dioxide.
     ',
+    'Trend'
+  )}}
+{% endset %}
+{% set PM25_annualAvg %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
+    ',
+    'Trend'
+  )}}
+{% endset %}
+{% set PM10_annualAvg %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average PM10 levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number). ',
+    'Trend'
+  )}}
+{% endset %}
+{% set NO2_annualAvg %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'Annual average nitrogen dioxide levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).',
+    'Trend'
+  )}}
+{% endset %}
+{% set O2_annualAvg %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'There is no annual average limit value for ozone.',
+    'Trend'
+  )}}
+{% endset %}
+{% set SO2_annualAvg %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'There is no annual average limit value for sulphur dioxide.',
     'Trend'
   )}}
 {% endset %}
@@ -124,7 +174,16 @@
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
-         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> {{ data.annualcount }} </td>
+        
+         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
+          {{ data.annualcount }} 
+          {% if data.pollutantName == "PM2.5" %}  {{PM25_annualAvg| safe }}
+          {% elif data.pollutantName == "PM10" %} {{PM10_annualAvg| safe }}
+           {% elif data.pollutantName == "Sulphur dioxide" %} {{SO2_annualAvg| safe }}
+           {% elif data.pollutantName == "Nitrogen dioxide" %} {{NO2_annualAvg| safe }}
+           {% elif data.pollutantName == "Ozone" %} {{O2_annualAvg| safe }} 
+{% endif %}
+          </td>
 
 {% if data.pollutantName == "PM10" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">

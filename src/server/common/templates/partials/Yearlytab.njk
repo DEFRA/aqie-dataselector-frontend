@@ -22,12 +22,16 @@
 {# <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p> #}
  <span id="selectedYear" style="display: none;" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
-  <ul class="moj-sub-navigation__list">
+  <ul class="moj-sub-navigation__list"  role="tablist">
   {% for year in years %}
     <li class="moj-sub-navigation__item">
  <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
+ role="tab" aria-controls="panel-{{ year }}"
  name="year_selected" value="{{ year }}" 
- onclick="updateYear({{ year }})"  {% if year == selectedYear %}aria-current="page" aria-selected="true"{% endif %}>
+ onclick="updateYear({{ year }})"  
+ {% if year == selectedYear %}
+ aria-current="page" 
+ {% endif %}>
  {{ year }}</a>
     </li>
   {% endfor %}
@@ -45,6 +49,7 @@
               let selyear;
        function updateYear(year) {
     selyear = year;
+   console.log( document.getElementById('link-'+selyear))
     //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
     const currentDate = new Date();
@@ -66,6 +71,10 @@
     var selectedLink = document.getElementById('link-' + year);
     if (selectedLink) {
         selectedLink.setAttribute('aria-current', 'page');
+       selectedLink.setAttribute('aria-selected', 'true');
+        //selectedLink.setAttribute(' tabindex', 0);
+    }else{
+      selectedLink.setAttribute('aria-selected', 'false');
     }
 const selectedy = year;
 console.log("selectedy",selectedy)
