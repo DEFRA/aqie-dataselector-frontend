@@ -221,13 +221,6 @@ export const english = {
       c: 'You can go to',
       d: 'UK AIR',
       e: 'to get air pollution data.'
-    },
-    hideCookieMsg: {
-      text0: 'You’ve accepted analytics cookies. You can ',
-      text1: 'You’ve rejected analytics cookies. You can',
-      text2: 'change your cookie settings',
-      text3: ' at any time.',
-      buttonText: 'Hide cookie message'
     }
   },
   footerTxt: {
