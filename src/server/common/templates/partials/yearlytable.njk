@@ -3,7 +3,7 @@
   {% set dataToggletip %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about what verified means',
     'Data is verified when it has been checked for anomalies.
     ',
     'Trend'
@@ -13,7 +13,7 @@
 {% set PM10_dailyToggletip %}
   {{ toggletip(
    '',
-    'More information about the trend',
+    'More information about daily exceedances for PM10',
     'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
@@ -22,7 +22,7 @@
 {% set SO2_dailyToggletip %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about daily exceedances for sulphur dioxide',
     'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
@@ -31,7 +31,7 @@
 {% set NO2_hourlyToggletip %}
   {{ toggletip(
     '',
-    'More information about the trend',
+   'More information about hourly exceedances for nitrogen dioxide',
     'Hourly nitrogen dioxide levels must not go above 200 micrograms per cubic metre (µg/m³) more than 18 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
@@ -40,21 +40,13 @@
 {% set SO2_hourlyToggletip %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about hourly exceedances for sulphur dioxide',
     'Hourly sulphur dioxide levels must not go above 350 micrograms per cubic metre (µg/m³) more than 24 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
   )}}
 {% endset %}
-{% set PM25_annualToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
+
 {% set PM10_annualToggletip %}
   {{ toggletip(
     '',
@@ -73,37 +65,12 @@
     'Trend'
   )}}
 {% endset %}
-{% set examplett %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set O3_annualToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'There is no annual average limit value for ozone.
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set SO2_annualToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'There is no annual average limit value for sulphur dioxide.
-    ',
-    'Trend'
-  )}}
-{% endset %}
+
+
 {% set PM25_annualAvg %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about the UK annual average limit value for PM2.5',
     'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
     ',
     'Trend'
@@ -112,7 +79,7 @@
 {% set PM10_annualAvg %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about the UK annual average limit value for PM10',
     'Annual average PM10 levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number). ',
     'Trend'
   )}}
@@ -120,7 +87,7 @@
 {% set NO2_annualAvg %}
   {{ toggletip(
     '',
-    'More information about the trend',
+    'More information about the UK annual average limit value for nitrogen dioxide',
     'Annual average nitrogen dioxide levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).',
     'Trend'
   )}}
@@ -128,7 +95,7 @@
 {% set O2_annualAvg %}
   {{ toggletip(
     '',
-    'More information about the trend',
+   'More information about the UK annual average limit value for ozone',
     'There is no annual average limit value for ozone.',
     'Trend'
   )}}
@@ -136,7 +103,7 @@
 {% set SO2_annualAvg %}
   {{ toggletip(
     '',
-    'More information about the trend',
+   'More information about the UK annual average limit value for sulphur dioxide',
     'There is no annual average limit value for sulphur dioxide.',
     'Trend'
   )}}
@@ -146,9 +113,9 @@
 {% if tabledata !== null %}
 
   <div id="yeartabble">
-  <h3 class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
+  <p class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
    
-  </h3>
+  </p>
              
 
 <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
@@ -173,15 +140,21 @@
       {% for data in tabledata %}
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
+                       
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
-        
+      
          <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
+           
           {{ data.annualcount }} 
+           
+       {% if data.annualcount != '-' %}
+    
           {% if data.pollutantName == "PM2.5" %}  {{PM25_annualAvg| safe }}
           {% elif data.pollutantName == "PM10" %} {{PM10_annualAvg| safe }}
            {% elif data.pollutantName == "Sulphur dioxide" %} {{SO2_annualAvg| safe }}
            {% elif data.pollutantName == "Nitrogen dioxide" %} {{NO2_annualAvg| safe }}
            {% elif data.pollutantName == "Ozone" %} {{O2_annualAvg| safe }} 
+{% endif %}
 {% endif %}
           </td>
 
@@ -304,7 +277,7 @@
 
 
  {% for pollutant in tabledata %}
-<h2 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h2>
+<h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
  
                     <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
