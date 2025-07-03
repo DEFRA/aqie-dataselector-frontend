@@ -20,7 +20,7 @@ const downloadcontroller = {
       const downloadresult = await Invokedownload(apiparams)
 
       request.yar.set('downloadresult', downloadresult)
-      async function Invokedownload() {
+      async function Invokedownload(apiparams) {
         try {
           const response = await axios.post(
             config.get('Download_URL'),

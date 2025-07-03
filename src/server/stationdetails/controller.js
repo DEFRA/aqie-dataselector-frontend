@@ -10,6 +10,8 @@ const stationDetailsController = {
 
     request.yar.set('downloadresult', '')
 
+    const stationDetailsView = 'stationdetails/index'
+
     // console.log("Selectedyear", request.yar.get('selectedYear'))
     if (request.params.download) {
       request.yar.set('selectedYear', request.params.download)
@@ -17,22 +19,33 @@ const stationDetailsController = {
       request.yar.set('downloadFrequency', request.params.frequency)
     }
 
-    // else
-    // {
-    //   request.yar.set('selectedYear','2024')
-    // }
-    if (request != null) {
-      const MonitoringstResult = request.yar.get('MonitoringstResult')
-      if (MonitoringstResult !== null) {
-        const result = MonitoringstResult.getmonitoringstation
+    // commented due to sonar
+    // if (request != null) {
+    //   const MonitoringstResult = request.yar.get('MonitoringstResult')
+    //   if (MonitoringstResult !== null) {
+    //     const result = MonitoringstResult.getmonitoringstation
 
-        for (const x of result) {
-          if (x.id === request.params.id) {
-            request.yar.set('stationdetails', x)
-          }
-        }
-      }
+    //     for (const x of result) {
+    //       if (x.id === request.params.id) {
+    //         request.yar.set('stationdetails', x)
+    //       }
+    //     }
+    //   }
+    // }
+
+    if (!request) return
+
+    const MonitoringstResult = request.yar.get('MonitoringstResult')
+    if (!MonitoringstResult) return
+
+    const result = MonitoringstResult.getmonitoringstation
+    if (!Array.isArray(result)) return
+
+    const station = result.find((x) => x.id === request.params.id)
+    if (station) {
+      request.yar.set('stationdetails', station)
     }
+
     const stndetails = request.yar.get('stationdetails')
 
     // const pollutants = stndetails.pollutants
@@ -131,7 +144,7 @@ const stationDetailsController = {
       //   downloadresult: request.yar.get('downloadresult')
       // });
 
-      return h.view('stationdetails/index', {
+      return h.view(stationDetailsView, {
         pageTitle: english.stationdetails.pageTitle,
         title: english.stationdetails.title,
         serviceName: english.stationdetails.serviceName,
@@ -154,7 +167,7 @@ const stationDetailsController = {
       })
     } else {
       if (request.yar.get('nooflocation') === 'single') {
-        return h.view('stationdetails/index', {
+        return h.view(stationDetailsView, {
           pageTitle: english.stationdetails.pageTitle,
           title: english.stationdetails.title,
           serviceName: english.stationdetails.serviceName,
@@ -176,7 +189,7 @@ const stationDetailsController = {
             locationMiles
         })
       } else {
-        return h.view('stationdetails/index', {
+        return h.view(stationDetailsView, {
           pageTitle: english.stationdetails.pageTitle,
           title: english.stationdetails.title,
           serviceName: english.stationdetails.serviceName,
