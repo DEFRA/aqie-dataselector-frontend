@@ -361,12 +361,16 @@
     svg {
       position: relative;
       margin: -1px 0 0 -1px;
-    }
+    }	
+    
+    &:hover, &:focus {
+			color: govuk-colour('black');
+		}
 
-    &:hover,
-   focus {
-      color: govuk-colour('black');
-    }
+    // &:hover,
+  //  focus {
+  //     color: govuk-colour('black');
+  //   }
 
     &:hover span {
       box-shadow: 0 0 0 5px govuk-colour('light-grey');
