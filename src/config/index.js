@@ -10,7 +10,7 @@ const oneWeekMs = 604800000
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
-
+const longpass = 'the-password-must-be-at-least-32-characters-long'
 export const config = convict({
   serviceVersion: {
     doc: 'The service version, this variable is injected into your docker container in CDP environments',
@@ -153,7 +153,7 @@ export const config = convict({
       password: {
         doc: 'session cookie password',
         format: String,
-        default: 'the-password-must-be-at-least-32-characters-long',
+        default: longpass,
         env: 'SESSION_COOKIE_PASSWORD',
         sensitive: true
       },
@@ -245,22 +245,22 @@ export const config = convict({
     env: 'Osname api url'
   },
   OS_NAMES_API_URL_1: {
-    doc: 'Osname api url',
+    doc: 'connect to get monitoring station prod',
     format: String,
     default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
-    env: 'Osname api url'
+    env: 'OS_NAMES_API_URL_1'
   },
   Download_URL: {
-    doc: 'Osname api url',
+    doc: 'connect to get download data prod',
     format: String,
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
-    env: 'Osname api url'
+    env: 'Download_URL'
   },
   Table_URL: {
-    doc: 'Osname api url',
+    doc: 'connect to get table data prod',
     format: String,
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryexceedence/`,
-    env: 'Osname api url'
+    env: 'Table_URL'
   },
 
   // dev //
@@ -273,22 +273,22 @@ export const config = convict({
   //   env: 'Osname api url'
   // },
   // OS_NAMES_API_URL_1: {
-  //   doc: 'Osname api url',
+  //   doc: 'connect monitoringstn dev',
   //   format: String,
   //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/location=`,
-  //   env: 'Osname api url'
+  //   env: 'OS_NAMES_API_URL_1'
   // },
   // Download_URL: {
-  //   doc: 'Osname api url',
+  //   doc: 'connect to s3 bucket dev',
   //   format: String,
   //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
-  //   env: 'Osname api url'
+  //   env: 'Download_URL'
   // },
   // Table_URL: {
-  //   doc: 'Osname api url',
+  //   doc: 'connect to get table data dev',
   //   format: String,
   //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
-  //   env: 'Osname api url'
+  //   env: 'Table_URL'
   // },
   aqiePassword: {
     doc: 'password for daqie',
@@ -300,14 +300,14 @@ export const config = convict({
   cookiePassword: {
     doc: 'password for  cookie',
     format: '*',
-    default: 'the-password-must-be-at-least-32-characters-long',
+    default: longpass,
     sensitive: true,
     env: 'COOKIE_PASSWORD'
   },
   sessionCookiePassword: {
     doc: 'session password for  cookie',
     format: '*',
-    default: 'the-password-must-be-at-least-32-characters-long',
+    default: longpass,
     sensitive: true,
     env: 'SESSION_COOKIE_PASSWORD'
   }

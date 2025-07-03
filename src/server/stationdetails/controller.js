@@ -33,13 +33,30 @@ const stationDetailsController = {
     //   }
     // }
 
-    if (!request) return
+    const MONITORING_RESULT_KEY = 'MonitoringstResult'
+    const MONITORING_PROPERTY = 'getmonitoringstation'
 
-    const MonitoringstResult = request.yar.get('MonitoringstResult')
-    if (!MonitoringstResult) return
+    if (!request) {
+      return
+    }
 
-    const result = MonitoringstResult.getmonitoringstation
-    if (!Array.isArray(result)) return
+    const monitoringResult = request.yar.get(MONITORING_RESULT_KEY)
+    if (!monitoringResult) {
+      return
+    }
+
+    const result = monitoringResult[MONITORING_PROPERTY]
+    if (!Array.isArray(result)) {
+      return
+    }
+
+    // if (!request) return
+
+    // const MonitoringstResult = request.yar.get('MonitoringstResult')
+    // if (!MonitoringstResult) return
+
+    // const result = MonitoringstResult.getmonitoringstation
+    // if (!Array.isArray(result)) return
 
     const station = result.find((x) => x.id === request.params.id)
     if (station) {
@@ -123,7 +140,7 @@ const stationDetailsController = {
     if (request.params.download) {
       const downloadresult = await Invokedownload(apiparams)
       request.yar.set('downloadresult', downloadresult)
-      async function Invokedownload() {
+      async function Invokedownload(apiparams) {
         try {
           const response = await axios.post(
             config.get('Download_URL'),

@@ -1,3 +1,7 @@
+const IS_VISIBLE_CLASS = 'is-visible'
+
+const ARIA_EXPANDED = 'aria-expanded'
+
 document.addEventListener('DOMContentLoaded', () => {
   const toggletips = document.querySelectorAll('.defra-toggletip')
 
@@ -5,24 +9,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const button = toggletip.querySelector('.defra-toggletip__button')
     const tooltip = toggletip.querySelector('.defra-toggletip__info')
 
-    if (!button || !tooltip) return
+    if (!button || !tooltip) {
+      return
+    }
 
     button.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
-        const isVisible = tooltip.classList.toggle('is-visible')
-        button.setAttribute('aria-expanded', isVisible)
+        const isVisible = tooltip.classList.toggle(IS_VISIBLE_CLASS)
+        button.setAttribute(ARIA_EXPANDED, isVisible)
       }
     })
 
     button.addEventListener('focus', () => {
-      tooltip.classList.add('is-visible')
-      button.setAttribute('aria-expanded', 'true')
+      tooltip.classList.add(IS_VISIBLE_CLASS)
+      button.setAttribute(ARIA_EXPANDED, 'true')
     })
 
     button.addEventListener('blur', () => {
-      tooltip.classList.remove('is-visible')
-      button.setAttribute('aria-expanded', 'false')
+      tooltip.classList.remove(IS_VISIBLE_CLASS)
+      button.setAttribute(ARIA_EXPANDED, 'false')
     })
   })
 })
