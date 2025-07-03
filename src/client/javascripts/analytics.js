@@ -17,7 +17,7 @@ export default function loadAnalytics() {
       )
     }
     // prettier-ignore
-    ;(function (w, d, s, l) {
+    ;(function (w, d, s, l,i) {
         w[l] = w[l] || []
         w[l].push({
           'gtm.start': new Date().getTime(),
