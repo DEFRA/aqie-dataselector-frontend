@@ -1,6 +1,11 @@
+const SERVICE_NAME = 'Get air pollution data'
+const problemtitle = 'There is a problem'
+const trytitle = 'Try again later.'
+const healtheff = 'Health effects'
+
 export const english = {
   home: {
-    pageTitle: 'Get air pollution data',
+    pageTitle: SERVICE_NAME,
     heading: 'This is a private beta',
     subheading: ' Related content',
     buttonText: 'Start now',
@@ -40,8 +45,8 @@ export const english = {
   },
   checkLocalAirQuality: {
     pageTitle: 'Get air pollution data - GOV.UK',
-    heading: 'Get air pollution data',
-    page: 'Get air pollution data',
+    heading: SERVICE_NAME,
+    page: SERVICE_NAME,
     paragraphs: {
       a: 'Use this service to:',
       b: 'check air quality in a local area',
@@ -51,9 +56,9 @@ export const english = {
   },
   searchLocation: {
     pageTitle: 'Find monitoring stations by location',
-    heading: 'Get air pollution data',
+    heading: SERVICE_NAME,
     page: 'search-location',
-    serviceName: 'Get air pollution data',
+    serviceName: SERVICE_NAME,
 
     searchParams: {
       text1: 'Find monitoring stations by location',
@@ -68,21 +73,21 @@ export const english = {
     button: 'Continue',
     errorText: {
       radios: {
-        title: 'There is a problem',
+        title: problemtitle,
         list: {
           text: 'Select where you want to check'
         }
       },
       uk: {
         fields: {
-          title: 'There is a problem',
+          title: problemtitle,
 
           text: 'Enter a town or postcode'
         }
       },
       ni: {
         fields: {
-          title: 'There is a problem',
+          title: problemtitle,
           list: {
             text: 'Enter a postcode'
           }
@@ -91,7 +96,7 @@ export const english = {
     }
   },
   notFoundLocation: {
-    heading: 'Get air pollution data',
+    heading: SERVICE_NAME,
     paragraphs: {
       a: 'We could not find',
       b: 'If you searched for a place in England, Scotland or Wales, you should:',
@@ -103,7 +108,7 @@ export const english = {
     }
   },
   noStation: {
-    heading: 'Get air pollution data',
+    heading: SERVICE_NAME,
     paragraphs: {
       a: 'There are no monitoring stations within',
       b: 'miles of',
@@ -122,7 +127,7 @@ export const english = {
   multipleLocations: {
     pageTitle: 'Multiplelocations',
     title: 'Locations matching',
-    serviceName: 'Get air pollution data',
+    serviceName: SERVICE_NAME,
     paragraphs: {
       a: 'More than one match was found for your location. Choose the correct location from the following options:',
       b: 'Alternatively,',
@@ -137,7 +142,7 @@ export const english = {
       title3: 'of'
     },
 
-    serviceName: 'Get air pollution data',
+    serviceName: SERVICE_NAME,
     paragraphs: {
       a: 'Change search area',
       b: 'Monitoring station',
@@ -153,7 +158,7 @@ export const english = {
       title3: 'of'
     },
 
-    serviceName: 'Get air pollution data',
+    serviceName: SERVICE_NAME,
     paragraphs: {
       a: 'Change search area',
       b: 'Monitoring station',
@@ -203,24 +208,20 @@ export const english = {
     },
     texts_401: {
       a: 'Unauthorised access',
-      b: 'Try again later.',
+      b: trytitle,
       c: 'You can go to',
       d: 'UK AIR',
       e: 'to get air pollution data.'
     },
     texts_403: {
       a: 'Forbidden',
-      b: 'Try again later.',
-      c: 'You can go to',
-      d: 'UK AIR',
-      e: 'to get air pollution data.'
+      b: trytitle,
+      d: 'UK AIR'
     },
     texts_500: {
       a: 'Sorry, there is a problem with the service',
-      b: 'Try again later.',
-      c: 'You can go to',
-      d: 'UK AIR',
-      e: 'to get air pollution data.'
+      b: trytitle,
+      d: 'UK AIR'
     }
   },
   footerTxt: {
@@ -298,10 +299,10 @@ export const english = {
     ozone: {
       title: 'Ozone (O₃)',
       pageTitle: 'Ozone(O₃) – Get air pollution data – GOV.UK',
-      headerText: 'Get air pollution data',
+      headerText: SERVICE_NAME,
       headings: {
         a: 'Sources of ozone',
-        b: 'Health effects'
+        b: healtheff
       },
       paragraphs: {
         a: 'There are no major emission sources of ozone itself. Reactions between other pollutants form ozone in the air. For example, when pollutants from cars, power stations and factories react with sunlight.',
@@ -321,10 +322,10 @@ export const english = {
     nitrogenDioxide: {
       title: 'Nitrogen dioxide (NO₂)',
       pageTitle: 'Nitrogen dioxide (NO₂) – Get air pollution data – GOV.UK',
-      headerText: 'Get air pollution data',
+      headerText: SERVICE_NAME,
       headings: {
         a: 'Sources of nitrogen dioxide',
-        b: 'Health effects'
+        b: healtheff
       },
       paragraphs: {
         a: 'Nitrogen dioxide is a colourless gas. It’s mainly produced during:',
@@ -346,10 +347,10 @@ export const english = {
     sulphurDioxide: {
       title: 'Sulphur dioxide (SO₂)',
       pageTitle: 'Sulphur dioxide (NO₂) – Get air pollution data – GOV.UK',
-      headerText: 'Get air pollution data',
+      headerText: SERVICE_NAME,
       headings: {
         a: 'Sources of sulphur dioxide',
-        b: 'Health effects'
+        b: healtheff
       },
       paragraphs: {
         a: 'Sulphur dioxide is a colourless gas with a strong odour. It’s mainly produced from:',
@@ -371,10 +372,10 @@ export const english = {
     particulateMatter10: {
       title: 'Particulate matter (PM10)',
       pageTitle: 'Particulate matter (PM10) – Get air pollution data – GOV.UK',
-      headerText: 'Get air pollution data',
+      headerText: SERVICE_NAME,
       headings: {
         a: 'Sources of PM10',
-        b: 'Health effects'
+        b: healtheff
       },
       paragraphs: {
         a: 'Particulate matter (PM) are small particles of solids or liquids that are in the air. The particles are only 10 micrometres in diameter. For context, the width of a human hair is 50 to 70 micrometres.',
@@ -402,10 +403,10 @@ export const english = {
     particulateMatter25: {
       title: 'Particulate matter (PM2.5)',
       pageTitle: 'Particulate matter (PM2.5) – Get air pollution data – GOV.UK',
-      headerText: 'Get air pollution data',
+      headerText: SERVICE_NAME,
       headings: {
         a: 'Sources of PM2.5',
-        b: 'Health effects'
+        b: healtheff
       },
       paragraphs: {
         a: 'Particulate matter (PM) are small particles of solids or liquids that are in the air. The particles are only 2.5 micrometres in diameter. For context, the width of a human hair is 50 to 70 micrometres.',
@@ -434,9 +435,9 @@ export const english = {
   },
   footer: {
     privacy: {
-      pageTitle: 'Get air pollution data',
+      pageTitle: SERVICE_NAME,
       title: 'Privacy notice',
-      heading: 'Get air pollution data',
+      heading: SERVICE_NAME,
       headings: {
         a: 'Who collects your personal data',
         b: 'What personal data we collect and how it’s used',
@@ -453,7 +454,7 @@ export const english = {
       },
       paragraphs: {
         a: 'This privacy notice explains how the',
-        link1: 'Get air pollution data',
+        link1: SERVICE_NAME,
         a29: 'website processes and shares your personal data. If you have any queries about the content of this privacy notice, email ',
         b: 'Department for Environment, Food and Rural Affairs (Defra) is the controller for the personal data we collect:',
         c: ' Department for Environment, Food and Rural Affairs',
@@ -551,7 +552,7 @@ export const english = {
       },
       paragraphs: {
         w1: '',
-        a: 'Get air pollution data',
+        a: SERVICE_NAME,
         b: 'puts small files (known as ‘cookies’) on your computer.',
         c: "These cookies are used across the 'get air pollution data' service.",
         d: 'We only set cookies when Javascript is running in your browser and you have accepted them. If you choose not to run Javascript, the information on this page will not apply to you.',

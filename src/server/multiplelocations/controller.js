@@ -7,6 +7,7 @@ import axios from 'axios'
 const multipleLocationsController = {
   handler: async (request, h) => {
     const logger = createLogger()
+    const searchlocationurl = '/search-location'
     if (request != null) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
@@ -125,7 +126,7 @@ const multipleLocationsController = {
             paragraph: english.notFoundLocation.paragraphs,
             searchLocation: request.yar.get('searchLocation'),
             displayBacklink: true,
-            hrefq: '/search-location'
+            hrefq: searchlocationurl
           })
         }
       }
@@ -141,7 +142,7 @@ const multipleLocationsController = {
             paragraph: english.notFoundLocation.paragraphs,
             searchLocation: request.yar.get('searchLocation'),
             displayBacklink: true,
-            hrefq: '/search-location'
+            hrefq: searchlocationurl
           })
         } else if (locations.length === 1) {
           request.yar.set('errors', '')
@@ -154,7 +155,7 @@ const multipleLocationsController = {
               paragraph: english.noStation.paragraphs,
               searchLocation: request.yar.get('searchLocation'),
               displayBacklink: true,
-              hrefq: '/search-location'
+              hrefq: searchlocationurl
             })
           } else {
             return h.view('monitoring-station/index', {
@@ -168,7 +169,7 @@ const multipleLocationsController = {
               pollmap: map1,
 
               displayBacklink: true,
-              hrefq: '/search-location'
+              hrefq: searchlocationurl
             })
           }
         } else {
@@ -188,7 +189,7 @@ const multipleLocationsController = {
             searchLocation: request.yar.get('searchLocation'),
             monitoring_station: MonitoringstResult.getmonitoringstation,
             displayBacklink: true,
-            hrefq: '/search-location'
+            hrefq: searchlocationurl
           })
         }
       }
