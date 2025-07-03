@@ -49,7 +49,8 @@ export default function loadAnalytics() {
         const j = d.createElement(s); 
       //  const dl = l != 'dataLayer' ? '&l=' + l : ''
         j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtag/js?id=GTM-5ZWS27T3' 
+       //  j.src = `https://www.googletagmanager.com/gtm.js?id=${i}${dl}`
+        j.src = `https://www.googletagmanager.com/gtag/js?id=${i}` 
         f.parentNode.insertBefore(j, f)
         window.dataLayer.push('js', new Date())
         // window.dataLayer.push('config', 'GTM-5ZWS27T3',{
