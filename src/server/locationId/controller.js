@@ -16,10 +16,14 @@ const getLocationDetailsController = {
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
 
-    if (!result || !locationID) return
+    if (!result || !locationID) {
+      return
+    }
 
     const userLocation = findUserLocation(result.getOSPlaces, locationID)
-    if (!userLocation) return
+    if (!userLocation) {
+      return
+    }
 
     const monitoringResult = await fetchMonitoringStations(
       userLocation,
@@ -49,7 +53,9 @@ const getLocationDetailsController = {
 // 🔍 Helper Functions
 
 function findUserLocation(locations, locationID) {
-  if (!locations) return ''
+  if (!locations) {
+    return ''
+  }
   for (const loc of locations) {
     if (loc.GAZETTEER_ENTRY.ID === locationID) {
       return loc.GAZETTEER_ENTRY.NAME1
