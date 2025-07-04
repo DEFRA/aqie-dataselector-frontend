@@ -2,106 +2,127 @@ import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
+
 const getLocationDetailsController = {
   handler: async (request, h) => {
     const logger = createLogger()
-    // const { query } = request
-
     const locationID = request.params.id
-
     const result = request.yar.get('osnameapiresult')
-    const fullSearchQuery = request.yar.get('fullSearchQuery').value
-    request.yar.set('locationID', request.params.id)
+    const fullSearchQuery = request.yar.get('fullSearchQuery')?.value || ''
     const locationMiles = request.yar.get('locationMiles')
-    const hrefq =
-      '/multiplelocations?fullSearchQuery=' +
-      fullSearchQuery +
-      '&locationMiles=' +
-      locationMiles
+    const hrefq = `/multiplelocations?fullSearchQuery=${fullSearchQuery}&locationMiles=${locationMiles}`
+
+    request.yar.set('locationID', locationID)
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
-    let userLocation = ''
-    if (result != null && locationID != null) {
-      const locations = result.getOSPlaces
-      if (locations) {
-        for (const x of result.getOSPlaces) {
-          if (x.GAZETTEER_ENTRY.ID === locationID) {
-            userLocation = x.GAZETTEER_ENTRY.NAME1
-          }
-        }
-      }
-      async function InvokeMonitstnAPI() {
-        try {
-          const response = await axios.get(
-            config.get('OS_NAMES_API_URL_1') +
-              userLocation +
-              '&miles=' +
-              locationMiles
-          )
-          logger.info('response of OSNAMEURL1', response)
-          return response.data
-        } catch (error) {
-          return error // Rethrow the error so it can be handled appropriately
-        }
-      }
-      const MonitoringstResult = await InvokeMonitstnAPI()
-      logger.info('MonitoringstResult', MonitoringstResult)
-      request.yar.set('MonitoringstResult', MonitoringstResult)
 
-      const map1 = new Map()
+    if (!result || !locationID) return
 
-      if (MonitoringstResult.getmonitoringstation.length !== 0) {
-        for (const ar of MonitoringstResult.getmonitoringstation) {
-          const poll = ar.pollutants
-          const poll1 = Object.keys(poll)
-          const pollarray = []
-          let pollutant
-          for (const p of poll1) {
-            if (p === 'PM25' || p === 'GR25') {
-              pollutant = 'PM2.5'
-            } else if (p === 'MP10' || p === 'GE10' || p === 'GR10') {
-              pollutant = 'PM10'
-            } else {
-              pollutant = p
-            }
-            pollarray.push(pollutant)
-          }
-          const pollkeys = pollarray.filter(
-            (item, index) => pollarray.indexOf(item) === index
-          )
-          map1.set(ar.name, pollkeys)
-        }
+    const userLocation = findUserLocation(result.getOSPlaces, locationID)
+    if (!userLocation) return
 
-        if (userLocation) {
-          return h.view('monitoring-station/index', {
-            pageTitle: english.monitoringStation.pageTitle,
-            title: english.monitoringStation.title,
-            serviceName: english.monitoringStation.serviceName,
-            paragraphs: english.monitoringStation.paragraphs,
-            searchLocation: userLocation,
-            locationMiles,
-            monitoring_station: MonitoringstResult.getmonitoringstation,
-            pollmap: map1,
-            displayBacklink: true,
-            fullSearchQuery,
-            hrefq
-          })
-        }
-      } else {
-        return h.view('multiplelocations/nostation', {
-          locationMiles,
-          serviceName: english.noStation.heading,
-          paragraph: english.noStation.paragraphs,
-          searchLocation: userLocation,
-          displayBacklink: true,
-          hrefq
-        })
-      }
+    const monitoringResult = await fetchMonitoringStations(
+      userLocation,
+      locationMiles,
+      logger
+    )
+    request.yar.set('MonitoringstResult', monitoringResult)
 
-      //   const x = query
-      // const invalidSearchEntry = false
+    const pollMap = buildPollutantMap(monitoringResult.getmonitoringstation)
+
+    if (monitoringResult.getmonitoringstation.length === 0) {
+      return renderNoStation(h, userLocation, locationMiles, hrefq)
+    }
+
+    return renderMonitoringStation(
+      h,
+      userLocation,
+      locationMiles,
+      monitoringResult,
+      pollMap,
+      fullSearchQuery,
+      hrefq
+    )
+  }
+}
+
+// 🔍 Helper Functions
+
+function findUserLocation(locations, locationID) {
+  if (!locations) return ''
+  for (const loc of locations) {
+    if (loc.GAZETTEER_ENTRY.ID === locationID) {
+      return loc.GAZETTEER_ENTRY.NAME1
     }
   }
+  return ''
+}
+
+async function fetchMonitoringStations(location, miles, logger) {
+  try {
+    const url = `${config.get('OS_NAMES_API_URL_1')}${location}&miles=${miles}`
+    const response = await axios.get(url)
+    logger.info('Monitoring station API response', response)
+    return response.data
+  } catch (error) {
+    return error
+  }
+}
+
+function buildPollutantMap(stations) {
+  const map = new Map()
+  const pollutantMap = {
+    PM25: 'PM2.5',
+    GR25: 'PM2.5',
+    MP10: 'PM10',
+    GE10: 'PM10',
+    GR10: 'PM10'
+  }
+
+  for (const station of stations) {
+    const pollutants = Object.keys(station.pollutants).map(
+      (p) => pollutantMap[p] || p
+    )
+    const uniquePollutants = [...new Set(pollutants)]
+    map.set(station.name, uniquePollutants)
+  }
+
+  return map
+}
+
+function renderMonitoringStation(
+  h,
+  location,
+  miles,
+  result,
+  pollMap,
+  query,
+  hrefq
+) {
+  return h.view('monitoring-station/index', {
+    pageTitle: english.monitoringStation.pageTitle,
+    title: english.monitoringStation.title,
+    serviceName: english.monitoringStation.serviceName,
+    paragraphs: english.monitoringStation.paragraphs,
+    searchLocation: location,
+    locationMiles: miles,
+    monitoring_station: result.getmonitoringstation,
+    pollmap: pollMap,
+    displayBacklink: true,
+    fullSearchQuery: query,
+    hrefq
+  })
+}
+
+function renderNoStation(h, location, miles, hrefq) {
+  return h.view('multiplelocations/nostation', {
+    locationMiles: miles,
+    serviceName: english.noStation.heading,
+    paragraph: english.noStation.paragraphs,
+    searchLocation: location,
+    displayBacklink: true,
+    hrefq
+  })
 }
 
 export { getLocationDetailsController }
