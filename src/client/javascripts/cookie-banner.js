@@ -9,12 +9,16 @@ const cookieConfirmationRejectSelector = '.js-cookie-banner-confirmation-reject'
 
 class CookieBanner {
   constructor($module) {
-    if (!this.shouldInitialize($module)) return this
+    if (!this.shouldInitialize($module)) {
+      return this
+    }
 
     this.$cookieBanner = $module
     this.cacheElements($module)
 
-    if (!this.areElementsValid()) return this
+    if (!this.areElementsValid()) {
+      return this
+    }
 
     this.initializeBanner()
     this.bindEvents()
