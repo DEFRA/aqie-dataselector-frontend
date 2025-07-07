@@ -24,7 +24,7 @@ export default {
     '<rootDir>/src/server/common/',
     '<rootDir>/src/client/javascripts/cookies-page.js',
     '<rootDir>/src/server/renderTable',
-    '<rootDir>/src/server/stationdetails',
+    //'<rootDir>/src/server/stationdetails',
     '<rootDir>/src/config/',
     '<rootDir>/server/',
     '<rootDir>/src/server/health',
