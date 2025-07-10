@@ -90,6 +90,18 @@ class CookieBanner {
     this.revealConfirmationMessage(this.$cookieConfirmationReject)
   }
 
+  rejectCookies_cookiepage() {
+    CookieFunctions.setConsentCookie({ analytics: false })
+    this.$cookieMessage.setAttribute('hidden', 'true')
+    // this.revealConfirmationMessage(this.$cookieConfirmationReject)
+  }
+
+  acceptCookies_cookiepage() {
+    CookieFunctions.setConsentCookie({ analytics: true })
+    this.$cookieMessage.setAttribute('hidden', 'true')
+    // this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+  }
+
   revealConfirmationMessage(confirmationMessage) {
     confirmationMessage.removeAttribute('hidden')
     if (!confirmationMessage.getAttribute('tabindex')) {

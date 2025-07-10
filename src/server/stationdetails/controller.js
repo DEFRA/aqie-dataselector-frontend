@@ -3,8 +3,6 @@ import axios from 'axios'
 import { config } from '~/src/config/config.js'
 const stationDetailsController = {
   handler: async (request, h) => {
-    // const { query } = request
-
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
 
@@ -12,26 +10,11 @@ const stationDetailsController = {
 
     const stationDetailsView = 'stationdetails/index'
 
-    // console.log("Selectedyear", request.yar.get('selectedYear'))
     if (request.params.download) {
       request.yar.set('selectedYear', request.params.download)
       request.yar.set('downloadPollutant', request.params.pollutant)
       request.yar.set('downloadFrequency', request.params.frequency)
     }
-
-    // commented due to sonar
-    // if (request != null) {
-    //   const MonitoringstResult = request.yar.get('MonitoringstResult')
-    //   if (MonitoringstResult !== null) {
-    //     const result = MonitoringstResult.getmonitoringstation
-
-    //     for (const x of result) {
-    //       if (x.id === request.params.id) {
-    //         request.yar.set('stationdetails', x)
-    //       }
-    //     }
-    //   }
-    // }
 
     const MONITORING_RESULT_KEY = 'MonitoringstResult'
     const MONITORING_PROPERTY = 'getmonitoringstation'
@@ -50,14 +33,6 @@ const stationDetailsController = {
       return
     }
 
-    // if (!request) return
-
-    // const MonitoringstResult = request.yar.get('MonitoringstResult')
-    // if (!MonitoringstResult) return
-
-    // const result = MonitoringstResult.getmonitoringstation
-    // if (!Array.isArray(result)) return
-
     const station = result.find((x) => x.id === request.params.id)
     if (station) {
       request.yar.set('stationdetails', station)
@@ -65,8 +40,6 @@ const stationDetailsController = {
 
     const stndetails = request.yar.get('stationdetails')
 
-    // const pollutants = stndetails.pollutants
-    //  const pollutantKeys = Object.keys(stndetails.pollutants)
     const cd = new Date()
     cd.setDate(cd.getDate() - 1)
     const formattedDat = cd.toISOString().split('.')[0] + 'Z'
@@ -152,14 +125,6 @@ const stationDetailsController = {
           return error // Rethrow the error so it can be handled appropriately
         }
       }
-      // return h.view('src/server/common/templates/partials/downloads.njk', {
-      //   apiparams,
-      //   years,
-      //   currentdate,
-      //   pollutantKeys,
-      //   selectedYear: request.yar.get('selectedYear'),
-      //   downloadresult: request.yar.get('downloadresult')
-      // });
 
       return h.view(stationDetailsView, {
         pageTitle: english.stationdetails.pageTitle,

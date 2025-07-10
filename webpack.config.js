@@ -4,10 +4,7 @@ import path from 'path'
 import CopyPlugin from 'copy-webpack-plugin'
 import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
-import WebpackAssetsManifest from 'webpack-assets-manifest'
-import NodePolyfillPlugin from 'node-polyfill-webpack-plugin'
-
-// import HtmlWebpackPlugin from 'html-webpack-plugin'
+import { WebpackAssetsManifest } from 'webpack-assets-manifest'
 
 const { NODE_ENV = 'development' } = process.env
 
@@ -18,13 +15,8 @@ const govukFrontendPath = path.dirname(
   require.resolve('govuk-frontend/package.json')
 )
 
-// const pathjoin = path.join(MOJFrontendPath, 'moj/assets')
-
 const ruleTypeAssetResource = 'asset/resource'
 
-/**
- * @type {Configuration}
- */
 export default {
   context: path.resolve(dirname, 'src/client'),
   entry: {
@@ -32,13 +24,6 @@ export default {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     }
   },
-
-  // resolve: {
-  //   fallback: {
-  //     fs: false
-  //   }
-  // },
-
   experiments: {
     outputModule: true
   },
@@ -67,15 +52,8 @@ export default {
   resolve: {
     alias: {
       '/public/assets': path.join(govukFrontendPath, 'dist/govuk/assets')
-    },
-
-    fallback: {
-      fs: false,
-      path: require.resolve('path-browserify'),
-      url: require.resolve('url/')
     }
   },
-
   module: {
     rules: [
       {
@@ -83,30 +61,15 @@ export default {
         loader: 'source-map-loader',
         enforce: 'pre'
       },
-
       {
         test: /\.js$/,
         loader: 'babel-loader',
-
+        exclude: /node_modules/,
         options: {
           browserslistEnv: 'javascripts',
           cacheDirectory: true,
           extends: path.join(dirname, 'babel.config.cjs'),
-          presets: [
-            [
-              '@babel/preset-env',
-              {
-                // Apply bug fixes to avoid transforms
-                bugfixes: true,
-
-                // Apply smaller "loose" transforms for browsers
-                loose: true,
-
-                // Skip CommonJS modules transform
-                modules: false
-              }
-            ]
-          ]
+          presets: [['@babel/preset-env']]
         },
 
         // Flag loaded modules as side effect free
@@ -129,7 +92,6 @@ export default {
             options: {
               sassOptions: {
                 loadPaths: [
-                  // path.join(dirname, 'node_modules'),
                   path.join(dirname, 'src/client/stylesheets'),
                   path.join(dirname, 'src/server/common/components'),
                   path.join(dirname, 'src/server/common/templates/partials')
@@ -197,7 +159,6 @@ export default {
   plugins: [
     new CleanWebpackPlugin(),
     new WebpackAssetsManifest(),
-    new NodePolyfillPlugin(),
     new CopyPlugin({
       patterns: [
         {
@@ -214,7 +175,3 @@ export default {
   },
   target: 'browserslist:javascripts'
 }
-
-/**
- * @import { Configuration } from 'webpack'
- */

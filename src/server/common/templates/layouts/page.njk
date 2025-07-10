@@ -7,11 +7,12 @@
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
 {% from "cookie-banner/macro.njk" import govukCookieBanner %}
+{# {% from "govuk/components/footer/macro.njk" import govukFooter -%} #}
 {% set mainClasses = "app-main-wrapper" %}
 
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
-  {# <link  href="{{ getAssetPath('stylesheets/moj-frontend.min.css) }}" rel="stylesheet"> #}
+  
 {% endblock %}
 
 {% block header %}
@@ -66,6 +67,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 {% block content %}{% endblock %}
 {% block footer %}
 
+  
   {{ govukFooter({
     meta: {
       items: [
@@ -88,13 +90,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 {% block bodyEnd %}
   <script type="module" src="{{ getAssetPath('application.js') }}"></script>
-   <script type="module" src="src/client/javascripts/toggletip.js"></script>
+   {# <script type="module" src="src/client/javascripts/toggletip.js"></script> #}
    <script
   src="https://code.jquery.com/jquery-3.6.0.min.js"
   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
   crossorigin="anonymous"
 ></script>
-<script src="/javascript/moj-frontend.min.js"></script>
+{# <script src="/javascript/moj-frontend.min.js"></script> #}
 <script>
   window.MOJFrontend.initAll()
 </script>

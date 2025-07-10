@@ -5,8 +5,7 @@ const rendertablecontroller = {
   handler: async (request, h) => {
     try {
       request.yar.set('selectedYear', request.params.year)
-      // const stndetails = request.yar.get('stationdetails')
-      // const url = request.yar.get('stationdetails').localSiteID // Example URL
+
       const apiparams = {
         siteId: request.yar.get('stationdetails').localSiteID,
         year: request.params.year
@@ -18,7 +17,7 @@ const rendertablecontroller = {
       async function Invoketable(apiparams) {
         try {
           const response = await axios.post(config.get('Table_URL'), apiparams)
-          // logger.info(`response data ${JSON.stringify(response.data)}`)
+
           return response.data
         } catch (error) {
           return error // Rethrow the error so it can be handled appropriately
@@ -36,7 +35,7 @@ const rendertablecontroller = {
       } else {
         request.yar.set('tabledata', tabledata)
       }
-      // console.log("request.yar.get('tabledata')",request.yar.get('tabledata'))
+
       // Render the partial template with the URL data
       const partialContent1 = nunjucks.render('partials/yearlytable.njk', {
         tabledata: request.yar.get('tabledata'),

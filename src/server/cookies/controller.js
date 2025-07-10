@@ -16,13 +16,7 @@ const cookiesController = {
         }
       }
     } = english
-    /* eslint-disable camelcase */
-    // const {
-    //   query: { lang }
-    // } = request
-    // if (lang && lang === 'cy') {
-    //   return h.redirect(`/preifatrwydd/cy?lang=cy`)
-    // }
+
     return h.view('cookies/index', {
       pageTitle,
       title,
