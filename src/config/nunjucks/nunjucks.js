@@ -13,28 +13,8 @@ const nunjucksEnvironment = nunjucks.configure(
   [
     'node_modules/govuk-frontend/dist/',
     path.resolve(dirname, '../../server/common/templates'),
-    path.resolve(dirname, '../../server/common/components'),
-    'node_modules/@ministryofjustice/frontend/moj/all',
-    path.normalize(
-      path.resolve(
-        dirname,
-        '..',
-        '..',
-        '..',
-        '..',
-        '..',
-        'node_modules',
-        '@ministryofjustice',
-        'frontend',
-        'moj',
-        'all'
-      )
-    ),
-    path.normalize(
-      path.resolve(dirname, '..', '..', 'server', 'common', 'helpers')
-    )
+    path.resolve(dirname, '../../server/common/components')
   ],
-
   {
     autoescape: true,
     throwOnUndefined: false,
@@ -45,19 +25,11 @@ const nunjucksEnvironment = nunjucks.configure(
   }
 )
 
-/**
- * @satisfies {ServerRegisterPluginObject<ServerViewsConfiguration>}
- */
 export const nunjucksConfig = {
   plugin: hapiVision,
   options: {
     engines: {
       njk: {
-        /**
-         * @param {string} src
-         * @param {{ environment: typeof nunjucksEnvironment }} options
-         * @returns {(options: ReturnType<Awaited<typeof context>>) => string}
-         */
         compile(src, options) {
           const template = nunjucks.compile(src, options.environment)
           return (ctx) => template.render(ctx)
@@ -81,8 +53,3 @@ Object.entries(globals).forEach(([name, global]) => {
 Object.entries(filters).forEach(([name, filter]) => {
   nunjucksEnvironment.addFilter(name, filter)
 })
-
-/**
- * @import { ServerRegisterPluginObject } from '@hapi/hapi'
- * @import { ServerViewsConfiguration } from '@hapi/vision'
- */

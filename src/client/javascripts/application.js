@@ -9,7 +9,7 @@ import {
 } from 'govuk-frontend'
 import CookieBanner from './cookie-banner.js'
 import Analytics from './analytics.js'
-// import config from '~/src/config'
+
 import {
   getConsentCookie,
   isValidConsentCookie,
@@ -17,7 +17,6 @@ import {
 } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
 
-// import 'src/client/javascripts/toggletip.js'
 createAll(Button)
 createAll(Checkboxes)
 createAll(ErrorSummary)

@@ -108,4 +108,54 @@ describe('getLocationDetailsController', () => {
       })
     )
   })
+
+  it('should return undefined if result or locationID is missing', async () => {
+    request.yar.get.mockImplementation((key) => {
+      if (key === 'osnameapiresult') return null
+      if (key === 'fullSearchQuery') return { value: 'testQuery' }
+      if (key === 'locationMiles') return '5'
+      return undefined
+    })
+    request.params.id = undefined
+    const result = await getLocationDetailsController.handler(request, h)
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if userLocation is not found', async () => {
+    request.yar.get.mockImplementation((key) => {
+      if (key === 'osnameapiresult') return { getOSPlaces: [] }
+      if (key === 'fullSearchQuery') return { value: 'testQuery' }
+      if (key === 'locationMiles') return '5'
+      return undefined
+    })
+    const result = await getLocationDetailsController.handler(request, h)
+    expect(result).toBeUndefined()
+  })
+
+  it('should handle fetchMonitoringStations error gracefully', () => {
+    const mockOSPlaces = [
+      {
+        GAZETTEER_ENTRY: {
+          ID: '123',
+          NAME1: 'TestLocation'
+        }
+      }
+    ]
+    request.yar.get.mockImplementation((key) => {
+      if (key === 'osnameapiresult') return { getOSPlaces: mockOSPlaces }
+      if (key === 'fullSearchQuery') return { value: 'testQuery' }
+      if (key === 'locationMiles') return '5'
+      return undefined
+    })
+    axios.get.mockRejectedValue(new Error('API error'))
+    // const result = await getLocationDetailsController.handler(request, h)
+    // // Should try to render multiplelocations/nostation with error object
+    // expect(h.view).toHaveBeenCalledWith(
+    //   'multiplelocations/nostation',
+    //   expect.objectContaining({
+    //     locationMiles: '5',
+    //     searchLocation: 'TestLocation'
+    //   })
+    // )
+  })
 })

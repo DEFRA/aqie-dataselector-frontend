@@ -3,7 +3,6 @@ import { config } from '~/src/config/config.js'
 const password = config.get('aqiePassword')
 const homeloginController = {
   handler: (request, h) => {
-    // const { footerTxt, cookieBanner, login } = english
     if (request.auth.isAuthenticated) {
       return h.redirect('/home')
     } else {

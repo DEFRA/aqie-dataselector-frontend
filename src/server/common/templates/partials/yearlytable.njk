@@ -1,5 +1,4 @@
-  
-  {% from "toggletip/macro.njk" import toggletip %}
+{% from "toggletip/macro.njk" import toggletip %}
   {% set dataToggletip %}
   {{ toggletip(
     '',
@@ -14,7 +13,7 @@
   {{ toggletip(
    '',
     'More information about daily exceedances for PM10',
-    'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
+    'Daily average PM10 levels must not go above 50 micrograms per cubic metre (µg/m³) more than 35 times in a calendar year (when rounded to a whole number).
     ',
     'Trend'
   )}}
@@ -232,8 +231,8 @@
                     <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
  
    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Hourly')" role="button" 
-   class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
-                
+   class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+   aria-label="Download hourly data for All pollutants">
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
                         <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
@@ -241,13 +240,14 @@
                 </span>
                 <span class="aq-button-secondary__text">
                     Download hourly data 
-          
-                      
-                    </a>
+                </span>
+</a>
 
 <br>
 
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      aria-label=" Download daily average data for All pollutants"
+                      >
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -262,7 +262,9 @@
 
                     <br>
 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                        aria-label="Download annual average data for All pollutants"
+                    >
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -279,7 +281,9 @@
  {% for pollutant in tabledata %}
 <h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
  
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                     aria-label="Download hourly data for {{pollutant.pollutantName}}"   
+                    >
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -295,7 +299,9 @@
                     </a>
 
 <br>
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      
+                        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -311,7 +317,9 @@
                     </a>
                     <br>
                     
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                        aria-label="Download annual average data for {{pollutant.pollutantName}}"
+                    >
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -341,8 +349,7 @@
               
               <script>
 
-      
-           async function getAPIstn_details1(pollutants,freq) {          
+      async function getAPIstn_details1(pollutants,freq) {          
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
         .then(data => {           
@@ -359,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
    
 });
+          
     </script>
     {% if downloadresult %}
   <script>
@@ -367,4 +375,4 @@ document.addEventListener('DOMContentLoaded', () => {
     var url = downloadresult;
    window.location.href = url;
   </script>
-{% endif %} 
+{% endif %}

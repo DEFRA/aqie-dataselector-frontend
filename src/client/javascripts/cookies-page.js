@@ -1,5 +1,6 @@
-import { getConsentCookie, setConsentCookie } from './cookie-functions.js'
+import { getConsentCookie } from './cookie-functions.js'
 
+import * as CookieFunctions from './cookie-functions.js'
 /**
  * Website cookies page
  */
@@ -45,6 +46,7 @@ class CookiesPage {
     const $successNotification = this.$page.querySelector(
       '.js-cookies-page-success'
     )
+
     if ($successNotification instanceof HTMLElement) {
       this.$successNotification = $successNotification
     }
@@ -85,20 +87,17 @@ class CookiesPage {
 
       if ($selectedItem instanceof HTMLInputElement) {
         preferences[cookieType] = $selectedItem.value === 'yes'
+
+        if ($selectedItem.value === 'Yes') {
+          CookieFunctions.setConsentCookie({ analytics: true })
+        } else {
+          CookieFunctions.setConsentCookie({ analytics: false })
+        }
       }
     })
 
     // Save preferences to cookie and show success notification
-    setConsentCookie(preferences)
-
-    // for (const UACookie of [
-    //   '_ga_HVF94VF4NZ',
-    //   '_gid',
-    //   '_ga',
-    //   'airaqie_cookies_analytics'
-    // ]) {
-    //   Cookie(UACookie, null)
-    // }
+    // setConsentCookie(preferences)
 
     this.showSuccessNotification()
     const cookieBanner = document.querySelector(

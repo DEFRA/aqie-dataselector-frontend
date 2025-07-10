@@ -38,31 +38,18 @@ export default function loadAnalytics() {
         k.async = true
         k.src = "https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3%22"
         document.body.appendChild(k)
-      //  const urlParams = new URLSearchParams(window.location.search);
-       // const userId = urlParams.get('userId');
-        // const utm_source = urlParams.get('utm_source');
-       // const utm_campaign = urlParams.get('utm_campaign');
-        // const utm_medium = urlParams.get('utm_medium');
-       
+     
         
         const f = d.getElementsByTagName(s)[0];
         const j = d.createElement(s); 
-      //  const dl = l != 'dataLayer' ? '&l=' + l : ''
+    
         j.async = true;
-       //  j.src = `https://www.googletagmanager.com/gtm.js?id=${i}${dl}`
+      
         j.src = `https://www.googletagmanager.com/gtag/js?id=${i}` 
         f.parentNode.insertBefore(j, f)
         window.dataLayer.push('js', new Date())
-        // window.dataLayer.push('config', 'GTM-5ZWS27T3',{
-        //   'user_id': utm_source
-        // })
+       
         
       })(window, document, 'script', 'dataLayer', 'GTM-5ZWS27T3')
   }
 }
-// window.dataLayer = window.dataLayer || [];
-// function gtag(){
-// dataLayer.push(arguments);
-// }
-// gtag('js', new Date());
-//  gtag('config', 'GTM-5ZWS27T3');

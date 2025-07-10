@@ -40,8 +40,12 @@
           
           </nav>
             <div id="yearlytable-container">
-       
-    {% include "partials/yearlytable.njk" %}
+  {% include "partials/yearlytable.njk" %}
+  <noscript>
+    <div class="no-js-warning">
+      <p>JavaScript is disabled. You are viewing the default data for the selected year.</p>
+    </div>
+  </noscript>
 </div>
       
          <script> 
@@ -65,13 +69,14 @@
     var links = document.querySelectorAll('.moj-sub-navigation__link');
     links.forEach(function(link) {
         link.removeAttribute('aria-current');
+        link.setAttribute('aria-selected', 'false');
     });
 
-    // Set aria-current to the clicked link
+    // Set aria-current and aria-selected to the clicked link
     var selectedLink = document.getElementById('link-' + year);
     if (selectedLink) {
         selectedLink.setAttribute('aria-current', 'page');
-       selectedLink.setAttribute('aria-selected', 'true');
+        selectedLink.setAttribute('aria-selected', 'true');
         //selectedLink.setAttribute(' tabindex', 0);
     }else{
       selectedLink.setAttribute('aria-selected', 'false');
@@ -110,4 +115,3 @@ document.addEventListener('DOMContentLoaded', () => {
     
 }
        </script>
-      

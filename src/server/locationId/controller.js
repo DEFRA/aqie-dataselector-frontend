@@ -64,11 +64,11 @@ function findUserLocation(locations, locationID) {
   return ''
 }
 
-async function fetchMonitoringStations(location, miles, logger) {
+async function fetchMonitoringStations(location, miles) {
   try {
     const url = `${config.get('OS_NAMES_API_URL_1')}${location}&miles=${miles}`
     const response = await axios.get(url)
-    logger.info('Monitoring station API response', response)
+    // logger.info('Monitoring station API response', response)
     return response.data
   } catch (error) {
     return error
@@ -76,6 +76,9 @@ async function fetchMonitoringStations(location, miles, logger) {
 }
 
 function buildPollutantMap(stations) {
+  if (!Array.isArray(stations)) {
+    return new Map()
+  }
   const map = new Map()
   const pollutantMap = {
     PM25: 'PM2.5',

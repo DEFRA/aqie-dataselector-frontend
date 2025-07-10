@@ -11,11 +11,6 @@ const searchLocationController = {
     }
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')
 
-    if (request != null) {
-      //   const x = query
-      // const invalidSearchEntry = false
-    }
-
     return h.view('search-location/index', {
       pageTitle: english.searchLocation.pageTitle,
       heading: english.searchLocation.heading,

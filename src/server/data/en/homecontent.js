@@ -1,4 +1,4 @@
-const SERVICE_NAME = 'Get air pollution data'
+const SERVICE_NAME = 'Get air pollution data - GOV.UK'
 const problemtitle = 'There is a problem'
 const trytitle = 'Try again later.'
 const healtheff = 'Health effects'
@@ -571,7 +571,7 @@ export const english = {
         q: 'the device and browser you use',
         r: 'Yes',
         s: 'No',
-        u: 'The cookies _ga_ and _gat_UA-[G-8CMZBTDQBC] will only be active if you accept cookies. If you do not accept cookies, they may still appear in your cookie session, but they will not be active.',
+        u: 'The cookies _ga_ and _gat_UA-[G-V4MBMR0QPC] will only be active if you accept cookies. If you do not accept cookies, they may still appear in your cookie session, but they will not be active.',
         v: "We use Google Analytics software to understand how people use the 'get air pollution data' service. We do this to: ",
         v1: 'help make sure the site is meeting the needs of its users',
         v2: 'help us make improvements',
