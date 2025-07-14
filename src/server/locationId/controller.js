@@ -1,11 +1,11 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+
 import axios from 'axios'
 
 const getLocationDetailsController = {
   handler: async (request, h) => {
-    const logger = createLogger()
+    // const logger = createLogger()
     const locationID = request.params.id
     const result = request.yar.get('osnameapiresult')
     const fullSearchQuery = request.yar.get('fullSearchQuery')?.value || ''
@@ -27,8 +27,7 @@ const getLocationDetailsController = {
 
     const monitoringResult = await fetchMonitoringStations(
       userLocation,
-      locationMiles,
-      logger
+      locationMiles
     )
     request.yar.set('MonitoringstResult', monitoringResult)
 
