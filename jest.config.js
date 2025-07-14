@@ -30,8 +30,6 @@ export default {
     '<rootDir>/src/server/router.js',
     '<rootDir>/src/server/common/helpers/errors.js',
     '<rootDir>/src/server/common/helpers/errors_message.js',
-    '<rootDir>/src/server/common/helpers/errors_message.js',
-    '<rootDir>/src/client/javascripts/analytics.js',
     '<rootDir>/src/server/common/components/toggletip/toggletip.js',
     '<rootDir>/src/config/config.js',
     '<rootDir>/src/server/common/helpers/logging/logger.js',

@@ -8,7 +8,6 @@ import {
   SkipLink
 } from 'govuk-frontend'
 import CookieBanner from './cookie-banner.js'
-import Analytics from './analytics.js'
 
 import {
   getConsentCookie,
@@ -35,7 +34,7 @@ if ($cookieBanner) {
 // Initialise analytics if consent is given
 const userConsent = getConsentCookie()
 if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
-  Analytics()
+  // Analytics()
 
   // Remove UA cookies if the user previously had them set or Google attempts
   // to set them

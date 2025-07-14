@@ -25,22 +25,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-5ZWS27T3');</script>
 {% from "govuk/components/header/macro.njk" import govukHeader %}
 
-{{ govukHeader({
-  homepageUrl: "#"
-}) }}
-  {# {{ govukHeader({
+
+  {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
     containerClasses: "govuk-width-container",
     serviceName: serviceName,
     serviceUrl: serviceUrl,
     useTudorCrown: true
-  }) }} #}
+  }) }}
   {# {% include "partials/navigation/navigation.njk" %} #}
 {% endblock %}
 
 {% block pageTitle %}
-  {{ pageTitle }} | Get air pollution data - GOV.UK
+  {{ pageTitle }} | Get air pollution data - GOV.UK 
 {% endblock %}
 
 {% block beforeContent %}
