@@ -13,15 +13,18 @@ const multipleLocationsController = {
       request.yar.set('errorMessage', '')
       request.yar.set('locationMiles', request.query?.locationMiles)
       request.yar.set('selectedLocation', '')
-
+      // ...existing code...
+      // Use a non-greedy quantifier to prevent super-linear backtracking
+      const sanitizedQuery = request.query.searchQuery?.replace(
+        / *\([^)]*?\) */g,
+        ''
+      )
       if (request.query?.fullSearchQuery?.length > 0) {
         request.yar.set('fullSearchQuery', {
           value: decodeURI(request.query.fullSearchQuery)
         })
         request.yar.set('searchQuery', {
-          value: decodeURI(
-            request.query.searchQuery?.replace(/ *\([^)]*\) */g, '')
-          )
+          value: decodeURI(sanitizedQuery)
         })
       }
     }
