@@ -1,4 +1,4 @@
-const SERVICE_NAME = 'Get air pollution data - GOV.UK'
+const SERVICE_NAME = 'Get air pollution data'
 const problemtitle = 'There is a problem'
 const trytitle = 'Try again later.'
 const healtheff = 'Health effects'
