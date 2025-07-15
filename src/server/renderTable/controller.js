@@ -1,6 +1,17 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
+
+async function Invoketable(params) {
+  // Renamed parameter to avoid shadowing
+  try {
+    const response = await axios.post(config.get('Table_URL'), params)
+    return response.data
+  } catch (error) {
+    return error // Rethrow the error so it can be handled appropriately
+  }
+}
+
 const rendertablecontroller = {
   handler: async (request, h) => {
     try {
@@ -13,16 +24,6 @@ const rendertablecontroller = {
 
       const tabledata = await Invoketable(apiparams)
       const finalyear = request.yar.get('selectedYear')
-
-      async function Invoketable(apiparams) {
-        try {
-          const response = await axios.post(config.get('Table_URL'), apiparams)
-
-          return response.data
-        } catch (error) {
-          return error // Rethrow the error so it can be handled appropriately
-        }
-      }
 
       if (
         !tabledata || // null or undefined

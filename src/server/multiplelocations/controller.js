@@ -15,10 +15,11 @@ const multipleLocationsController = {
       request.yar.set('selectedLocation', '')
       // ...existing code...
       // Use a non-greedy quantifier to prevent super-linear backtracking
-      const sanitizedQuery = request.query.searchQuery?.replace(
-        / *\([^)]*?\) */g,
-        ''
-      )
+
+      const sanitizedQuery = request.query.searchQuery
+        ?.replace(/[^a-zA-Z0-9 ]/g, ' ')
+        .trim()
+
       if (request.query?.fullSearchQuery?.length > 0) {
         request.yar.set('fullSearchQuery', {
           value: decodeURI(request.query.fullSearchQuery)
