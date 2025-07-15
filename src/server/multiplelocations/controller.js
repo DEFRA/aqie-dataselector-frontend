@@ -17,7 +17,7 @@ const multipleLocationsController = {
       // Use a non-greedy quantifier to prevent super-linear backtracking
 
       const sanitizedQuery = request.query.searchQuery
-        ?.replace(/\s*\([^()]*\)\s*/g, ' ')
+        ?.replace(/[^a-zA-Z0-9 ]/g, ' ')
         .trim()
 
       if (request.query?.fullSearchQuery?.length > 0) {
