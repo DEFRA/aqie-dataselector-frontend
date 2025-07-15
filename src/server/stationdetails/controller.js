@@ -9,9 +9,12 @@ const stationDetailsController = {
     request.yar.set('downloadresult', '')
 
     const stationDetailsView = 'stationdetails/index'
-    async function Invokedownload(apiparams) {
+    async function Invokedownload(apiparameters) {
       try {
-        const response = await axios.post(config.get('Download_URL'), apiparams)
+        const response = await axios.post(
+          config.get('Download_URL'),
+          apiparameters
+        )
         // logger.info(`response data ${JSON.stringify(response.data)}`)
         return response.data
       } catch (error) {
