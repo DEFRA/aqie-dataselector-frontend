@@ -1,4 +1,5 @@
-import { getLocationDetailsController } from './controller'
+import { getLocationDetailsController } from '~/src/server/locationId/controller.js'
+
 import axios from 'axios'
 
 jest.mock('axios')

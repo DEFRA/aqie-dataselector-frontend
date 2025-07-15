@@ -1,4 +1,5 @@
-import { multipleLocationsController } from './controller'
+import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
+
 import axios from 'axios'
 
 jest.mock('axios')

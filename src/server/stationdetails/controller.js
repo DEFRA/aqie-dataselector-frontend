@@ -97,6 +97,19 @@ const stationDetailsController = {
 
     // }
     // NewApi
+    const apiparams = {
+      region: stndetails.region,
+      siteType: stndetails.siteType,
+      sitename: stndetails.name,
+      siteId: stndetails.localSiteID,
+      latitude: stndetails.location.coordinates[0].toString(),
+      longitude: stndetails.location.coordinates[1].toString(),
+
+      year: request.yar.get('selectedYear'),
+      downloadpollutant: request.yar.get('downloadPollutant'),
+      downloadpollutanttype: request.yar.get('downloadFrequency'),
+      stationreaddate: stndetails.updated
+    }
     if (request.params.download) {
       const downloadresult = await Invokedownload(apiparams)
       request.yar.set('downloadresult', downloadresult)

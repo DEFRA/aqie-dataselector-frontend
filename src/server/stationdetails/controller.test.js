@@ -1,4 +1,4 @@
-import { stationDetailsController } from './controller'
+import { stationDetailsController } from './controller.js'
 import axios from 'axios'
 
 jest.mock('axios')
