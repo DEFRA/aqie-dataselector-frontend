@@ -1,32 +1,46 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import { config } from '~/src/config/config.js'
 import axios from 'axios'
-
-// Move Invokedownload outside the handler block
-async function Invokedownload(apiparams) {
-  try {
-    const response = await axios.post(config.get('Download_URL'), apiparams)
-    return response.data
-  } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
-  }
-}
-
+import { config } from '~/src/config/config.js'
 const stationDetailsController = {
   handler: async (request, h) => {
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
+
     request.yar.set('downloadresult', '')
 
     const stationDetailsView = 'stationdetails/index'
+    async function Invokedownload(apiparameters) {
+      try {
+        const response = await axios.post(
+          config.get('Download_URL'),
+          apiparameters
+        )
+        // logger.info(`response data ${JSON.stringify(response.data)}`)
+        return response.data
+      } catch (error) {
+        return error // Rethrow the error so it can be handled appropriately
+      }
+    }
+    function ParseDateformat(Apidate) {
+      const originalDate = Apidate
+      // Create a new Date object
+      const date = new Date(originalDate)
+      // Extract the desired components
+      const hours = date.getUTCHours()
+      const minutes = date.getUTCMinutes()
+      const ampm = hours >= 12 ? 'pm' : 'am'
+      const formattedHours = hours % 12 || 12 // Convert to 12-hour format
+      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes
+      const day = date.getUTCDate()
+      const month = date.toLocaleString('en-GB', { month: 'long' })
+      const year = date.getUTCFullYear()
 
-    // Declare apiparams only once at the top of the handler
-    let apiparams = {
-      siteId: request.yar.get('stationdetails')?.localSiteID,
-      year: request.yar.get('selectedYear')
+      // Construct the final formatted string
+      const finalFormattedDate = `${formattedHours}:${formattedMinutes} ${ampm} on ${day} ${month} ${year}`
+
+      return finalFormattedDate
     }
 
-    // If you need to modify apiparams in any block, just assign to it (do not redeclare)
     if (request.params.download) {
       request.yar.set('selectedYear', request.params.download)
       request.yar.set('downloadPollutant', request.params.pollutant)
@@ -83,26 +97,6 @@ const stationDetailsController = {
 
     const currentdate = `${day} ${month}`
 
-    function ParseDateformat(Apidate) {
-      const originalDate = Apidate
-      // Create a new Date object
-      const date = new Date(originalDate)
-      // Extract the desired components
-      const hours = date.getUTCHours()
-      const minutes = date.getUTCMinutes()
-      const ampm = hours >= 12 ? 'pm' : 'am'
-      const formattedHours = hours % 12 || 12 // Convert to 12-hour format
-      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes
-      const day = date.getUTCDate()
-      const month = date.toLocaleString('en-GB', { month: 'long' })
-      const year = date.getUTCFullYear()
-
-      // Construct the final formatted string
-      const finalFormattedDate = `${formattedHours}:${formattedMinutes} ${ampm} on ${day} ${month} ${year}`
-
-      return finalFormattedDate
-    }
-
     const lat = request.yar.get('stationdetails').location.coordinates[0]
     const longitude1 = request.yar.get('stationdetails').location.coordinates[1]
     const maplocation =
@@ -114,7 +108,7 @@ const stationDetailsController = {
 
     // }
     // NewApi
-    apiparams = {
+    const apiparams = {
       region: stndetails.region,
       siteType: stndetails.siteType,
       sitename: stndetails.name,
@@ -130,6 +124,7 @@ const stationDetailsController = {
     if (request.params.download) {
       const downloadresult = await Invokedownload(apiparams)
       request.yar.set('downloadresult', downloadresult)
+
       return h.view(stationDetailsView, {
         pageTitle: english.stationdetails.pageTitle,
         title: english.stationdetails.title,

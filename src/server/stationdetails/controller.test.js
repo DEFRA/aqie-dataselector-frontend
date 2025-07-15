@@ -1,120 +1,124 @@
-// __tests__/stationDetailsController.test.js
-import { stationDetailsController } from '~/src/server/stationdetails/controller.js'
+import { stationDetailsController } from './controller.js'
 import axios from 'axios'
 
 jest.mock('axios')
 
+global.apiparams = { some: 'value' }
+
 describe('stationDetailsController.handler', () => {
-  let request, h
+  let h, request
 
   beforeEach(() => {
-    const mockStation = {
-      id: 'station123',
-      region: 'RegionX',
-      siteType: 'Urban',
-      name: 'Station Name',
-      localSiteID: 'LOC123',
-      location: {
-        coordinates: [51.5, -0.1]
-      },
-      updated: '2025-07-06T12:00:00Z',
+    h = {
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockReturnThis(),
+      type: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'urban',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
       pollutants: ['NO2', 'PM10']
     }
 
     request = {
       params: {
-        id: 'station123',
-        download: '2024',
-        pollutant: 'NO2',
-        frequency: 'hourly'
+        id: 'site123'
       },
       yar: {
         get: jest.fn((key) => {
-          const mockData = {
-            MonitoringstResult: {
-              getmonitoringstation: [mockStation]
-            },
-            stationdetails: mockStation,
-            selectedYear: '2024',
-            downloadPollutant: 'NO2',
-            downloadFrequency: 'hourly',
-            fullSearchQuery: { value: 'London' },
-            locationMiles: '10',
-            locationID: 'loc123',
+          const session = {
+            MonitoringstResult: { getmonitoringstation: [station] },
+            stationdetails: station,
+            selectedYear: 2024,
+            latesttime: '2024-07-15',
+            downloadresult: { result: 'downloaded' },
+            fullSearchQuery: { value: 'mockFullSearchQuery' },
+            locationMiles: 10,
+            locationID: 'mockLocationID',
             nooflocation: 'multiple'
           }
-          return mockData[key]
+          return session[key]
         }),
         set: jest.fn()
       }
     }
 
-    h = {
-      view: jest.fn()
-    }
+    jest.clearAllMocks()
   })
 
-  it('should render the stationdetails view with download result', async () => {
-    axios.post.mockResolvedValue({ data: 'mockDownloadData' })
-
-    await stationDetailsController.handler(request, h)
-
-    expect(request.yar.set).toHaveBeenCalledWith(
-      'downloadresult',
-      'mockDownloadData'
-    )
-  })
-
-  it('should handle missing monitoring result gracefully', async () => {
-    request.yar.get = jest.fn((key) => {
-      if (key === 'MonitoringstResult') return null
-      return undefined
-    })
+  it('should render the view for non-download requests', async () => {
+    request.params.download = undefined
 
     const result = await stationDetailsController.handler(request, h)
-    expect(result).toBeUndefined()
-    expect(h.view).not.toHaveBeenCalled()
-  })
-
-  it('should render view with single location href if nooflocation is single', async () => {
-    request.yar.get = jest.fn((key) => {
-      const mockStation = {
-        id: 'station123',
-        region: 'RegionX',
-        siteType: 'Urban',
-        name: 'Station Name',
-        localSiteID: 'LOC123',
-        location: {
-          coordinates: [51.5, -0.1]
-        },
-        updated: '2025-07-06T12:00:00Z',
-        pollutants: ['NO2', 'PM10']
-      }
-      const mockData = {
-        MonitoringstResult: {
-          getmonitoringstation: [mockStation]
-        },
-        stationdetails: mockStation,
-        selectedYear: '2024',
-        downloadPollutant: 'NO2',
-        downloadFrequency: 'hourly',
-        fullSearchQuery: { value: 'London' },
-        locationMiles: '10',
-        locationID: 'loc123',
-        nooflocation: 'single'
-      }
-      return mockData[key]
-    })
-
-    axios.post.mockResolvedValue({ data: 'mockDownloadData' })
-
-    await stationDetailsController.handler(request, h)
 
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/index',
       expect.objectContaining({
-        hrefq: expect.stringContaining('/multiplelocations')
+        pageTitle: 'Stations summary details',
+        title: expect.any(Object),
+        serviceName: 'Get air pollution data',
+        stationdetails: expect.any(Object),
+        maplocation: expect.stringContaining(
+          'https://www.google.co.uk/maps?q='
+        ),
+        updatedTime: expect.any(String),
+        displayBacklink: true,
+        fullSearchQuery: 'mockFullSearchQuery',
+        apiparams: expect.any(Object),
+        years: expect.any(Array),
+        currentdate: expect.any(String),
+        pollutantKeys: ['NO2', 'PM10'],
+        selectedYear: 2024,
+        downloadresult: { result: 'downloaded' },
+        hrefq: expect.stringContaining('/location/')
       })
     )
+
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('should handle download requests and set downloadresult', async () => {
+    request.params.download = 2024
+    request.params.pollutant = 'NO2'
+    request.params.frequency = 'hourly'
+
+    axios.post.mockResolvedValue({ data: { result: 'downloaded' } })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('downloadresult', {
+      result: 'downloaded'
+    })
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        downloadresult: { result: 'downloaded' }
+      })
+    )
+
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('should handle Invokedownload error gracefully', async () => {
+    request.params.download = 2024
+    request.params.pollutant = 'NO2'
+    request.params.frequency = 'hourly'
+
+    axios.post.mockRejectedValue(new Error('fail'))
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      'downloadresult',
+      expect.any(Error)
+    )
+    expect(h.view).toHaveBeenCalled()
+    expect(result).toBe(h.view.mock.results[0].value)
   })
 })

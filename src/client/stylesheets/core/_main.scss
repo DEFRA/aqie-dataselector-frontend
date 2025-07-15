@@ -117,7 +117,7 @@
   
 }
 .defra-toggletip {
-	// height: 1rem;
+
 	&:first-child {
 		display: inline-block;
 	}
@@ -204,12 +204,7 @@
 
 
 
-//   &:focus ~ .defra-toggletip__info,
-//   &:focus-visible ~ .defra-toggletip__info {
-//     opacity: 1;
-//     visibility: visible;
-//   }
-// }
+
 	&__info {
 		@include govuk-font($size: 16);
 		cursor: auto;

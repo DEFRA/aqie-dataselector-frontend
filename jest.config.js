@@ -29,6 +29,8 @@ export default {
     '<rootDir>/src/server/index.js',
     '<rootDir>/src/server/router.js',
     '<rootDir>/src/server/common/helpers/errors.js',
+    '<rootDir>/src/client/javascripts/cookie-functions.js',
+    '<rootDir>/src/client/javascripts/cookie-banner.js',
     '<rootDir>/src/server/common/helpers/errors_message.js',
     '<rootDir>/src/server/common/components/toggletip/toggletip.js',
     '<rootDir>/src/config/config.js',
