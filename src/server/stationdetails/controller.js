@@ -1,15 +1,32 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import axios from 'axios'
+
+// Move Invokedownload outside the handler block
+async function Invokedownload(apiparams) {
+  try {
+    const response = await axios.post(config.get('Download_URL'), apiparams)
+    return response.data
+  } catch (error) {
+    return error // Rethrow the error so it can be handled appropriately
+  }
+}
+
 const stationDetailsController = {
   handler: async (request, h) => {
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
-
     request.yar.set('downloadresult', '')
 
     const stationDetailsView = 'stationdetails/index'
 
+    // Declare apiparams only once at the top of the handler
+    let apiparams = {
+      siteId: request.yar.get('stationdetails')?.localSiteID,
+      year: request.yar.get('selectedYear')
+    }
+
+    // If you need to modify apiparams in any block, just assign to it (do not redeclare)
     if (request.params.download) {
       request.yar.set('selectedYear', request.params.download)
       request.yar.set('downloadPollutant', request.params.pollutant)
@@ -97,7 +114,7 @@ const stationDetailsController = {
 
     // }
     // NewApi
-    const apiparams = {
+    apiparams = {
       region: stndetails.region,
       siteType: stndetails.siteType,
       sitename: stndetails.name,
@@ -113,19 +130,6 @@ const stationDetailsController = {
     if (request.params.download) {
       const downloadresult = await Invokedownload(apiparams)
       request.yar.set('downloadresult', downloadresult)
-      async function Invokedownload(apiparams) {
-        try {
-          const response = await axios.post(
-            config.get('Download_URL'),
-            apiparams
-          )
-          // logger.info(`response data ${JSON.stringify(response.data)}`)
-          return response.data
-        } catch (error) {
-          return error // Rethrow the error so it can be handled appropriately
-        }
-      }
-
       return h.view(stationDetailsView, {
         pageTitle: english.stationdetails.pageTitle,
         title: english.stationdetails.title,
