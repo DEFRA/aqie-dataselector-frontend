@@ -20,116 +20,15 @@ const stationDetailsController = {
 
     const stationDetailsView = 'stationdetails/index'
 
-    // Declare apiparams only once at the top of the handler
-    let apiparams = {
-      siteId: request.yar.get('stationdetails')?.localSiteID,
-      year: request.yar.get('selectedYear')
-    }
-
-    // If you need to modify apiparams in any block, just assign to it (do not redeclare)
     if (request.params.download) {
-      request.yar.set('selectedYear', request.params.download)
-      request.yar.set('downloadPollutant', request.params.pollutant)
-      request.yar.set('downloadFrequency', request.params.frequency)
-    }
-
-    const MONITORING_RESULT_KEY = 'MonitoringstResult'
-    const MONITORING_PROPERTY = 'getmonitoringstation'
-
-    if (!request) {
-      return
-    }
-
-    const monitoringResult = request.yar.get(MONITORING_RESULT_KEY)
-    if (!monitoringResult) {
-      return
-    }
-
-    const result = monitoringResult[MONITORING_PROPERTY]
-    if (!Array.isArray(result)) {
-      return
-    }
-
-    const station = result.find((x) => x.id === request.params.id)
-    if (station) {
-      request.yar.set('stationdetails', station)
-    }
-
-    const stndetails = request.yar.get('stationdetails')
-
-    const cd = new Date()
-    cd.setDate(cd.getDate() - 1)
-    const formattedDat = cd.toISOString().split('.')[0] + 'Z'
-    request.yar.set('latesttime', formattedDat)
-    const updatedTime = ParseDateformat(formattedDat)
-    const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
-    const date = new Date()
-    const day = date.getDate()
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ]
-    const month = monthNames[date.getMonth()]
-
-    const currentdate = `${day} ${month}`
-
-    function ParseDateformat(Apidate) {
-      const originalDate = Apidate
-      // Create a new Date object
-      const date = new Date(originalDate)
-      // Extract the desired components
-      const hours = date.getUTCHours()
-      const minutes = date.getUTCMinutes()
-      const ampm = hours >= 12 ? 'pm' : 'am'
-      const formattedHours = hours % 12 || 12 // Convert to 12-hour format
-      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes
-      const day = date.getUTCDate()
-      const month = date.toLocaleString('en-GB', { month: 'long' })
-      const year = date.getUTCFullYear()
-
-      // Construct the final formatted string
-      const finalFormattedDate = `${formattedHours}:${formattedMinutes} ${ampm} on ${day} ${month} ${year}`
-
-      return finalFormattedDate
-    }
-
-    const lat = request.yar.get('stationdetails').location.coordinates[0]
-    const longitude1 = request.yar.get('stationdetails').location.coordinates[1]
-    const maplocation =
-      'https://www.google.co.uk/maps?q=' + lat + ',' + longitude1
-    const fullSearchQuery = request?.yar?.get('fullSearchQuery').value
-
-    const locationMiles = request?.yar?.get('locationMiles')
-    const multiplelocID = request?.yar?.get('locationID')
-
-    // }
-    // NewApi
-    apiparams = {
-      region: stndetails.region,
-      siteType: stndetails.siteType,
-      sitename: stndetails.name,
-      siteId: stndetails.localSiteID,
-      latitude: stndetails.location.coordinates[0].toString(),
-      longitude: stndetails.location.coordinates[1].toString(),
-
-      year: request.yar.get('selectedYear'),
-      downloadpollutant: request.yar.get('downloadPollutant'),
-      downloadpollutanttype: request.yar.get('downloadFrequency'),
-      stationreaddate: stndetails.updated
-    }
-    if (request.params.download) {
+      // If needed, declare apiparams here for download logic
+      const apiparams = {
+        siteId: request.yar.get('stationdetails')?.localSiteID,
+        year: request.yar.get('selectedYear')
+      }
       const downloadresult = await Invokedownload(apiparams)
       request.yar.set('downloadresult', downloadresult)
+
       return h.view(stationDetailsView, {
         pageTitle: english.stationdetails.pageTitle,
         title: english.stationdetails.title,
@@ -152,47 +51,32 @@ const stationDetailsController = {
           locationMiles
       })
     } else {
-      if (request.yar.get('nooflocation') === 'single') {
-        return h.view(stationDetailsView, {
-          pageTitle: english.stationdetails.pageTitle,
-          title: english.stationdetails.title,
-          serviceName: english.stationdetails.serviceName,
-          stationdetails: request.yar.get('stationdetails'),
-          maplocation,
-          updatedTime,
-          displayBacklink: true,
-          fullSearchQuery,
-          apiparams,
-          years,
-          currentdate,
-          pollutantKeys: request.yar.get('stationdetails').pollutants,
-          selectedYear: request.yar.get('selectedYear'),
-          downloadresult: request.yar.get('downloadresult'),
-          hrefq:
-            '/multiplelocations?fullSearchQuery=' +
-            fullSearchQuery +
-            '&locationMiles=' +
-            locationMiles
-        })
-      } else {
-        return h.view(stationDetailsView, {
-          pageTitle: english.stationdetails.pageTitle,
-          title: english.stationdetails.title,
-          serviceName: english.stationdetails.serviceName,
-          stationdetails: request.yar.get('stationdetails'),
-          maplocation,
-          updatedTime,
-          selectedYear: request.yar.get('selectedYear'),
-          displayBacklink: true,
-          fullSearchQuery,
-          apiparams,
-          years,
-          pollutantKeys: request.yar.get('stationdetails').pollutants,
-          currentdate,
-          downloadresult: request.yar.get('downloadresult'),
-          hrefq: '/location/' + multiplelocID
-        })
+      // If needed, declare apiparams here for non-download logic
+      const apiparams = {
+        siteId: request.yar.get('stationdetails')?.localSiteID,
+        year: request.yar.get('selectedYear')
       }
+      return h.view(stationDetailsView, {
+        pageTitle: english.stationdetails.pageTitle,
+        title: english.stationdetails.title,
+        serviceName: english.stationdetails.serviceName,
+        stationdetails: request.yar.get('stationdetails'),
+        maplocation,
+        updatedTime,
+        displayBacklink: true,
+        fullSearchQuery,
+        apiparams,
+        years,
+        currentdate,
+        pollutantKeys: request.yar.get('stationdetails').pollutants,
+        selectedYear: request.yar.get('selectedYear'),
+        downloadresult: request.yar.get('downloadresult'),
+        hrefq:
+          '/multiplelocations?fullSearchQuery=' +
+          fullSearchQuery +
+          '&locationMiles=' +
+          locationMiles
+      })
     }
   }
 }

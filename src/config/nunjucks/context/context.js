@@ -36,15 +36,4 @@ export function context(request) {
       return `${assetPath}/${normalizedAssetPath}`
     }
   }
-  // return {
-  //   assetPath: `${assetPath}/assets`,
-  //   serviceName: config.get('serviceName'),
-  //   serviceUrl: '/',
-  //   breadcrumbs: [],
-  //   navigation: buildNavigation(request),
-  //   getAssetPath(asset) {
-  //     const webpackAssetPath = webpackManifest?.[asset]
-  //     return `${assetPath}/${webpackAssetPath ?? asset}`
-  //   }
-  // }
 }
