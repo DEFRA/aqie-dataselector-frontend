@@ -1,11 +1,17 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const stationDetailsController = {
   handler: async (request, h) => {
+    const HTTP_BAD_REQUEST = 400
+    const HTTP_NOT_FOUND = 404
+    const HTTP_INTERNAL_SERVER_ERROR = 500
+    const formathrs = 12
+    const logger = createLogger()
     if (!request) {
-      return h.response('Invalid request').code(400)
+      return h.response('Invalid request').code(HTTP_BAD_REQUEST)
     }
     // Clear previous session values
     request.yar.set('errors', '')
@@ -23,7 +29,12 @@ const stationDetailsController = {
         )
         return response.data
       } catch (error) {
-        return h.response('Failed to download data').code(500)
+        logger.error('Download API failed:', error)
+        // Log the error for debugging
+
+        return h
+          .response('Failed to download data')
+          .code(HTTP_INTERNAL_SERVER_ERROR)
       }
     }
 
@@ -32,8 +43,8 @@ const stationDetailsController = {
       const date = new Date(apiDate)
       const hours = date.getUTCHours()
       const minutes = date.getUTCMinutes()
-      const ampm = hours >= 12 ? 'pm' : 'am'
-      const formattedHours = hours % 12 || 12
+      const ampm = hours >= formathrs ? 'pm' : 'am'
+      const formattedHours = hours % formathrs || formathrs
       const formattedMinutes = minutes < 10 ? '0' + minutes : minutes
       const day = date.getUTCDate()
       const month = date.toLocaleString('en-GB', { month: 'long' })
@@ -52,17 +63,19 @@ const stationDetailsController = {
 
     const monitoringResult = request.yar.get('MonitoringstResult')
     if (!monitoringResult) {
-      return h.response('Monitoring result not found').code(404)
+      return h.response('Monitoring result not found').code(HTTP_NOT_FOUND)
     }
 
     const result = monitoringResult.getmonitoringstation
     if (!Array.isArray(result)) {
-      return h.response('Invalid monitoring data format').code(500)
+      return h
+        .response('Invalid monitoring data format')
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
 
     const station = result.find((x) => x.id === request.params.id)
     if (!station) {
-      return h.response('Station not found').code(404)
+      return h.response('Station not found').code(HTTP_NOT_FOUND)
     }
 
     request.yar.set('stationdetails', station)
