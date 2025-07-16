@@ -21,7 +21,9 @@ const previewID = 'GTM-5ZWS27T3'
 /* Google Analytics tracking IDs for preview and live environments. */
 const TRACKING_PREVIEW_ID = previewID
 const TRACKING_LIVE_ID = previewID
-
+function gtag() {
+  window.dataLayer.push(arguments)
+}
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
   analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
@@ -191,9 +193,7 @@ export function resetCookies() {
         Cookie(cookie, null)
       })
     }
-    function gtag() {
-      window.dataLayer.push(arguments)
-    }
+
     function loadGoogleAnalytics() {
       const script = document.createElement('script')
       script.src = ganalytics
