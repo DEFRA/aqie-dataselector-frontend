@@ -50,6 +50,7 @@ module.exports = {
         '@typescript-eslint/no-unsafe-call': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/prefer-nullish-coalescing': 'off',
 
         // JSDoc blocks are optional by default
         'jsdoc/require-jsdoc': 'off',
@@ -105,6 +106,7 @@ module.exports = {
       },
       rules: {
         '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/prefer-nullish-coalescing': 'off',
 
         // Allow require devDependencies
         'n/no-unpublished-require': [

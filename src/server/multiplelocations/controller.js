@@ -6,9 +6,33 @@ import axios from 'axios'
 
 const multipleLocationsController = {
   handler: async (request, h) => {
+    async function invokeosnameAPI(searchv) {
+      try {
+        const response = await axios.get(
+          config.get('OS_NAMES_API_URL') + searchv
+        )
+        // logger.info('repsonse of osnameAPI', response)
+        return response.data
+      } catch (error) {
+        return error // Rethrow the error so it can be handled appropriately
+      }
+    }
+
+    async function InvokeMonitstnAPI(sValue, lMiles) {
+      try {
+        const response = await axios.get(
+          config.get('OS_NAMES_API_URL_1') + sValue + '&miles=' + lMiles
+        )
+
+        return response.data
+      } catch (error) {
+        return error // Rethrow the error so it can be handled appropriately
+      }
+    }
     // const logger = createLogger()
     const searchlocationurl = '/search-location'
-    if (request != null) {
+
+    if (request !== null) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
       request.yar.set('locationMiles', request.query?.locationMiles)
@@ -53,21 +77,10 @@ const multipleLocationsController = {
         locationdetails.length === 0 ||
         locationdetails.length === undefined
       ) {
-        const result = await invokeosnameAPI()
+        const result = await invokeosnameAPI(searchValue)
         //  logger.info('Result of OSNAMEAPI', result)
-        if (result != null) {
+        if (result !== null) {
           request.yar.set('osnameapiresult', result)
-        }
-        async function invokeosnameAPI() {
-          try {
-            const response = await axios.get(
-              config.get('OS_NAMES_API_URL') + searchValue
-            )
-            // logger.info('repsonse of osnameAPI', response)
-            return response.data
-          } catch (error) {
-            return error // Rethrow the error so it can be handled appropriately
-          }
         }
 
         locations = result.getOSPlaces
@@ -76,24 +89,10 @@ const multipleLocationsController = {
       }
 
       if (searchValue !== '' || searchValue !== null) {
-        MonitoringstResult = await InvokeMonitstnAPI()
+        MonitoringstResult = await InvokeMonitstnAPI(searchValue, locationMiles)
 
         if (MonitoringstResult !== null) {
           request.yar.set('MonitoringstResult', MonitoringstResult)
-        }
-        async function InvokeMonitstnAPI() {
-          try {
-            const response = await axios.get(
-              config.get('OS_NAMES_API_URL_1') +
-                searchValue +
-                '&miles=' +
-                locationMiles
-            )
-
-            return response.data
-          } catch (error) {
-            return error // Rethrow the error so it can be handled appropriately
-          }
         }
 
         if (locations !== undefined && locations.length > 0) {

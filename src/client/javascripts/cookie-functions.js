@@ -63,7 +63,7 @@ const DEFAULT_COOKIE_CONSENT = {
  */
 export function Cookie(name, value, options) {
   if (typeof value !== 'undefined') {
-    if (value === false ?? value === null) {
+    if (value === false || value === null) {
       deleteCookie(name)
     } else {
       // Default expiry date of 30 days
@@ -121,7 +121,7 @@ export function isValidConsentCookie(options) {
  */
 export function setConsentCookie(options) {
   const cookieConsent =
-    getConsentCookie() ??
+    getConsentCookie() ||
     // If no preferences or old version use the default
     JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
 
@@ -150,7 +150,7 @@ export function setConsentCookie(options) {
  */
 export function resetCookies() {
   const options =
-    getConsentCookie() ??
+    getConsentCookie() ||
     // If no preferences or old version use the default
     JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
 
@@ -191,15 +191,16 @@ export function resetCookies() {
         Cookie(cookie, null)
       })
     }
+    function gtag() {
+      window.dataLayer.push(arguments)
+    }
     function loadGoogleAnalytics() {
       const script = document.createElement('script')
       script.src = ganalytics
       script.async = true
       document.head.appendChild(script)
-      window.dataLayer = window.dataLayer ?? []
-      function gtag() {
-        window.dataLayer.push(arguments)
-      }
+      window.dataLayer = window.dataLayer || []
+
       gtag('js', new Date())
       gtag('config', tagID, { page_path: window.location.pathname })
     }
@@ -263,10 +264,12 @@ function userAllowsCookie(cookieName) {
   }
 
   for (const category in COOKIE_CATEGORIES) {
-    const cookiesInCategory = COOKIE_CATEGORIES[category]
+    if (Object.prototype.hasOwnProperty.call(COOKIE_CATEGORIES, category)) {
+      const cookiesInCategory = COOKIE_CATEGORIES[category]
 
-    if (cookiesInCategory.indexOf(cookieName) !== '-1') {
-      return userAllowsCookieCategory(category, cookiePreferences)
+      if (cookiesInCategory.indexOf(cookieName) !== -1) {
+        return userAllowsCookieCategory(category, cookiePreferences)
+      }
     }
   }
 

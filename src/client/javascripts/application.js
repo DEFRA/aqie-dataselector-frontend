@@ -28,6 +28,7 @@ const $cookieBanner = document.querySelector(
   '[data-module="govuk-cookie-banner"]'
 )
 if ($cookieBanner) {
+  // Instantiating for side effects (e.g., auto-initialization)
   new CookieBanner($cookieBanner)
 }
 
@@ -44,6 +45,7 @@ if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
 // Initialise cookie page
 const $cookiesPage = document.querySelector('[data-module="app-cookies-page"]')
 if ($cookiesPage) {
+  // Instantiating for side effects (e.g., auto-initialization)
   new CookiesPage($cookiesPage)
 }
 
