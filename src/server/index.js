@@ -69,7 +69,7 @@ export async function createServer() {
       if (session.password === config.get('aqiePassword')) {
         return { isValid: true }
       } else {
-        return { isValid: true }
+        return { isValid: false }
       }
     }
   })
