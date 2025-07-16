@@ -1,4 +1,8 @@
-import { getLocationDetailsController } from '~/src/server/locationId/controller.js'
+import {
+  getLocationDetailsController,
+  findUserLocation,
+  buildPollutantMap
+} from '~/src/server/locationId/controller.js'
 
 import axios from 'axios'
 
@@ -141,30 +145,65 @@ describe('getLocationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
-  //  it('should handle API error gracefully', async () => {
-  //   const mockLocation = {
-  //     GAZETTEER_ENTRY: {
-  //       ID: 'loc123',
-  //       NAME1: 'TestLocation'
-  //     }
-  //   }
+  describe('findUserLocation', () => {
+    it('should return the location name when ID matches', () => {
+      const locations = [
+        { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } },
+        { GAZETTEER_ENTRY: { ID: 'loc456', NAME1: 'Manchester' } }
+      ]
+      const result = findUserLocation(locations, 'loc456')
+      expect(result).toBe('Manchester')
+    })
 
-  //   const mockError = new Error('API failed')
+    it('should return empty string when ID does not match', () => {
+      const locations = [{ GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } }]
+      const result = findUserLocation(locations, 'loc999')
+      expect(result).toBe('')
+    })
 
-  //   request.yar.get.mockImplementation((key) => {
-  //     const session = {
-  //       osnameapiresult: { getOSPlaces: [mockLocation] },
-  //       fullSearchQuery: { value: 'query' },
-  //       locationMiles: 5
-  //     }
-  //     return session[key]
-  //   })
+    it('should return empty string when locations is null or undefined', () => {
+      expect(findUserLocation(null, 'loc123')).toBe('')
+      expect(findUserLocation(undefined, 'loc123')).toBe('')
+    })
+  })
+})
 
-  //   axios.get.mockRejectedValue(mockError)
+describe('buildPollutantMap', () => {
+  it('should return a map with correct pollutant names', () => {
+    const stations = [
+      {
+        name: 'Station A',
+        pollutants: { PM25: {}, MP10: {}, NO2: {} }
+      },
+      {
+        name: 'Station B',
+        pollutants: { GR25: {}, GE10: {} }
+      }
+    ]
+    const result = buildPollutantMap(stations)
 
-  //   const result = await getLocationDetailsController.handler(request, h)
+    expect(result.get('Station A')).toEqual(
+      expect.arrayContaining(['PM2.5', 'PM10', 'NO2'])
+    )
+    expect(result.get('Station B')).toEqual(
+      expect.arrayContaining(['PM2.5', 'PM10'])
+    )
+  })
 
-  //   expect(request.yar.set).toHaveBeenCalledWith('MonitoringstResult', mockError)
-  //   expect(result).toBe(mockError)
-  // })
+  it('should return an empty map if input is not an array', () => {
+    const result = buildPollutantMap(null)
+    expect(result instanceof Map).toBe(true)
+    expect(result.size).toBe(0)
+  })
+
+  it('should handle stations with no pollutants', () => {
+    const stations = [
+      {
+        name: 'Station C',
+        pollutants: {}
+      }
+    ]
+    const result = buildPollutantMap(stations)
+    expect(result.get('Station C')).toEqual([])
+  })
 })

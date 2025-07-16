@@ -133,4 +133,4 @@ function renderNoStation(h, location, miles, hrefq) {
   })
 }
 
-export { getLocationDetailsController }
+export { getLocationDetailsController, findUserLocation, buildPollutantMap }
