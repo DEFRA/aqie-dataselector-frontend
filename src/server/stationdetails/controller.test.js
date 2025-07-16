@@ -114,11 +114,102 @@ describe('stationDetailsController.handler', () => {
 
     const result = await stationDetailsController.handler(request, h)
 
-    expect(request.yar.set).toHaveBeenCalledWith(
-      'downloadresult',
-      expect.any(Error)
+    expect(h.response).toHaveBeenCalledWith('Failed to download data')
+    expect(h.code).toHaveBeenCalledWith(500)
+    expect(result).toBe(h.response.mock.results[0].value)
+  })
+
+  it('should return 400 if request is null', async () => {
+    const result = await stationDetailsController.handler(null, h)
+
+    expect(h.response).toHaveBeenCalledWith('Invalid request')
+    expect(h.code).toHaveBeenCalledWith(400)
+    expect(result).toBe(h.response.mock.results[0].value)
+  })
+
+  it('should return 404 if monitoring result is missing', async () => {
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        stationdetails: {},
+        selectedYear: 2024
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Monitoring result not found')
+    expect(h.code).toHaveBeenCalledWith(404)
+    expect(result).toBe(h.response.mock.results[0].value)
+  })
+
+  it('should return 500 if monitoring result is not an array', async () => {
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: 'not-an-array' }
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Invalid monitoring data format')
+    expect(h.code).toHaveBeenCalledWith(500)
+    expect(result).toBe(h.response.mock.results[0].value)
+  })
+
+  it('should return 404 if station is not found in monitoring result', async () => {
+    request.params.id = 'nonexistent'
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: {
+          getmonitoringstation: [{ id: 'site123' }]
+        }
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Station not found')
+    expect(h.code).toHaveBeenCalledWith(404)
+    expect(result).toBe(h.response.mock.results[0].value)
+  })
+
+  it('should render single location view when nooflocation is single', async () => {
+    request.yar.get = jest.fn((key) => {
+      const station = {
+        id: 'site123',
+        region: 'region1',
+        siteType: 'urban',
+        name: 'StationName',
+        location: { coordinates: [1.23, 4.56] },
+        pollutants: ['NO2', 'PM10'],
+        updated: '2025-07-15T00:00:00Z'
+      }
+
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        latesttime: '2024-07-15',
+        downloadresult: { result: 'downloaded' },
+        fullSearchQuery: { value: 'mockFullSearchQuery' },
+        locationMiles: 10,
+        locationID: 'mockLocationID',
+        nooflocation: 'single'
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        hrefq: expect.stringContaining('/multiplelocations')
+      })
     )
-    expect(h.view).toHaveBeenCalled()
     expect(result).toBe(h.view.mock.results[0].value)
   })
 })
