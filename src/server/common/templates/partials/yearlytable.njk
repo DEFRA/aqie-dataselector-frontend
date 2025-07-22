@@ -107,6 +107,15 @@
     'Trend'
   )}}
 {% endset %}
+{% set DatacaptureToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the Data capture percentage',
+    'Data capture under 75% is low. We do not calculate the average when data capture is low.
+    ',
+    'Trend'
+  )}}
+{% endset %}
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   
 {% if tabledata !== null %}

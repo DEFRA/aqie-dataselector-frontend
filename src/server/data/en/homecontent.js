@@ -157,6 +157,20 @@ export const english = {
       title2: 'within ',
       title3: 'of'
     },
+    maptoggletips: {
+      Urban_traffic:
+        'This monitoring site is in a city or town close to roads, motorways or highways. ',
+      Urban_industrial:
+        'This monitoring site is in a city or town, downwind of an industrial source. ',
+      Suburban_industrial:
+        'This monitoring site is on the outskirts of an urban area (or in an area of its own), downwind of an industrial source.',
+      Suburban_background:
+        'This monitoring site is on the outskirts of an urban area or in an area of its own. It is located so pollutant measurements do not come from one specific source. ',
+      Rural_background:
+        'This monitoring area is in small settlements or areas with natural ecosystems, forests or crops. It is located so pollutant measurements do not come from one specific source.',
+      Urban_background:
+        'This monitoring area is in a city or town. It is located so pollutant measurements do not come from one specific source. '
+    },
 
     serviceName: SERVICE_NAME,
     paragraphs: {
