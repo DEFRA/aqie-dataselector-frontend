@@ -66,6 +66,8 @@ const stationDetailsController = {
           return english.stationdetails.maptoggletips.Rural_background
         case 'Urban Background':
           return english.stationdetails.maptoggletips.Urban_background
+        default:
+          return null // or undefined, or a default message
       }
     }
 
