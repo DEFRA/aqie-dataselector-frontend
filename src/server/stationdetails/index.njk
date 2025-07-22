@@ -16,12 +16,13 @@
   </script>
 {% block content %}
 
+    
  {% set mapToggletip %}
   {{ toggletip(
     '',
     'More information about the ' + stationdetails.siteType,
-    'This monitoring site is in a city or town close to roads, motorways or highways.
-    ',
+    maptoggletips
+    ,
     'Trend'
   )}}
 {% endset %}
@@ -52,12 +53,11 @@
               <dt class="defra-aq-features__key govuk-caption-m">Site type</dt>
              
               <dd class="defra-aq-features__value govuk-body" >
-                {# <div style="margin-left:172px"> #}
-              
-                  {# </div> #}
-                  
+               
                   {{stationdetails.siteType}}
-                      {{ mapToggletip | safe }}
+                   
+                    {{mapToggletip | safe}}
+
                   <p class="govuk-body govuk-!-margin-top-1"><a href={{maplocation}} class="govuk-link" target="_blank" >View on Google Maps (opens in new tab)</a></p>
               
 

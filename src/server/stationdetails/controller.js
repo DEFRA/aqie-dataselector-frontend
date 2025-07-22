@@ -51,6 +51,25 @@ const stationDetailsController = {
       const year = date.getUTCFullYear()
       return `${formattedHours}:${formattedMinutes} ${ampm} on ${day} ${month} ${year}`
     }
+    // Get map toggletips
+    function getToggletip(siteType) {
+      switch (siteType) {
+        case 'Urban Traffic':
+          return english.stationdetails.maptoggletips.Urban_traffic
+        case 'Urban Industrial':
+          return english.stationdetails.maptoggletips.Urban_industrial
+        case 'Suburban Industrial':
+          return english.stationdetails.maptoggletips.Suburban_industrial
+        case 'Suburban Background':
+          return english.stationdetails.maptoggletips.Suburban_background
+        case 'Rural Background':
+          return english.stationdetails.maptoggletips.Rural_background
+        case 'Urban Background':
+          return english.stationdetails.maptoggletips.Urban_background
+        default:
+          return null // or undefined, or a default message
+      }
+    }
 
     // Handle download parameters
     if (request.params.download) {
@@ -133,6 +152,7 @@ const stationDetailsController = {
       years,
       currentdate: currentDate,
       pollutantKeys: stationDetails.pollutants,
+      maptoggletips: getToggletip(stationDetails.siteType),
       selectedYear: request.yar.get('selectedYear'),
       downloadresult: request.yar.get('downloadresult'),
       hrefq:
