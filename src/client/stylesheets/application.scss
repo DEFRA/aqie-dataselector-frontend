@@ -1,3 +1,5 @@
+$govuk-assets-path: "../assets/";
+$govuk-global-styles: true;
 @warn "Loading app.scss"; 
 @import "govuk-frontend";
 
