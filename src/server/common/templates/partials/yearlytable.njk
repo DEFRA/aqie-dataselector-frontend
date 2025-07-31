@@ -116,6 +116,7 @@
     'Trend'
   )}}
 {% endset %}
+
   <span id="selectedYear" style="display: none;" >{{finalyear}}</span>
   
 {% if tabledata !== null %}
@@ -128,7 +129,7 @@
 
 <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
 
-<h1 class="govuk-heading-s" >{{url}} </h1>
+{# <h1 class="govuk-heading-s" >{{url}} </h1> #}
               <thead class="defra-aq-levels-table__head">
 <tr class="defra-aq-levels-table__row">
   <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
@@ -149,7 +150,15 @@
         <tbody class="defra-aq-levels-table__body">
                     <tr class="defra-aq-levels-table__row">
                        
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}<span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}</span></td>
+        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}
+          <span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}%
+          {% if data.dataCapturePercentage < 75 %}
+      {{ DatacaptureToggletip | safe }}
+          {% endif %}
+         
+
+
+        </span></td>
       
          <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
            
