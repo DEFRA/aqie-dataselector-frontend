@@ -6,11 +6,17 @@ import axios from 'axios'
 
 const multipleLocationsController = {
   handler: async (request, h) => {
+    
     async function invokeosnameAPI(searchv) {
+      const nameApiparams = {
+     userLocation: searchv
+          
+      }
       try {
-        const response = await axios.get(
-          config.get('OS_NAMES_API_URL') + searchv
+        const response = await axios.post(
+          config.get('OS_NAMES_API_URL'),nameApiparams
         )
+       
         // logger.info('repsonse of osnameAPI', response)
         return response.data
       } catch (error) {
@@ -19,9 +25,13 @@ const multipleLocationsController = {
     }
 
     async function InvokeMonitstnAPI(sValue, lMiles) {
+      const locationvalues = {
+     userLocation: sValue,
+        usermiles: lMiles       
+      }
       try {
-        const response = await axios.get(
-          config.get('OS_NAMES_API_URL_1') + sValue + '&miles=' + lMiles
+        const response = await axios.post(
+          config.get('OS_NAMES_API_URL_1'),locationvalues
         )
 
         return response.data
@@ -77,7 +87,7 @@ const multipleLocationsController = {
         locationdetails.length === 0 ||
         locationdetails.length === undefined
       ) {
-        const result = await invokeosnameAPI(searchValue)
+        const result = await invokeosnameAPI(searchValue)       
         //  logger.info('Result of OSNAMEAPI', result)
         if (result !== null) {
           request.yar.set('osnameapiresult', result)
