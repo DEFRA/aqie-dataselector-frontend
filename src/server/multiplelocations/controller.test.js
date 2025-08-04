@@ -1,5 +1,4 @@
 import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
-
 import axios from 'axios'
 
 jest.mock('axios')
@@ -48,12 +47,13 @@ describe('multipleLocationsController.handler', () => {
 
     request.yar.get.mockImplementation((key) => {
       if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult') return mockLocation
+      if (key === 'osnameapiresult')
+        return { getOSPlaces: mockLocation.getOSPlaces }
       return null
     })
 
-    axios.get.mockResolvedValueOnce({ data: mockLocation })
-    axios.get.mockResolvedValueOnce({ data: mockMonitoring })
+    axios.post.mockResolvedValueOnce({ data: mockLocation })
+    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
 
     const result = await multipleLocationsController.handler(request, h)
 
@@ -80,12 +80,13 @@ describe('multipleLocationsController.handler', () => {
 
     request.yar.get.mockImplementation((key) => {
       if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult') return mockLocation
+      if (key === 'osnameapiresult')
+        return { getOSPlaces: mockLocation.getOSPlaces }
       return null
     })
 
-    axios.get.mockResolvedValueOnce({ data: mockLocation })
-    axios.get.mockResolvedValueOnce({ data: mockMonitoring })
+    axios.post.mockResolvedValueOnce({ data: mockLocation })
+    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
 
     const result = await multipleLocationsController.handler(request, h)
 
@@ -119,12 +120,13 @@ describe('multipleLocationsController.handler', () => {
 
     request.yar.get.mockImplementation((key) => {
       if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult') return mockLocation
+      if (key === 'osnameapiresult')
+        return { getOSPlaces: mockLocation.getOSPlaces }
       return null
     })
 
-    axios.get.mockResolvedValueOnce({ data: mockLocation })
-    axios.get.mockResolvedValueOnce({ data: mockMonitoring })
+    axios.post.mockResolvedValueOnce({ data: mockLocation })
+    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
 
     const result = await multipleLocationsController.handler(request, h)
 
@@ -147,11 +149,12 @@ describe('multipleLocationsController.handler', () => {
 
     request.yar.get.mockImplementation((key) => {
       if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult') return mockLocation
+      if (key === 'osnameapiresult')
+        return { getOSPlaces: mockLocation.getOSPlaces }
       return null
     })
 
-    axios.get.mockResolvedValueOnce({ data: mockLocation })
+    axios.post.mockResolvedValueOnce({ data: mockLocation })
 
     const result = await multipleLocationsController.handler(request, h)
 
@@ -196,7 +199,7 @@ describe('multipleLocationsController.handler', () => {
       return null
     })
 
-    axios.get.mockRejectedValue(mockError)
+    axios.post.mockRejectedValue(mockError)
 
     const result = await multipleLocationsController.handler(request, h)
 
