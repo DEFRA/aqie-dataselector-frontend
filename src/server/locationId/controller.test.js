@@ -53,7 +53,7 @@ describe('getLocationDetailsController.handler', () => {
       return session[key]
     })
 
-    axios.get.mockResolvedValue({ data: mockMonitoringData })
+    axios.post.mockResolvedValue({ data: mockMonitoringData })
 
     const result = await getLocationDetailsController.handler(request, h)
 
@@ -75,7 +75,14 @@ describe('getLocationDetailsController.handler', () => {
   })
 
   it('should return undefined if osnameapiresult is missing', async () => {
-    request.yar.get.mockReturnValueOnce(undefined)
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: undefined,
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 5
+      }
+      return session[key]
+    })
 
     const result = await getLocationDetailsController.handler(request, h)
 
@@ -130,7 +137,7 @@ describe('getLocationDetailsController.handler', () => {
       return session[key]
     })
 
-    axios.get.mockResolvedValue({ data: mockMonitoringData })
+    axios.post.mockResolvedValue({ data: mockMonitoringData })
 
     const result = await getLocationDetailsController.handler(request, h)
 
@@ -144,27 +151,27 @@ describe('getLocationDetailsController.handler', () => {
     )
     expect(result).toBe(h.view.mock.results[0].value)
   })
+})
 
-  describe('findUserLocation', () => {
-    it('should return the location name when ID matches', () => {
-      const locations = [
-        { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } },
-        { GAZETTEER_ENTRY: { ID: 'loc456', NAME1: 'Manchester' } }
-      ]
-      const result = findUserLocation(locations, 'loc456')
-      expect(result).toBe('Manchester')
-    })
+describe('findUserLocation', () => {
+  it('should return the location name when ID matches', () => {
+    const locations = [
+      { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } },
+      { GAZETTEER_ENTRY: { ID: 'loc456', NAME1: 'Manchester' } }
+    ]
+    const result = findUserLocation(locations, 'loc456')
+    expect(result).toBe('Manchester')
+  })
 
-    it('should return empty string when ID does not match', () => {
-      const locations = [{ GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } }]
-      const result = findUserLocation(locations, 'loc999')
-      expect(result).toBe('')
-    })
+  it('should return empty string when ID does not match', () => {
+    const locations = [{ GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'London' } }]
+    const result = findUserLocation(locations, 'loc999')
+    expect(result).toBe('')
+  })
 
-    it('should return empty string when locations is null or undefined', () => {
-      expect(findUserLocation(null, 'loc123')).toBe('')
-      expect(findUserLocation(undefined, 'loc123')).toBe('')
-    })
+  it('should return empty string when locations is null or undefined', () => {
+    expect(findUserLocation(null, 'loc123')).toBe('')
+    expect(findUserLocation(undefined, 'loc123')).toBe('')
   })
 })
 

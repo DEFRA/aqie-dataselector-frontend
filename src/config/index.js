@@ -241,13 +241,13 @@ export const config = convict({
   OS_NAMES_API_URL: {
     doc: 'Osname api url',
     format: String,
-    default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/userLocation=`,
+    default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/`,
     env: 'Osname api url'
   },
   OS_NAMES_API_URL_1: {
     doc: 'connect to get monitoring station prod',
     format: String,
-    default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/location=`,
+    default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/`,
     env: 'OS_NAMES_API_URL_1'
   },
   Download_URL: {
