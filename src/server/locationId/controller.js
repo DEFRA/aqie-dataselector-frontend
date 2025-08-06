@@ -64,13 +64,19 @@ function findUserLocation(locations, locationID) {
 }
 
 async function fetchMonitoringStations(location, miles) {
+  const locationvalues = {
+    userLocation: location,
+    usermiles: miles
+  }
   try {
-    const url = `${config.get('OS_NAMES_API_URL_1')}${location}&miles=${miles}`
-    const response = await axios.get(url)
-    // logger.info('Monitoring station API response', response)
+    const response = await axios.post(
+      config.get('OS_NAMES_API_URL_1'),
+      locationvalues
+    )
+
     return response.data
   } catch (error) {
-    return error
+    return error // Rethrow the error so it can be handled appropriately
   }
 }
 
