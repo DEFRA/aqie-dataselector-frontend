@@ -151,9 +151,16 @@
                     <tr class="defra-aq-levels-table__row">
                        
         <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}
-          <span class="defra-aq-levels-table__cell--data">Data capture: {{ data.dataCapturePercentage }}%
+           {% if data.dataCapturePercentage < 75 %}
+           <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                          Low data capture
+                        </strong></span>
+             {% endif %}
+          <span class="defra-aq-levels-table__cell--data " style= "margin-top: 4px;">Data capture: {{ data.dataCapturePercentage }}%
           {% if data.dataCapturePercentage < 75 %}
+          <span>
       {{ DatacaptureToggletip | safe }}
+      </span>
           {% endif %}
          
 
@@ -201,6 +208,12 @@
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
  {{ data.hourlyCount }}
  {{ NO2_hourlyToggletip | safe }}
+ {% if (data.hourlyCount > 18) %}
+ <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                            Above limit
+                          </strong></span>
+ </td>
+ {% endif %}
     </td>
 
 {% endif %}
@@ -208,6 +221,7 @@
 {% if (data.pollutantName != "Nitrogen dioxide") and (data.pollutantName != "Sulphur dioxide") %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
         {{ data.hourlyCount }}
+
     </td>
 {% endif %}
 
@@ -216,7 +230,12 @@
 
  {{ data.hourlyCount }}
  {{ SO2_hourlyToggletip | safe }}
+ {% if (data.hourlyCount > 24) %}
+ <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                            Above limit
+                          </strong></span>
  </td>
+ {% endif %}
  {% endif %}
       </tr>
       {% endfor %}
@@ -367,19 +386,22 @@
               
               <script>
 
-      async function getAPIstn_details1(pollutants,freq) {          
+      async function getAPIstn_details1(pollutants,freq) {  
+        
+const scrollY = window.scrollY;
+
+window.scrollTo(0, scrollY); 
+        
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
         .then(data => {           
            
             window.location.href =data
+            window.scrollTo(0, scrollY); 
         })
         .catch(error => console.error('Error fetching partial content:', error));        
 }
 document.addEventListener('DOMContentLoaded', () => {
-
-  
-      console.log("document.getElementById('year-heading').textContent in152",document.getElementById('year-heading').textContent)
     //document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
     
    
