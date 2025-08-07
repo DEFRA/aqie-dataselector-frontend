@@ -223,7 +223,7 @@ export const english = {
     texts_401: {
       a: 'Unauthorised access',
       b: trytitle,
-      c: 'You can go to',
+      c: 'You can go to ',
       d: 'UK AIR',
       e: 'to get air pollution data.'
     },
@@ -449,7 +449,7 @@ export const english = {
   },
   footer: {
     privacy: {
-      pageTitle: SERVICE_NAME,
+      pageTitle: 'Privacy - ' + SERVICE_NAME,
       title: 'Privacy notice',
       heading: SERVICE_NAME,
       headings: {
@@ -532,6 +532,7 @@ export const english = {
     },
     cookies: {
       title: 'Cookies',
+      pageTitle: 'Cookies - ' + SERVICE_NAME,
       headings: {
         a: 'Essential cookies (strictly necessary)',
         b: 'Analytics cookies (optional)',
@@ -602,6 +603,7 @@ export const english = {
     },
     accessibility: {
       title: 'Accessibility Statement',
+      pageTitle: 'Accessibility Statement - ' + SERVICE_NAME,
       headings: {
         a: 'Compliance status',
         b: 'Preparation of this accessibility statement',

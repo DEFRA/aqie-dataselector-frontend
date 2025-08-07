@@ -15,7 +15,7 @@
    
    
 
- {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+  {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
  {% if errors.list %}
      <div class="govuk-error-summary" data-module="govuk-error-summary">
   <div role="alert">
@@ -35,7 +35,7 @@
       <form action='/multiplelocations' method="get">
      
 <div id="frontendUrl" style="display: none;">{{frontendUrl}}{{fullSearchQuery}}</div>
-    <div  class="govuk-form-group">
+    <div  class="govuk-form-group ">
       <h1 class="govuk-label-wrapper">
        <label class="govuk-heading-l govuk-!-margin-bottom-4" for="searchinput">
          {{params.text1}}
@@ -44,18 +44,28 @@
       <p id="hint1" class="govuk-body govuk-hint" for="searchinput">
         {{params.text2}}
       </p>
+      </div> 
 {% if errorMessage.message %}
+<div class="govuk-form-group govuk-form-group--error">
   <p id="event-name-error" class="govuk-error-message">
-    <span class="govuk-visually-hidden">Error:</span> {{errorMessage.message.text}}
+    <span class="govuk-visually-hidden ">Error:</span> {{errorMessage.message.text}}
   </p>
-{% endif %}
+
  <label class="govuk-label" for="search-input">
      {{params.text3}}
     </label>
 <input class="govuk-input" id="search-input" name="fullSearchQuery" type="text" value='{{fullSearchQuery.value}}'></input>
   
 </div>
-
+  
+   {%else %}
+   <label class="govuk-label" for="search-input">
+     {{params.text3}}
+    </label>
+<input class="govuk-input" id="search-input" name="fullSearchQuery" type="text" value='{{fullSearchQuery.value}}'></input>
+     
+   {% endif %}      
+       
        <div class="govuk-form-group">
   <fieldset class="govuk-fieldset">
     <legend class="govuk-fieldset__legend ">     
@@ -89,6 +99,7 @@
         </fieldset>
     </div>
 
+
         {{ govukButton({
   text: button
 }) }}
@@ -97,4 +108,5 @@
       </form>
     </div>
   </div>
+      
 {% endblock %}

@@ -12,6 +12,15 @@
     margin-top: -1px;
    margin-bottom: 0px;
 }
+.status-tag {
+  margin-top: 0px; 
+  padding: 6px 12px 6px 12px;
+}
+.status-description {
+  margin-left: 5px; 
+  display: inline-block; 
+  color: #505a5f !important;
+}
 
 .defra-aq-features {
     &__list {
@@ -68,15 +77,6 @@
         }
 }
 
-.status-tag {
-  margin-top: 0px; 
-  padding: 6px 12px 6px 12px;
-}
-.status-description {
-  margin-left: 5px; 
-  display: inline-block; 
-  color: #505a5f;
-}
 
 
 .aq-button-secondary {
@@ -673,6 +673,17 @@
           font-size: 14px;
       }
     }
+    @media (max-width: 330px) {
+  .table-scroll-container {
+    overflow-x: scroll; /* always show scrollbar */
+    -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+    max-width: 100%;
+  }
+
+  .table-scroll-container table {
+    min-width: 500px; /* adjust to prevent squishing */
+  }
+}
 }
 @include govuk-exports("govuk/component/cookie-banner") {
 .govuk-cookie-banner {
