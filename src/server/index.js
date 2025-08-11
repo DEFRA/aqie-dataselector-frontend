@@ -5,7 +5,7 @@ import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
-import { catchAll } from '~/src/server/common/helpers/errors.js'
+// import { catchAll } from '~/src/server/common/helpers/errors.js'
 import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
@@ -86,7 +86,18 @@ export async function createServer() {
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
-  server.ext('onPreResponse', catchAll)
+  server.ext('onPreResponse', (request, h) => {
+    const response = request.response
+    if (response.isBoom) {
+      return h.continue
+    }
+    response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.header(
+      'Content-Security-Policy',
+      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'"
+    )
+    return h.continue
+  })
 
   return server
 }
