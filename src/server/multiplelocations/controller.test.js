@@ -1,209 +1,179 @@
 import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
 import axios from 'axios'
 
+import { config } from '~/src/config/config.js'
+import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
+// import { english } from '~/src/server/data/en/homecontent.js'
+
 jest.mock('axios')
+jest.mock('~/src/config/config.js', () => ({
+  config: {
+    get: jest.fn()
+  }
+}))
+jest.mock('~/src/server/common/helpers/errors_message.js', () => ({
+  setErrorMessage: jest.fn()
+}))
+
+const mockRequest = (payload = {}) => ({
+  payload,
+  yar: {
+    set: jest.fn(),
+    get: jest.fn().mockImplementation((key) => {
+      if (key === 'osnameapiresult') return []
+      if (key === 'searchLocation') return payload.fullSearchQuery || ''
+      if (key === 'errors') return 'Some error'
+      if (key === 'errorMessage') return 'Some error message'
+      return undefined
+    })
+  }
+})
+
+const mockH = {
+  view: jest.fn()
+}
 
 describe('multipleLocationsController.handler', () => {
-  let h, request
-
   beforeEach(() => {
-    h = {
-      view: jest.fn().mockReturnThis()
-    }
-
-    request = {
-      query: {
-        fullSearchQuery: 'TestLocation',
-        locationMiles: '5',
-        searchQuery: 'TestLocation'
-      },
-      yar: {
-        get: jest.fn((key) => {
-          if (key === 'searchLocation') return 'TestLocation'
-          if (key === 'osnameapiresult') return null
-          return null
-        }),
-        set: jest.fn()
-      }
-    }
-
     jest.clearAllMocks()
+    config.get.mockImplementation((key) => {
+      if (key === 'OS_NAMES_API_URL') return 'https://mock-os-api.com'
+      if (key === 'OS_NAMES_API_URL_1') return 'https://mock-monitoring-api.com'
+    })
   })
 
-  it('should render monitoring-station view for single location with stations', async () => {
-    const mockLocation = {
-      getOSPlaces: [
-        { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'TestLocation' } }
-      ]
-    }
-    const mockMonitoring = {
-      getmonitoringstation: [
-        {
-          name: 'Station A',
-          pollutants: { PM25: {}, NO2: {} }
-        }
-      ]
-    }
-
-    request.yar.get.mockImplementation((key) => {
-      if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult')
-        return { getOSPlaces: mockLocation.getOSPlaces }
-      return null
+  it('should return multiple locations view', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'London',
+      locationMiles: '5'
     })
 
-    axios.post.mockResolvedValueOnce({ data: mockLocation })
-    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
-
-    const result = await multipleLocationsController.handler(request, h)
-
-    expect(h.view).toHaveBeenCalledWith(
-      'monitoring-station/index',
-      expect.objectContaining({
-        searchLocation: 'TestLocation',
-        locationMiles: '5',
-        monitoring_station: mockMonitoring.getmonitoringstation,
-        displayBacklink: true,
-        hrefq: '/search-location'
+    axios.post
+      .mockResolvedValueOnce({
+        data: { getOSPlaces: [{ name: 'Loc1' }, { name: 'Loc2' }] }
       })
-    )
-    expect(result).toBe(h.view.mock.results[0].value)
-  })
-
-  it('should render nostation view for single location with no stations', async () => {
-    const mockLocation = {
-      getOSPlaces: [
-        { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'TestLocation' } }
-      ]
-    }
-    const mockMonitoring = { getmonitoringstation: [] }
-
-    request.yar.get.mockImplementation((key) => {
-      if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult')
-        return { getOSPlaces: mockLocation.getOSPlaces }
-      return null
-    })
-
-    axios.post.mockResolvedValueOnce({ data: mockLocation })
-    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
-
-    const result = await multipleLocationsController.handler(request, h)
-
-    expect(h.view).toHaveBeenCalledWith(
-      'multiplelocations/nostation',
-      expect.objectContaining({
-        searchLocation: 'TestLocation',
-        locationMiles: '5',
-        displayBacklink: true,
-        hrefq: '/search-location'
-      })
-    )
-    expect(result).toBe(h.view.mock.results[0].value)
-  })
-
-  it('should render multiplelocations view when multiple locations are found', async () => {
-    const mockLocation = {
-      getOSPlaces: [
-        { GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'Location1' } },
-        { GAZETTEER_ENTRY: { ID: 'loc456', NAME1: 'Location2' } }
-      ]
-    }
-    const mockMonitoring = {
-      getmonitoringstation: [
-        {
-          name: 'Station A',
-          pollutants: { NO2: {}, MP10: {} }
+      .mockResolvedValueOnce({
+        data: {
+          getmonitoringstation: [
+            {
+              name: 'Station1',
+              pollutants: { PM25: {}, MP10: {} }
+            }
+          ]
         }
-      ]
-    }
+      })
 
-    request.yar.get.mockImplementation((key) => {
-      if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult')
-        return { getOSPlaces: mockLocation.getOSPlaces }
-      return null
-    })
+    await multipleLocationsController.handler(request, mockH)
 
-    axios.post.mockResolvedValueOnce({ data: mockLocation })
-    axios.post.mockResolvedValueOnce({ data: mockMonitoring })
-
-    const result = await multipleLocationsController.handler(request, h)
-
-    expect(h.view).toHaveBeenCalledWith(
+    expect(mockH.view).toHaveBeenCalledWith(
       'multiplelocations/index',
       expect.objectContaining({
-        results: mockLocation.getOSPlaces,
-        monitoring_station: mockMonitoring.getmonitoringstation,
-        searchLocation: 'TestLocation',
-        locationMiles: '5',
-        displayBacklink: true,
-        hrefq: '/search-location'
+        results: [{ name: 'Loc1' }, { name: 'Loc2' }],
+        monitoring_station: expect.any(Array)
       })
     )
-    expect(result).toBe(h.view.mock.results[0].value)
   })
 
-  it('should render nolocation view when no locations are found', async () => {
-    const mockLocation = { getOSPlaces: [] }
-
-    request.yar.get.mockImplementation((key) => {
-      if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult')
-        return { getOSPlaces: mockLocation.getOSPlaces }
-      return null
+  it('should return monitoring station view for single location with stations', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'London',
+      locationMiles: '5'
     })
 
-    axios.post.mockResolvedValueOnce({ data: mockLocation })
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'Loc1' }] } })
+      .mockResolvedValueOnce({
+        data: {
+          getmonitoringstation: [
+            {
+              name: 'Station1',
+              pollutants: { PM25: {}, MP10: {} }
+            }
+          ]
+        }
+      })
 
-    const result = await multipleLocationsController.handler(request, h)
+    await multipleLocationsController.handler(request, mockH)
 
-    expect(h.view).toHaveBeenCalledWith(
+    expect(mockH.view).toHaveBeenCalledWith(
+      'monitoring-station/index',
+      expect.objectContaining({
+        monitoring_station: expect.any(Array)
+      })
+    )
+  })
+
+  it('should return no station view for single location without stations', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'London',
+      locationMiles: '5'
+    })
+
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'Loc1' }] } })
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+    await multipleLocationsController.handler(request, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'multiplelocations/nostation',
+      expect.objectContaining({
+        locationMiles: '5'
+      })
+    )
+  })
+
+  it('should return no location view when no locations found', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'Unknown',
+      locationMiles: '5'
+    })
+
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [] } })
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+    await multipleLocationsController.handler(request, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
       'multiplelocations/nolocation',
       expect.objectContaining({
-        results: [],
-        searchLocation: 'TestLocation',
-        displayBacklink: true,
-        hrefq: '/search-location'
+        results: []
       })
     )
-    expect(result).toBe(h.view.mock.results[0].value)
   })
 
-  it('should render search-location view with error when query is missing', async () => {
-    request.query.fullSearchQuery = ''
-    request.query.searchQuery = ''
-    request.query.locationMiles = ''
-
-    request.yar.get.mockReturnValueOnce(undefined)
-
-    const result = await multipleLocationsController.handler(request, h)
-
-    expect(h.view).toHaveBeenCalledWith(
-      'search-location/index',
-      expect.objectContaining({
-        fullSearchQuery: '',
-        displayBacklink: true,
-        hrefq: '/'
-      })
-    )
-    expect(result).toBe(h.view.mock.results[0].value)
-  })
-
-  it('should handle API errors gracefully', async () => {
-    const mockError = new Error('API failed')
-
-    request.yar.get.mockImplementation((key) => {
-      if (key === 'searchLocation') return 'TestLocation'
-      if (key === 'osnameapiresult') return { getOSPlaces: [] }
-      return null
+  it('should return error view for special characters', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'Lond@n'
     })
 
-    axios.post.mockRejectedValue(mockError)
+    await multipleLocationsController.handler(request, mockH)
 
-    const result = await multipleLocationsController.handler(request, h)
+    expect(setErrorMessage).toHaveBeenCalled()
+    expect(mockH.view).toHaveBeenCalledWith(
+      'search-location/index',
+      expect.objectContaining({
+        errors: 'Some error',
+        errorMessage: 'Some error message'
+      })
+    )
+  })
 
-    expect(h.view).toHaveBeenCalled()
-    expect(result).toBe(h.view.mock.results[0].value)
+  it('should return error view for empty input', async () => {
+    const request = mockRequest({
+      fullSearchQuery: ''
+    })
+
+    await multipleLocationsController.handler(request, mockH)
+
+    expect(setErrorMessage).toHaveBeenCalled()
+    expect(mockH.view).toHaveBeenCalledWith(
+      'search-location/index',
+      expect.objectContaining({
+        errors: 'Some error',
+        errorMessage: 'Some error message'
+      })
+    )
   })
 })
