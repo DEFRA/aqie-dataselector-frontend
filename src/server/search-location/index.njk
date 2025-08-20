@@ -32,7 +32,7 @@
   </div>
 </div>
   {% endif %}
-      <form action='/multiplelocations' method="get">
+      <form action='/multiplelocations' method="post">
      
 <div id="frontendUrl" style="display: none;">{{frontendUrl}}{{fullSearchQuery}}</div>
     <div  class="govuk-form-group ">
@@ -107,6 +107,6 @@
         {# <input type="hidden" name="aq" value="{{ airQuality.value }}" /> #}
       </form>
     </div>
-  </div>
+  </div>  
       
 {% endblock %}

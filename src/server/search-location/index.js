@@ -6,6 +6,11 @@ export const searchLocation = {
     register(server) {
       server.route([
         {
+          method: 'POST',
+          path: '/search-location',
+          ...searchLocationController
+        },
+        {
           method: 'GET',
           path: '/search-location',
           ...searchLocationController
