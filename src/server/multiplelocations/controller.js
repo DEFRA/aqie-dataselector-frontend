@@ -45,28 +45,29 @@ const multipleLocationsController = {
     if (request !== null) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
-      request.yar.set('locationMiles', request.query?.locationMiles)
+      request.yar.set('locationMiles', request.payload?.locationMiles)
       request.yar.set('selectedLocation', '')
+
       // ...existing code...
       // Use a non-greedy quantifier to prevent super-linear backtracking
 
-      const sanitizedQuery = request.query.searchQuery
-        ?.replace(/[^a-zA-Z0-9 ]/g, ' ')
-        .trim()
+      // const sanitizedQuery = request.payload?.searchQuery
+      //   ?.replace(/[^a-zA-Z0-9 ]/g, ' ')
+      //   .trim()
 
-      if (request.query?.fullSearchQuery?.length > 0) {
+      if (request.payload?.fullSearchQuery?.length > 0) {
         request.yar.set('fullSearchQuery', {
-          value: decodeURI(request.query.fullSearchQuery)
+          value: decodeURI(request.payload.fullSearchQuery)
         })
         request.yar.set('searchQuery', {
-          value: decodeURI(sanitizedQuery)
+          value: decodeURI(request.payload?.searchQuery)
         })
       }
     }
 
-    const searchInput = request.query.fullSearchQuery
-    const searchValue = request.query.fullSearchQuery
-    const locationMiles = request.query?.locationMiles
+    const searchInput = request.payload.fullSearchQuery
+    const searchValue = request.payload.fullSearchQuery
+    const locationMiles = request.payload?.locationMiles
 
     if (searchValue !== '' || searchValue !== null) {
       request.yar.set('searchLocation', searchValue)
@@ -75,7 +76,11 @@ const multipleLocationsController = {
       request.yar.set('searchLocation', '')
       request.yar.set('searchValue', '')
     }
-    if (searchInput) {
+    const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(
+      request.payload.fullSearchQuery
+    )
+
+    if (searchInput && !hasSpecialCharacter) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
       const locationdetails = request.yar.get('osnameapiresult')
@@ -207,7 +212,32 @@ const multipleLocationsController = {
         }
       }
     } else {
-      const fullSearchQuery = request.query.fullSearchQuery
+      const fullSearchQuery = request.payload.fullSearchQuery
+      if (hasSpecialCharacter) {
+        const errorData = english.searchLocation.errorText_sp.uk
+        const errorSection = errorData?.fields
+        setErrorMessage(request, errorSection?.title, errorSection?.text)
+        const errors = request.yar?.get('errors')
+        const errorMessage = request.yar?.get('errorMessage')
+        request.yar.set('errors', '')
+        request.yar.set('errorMessage', '')
+        request.yar.set('fullSearchQuery', '')
+        request.yar.set('osnameapiresult', '')
+        return h.view('search-location/index', {
+          pageTitle: english.searchLocation.pageTitle,
+          heading: english.searchLocation.heading,
+          page: english.searchLocation.page,
+          serviceName: english.searchLocation.serviceName,
+          params: english.searchLocation.searchParams,
+          button: english.searchLocation.button,
+          displayBacklink: true,
+          fullSearchQuery,
+          hrefq: '/',
+          errors,
+          errorMessage
+        })
+      }
+
       if (!searchInput?.value) {
         const errorData = english.searchLocation.errorText.uk
         const errorSection = errorData?.fields

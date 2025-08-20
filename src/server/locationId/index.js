@@ -7,6 +7,11 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/location/{id}',
       ...getLocationDetailsController
+    },
+    {
+      method: 'POST',
+      path: '/location/{id}',
+      ...getLocationDetailsController
     }
   ])
 }

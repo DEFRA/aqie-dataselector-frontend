@@ -93,6 +93,23 @@ export const english = {
           }
         }
       }
+    },
+    errorText_sp: {
+      uk: {
+        fields: {
+          title: problemtitle,
+
+          text: "Please don't enter special characters"
+        }
+      },
+      ni: {
+        fields: {
+          title: problemtitle,
+          list: {
+            text: "Please don't enter special characters"
+          }
+        }
+      }
     }
   },
   notFoundLocation: {

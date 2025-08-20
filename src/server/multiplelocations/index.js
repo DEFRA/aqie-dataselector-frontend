@@ -6,6 +6,11 @@ export const multiplelocations = {
     register(server) {
       server.route([
         {
+          method: 'POST',
+          path: '/multiplelocations',
+          ...multipleLocationsController
+        },
+        {
           method: 'GET',
           path: '/multiplelocations',
           ...multipleLocationsController
