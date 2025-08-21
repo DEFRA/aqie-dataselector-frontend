@@ -46,25 +46,25 @@
       </p>
       </div> 
 {% if errorMessage.message %}
-<div class="govuk-form-group govuk-form-group--error">
-  <p id="event-name-error" class="govuk-error-message">
-    <span class="govuk-visually-hidden ">Error:</span> {{errorMessage.message.text}}
-  </p>
+  <div class="govuk-form-group govuk-form-group--error">
+    <p id="event-name-error" class="govuk-error-message">
+      <span class="govuk-visually-hidden">Error:</span> {{ errorMessage.message.text }}
+    </p>
 
- <label class="govuk-label" for="search-input">
-     {{params.text3}}
+    <label class="govuk-label" for="search-input">
+      {{ params.text3 }}
     </label>
-<input class="govuk-input" id="search-input" name="fullSearchQuery" type="text" value='{{fullSearchQuery.value}}'></input>
-  
-</div>
-  
-   {%else %}
-   <label class="govuk-label" for="search-input">
-     {{params.text3}}
+    <input class="govuk-input govuk-input--error" id="search-input" name="fullSearchQuery" type="text" value="{{ fullSearchQuery.value }}">
+  </div>
+{% else %}
+  <div class="govuk-form-group">
+    <label class="govuk-label" for="search-input">
+      {{ params.text3 }}
     </label>
-<input class="govuk-input" id="search-input" name="fullSearchQuery" type="text" value='{{fullSearchQuery.value}}'></input>
-     
-   {% endif %}      
+    <input class="govuk-input" id="search-input" name="fullSearchQuery" type="text" value="{{ fullSearchQuery.value }}">
+  </div>
+{% endif %}
+
        
        <div class="govuk-form-group">
   <fieldset class="govuk-fieldset">
