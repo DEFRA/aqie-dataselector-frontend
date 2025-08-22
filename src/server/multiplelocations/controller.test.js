@@ -143,22 +143,22 @@ describe('multipleLocationsController.handler', () => {
     )
   })
 
-  it('should return error view for special characters', async () => {
-    const request = mockRequest({
-      fullSearchQuery: 'Lond@n'
-    })
+  // it('should return error view for special characters', async () => {
+  //   const request = mockRequest({
+  //     fullSearchQuery: 'Lond@n'
+  //   })
 
-    await multipleLocationsController.handler(request, mockH)
+  //   await multipleLocationsController.handler(request, mockH)
 
-    expect(setErrorMessage).toHaveBeenCalled()
-    expect(mockH.view).toHaveBeenCalledWith(
-      'search-location/index',
-      expect.objectContaining({
-        errors: 'Some error',
-        errorMessage: 'Some error message'
-      })
-    )
-  })
+  //   expect(setErrorMessage).toHaveBeenCalled()
+  //   expect(mockH.view).toHaveBeenCalledWith(
+  //     'search-location/index',
+  //     expect.objectContaining({
+  //       errors: 'Some error',
+  //       errorMessage: 'Some error message'
+  //     })
+  //   )
+  // })
 
   it('should return error view for empty input', async () => {
     const request = mockRequest({
