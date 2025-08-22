@@ -47,7 +47,15 @@ const multipleLocationsController = {
       request.yar.set('errorMessage', '')
       request.yar.set('locationMiles', request.payload?.locationMiles)
       request.yar.set('selectedLocation', '')
-
+      console.log(
+        'request.payload.fullSearchQuery',
+        request.payload.fullSearchQuery
+      )
+      const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(
+        request.payload.fullSearchQuery
+      )
+      request.yar.set('hasSpecialCharacter', hasSpecialCharacter)
+      console.log('hasSpecialCharacter', hasSpecialCharacter)
       // ...existing code...
       // Use a non-greedy quantifier to prevent super-linear backtracking
 
@@ -55,7 +63,10 @@ const multipleLocationsController = {
       //   ?.replace(/[^a-zA-Z0-9 ]/g, ' ')
       //   .trim()
 
-      if (request.payload?.fullSearchQuery?.length > 0) {
+      if (
+        request.payload?.fullSearchQuery?.length > 0 &&
+        !hasSpecialCharacter
+      ) {
         request.yar.set('fullSearchQuery', {
           value: decodeURI(request.payload.fullSearchQuery)
         })
@@ -76,11 +87,9 @@ const multipleLocationsController = {
       request.yar.set('searchLocation', '')
       request.yar.set('searchValue', '')
     }
-    const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(
-      request.payload.fullSearchQuery
-    )
 
-    if (searchInput && !hasSpecialCharacter) {
+    if (searchInput && !request.yar.get('hasSpecialCharacter')) {
+      console.log('comes inside no specail')
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
       const locationdetails = request.yar.get('osnameapiresult')
@@ -213,7 +222,8 @@ const multipleLocationsController = {
       }
     } else {
       const fullSearchQuery = request.payload.fullSearchQuery
-      if (hasSpecialCharacter) {
+      if (request.yar.get('hasSpecialCharacter')) {
+        console.log('comes inside----- specail')
         const errorData = english.searchLocation.errorText_sp.uk
         const errorSection = errorData?.fields
         setErrorMessage(request, errorSection?.title, errorSection?.text)

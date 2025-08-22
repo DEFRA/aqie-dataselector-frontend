@@ -99,14 +99,14 @@ export const english = {
         fields: {
           title: problemtitle,
 
-          text: "Please don't enter special characters"
+          text: 'Enter a town or postcode using only numbers and letters'
         }
       },
       ni: {
         fields: {
           title: problemtitle,
           list: {
-            text: "Please don't enter special characters"
+            text: 'Enter a town or postcode using only numbers and letters'
           }
         }
       }
