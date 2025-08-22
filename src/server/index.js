@@ -92,10 +92,10 @@ export async function createServer() {
       return h.continue
     }
     response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
-    // response.header(
-    //   'Content-Security-Policy',
-    //   "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'"
-    // )
+    response.header(
+      'Content-Security-Policy',
+      "style-src 'self'; img-src 'self'; frame-ancestors 'none'"
+    )
     return h.continue
   })
 
