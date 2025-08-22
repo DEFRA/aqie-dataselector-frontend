@@ -5,7 +5,7 @@ import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
 import { requestLogger } from '~/src/server/common/helpers/logging/request-logger.js'
-// import { catchAll } from '~/src/server/common/helpers/errors.js'
+import { catchAll } from '~/src/server/common/helpers/errors.js'
 import { secureContext } from '~/src/server/common/helpers/secure-context/index.js'
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
@@ -98,7 +98,7 @@ export async function createServer() {
     )
     return h.continue
   })
-
+  server.ext('onPreResponse', catchAll)
   return server
 }
 
