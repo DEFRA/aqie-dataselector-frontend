@@ -1,6 +1,8 @@
 @use "govuk-frontend" as *;
 
-
+.display-none {
+  display: none !important;
+}
 
 .app-main-wrapper {
   display: block;

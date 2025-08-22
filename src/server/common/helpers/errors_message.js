@@ -28,7 +28,7 @@ function catchAll(request, h) {
   request.logger.error(response?.stack)
   // return  response.output
   return h.redirect(
-    '/check-plant-health-information-and-import-rules/problem-with-service?statusCode=' +
+    '/check-air-quality/problem-with-service?statusCode=' +
       response.output.statusCode
   )
 }
