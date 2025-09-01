@@ -115,7 +115,6 @@ const stationDetailsController = {
     const mapLocation = `https://www.google.co.uk/maps?q=${lat},${lon}`
 
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')?.value
-    const locationMiles = request?.yar?.get('locationMiles')
     const multipleLocID = request?.yar?.get('locationID')
 
     // Prepare API parameters
@@ -157,7 +156,7 @@ const stationDetailsController = {
       downloadresult: request.yar.get('downloadresult'),
       hrefq:
         request.yar.get('nooflocation') === 'single'
-          ? `/multiplelocations?fullSearchQuery=${fullSearchQuery}&locationMiles=${locationMiles}`
+          ? `/multiplelocations`
           : `/location/${multipleLocID}`
     }
 

@@ -45,30 +45,30 @@ const multipleLocationsController = {
     if (request !== null) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
-      request.yar.set('locationMiles', request.payload?.locationMiles)
-      request.yar.set('selectedLocation', '')
+      const sessionQuery = request?.yar?.get('fullSearchQuery')?.value
+      const payloadQuery = request.payload?.fullSearchQuery
 
-      const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(
-        request.payload.fullSearchQuery
-      )
-      request.yar.set('hasSpecialCharacter', hasSpecialCharacter)
+      if (!sessionQuery || sessionQuery !== payloadQuery) {
+        request.yar.set('locationMiles', request.payload?.locationMiles)
+        request.yar.set('selectedLocation', '')
 
-      if (
-        request.payload?.fullSearchQuery?.length > 0 &&
-        !hasSpecialCharacter
-      ) {
+        const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(payloadQuery)
+
+        request.yar.set('hasSpecialCharacter', hasSpecialCharacter)
+
         request.yar.set('fullSearchQuery', {
-          value: decodeURI(request.payload.fullSearchQuery)
+          value: request.payload.fullSearchQuery
         })
+
         request.yar.set('searchQuery', {
-          value: decodeURI(request.payload?.searchQuery)
+          value: request.payload.fullSearchQuery
         })
       }
     }
 
-    const searchInput = request.payload.fullSearchQuery
-    const searchValue = request.payload.fullSearchQuery
-    const locationMiles = request.payload?.locationMiles
+    const searchInput = request?.yar?.get('fullSearchQuery').value
+    const searchValue = request?.yar?.get('fullSearchQuery').value
+    const locationMiles = request?.yar?.get('locationMiles')
 
     if (searchValue !== '' || searchValue !== null) {
       request.yar.set('searchLocation', searchValue)
@@ -210,7 +210,7 @@ const multipleLocationsController = {
         }
       }
     } else {
-      const fullSearchQuery = request.payload.fullSearchQuery
+      const fullSearchQuery = request?.yar?.get('fullSearchQuery')
       if (request.yar.get('hasSpecialCharacter')) {
         const errorData = english.searchLocation.errorText_sp.uk
         const errorSection = errorData?.fields

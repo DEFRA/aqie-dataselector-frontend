@@ -10,7 +10,7 @@ const getLocationDetailsController = {
     const result = request.yar.get('osnameapiresult')
     const fullSearchQuery = request.yar.get('fullSearchQuery')?.value || ''
     const locationMiles = request.yar.get('locationMiles')
-    const hrefq = `/multiplelocations?fullSearchQuery=${fullSearchQuery}&locationMiles=${locationMiles}`
+    const hrefq = `/multiplelocations`
 
     request.yar.set('locationID', locationID)
     request.yar.set('errors', '')

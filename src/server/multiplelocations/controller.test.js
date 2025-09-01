@@ -1,9 +1,7 @@
 import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
 import axios from 'axios'
-
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-// import { english } from '~/src/server/data/en/homecontent.js'
 
 jest.mock('axios')
 jest.mock('~/src/config/config.js', () => ({
@@ -15,18 +13,24 @@ jest.mock('~/src/server/common/helpers/errors_message.js', () => ({
   setErrorMessage: jest.fn()
 }))
 
-const mockRequest = (payload = {}) => ({
-  payload,
-  yar: {
-    set: jest.fn(),
-    get: jest.fn().mockImplementation((key) => {
-      if (key === 'osnameapiresult') return []
-      if (key === 'searchLocation') return payload.fullSearchQuery || ''
-      if (key === 'errors') return 'Some error'
-      if (key === 'errorMessage') return 'Some error message'
-      return undefined
+const mockYar = (overrides = {}) => {
+  const store = {
+    osnameapiresult: [],
+    errors: 'Some error',
+    errorMessage: 'Some error message',
+    ...overrides
+  }
+  return {
+    get: jest.fn((key) => store[key]),
+    set: jest.fn((key, value) => {
+      store[key] = value
     })
   }
+}
+
+const mockRequest = (payload = {}, yarOverrides = {}) => ({
+  payload,
+  yar: mockYar(yarOverrides)
 })
 
 const mockH = {
@@ -143,26 +147,41 @@ describe('multipleLocationsController.handler', () => {
     )
   })
 
-  // it('should return error view for special characters', async () => {
-  //   const request = mockRequest({
-  //     fullSearchQuery: 'Lond@n'
-  //   })
+  it('should return error view for special characters', async () => {
+    const request = mockRequest({
+      fullSearchQuery: 'Lond@n'
+    })
 
-  //   await multipleLocationsController.handler(request, mockH)
+    request.yar.get = jest.fn((key) => {
+      if (key === 'hasSpecialCharacter') return true
+      if (key === 'fullSearchQuery') return { value: 'Lond@n' }
+      if (key === 'errors') return 'Some error'
+      if (key === 'errorMessage') return 'Some error message'
+      return undefined
+    })
 
-  //   expect(setErrorMessage).toHaveBeenCalled()
-  //   expect(mockH.view).toHaveBeenCalledWith(
-  //     'search-location/index',
-  //     expect.objectContaining({
-  //       errors: 'Some error',
-  //       errorMessage: 'Some error message'
-  //     })
-  //   )
-  // })
+    await multipleLocationsController.handler(request, mockH)
+
+    expect(setErrorMessage).toHaveBeenCalled()
+    expect(mockH.view).toHaveBeenCalledWith(
+      'search-location/index',
+      expect.objectContaining({
+        errors: 'Some error',
+        errorMessage: 'Some error message'
+      })
+    )
+  })
 
   it('should return error view for empty input', async () => {
     const request = mockRequest({
       fullSearchQuery: ''
+    })
+
+    request.yar.get = jest.fn((key) => {
+      if (key === 'fullSearchQuery') return { value: '' }
+      if (key === 'errors') return 'Some error'
+      if (key === 'errorMessage') return 'Some error message'
+      return undefined
     })
 
     await multipleLocationsController.handler(request, mockH)
