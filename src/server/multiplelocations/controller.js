@@ -46,9 +46,15 @@ const multipleLocationsController = {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
       const sessionQuery = request?.yar?.get('fullSearchQuery')?.value
+
       const payloadQuery = request.payload?.fullSearchQuery
 
-      if (!sessionQuery || sessionQuery !== payloadQuery) {
+      if (
+        !sessionQuery ||
+        (payloadQuery !== null &&
+          payloadQuery !== undefined &&
+          payloadQuery !== sessionQuery)
+      ) {
         request.yar.set('locationMiles', request.payload?.locationMiles)
         request.yar.set('selectedLocation', '')
 
