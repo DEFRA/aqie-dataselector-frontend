@@ -10,13 +10,13 @@ const login = {
       server.route([
         {
           method: 'GET',
-          path: '/',
+          path: '/login',
           ...homeloginController,
           options: { auth: { mode: 'try' } }
         },
         {
           method: 'POST',
-          path: '/',
+          path: '/login',
           ...loginController,
           options: { auth: { mode: 'try' } }
         }
