@@ -12,7 +12,7 @@ import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 
-const isProduction = config.get('isProduction')
+// const isProduction = config.get('isProduction')
 
 export async function createServer() {
   const server = hapi.server({
@@ -54,27 +54,27 @@ export async function createServer() {
     }
   })
   await server.register([hapiCookie])
-  const cookiePassword = config.get('cookiePassword')
-  server.auth.strategy('login', 'cookie', {
-    cookie: {
-      name: 'airaqie_cookies_analytics_session',
-      path: '/',
-      password: cookiePassword,
-      isSecure: isProduction
-    },
-    redirectTo: '/',
-    keepAlive: true,
-    // to validate cookie content on each request and returns boolean(isauthenticated/not)
-    validate: (request, session) => {
-      if (session.password === config.get('aqiePassword')) {
-        return { isValid: true }
-      } else {
-        return { isValid: false }
-      }
-    }
-  })
+  // const cookiePassword = config.get('cookiePassword')
+  // server.auth.strategy('login', 'cookie', {
+  //   cookie: {
+  //     name: 'airaqie_cookies_analytics_session',
+  //     path: '/',
+  //     password: cookiePassword,
+  //     isSecure: isProduction
+  //   },
+  //   redirectTo: '/',
+  //   keepAlive: true,
+  //   // to validate cookie content on each request and returns boolean(isauthenticated/not)
+  //   validate: (request, session) => {
+  //     if (session.password === config.get('aqiePassword')) {
+  //       return { isValid: true }
+  //     } else {
+  //       return { isValid: false }
+  //     }
+  //   }
+  // })
 
-  server.auth.default({ strategy: 'login', mode: 'required' })
+  // server.auth.default({ strategy: 'login', mode: 'required' })
 
   await server.register([
     requestLogger,

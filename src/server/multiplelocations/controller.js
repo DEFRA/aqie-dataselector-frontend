@@ -48,6 +48,8 @@ const multipleLocationsController = {
       const sessionQuery = request?.yar?.get('fullSearchQuery')?.value
 
       const payloadQuery = request.payload?.fullSearchQuery
+      const milessession = request?.yar?.get('locationMiles')
+      const payloadmiles = request.payload?.locationMiles
 
       if (
         !sessionQuery ||
@@ -55,7 +57,6 @@ const multipleLocationsController = {
           payloadQuery !== undefined &&
           payloadQuery !== sessionQuery)
       ) {
-        request.yar.set('locationMiles', request.payload?.locationMiles)
         request.yar.set('selectedLocation', '')
 
         const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(payloadQuery)
@@ -69,6 +70,14 @@ const multipleLocationsController = {
         request.yar.set('searchQuery', {
           value: request.payload.fullSearchQuery
         })
+      }
+      if (
+        !milessession ||
+        (payloadmiles !== null &&
+          payloadmiles !== undefined &&
+          payloadmiles !== milessession)
+      ) {
+        request.yar.set('locationMiles', request.payload?.locationMiles)
       }
     }
 

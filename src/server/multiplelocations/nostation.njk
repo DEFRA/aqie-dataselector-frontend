@@ -5,8 +5,9 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
+  
     <h1 class="govuk-heading-l odd-page">{{paragraph.a}} {{ locationMiles }} {{paragraph.b}} '{{ searchLocation }}'</h1>
-     {% if locationMiles != 50 %} 
+     {% if locationMiles != 50 %}    
     <p class="govuk-body">{{paragraph.d}}</p>
 
     <ul class="govuk-list govuk-list--bullet">

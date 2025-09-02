@@ -2,7 +2,6 @@ import inert from '@hapi/inert'
 import { fileURLToPath } from 'node:url'
 import { health } from '~/src/server/health/index.js'
 import { home } from '~/src/server/home/index.js'
-import { login } from '~/src/server/login/index.js'
 import { privacy } from '~/src/server/privacy/index.js'
 import { cookies } from '~/src/server/cookies/index.js'
 import { accessibility } from '~/src/server/accessibility/index.js'
@@ -68,9 +67,7 @@ export const router = {
         moj,
         yearId,
         renderTable,
-        download,
-
-        login
+        download
       ])
 
       // Static assets
