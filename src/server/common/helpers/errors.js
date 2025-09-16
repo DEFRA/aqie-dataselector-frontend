@@ -19,7 +19,7 @@ function statusCodeMessage(statusCode) {
       return 'Sorry, there is a problem with the service'
   }
 }
-// console.log('Comes to errorjs', statusCodes)
+
 /**
  * @param { Request } request
  * @param { ResponseToolkit } h

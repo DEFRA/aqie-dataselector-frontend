@@ -22,6 +22,7 @@ export default {
     '<rootDir>/src/server/about/',
     '<rootDir>/src/server/accessibility/',
     '<rootDir>/src/server/common/',
+
     '<rootDir>/src/client/javascripts/cookies-page.js',
     '<rootDir>/src/config/',
     '<rootDir>/src/server/health',

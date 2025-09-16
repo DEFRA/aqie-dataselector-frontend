@@ -1,0 +1,72 @@
+{% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/tabs/macro.njk" import govukTabs %}
+   {% from "govuk/components/details/macro.njk" import govukDetails %}
+<script src="/path/to/govuk-frontend/govuk/all.js"></script>
+<script>
+  // If JS is enabled, reload with ?js=1
+  if (!window.location.search.includes('js=1')) {
+    var newSearch = window.location.search
+      ? window.location.search + '&js=1'
+      : '?js=1';
+    window.location.href = window.location.pathname + newSearch;
+  }
+</script>
+
+  
+{% block content %}
+
+    
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+<h1 class="govuk-heading-xl govuk-!-margin-bottom-1">{{stationdetails.name}}</h1>   
+
+
+
+        <strong class="govuk-tag status-tag govuk-tag--green">
+            Active
+          </strong>
+          <p class="status-description govuk-!-margin-top-3" id="status">Latest at {{updatedTime}}</p>
+</div>
+</div>
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+          <dl class="defra-aq-features__list govuk-!-margin-top-3">
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m" >Monitoring network</dt>
+              <dd class="defra-aq-features__value govuk-body" >Automatic Urban and Rural Network (AURN)</dd>
+            </div>
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m" >Region</dt>
+              <dd class="defra-aq-features__value govuk-body" >{{stationdetails.region}}</dd>
+            </div>
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m">Site type</dt>
+             
+              <dd class="defra-aq-features__value govuk-body">
+                {{stationdetails.siteType}}
+                <span id="map-toggletip" style="display:none;">
+                  {{mapToggletip | safe}}
+                </span>
+             
+
+                  {{ govukDetails({
+      summaryText: "More information about " + stationdetails.siteType,
+      html: maptoggletips
+    }) }}
+                
+                <p class="govuk-body govuk-!-margin-top-1">
+                  <a href={{maplocation}} class="govuk-link" target="_blank">View on Google Maps (opens in new tab)</a>
+                </p>
+              </dd>
+             
+            </div>
+            </dl>
+            
+        {% include "partials/Yearlytab.njk" %}    
+         
+
+ 
+{% endblock %}

@@ -6,6 +6,9 @@ import axios from 'axios'
 
 const multipleLocationsController = {
   handler: async (request, h) => {
+    // Set js_enabled to false by default
+    h.state('js_enabled', 'false')
+
     async function invokeosnameAPI(searchv) {
       const nameApiparams = {
         userLocation: searchv

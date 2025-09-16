@@ -31,10 +31,18 @@ const downloadcontroller = {
       const downloadresult = await Invokedownload(apiparams)
 
       request.yar.set('downloadresult', downloadresult)
+      // const viewData = request.yar.get('viewData')
+      const viewData = {
+        ...request.yar.get('viewData'),
+        downloadresult
+      }
 
-      // console.log('downloadresult at 71', downloadresult)
-      // const url1 = 'https://url'
-      return h.response(downloadresult).type('application/json').code(200)
+      // const url1 = 'https://url'aqie-dataselector-frontend\src\server\stationDetailsNojs\index.njk
+      if (request.url.pathname.includes('/downloaddatanojs/')) {
+        return h.view('stationDetailsNojs/index', viewData)
+      } else {
+        return h.response(downloadresult).type('application/json').code(200)
+      }
     } catch (error) {
       // console.error('Error rendering partial content:', error)
       // return h.response('Error rendering partial content').code(500);

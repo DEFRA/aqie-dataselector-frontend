@@ -1,3 +1,123 @@
+{% extends 'layouts/page.njk' %}
+{% set displayBreadcrumbs = false %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+ {% from "govuk/components/tabs/macro.njk" import govukTabs %}
+   {% from "govuk/components/details/macro.njk" import govukDetails %}
+<script src="/path/to/govuk-frontend/govuk/all.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      window.GOVUKFrontend.initAll();
+      // Show the map toggletip only if JS is enabled
+      var toggletip = document.getElementById('map-toggletip');
+      if (toggletip) {
+        toggletip.style.display = 'inline';
+      }
+    });
+    
+       
+        
+    
+  </script>
+{% block content %}
+
+    
+ {% set mapToggletip %}
+  {{ toggletip(
+    '',
+    'More information about ' + stationdetails.siteType,
+    maptoggletips
+    ,
+    'Trend'
+  )}}
+{% endset %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+<h1 class="govuk-heading-xl govuk-!-margin-bottom-1">{{stationdetails.name}}</h1>   
+
+
+
+        <strong class="govuk-tag status-tag govuk-tag--green">
+            Active
+          </strong>
+          <p class="status-description govuk-!-margin-top-3" id="status">Latest at {{updatedTime}}</p>
+</div>
+</div>
+          <div class="govuk-grid-row">
+            <div class="govuk-grid-column-full">
+          <dl class="defra-aq-features__list govuk-!-margin-top-3">
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m" >Monitoring network</dt>
+              <dd class="defra-aq-features__value govuk-body" >Automatic Urban and Rural Network (AURN)</dd>
+            </div>
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m" >Region</dt>
+              <dd class="defra-aq-features__value govuk-body" >{{stationdetails.region}}</dd>
+            </div>
+            <div class="defra-aq-features__item" >
+              <dt class="defra-aq-features__key govuk-caption-m">Site type</dt>
+             
+              <dd class="defra-aq-features__value govuk-body">
+                {{stationdetails.siteType}}
+                <span id="map-toggletip" >
+                  {{mapToggletip | safe}}
+                </span>
+                {# <noscript>
+
+                  {{ govukDetails({
+      summaryText: "More information about " + stationdetails.siteType,
+      html: maptoggletips
+    }) }}
+                </noscript> #}
+                <p class="govuk-body govuk-!-margin-top-1">
+                  <a href={{maplocation}} class="govuk-link" target="_blank">View on Google Maps (opens in new tab)</a>
+                </p>
+              </dd>
+             
+            </div>
+            </dl>
+            {% from "toggletip/macro.njk" import toggletip %}
+{% set mapToggletip %}
+  {{ toggletip(
+    '',
+    'More information about the trend',
+    'This monitoring site is in a city or town close to roads, motorways or highways.
+    ',
+    'Trend'
+  )}}
+{% endset %}
+
+<h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
+    
+     
+     
+{% if selectedYear == 2025 %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
+{% else %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
+{% endif %}       
+
+{# <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p> #}
+ <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
+<nav class="moj-sub-navigation" aria-label="Sub navigation">  
+  <ul class="moj-sub-navigation__list"  role="tablist">
+  {% for year in years %}
+    <li class="moj-sub-navigation__item">
+ <a class="moj-sub-navigation__link" id="link-{{ year }}" href="/stationDetailsNojs/year/{{ year }}" 
+ role="tab" aria-controls="panel-{{ year }}"
+ name="year_selected" value="{{ year }}" 
+  
+ {% if year == selectedYear %}
+ aria-current="page" 
+ {% endif %}>
+ {{ year }}</a>
+    </li>
+  {% endfor %}
+   
+</ul>
+          
+          </nav>
+            <div id="yearlytable-container">
 {% from "toggletip/macro.njk" import toggletip %}
   {% set dataToggletip %}
   {{ toggletip(
@@ -126,7 +246,7 @@
    
   </p>
              
-<div class="table-scroll-container">
+
 <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
 
 {# <h1 class="govuk-heading-s" >{{url}} </h1> #}
@@ -242,7 +362,6 @@
     </tbody>
             </table>
             </div>
-            </div>
               <span id="selectedYear"  class="display-none" >{{finalyear}}</span>
           
  <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-6">Download data for {{finalyear}}</h2> 
@@ -268,7 +387,7 @@
                   <div class="govuk-grid-column-full">
                     <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
  
-   <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Hourly')" role="button" 
+   <a id="download-link"   href="/downloaddatanojs/AllPollutants/Hourly" role="button" 
    class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
    aria-label="Download hourly data for All pollutants">
                 <span class="aq-button-secondary__icon">
@@ -280,10 +399,8 @@
                     Download hourly data 
                 </span>
 </a>
-
 <br>
-
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      <a id="download-link" href="/downloaddatanojs/AllPollutants/Daily" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       aria-label=" Download daily average data for All pollutants"
                       >
                 
@@ -300,7 +417,7 @@
 
                     <br>
 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                    <a id="download-link" href="/downloaddatanojs/AllPollutants/Annual" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for All pollutants"
                     >
                 
@@ -318,9 +435,9 @@
 
  {% for pollutant in tabledata %}
 <h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
- 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                     aria-label="Download hourly data for {{pollutant.pollutantName}}"   
+
+                    <a id="download-link" href="/downloaddatanojs/{{pollutant.pollutantName}}/Hourly" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                     aria-label="Download hourly data for {{pollutant.pollutantName}}"
                     >
                 
                 <span class="aq-button-secondary__icon">
@@ -337,7 +454,7 @@
                     </a>
 
 <br>
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      <a id="download-link" href="/downloaddatanojs/{{pollutant.pollutantName}}/Daily" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -355,7 +472,9 @@
                     </a>
                     <br>
                     
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                  <a id="download-link" 
+                   href="/downloaddatanojs/{{pollutant.pollutantName}}/Annual"
+                   role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for {{pollutant.pollutantName}}"
                     >
                 
@@ -387,26 +506,7 @@
               
               <script>
 
-      async function getAPIstn_details1(pollutants,freq) {  
-        
-const scrollY = window.scrollY;
-
-window.scrollTo(0, scrollY); 
-        
-      fetch(`/downloaddata/${pollutants}/${freq}`)
-        .then(response => response.text())
-        .then(data => {           
-           
-            window.location.href =data
-            window.scrollTo(0, scrollY); 
-        })
-        .catch(error => console.error('Error fetching partial content:', error));        
-}
-document.addEventListener('DOMContentLoaded', () => {
-    //document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-    
-   
-});
+      
           
     </script>
     {% if downloadresult %}
@@ -416,4 +516,85 @@ document.addEventListener('DOMContentLoaded', () => {
     var url = downloadresult;
    window.location.href = url;
   </script>
+  <noscript>
+  <meta http-equiv="refresh" content="0; url={{ downloadresult }}">
+  <!-- Or provide a manual link -->
+  <p>
+    <a href="{{ downloadresult }}">Download file</a>
+  </p>
+</noscript>
 {% endif %}
+
+  <noscript>
+    <div class="no-js-warning">
+      <p>JavaScript is disabled. You are viewing the default data for the selected year.</p>
+    </div>
+  </noscript>
+</div>
+      
+         <script> 
+              
+              let selyear;
+       function updateYear(year) {
+    selyear = year;
+   console.log( document.getElementById('link-'+selyear))
+    //document.getElementById('year-heading').textContent = `Download data for ${year}`;
+    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
+  
+    if( year === '2025' || year === 2025)
+    {
+ document.getElementById('duration_current').textContent = '1 January to ' + formattedDate;
+ }else
+ {
+  document.getElementById('duration_current').textContent = '1 January to 31 December';
+ }
+    var links = document.querySelectorAll('.moj-sub-navigation__link');
+    links.forEach(function(link) {
+        link.removeAttribute('aria-current');
+        link.setAttribute('aria-selected', 'false');
+    });
+
+    // Set aria-current and aria-selected to the clicked link
+    var selectedLink = document.getElementById('link-' + year);
+    if (selectedLink) {
+        selectedLink.setAttribute('aria-current', 'page');
+        selectedLink.setAttribute('aria-selected', 'true');
+        //selectedLink.setAttribute(' tabindex', 0);
+    }else{
+      selectedLink.setAttribute('aria-selected', 'false');
+    }
+const selectedy = year;
+console.log("selectedy",selectedy)
+   window.location.href = `/stationDetailsNojs/year/${year}`;
+   
+   }
+
+// Check if there is already a selected year and set aria-current
+document.addEventListener('DOMContentLoaded', () => {
+
+    const selectedYearElement = document.getElementById('selectedYear');
+    const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
+      document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
+      console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
+    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
+    console.log("selectedyearim78",selectedYear)
+    
+});
+
+
+ function updateYear1(year) {
+    console.log("year", year);
+    
+}
+       </script>
+
+        {# {% include "partials/Yearlytab.njk" %}     #}
+         
+
+ 
+{% endblock %}
+<noscript>
+  <meta http-equiv="refresh" content="0; url=/stationDetailsNojs/nojs/{{stationdetails.id}}">
+</noscript>
