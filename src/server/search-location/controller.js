@@ -2,7 +2,6 @@ import { english } from '~/src/server/data/en/homecontent.js'
 
 const searchLocationController = {
   handler: (request, h) => {
-    // const { query } = request
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
     request.yar.get('osnameapiresult', '')

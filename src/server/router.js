@@ -9,6 +9,7 @@ import { searchLocation } from '~/src/server/search-location/index.js'
 import { multiplelocations } from '~/src/server/multiplelocations/index.js'
 import { monitoringStation } from '~/src/server/monitoring-station/index.js'
 import { stationDetails } from '~/src/server/stationdetails/index.js'
+import { stationDetailsNojs } from '~/src/server/stationDetailsNojs/index.js'
 import { serveStaticFiles } from '~/src/server/common/helpers/serve-static-files.js'
 import { about } from '~/src/server/about/index.js'
 import { locationId } from '~/src/server/locationId/index.js'
@@ -67,7 +68,8 @@ export const router = {
         moj,
         yearId,
         renderTable,
-        download
+        download,
+        stationDetailsNojs
       ])
 
       // Static assets

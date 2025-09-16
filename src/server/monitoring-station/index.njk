@@ -30,9 +30,19 @@
         <tr class="govuk-table__header">
 
           <th class="govuk-table__cell"> 
+        
           <strong>
-          <a href=  {{['/stationdetails/',item.id] | join}} >  {{item.name}} </a>
-          </strong>
+  <a id="station-link-{{ item.id }}" href="{{ ['/stationDetailsNojs/', item.id] | join }}">{{ item.name }}</a>
+</strong>
+
+<script>
+  // Change href for JS-enabled users
+  document.getElementById('station-link-{{ item.id }}').href = "{{ ['/stationdetails/', item.id] | join }}";
+</script>
+
+<noscript>
+  <!-- Link already has nojs path as default, so no changes needed -->
+</noscript>
            <p class="govuk-body">{{item.distance}} miles away</p>
           </th>
          <td class="govuk-table__cell">
@@ -57,5 +67,7 @@
   
 </table>
    
+
+
 
 {% endblock %}

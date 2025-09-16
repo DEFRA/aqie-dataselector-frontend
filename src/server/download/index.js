@@ -1,16 +1,26 @@
 import { downloadcontroller } from '~/src/server/download/controller.js'
 
-export const download = {
+const configureRoutes = (server) => {
+  server.route([
+    {
+      method: 'GET',
+      path: '/downloaddata/{poll}/{freq}',
+      ...downloadcontroller
+    },
+    {
+      method: 'GET',
+      path: '/downloaddatanojs/{poll}/{freq}',
+      ...downloadcontroller
+    }
+  ])
+}
+
+const download = {
   plugin: {
     name: 'download',
-    register(server) {
-      server.route([
-        {
-          method: 'GET',
-          path: '/downloaddata/{poll}/{freq}',
-          ...downloadcontroller
-        }
-      ])
+    register: (server) => {
+      configureRoutes(server)
     }
   }
 }
+export { download, configureRoutes }

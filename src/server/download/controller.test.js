@@ -1,96 +1,205 @@
 import { downloadcontroller } from '~/src/server/download/controller.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+
+// Mock dependencies
 jest.mock('axios')
-jest.mock('~/src/config/config.js', () => ({
-  config: {
-    get: jest.fn()
-  }
-}))
+jest.mock('~/src/config/config.js')
 
-describe('downloadcontroller.handler', () => {
-  const mockStationDetails = {
-    region: 'London',
-    siteType: 'Urban',
-    name: 'Station A',
-    localSiteID: '123',
-    location: {
-      coordinates: [51.5074, -0.1278]
-    }
-  }
+const mockedAxios = axios
+const mockedConfig = config
 
-  const mockRequest = {
-    yar: {
-      get: jest.fn(),
-      set: jest.fn()
-    },
-    params: {
-      poll: 'NO2',
-      freq: 'hourly'
-    }
-  }
-
-  const mockResponseToolkit = {
-    response: jest.fn().mockReturnThis(),
-    type: jest.fn().mockReturnThis(),
-    code: jest.fn()
-  }
+describe('downloadcontroller', () => {
+  let mockRequest
+  let mockH
 
   beforeEach(() => {
+    // Reset all mocks
     jest.clearAllMocks()
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        stationdetails: mockStationDetails,
-        selectedYear: '2024',
-        latesttime: '2024-12-31T23:59:59Z'
+
+    // Mock request object with proper url structure
+    mockRequest = {
+      url: {
+        pathname: '/download/NO2/Daily'
+      },
+      yar: {
+        get: jest.fn(),
+        set: jest.fn()
+      },
+      params: {
+        poll: 'NO2',
+        freq: 'Daily'
       }
-      return values[key]
+    }
+
+    // Mock h object
+    mockH = {
+      view: jest.fn().mockReturnValue('view-response'),
+      response: jest.fn().mockReturnValue({
+        type: jest.fn().mockReturnValue({
+          code: jest.fn().mockReturnValue('json-response')
+        })
+      })
+    }
+
+    // Mock config
+    mockedConfig.get.mockReturnValue('http://test-download-url')
+
+    // Setup default mocks for yar.get
+    mockRequest.yar.get.mockImplementation((key) => {
+      switch (key) {
+        case 'stationdetails':
+          return {
+            region: 'Test Region',
+            siteType: 'Urban Background',
+            name: 'Test Station',
+            localSiteID: 'TS001',
+            location: {
+              coordinates: [51.5074, -0.1278]
+            }
+          }
+        case 'selectedYear':
+          return '2023'
+        case 'latesttime':
+          return '2023-12-01T10:00:00Z'
+        case 'viewData':
+          return {
+            title: 'Test Title',
+            stationdetails: {}
+          }
+        default:
+          return null
+      }
     })
-    config.get.mockReturnValue('https://mock-download-url.com')
   })
 
-  it('should return download result with status 200', async () => {
-    const mockDownloadData = { success: true, data: 'mocked data' }
-    axios.post.mockResolvedValue({ data: mockDownloadData })
+  describe('handler', () => {
+    it('should return download result with status 200', async () => {
+      const mockDownloadResult = { downloadUrl: 'http://test-download-url' }
 
-    await downloadcontroller.handler(mockRequest, mockResponseToolkit)
+      mockedAxios.post.mockResolvedValueOnce({
+        data: mockDownloadResult
+      })
 
-    expect(axios.post).toHaveBeenCalledWith(
-      'https://mock-download-url.com',
-      expect.objectContaining({
-        region: 'London',
-        siteType: 'Urban',
-        sitename: 'Station A',
-        siteId: '123',
+      const result = await downloadcontroller.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadresult',
+        mockDownloadResult
+      )
+      expect(mockH.response).toHaveBeenCalledWith(mockDownloadResult)
+      expect(result).toBe('json-response')
+    })
+
+    it('should handle nojs path correctly', async () => {
+      mockRequest.url.pathname = '/stationdetails/downloaddatanojs/PM10/Daily'
+
+      const mockDownloadResult = { downloadUrl: 'http://test-download-url' }
+
+      mockedAxios.post.mockResolvedValueOnce({
+        data: mockDownloadResult
+      })
+
+      const result = await downloadcontroller.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('stationDetailsNojs/index', {
+        title: 'Test Title',
+        stationdetails: {},
+        downloadresult: mockDownloadResult
+      })
+      expect(result).toBe('view-response')
+    })
+
+    it('should build correct API parameters', async () => {
+      const mockDownloadResult = { downloadUrl: 'http://test-download-url' }
+
+      mockedAxios.post.mockResolvedValueOnce({
+        data: mockDownloadResult
+      })
+
+      await downloadcontroller.handler(mockRequest, mockH)
+
+      const expectedApiParams = {
+        region: 'Test Region',
+        siteType: 'Urban Background',
+        sitename: 'Test Station',
+        siteId: 'TS001',
         latitude: '51.5074',
         longitude: '-0.1278',
-        year: '2024',
+        year: '2023',
         downloadpollutant: 'NO2',
-        downloadpollutanttype: 'hourly',
-        stationreaddate: '2024-12-31T23:59:59Z'
+        downloadpollutanttype: 'Daily',
+        stationreaddate: '2023-12-01T10:00:00Z'
+      }
+
+      expect(mockedAxios.post).toHaveBeenCalledWith(
+        'http://test-download-url',
+        expectedApiParams
+      )
+    })
+
+    it('should handle missing station details', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'stationdetails') return null
+        if (key === 'selectedYear') return '2023'
+        if (key === 'latesttime') return '2023-12-01T10:00:00Z'
+        if (key === 'viewData') return {}
+        return null
       })
-    )
 
-    expect(mockRequest.yar.set).toHaveBeenCalledWith(
-      'downloadresult',
-      mockDownloadData
-    )
-    expect(mockResponseToolkit.response).toHaveBeenCalledWith(mockDownloadData)
-    expect(mockResponseToolkit.type).toHaveBeenCalledWith('application/json')
-    expect(mockResponseToolkit.code).toHaveBeenCalledWith(200)
-  })
+      await downloadcontroller.handler(mockRequest, mockH)
 
-  it('should handle axios error gracefully', async () => {
-    const mockError = new Error('Download failed')
-    axios.post.mockRejectedValue(mockError)
+      // Test that function handles missing data gracefully
+      expect(mockRequest.yar.get).toHaveBeenCalled()
+    })
 
-    const result = await downloadcontroller.handler(
-      mockRequest,
-      mockResponseToolkit
-    )
+    it('should handle different URL pathnames', async () => {
+      mockRequest.url.pathname = '/different/path'
 
-    // Since the catch block in your controller doesn't return anything,
-    // the result will be undefined. You might want to improve error handling.
-    expect(result).toBeUndefined()
+      const mockDownloadResult = { downloadUrl: 'http://test-download-url' }
+
+      mockedAxios.post.mockResolvedValueOnce({
+        data: mockDownloadResult
+      })
+
+      await downloadcontroller.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith(mockDownloadResult)
+    })
+
+    it('should handle null viewData', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        switch (key) {
+          case 'stationdetails':
+            return {
+              region: 'Test Region',
+              siteType: 'Urban Background',
+              name: 'Test Station',
+              localSiteID: 'TS001',
+              location: {
+                coordinates: [51.5074, -0.1278]
+              }
+            }
+          case 'selectedYear':
+            return '2023'
+          case 'latesttime':
+            return '2023-12-01T10:00:00Z'
+          case 'viewData':
+            return null
+          default:
+            return null
+        }
+      })
+
+      const mockDownloadResult = { downloadUrl: 'http://test-download-url' }
+
+      mockedAxios.post.mockResolvedValueOnce({
+        data: mockDownloadResult
+      })
+
+      await downloadcontroller.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith(mockDownloadResult)
+    })
   })
 })

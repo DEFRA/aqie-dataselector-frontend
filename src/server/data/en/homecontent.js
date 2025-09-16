@@ -630,7 +630,7 @@ export const english = {
       paragraphs: {
         a: 'The Department for Environment, Food and Rural Affairs (Defra) is committed to making its websites accessible in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.',
         b: 'This accessibility statement applies to the',
-        c: 'This website is fully compliant with the Web Content Accessibility Guidelines (WCAG) version 2.2 AA.',
+        c: 'This website is fully compliant with the Web Content Accessibility Guidelines (WCAG) version 2.2 AA standard.',
         d: 'service was evaluated for accessibility by Defra. ',
         e: 'This statement was prepared on 8 January 2025.It was last reviewed on 19 August 2025.',
         f: 'This website was last tested on 5 June 2025.The test was carried out by the Digital Accessibility Centre.',
