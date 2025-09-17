@@ -628,12 +628,12 @@ export const english = {
         d: 'Enforcement procedure'
       },
       paragraphs: {
-        a: 'The Department for Environment, Food and Rural Affairs (Defra) is committed to making its websites accessible in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.',
+        a: 'The Department for Environment, Food and Rural Affairs is committed to making its websites accessible in accordance with the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.',
         b: 'This accessibility statement applies to the',
-        c: 'This website is fully compliant with the Web Content Accessibility Guidelines (WCAG) version 2.2 AA standard.',
+        c: 'This website complies with the Web Content Accessibility Guidelines (WCAG) version 2.2 AA standard.',
         d: 'service was evaluated for accessibility by Defra. ',
-        e: 'This statement was prepared on 8 January 2025.It was last reviewed on 19 August 2025.',
-        f: 'This website was last tested on 5 June 2025.The test was carried out by the Digital Accessibility Centre.',
+        e: 'This statement was prepared on 8 January 2025. It was last reviewed on 19 August 2025.',
+        f: 'This website was last tested on 5 June 2025. The test was carried out by the Digital Accessibility Centre.',
         g: 'If you notice any compliance failures or need to request information and content that is not provided in this document, email',
         h: 'The Equality and Human Rights Commission is responsible for enforcing the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.',
         i: 'If you are not happy with how Defra responds to your complaint, contact the',

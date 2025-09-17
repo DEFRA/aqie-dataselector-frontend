@@ -168,75 +168,97 @@
         </span></td>
       
          <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
-           
-          {{ data.annualcount }} 
-           
-       {% if data.annualcount != '-' %}
-    
-          {% if data.pollutantName == "PM2.5" %}  {{PM25_annualAvg| safe }}
-          {% elif data.pollutantName == "PM10" %} {{PM10_annualAvg| safe }}
-           {% elif data.pollutantName == "Sulphur dioxide" %} {{SO2_annualAvg| safe }}
-           {% elif data.pollutantName == "Nitrogen dioxide" %} {{NO2_annualAvg| safe }}
-           {% elif data.pollutantName == "Ozone" %} {{O2_annualAvg| safe }} 
-{% endif %}
-{% endif %}
-          </td>
+  {{ data.annualcount }} µg/m3
+   
+  {% if data.annualcount != '-' %}
+    {% if data.pollutantName == "PM2.5" %}
+      {{PM25_annualAvg| safe }}
+      {% if data.annualcount > 20 and data.datacapture >= 75 %}
+        <span class="defra-aq-levels-table__cell--data">
+          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+            Above limit
+          </strong>
+        </span>
+      {% endif %}
+    {% elif data.pollutantName == "PM10" %}
+      {{PM10_annualAvg| safe }}
+      {% if data.annualcount > 40 and data.datacapture >= 75 %}
+        <span class="defra-aq-levels-table__cell--data">
+          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+            Above limit
+          </strong>
+        </span>
+      {% endif %}
+    {% elif data.pollutantName == "Sulphur dioxide" %}
+      {{SO2_annualAvg| safe }}
+    {% elif data.pollutantName == "Nitrogen dioxide" %}
+      {{NO2_annualAvg| safe }}
+      {% if data.annualcount > 40 and data.datacapture >= 75 %}
+        <span class="defra-aq-levels-table__cell--data">
+          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+            Above limit
+          </strong>
+        </span>
+      {% endif %}
+    {% elif data.pollutantName == "Ozone" %}
+      {{O2_annualAvg| safe }} 
+    {% endif %}
+  {% endif %}
+</td>
 
 {% if data.pollutantName == "PM10" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
- {{ data.dailyCount }}
- {{ PM10_dailyToggletip | safe }}
-    </td>
-
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+        {{ data.dailyCount }}
+        {{ PM10_dailyToggletip | safe }}
+        {% if data.dailyCount > 35 %}
+            <span class="defra-aq-levels-table__cell--data">
+                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                    Above limit
+                </strong>
+            </span>
+        {% endif %}
+    </td>
 {% endif %}
 
 {% if (data.pollutantName != "PM10") and (data.pollutantName != "Sulphur dioxide") %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-        {{ data.dailyCount }}
-    </td>
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+        {{ data.dailyCount }}
+    </td>
 {% endif %}
 
- {% if data.pollutantName == "Sulphur dioxide" %}
-<td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+{% if data.pollutantName == "Sulphur dioxide" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+        {{ data.dailyCount }}
+        {{ SO2_dailyToggletip | safe }}
+        {% if data.dailyCount > 3 %}
+            <span class="defra-aq-levels-table__cell--data">
+                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                    Above limit
+                </strong>
+            </span>
+        {% endif %}
+    </td>
+{% endif %}
 
- {{ data.dailyCount }}
- {{ SO2_dailyToggletip | safe }}
- </td>
- {% endif %}
-
-       {% if data.pollutantName == "Nitrogen dioxide" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
- {{ data.hourlyCount }}
- {{ NO2_hourlyToggletip | safe }}
- {% if (data.hourlyCount > 18) %}
- <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                            Above limit
-                          </strong></span>
- </td>
- {% endif %}
-    </td>
-
+{% if data.pollutantName == "Nitrogen dioxide" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        {{ data.hourlyCount }}
+        {{ NO2_hourlyToggletip | safe }}
+        {% if (data.hourlyCount > 18) %}
+            <span class="defra-aq-levels-table__cell--data">
+                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                    Above limit
+                </strong>
+            </span>
+        {% endif %}
+    </td>
 {% endif %}
 
 {% if (data.pollutantName != "Nitrogen dioxide") and (data.pollutantName != "Sulphur dioxide") %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        {{ data.hourlyCount }}
-
-    </td>
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        {{ data.hourlyCount }}
+    </td>
 {% endif %}
-
- {% if data.pollutantName == "Sulphur dioxide" %}
-<td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-
- {{ data.hourlyCount }}
- {{ SO2_hourlyToggletip | safe }}
- {% if (data.hourlyCount > 24) %}
- <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                            Above limit
-                          </strong></span>
- </td>
- {% endif %}
- {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -395,7 +417,7 @@ window.scrollTo(0, scrollY);
         
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
-        .then(data => {           
+        .then data => {           
            
             window.location.href =data
             window.scrollTo(0, scrollY); 
