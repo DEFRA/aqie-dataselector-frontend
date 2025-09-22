@@ -238,58 +238,58 @@ export const config = convict({
     }
   },
 
-  // OS_NAMES_API_URL: {
-  //   doc: 'Osname api url',
-  //   format: String,
-  //   default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/`,
-  //   env: 'Osname api url'
-  // },
-  // OS_NAMES_API_URL_1: {
-  //   doc: 'connect to get monitoring station prod',
-  //   format: String,
-  //   default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/`,
-  //   env: 'OS_NAMES_API_URL_1'
-  // },
-  // Download_URL: {
-  //   doc: 'connect to get download data prod',
-  //   format: String,
-  //   default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
-  //   env: 'Download_URL'
-  // },
-  // Table_URL: {
-  //   doc: 'connect to get table data prod',
-  //   format: String,
-  //   default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryexceedence/`,
-  //   env: 'Table_URL'
-  // },
-
-  // dev //
   OS_NAMES_API_URL: {
     doc: 'Osname api url',
     format: String,
-
-    default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/`,
-
+    default: `https://aqie-location-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/osnameplaces/`,
     env: 'Osname api url'
   },
   OS_NAMES_API_URL_1: {
-    doc: 'connect monitoringstn dev',
+    doc: 'connect to get monitoring station prod',
     format: String,
-    default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/`,
+    default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/`,
     env: 'OS_NAMES_API_URL_1'
   },
   Download_URL: {
-    doc: 'connect to s3 bucket dev',
+    doc: 'connect to get download data prod',
     format: String,
-    default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
     env: 'Download_URL'
   },
   Table_URL: {
-    doc: 'connect to get table data dev',
+    doc: 'connect to get table data prod',
     format: String,
-    default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomHistoryexceedence/`,
     env: 'Table_URL'
   },
+
+  // dev //
+  // OS_NAMES_API_URL: {
+  //   doc: 'Osname api url',
+  //   format: String,
+
+  //   default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/`,
+
+  //   env: 'Osname api url'
+  // },
+  // OS_NAMES_API_URL_1: {
+  //   doc: 'connect monitoringstn dev',
+  //   format: String,
+  //   default: `https://aqie-monitoringstation-backend.dev.cdp-int.defra.cloud/monitoringstation/`,
+  //   env: 'OS_NAMES_API_URL_1'
+  // },
+  // Download_URL: {
+  //   doc: 'connect to s3 bucket dev',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryHourlydata/`,
+  //   env: 'Download_URL'
+  // },
+  // Table_URL: {
+  //   doc: 'connect to get table data dev',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
+  //   env: 'Table_URL'
+  // },
   aqiePassword: {
     doc: 'password for daqie',
     format: '*',
