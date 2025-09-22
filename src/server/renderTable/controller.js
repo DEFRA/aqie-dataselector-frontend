@@ -16,48 +16,48 @@ const rendertablecontroller = {
   handler: async (request, h) => {
     try {
       request.yar.set('selectedYear', request.params.year)
-      const tabledata1 = [
-        {
-          pollutantName: 'PM2.5',
-          hourlyCount: 'n/a',
-          dailyCount: 23,
-          annualcount: 24,
-          dataVerifiedTag: 'Data has been verified',
-          dataCapturePercentage: 97
-        },
-        {
-          pollutantName: 'PM10',
-          hourlyCount: 'n/a',
-          dailyCount: 36,
-          annualcount: 42,
-          dataVerifiedTag: 'Data has been verified',
-          dataCapturePercentage: 97
-        },
-        {
-          pollutantName: 'Nitrogen dioxide',
-          hourlyCount: 19,
-          dailyCount: 'n/a',
-          annualcount: 45,
-          dataVerifiedTag: 'Data has been verified',
-          dataCapturePercentage: 99
-        },
-        {
-          pollutantName: 'Ozone',
-          hourlyCount: 'n/a',
-          dailyCount: 'n/a',
-          annualcount: 90,
-          dataVerifiedTag: 'Data has been verified',
-          dataCapturePercentage: 91
-        },
-        {
-          pollutantName: 'Sulphur dioxide',
-          hourlyCount: '0',
-          dailyCount: 4,
-          annualcount: 91,
-          dataVerifiedTag: 'Data has been verified',
-          dataCapturePercentage: 92
-        }
-      ]
+      // const tabledata1 = [
+      //   {
+      //     pollutantName: 'PM2.5',
+      //     hourlyCount: 'n/a',
+      //     dailyCount: 23,
+      //     annualcount: 24,
+      //     dataVerifiedTag: 'Data has been verified',
+      //     dataCapturePercentage: 97
+      //   },
+      //   {
+      //     pollutantName: 'PM10',
+      //     hourlyCount: 'n/a',
+      //     dailyCount: 36,
+      //     annualcount: 42,
+      //     dataVerifiedTag: 'Data has been verified',
+      //     dataCapturePercentage: 97
+      //   },
+      //   {
+      //     pollutantName: 'Nitrogen dioxide',
+      //     hourlyCount: 19,
+      //     dailyCount: 'n/a',
+      //     annualcount: 45,
+      //     dataVerifiedTag: 'Data has been verified',
+      //     dataCapturePercentage: 99
+      //   },
+      //   {
+      //     pollutantName: 'Ozone',
+      //     hourlyCount: 'n/a',
+      //     dailyCount: 'n/a',
+      //     annualcount: 90,
+      //     dataVerifiedTag: 'Data has been verified',
+      //     dataCapturePercentage: 91
+      //   },
+      //   {
+      //     pollutantName: 'Sulphur dioxide',
+      //     hourlyCount: '0',
+      //     dailyCount: 4,
+      //     annualcount: 91,
+      //     dataVerifiedTag: 'Data has been verified',
+      //     dataCapturePercentage: 92
+      //   }
+      // ]
 
       const apiparams = {
         siteId: request.yar.get('stationdetails').localSiteID,
@@ -76,7 +76,7 @@ const rendertablecontroller = {
       ) {
         request.yar.set('tabledata', null)
       } else {
-        request.yar.set('tabledata', tabledata1)
+        request.yar.set('tabledata', tabledata)
       }
 
       // Render the partial template with the URL data

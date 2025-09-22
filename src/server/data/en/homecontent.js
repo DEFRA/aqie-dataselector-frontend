@@ -619,8 +619,8 @@ export const english = {
       }
     },
     accessibility: {
-      title: 'Accessibility Statement',
-      pageTitle: 'Accessibility Statement - ' + SERVICE_NAME,
+      title: 'Accessibility statement',
+      pageTitle: 'Accessibility statement - ' + SERVICE_NAME,
       headings: {
         a: 'Compliance status',
         b: 'Preparation of this accessibility statement',
