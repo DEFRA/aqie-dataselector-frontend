@@ -260,6 +260,19 @@
         {% endif %}
     </td>
 {% endif %}
+{% if data.pollutantName == "Sulphur dioxide" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        {{ data.hourlyCount }}
+        {{ NO2_hourlyToggletip | safe }}
+        {% if (data.hourlyCount > 24) %}
+            <span class="defra-aq-levels-table__cell--data">
+                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                    Above limit
+                </strong>
+            </span>
+        {% endif %}
+    </td>
+{% endif %}
 
 {% if (data.pollutantName != "Nitrogen dioxide") and (data.pollutantName != "Sulphur dioxide") %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
