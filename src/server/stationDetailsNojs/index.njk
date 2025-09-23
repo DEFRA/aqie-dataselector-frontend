@@ -289,12 +289,15 @@
         </span></td>
       
          <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
-  {{ data.annualcount }} µg/m3
+  {{ data.annualcount }} 
    
   {% if data.annualcount != '-' %}
     {% if data.pollutantName == "PM2.5" %}
+    
+     
+      {% if data.annualcount != '-' %} µg/m3 {% endif %}
       {{PM25_annualAvg| safe }}
-      {% if data.annualcount > 20 and data.datacapture >= 75 %}
+      {% if data.annualcount > 20 and data.dataCapturePercentage >= 75 %}
         <span class="defra-aq-levels-table__cell--data">
           <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
             Above limit
@@ -302,8 +305,9 @@
         </span>
       {% endif %}
     {% elif data.pollutantName == "PM10" %}
+    {% if data.annualcount != '-' %} µg/m3 {% endif %}
       {{PM10_annualAvg| safe }}
-      {% if data.annualcount > 40 and data.datacapture >= 75 %}
+      {% if data.annualcount > 40 and data.dataCapturePercentage >= 75 %}
         <span class="defra-aq-levels-table__cell--data">
           <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
             Above limit
@@ -311,10 +315,12 @@
         </span>
       {% endif %}
     {% elif data.pollutantName == "Sulphur dioxide" %}
+    {% if data.annualcount != '-' %} µg/m3 {% endif %}
       {{SO2_annualAvg| safe }}
     {% elif data.pollutantName == "Nitrogen dioxide" %}
+    {% if data.annualcount != '-' %} µg/m3 {% endif %}
       {{NO2_annualAvg| safe }}
-      {% if data.annualcount > 40 and data.datacapture >= 75 %}
+      {% if data.annualcount > 40 and data.dataCapturePercentage >= 75 %}
         <span class="defra-aq-levels-table__cell--data">
           <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
             Above limit
@@ -322,6 +328,7 @@
         </span>
       {% endif %}
     {% elif data.pollutantName == "Ozone" %}
+    {% if data.annualcount != '-' %} µg/m3 {% endif %}
       {{O2_annualAvg| safe }} 
     {% endif %}
   {% endif %}
@@ -366,6 +373,19 @@
         {{ data.hourlyCount }}
         {{ NO2_hourlyToggletip | safe }}
         {% if (data.hourlyCount > 18) %}
+            <span class="defra-aq-levels-table__cell--data">
+                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
+                    Above limit
+                </strong>
+            </span>
+        {% endif %}
+    </td>
+{% endif %}
+{% if data.pollutantName == "Sulphur dioxide" %}
+    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+        {{ data.hourlyCount }}
+        {{ SO2_hourlyToggletip | safe }}
+        {% if (data.hourlyCount > 24) %}
             <span class="defra-aq-levels-table__cell--data">
                 <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
                     Above limit
