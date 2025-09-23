@@ -242,7 +242,7 @@ export const english = {
       b: trytitle,
       c: 'You can go to ',
       d: 'UK AIR',
-      e: 'to get air pollution data.'
+      e: ' to get air pollution data.'
     },
     texts_403: {
       a: 'Forbidden',
