@@ -853,7 +853,7 @@ width: 100%;
     top: 50%;
     margin-top: 5px;
     transform: rotate(45deg);
-    //@include prefixed-transform($rotate: 45deg);
+    // @include prefixed-transform($rotate: 45deg);
     width: $dimension;
   }
 
