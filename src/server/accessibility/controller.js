@@ -15,12 +15,8 @@ const accessibilityController = {
     // if (lang && lang === 'cy') {
     //   return h.redirect(`/preifatrwydd/cy?lang=cy`)
     // }
-
-    const cleanPageTitle = pageTitle
-      ? pageTitle.replace(/['"]/g, '')
-      : pageTitle
     return h.view('accessibility/index', {
-      pageTitle: cleanPageTitle,
+      pageTitle,
       title,
       heading,
       headings,

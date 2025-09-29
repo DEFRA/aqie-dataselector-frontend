@@ -17,7 +17,6 @@ import path from 'path'
 import { yearId } from '~/src/server/year_pollutiondetails/index.js'
 import { renderTable } from '~/src/server/renderTable/index.js'
 import { download } from '~/src/server/download/index.js'
-import { hubPage } from '~/src/server/hubpage/index.js'
 
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
@@ -70,8 +69,7 @@ export const router = {
         yearId,
         renderTable,
         download,
-        stationDetailsNojs,
-        hubPage
+        stationDetailsNojs
       ])
 
       // Static assets
