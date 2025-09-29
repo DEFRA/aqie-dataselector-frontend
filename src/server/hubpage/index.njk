@@ -1,0 +1,60 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-xl">{{pageTitle}}</h1>
+
+   
+    </div>
+    </div>
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+   <div class="gem-c-cards">
+    <ul class="gem-c-cards__list gem-c-cards__list--one-column">
+        <li class="gem-c-cards__list-item">
+          <div class="gem-c-cards__list-item-wrapper">
+            <h3 class="gem-c-cards__sub-heading govuk-heading-s">
+              <a class="govuk-link gem-c-cards__link gem-c-force-print-link-styles" href="/search-location">{{texts.a}}</a>
+</h3>              <p class="govuk-body gem-c-cards__description">{{texts.b}}</p>
+          </div>
+        </li>
+
+        <li class="gem-c-cards__list-item">
+          <div class="gem-c-cards__list-item-wrapper">
+            <h3 class="gem-c-cards__sub-heading govuk-heading-s">
+              <a class="govuk-link gem-c-cards__link gem-c-force-print-link-styles" target="_blank" href="/search-location">{{texts.c}}</a>
+</h3>              <p class="govuk-body gem-c-cards__description">{{texts.d}}</p>
+          </div>
+        </li>
+
+
+      </div>
+      </div>
+
+       <!-- <div class="govuk-grid-column-one-third-from-desktop">
+      <aside class="govuk-prototype-kit-common-templates-related-items" role="complementary">
+        <h2 class="govuk-heading-m" id="subsection-title">
+          Related content
+        </h2>
+        <nav role="navigation" aria-labelledby="subsection-title">
+          <ul class="govuk-list govuk-!-font-size-16">
+            <li>
+              <a href="#">
+                What data sources are available (opens in new tab)
+              </a>
+            </li>
+          
+          </ul>
+        </nav>
+      </aside>
+
+    </div> -->
+
+</div>
+
+
+{% endblock %}
