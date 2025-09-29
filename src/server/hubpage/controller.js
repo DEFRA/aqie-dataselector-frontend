@@ -6,9 +6,8 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
-export const homeController = {
+export const hubController = {
   handler(request, h) {
-    const { home } = englishNew
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -17,12 +16,9 @@ export const homeController = {
     request.yar.set('nooflocation', '')
     request.yar.set('yearselected', '2024')
     request.yar.set('selectedYear', '2025')
-    return h.view('home/index', {
-      pageTitle: home.pageTitle,
-      heading: home.heading,
-      text: home.texts,
-      buttontxt: home.buttonText,
-      subheading: home.subheading
+    return h.view('hubpage/index', {
+      pageTitle: englishNew.hub.pageTitle,
+      texts: englishNew.hub.texts
     })
   }
 }
