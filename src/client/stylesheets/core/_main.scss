@@ -65,7 +65,8 @@ width: 100%;
  
     &__value {
     margin: 5px 0 0 0;
-    @include govuk-font($size: 24);
+    font-size: 22px;
+   // @include govuk-font($size: 24);
     @media (max-width: 640px) {
         font-size: 16px;
     }
@@ -126,11 +127,9 @@ width: 100%;
     }
     
 }
-.defra-toggletip {
 
-	&:first-child {
-		display: inline-block;
-	}
+
+.defra-toggletip {
   display: inline-block;
   position: relative;
 	&:not(.defra-toggletip-target) {
@@ -141,114 +140,113 @@ width: 100%;
 	}
 	&__container {
 		position: absolute;
-		top: -3px;
+		top: -28px;
 		@include mq ($from: tablet) {
-			top: -23px;
+			top: -28px;
 		}
 		right: 0px;
 		width: 26px;
 		height: 26px;
 	}
-	&__button {
+
+  &__button {
     position: absolute;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     width: 26px;
     height: 26px;
     background-color: white;
-    border: 0px;
-    padding: 0px;
+    border: 0;
+    padding: 0;
     text-align: center;
-    color: #0b0c0c;
+    color: $govuk-text-colour;
     cursor: help;
-		
-		&-icon {
-			pointer-events: none;
-			position: absolute;
-			overflow: visible;
-			top: 5px;
-			left: 5px;
-			width: 16px;
-			height: 16px;
-			border-radius: 100%;
-		}
-		&-text {
-			position: absolute !important;
-            width: 1px !important;
-            height: 1px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-            clip: rect(0 0 0 0) !important;
-            clip-path: inset(50%) !important;
-            border: 0 !important;
-            white-space: nowrap !important;
-           
-            
-		}
-		svg {
-			position: relative;
-			margin: -1px 0px 0px -1px;
-		}
-		&:hover, &:focus {
-			color: govuk-colour('black');
-		}
-		&:hover span {
-			box-shadow: 0 0 0 5px govuk-colour('light-grey');
-		}
-		&:focus {
-			outline: 3px solid transparent;
-			span {
-				box-shadow: 0 0 0 1px govuk-colour('black'), 0 0 0 5px $govuk-focus-colour;
-			}
-		}
-	
-   // ✅ Show tooltip on keyboard focus
-   &:focus ~ .defra-toggletip__info,
-   &:focus-visible ~ .defra-toggletip__info {
-     opacity: 1;
-     visibility: visible;
-   }
- }
 
+    &:hover + .defra-toggletip__info,
+    &:focus + .defra-toggletip__info {
+      opacity: 1;
+      visibility: visible;
+    }
 
+    &-icon {
+      pointer-events: none;
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 100%;
+    }
 
+    &-text {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
 
+    svg {
+      position: relative;
+      margin: -1px 0 0 -1px;
+    }
 
-	&__info {
-		@include govuk-font($size: 16);
-		cursor: auto;
-		position:absolute;
-		width:0px;
-		overflow: hidden;
-		box-sizing: border-box;
-		visibility: hidden;
-		top: auto;
-		bottom: 100%;
-		left: 0px;
-		padding-bottom: 10px;
-		text-align: left;
-	}
-  // Keyboard access
-  &__info.is-visible {
-    visibility: visible;
-    opacity: 1;
+    &:hover {
+      color: govuk-colour('black');
+
+      span {
+        box-shadow: 0 0 0 5px govuk-colour('light-grey');
+      }
+    }
+
+    &:focus {
+      outline: 3px solid transparent;
+
+      span {
+        box-shadow: 0 0 0 1px govuk-colour('black'), 0 0 0 5px $govuk-focus-colour;
+      }
+    }
   }
-  // end
-	&__text {
-		position: relative;
-		display:block;
-		box-sizing: border-box;
-		padding: 7.5px 10px;
-		color: white;
-		background: black;    
-		border: 2px solid currentcolor;
-		z-index: 2;
-		span {
-			color: white;
-		}
-	}
-	&__arrow {
+
+  &__info {
+    @include govuk-font($size: 16);
+    cursor: auto;
+    position: absolute;
+    width: 200px;
+    overflow: visible;
+    box-sizing: border-box;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    bottom: 100%;
+    left: 0;
+    padding-bottom: 10px;
+    text-align: left;
+    z-index: 99;
+  }
+
+  &__text {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    padding: 7.5px 10px;
+    color: white;
+    background: black;
+    border: 2px solid currentcolor;
+
+    span {
+      color: white;
+    }
+  }
+
+  
+
+  &__arrow {
 		position: absolute;
 		box-sizing: border-box;
 		z-index: 1;
@@ -265,126 +263,50 @@ width: 100%;
 		-o-transform: rotate(135deg);
 		transform: rotate(135deg);
 	}
-	&--bottom &__info {
-		bottom: auto;
-		top: 100%;
-		padding-top: 10px;
-		padding-bottom: 0px;
-	}
-	&--bottom &__arrow {
+  
+
+  &--bottom {
+    .defra-toggletip__info {
+      top: 100%;
+      bottom: auto;
+      padding-top: 10px;
+      padding-bottom: 0;
+    }
+&__arrow {
 		bottom: 100%;
 		top: auto;
 		margin: 0px 0px -15px -5px;
 	}
-	&--open &__info {
-		visibility: hidden;
-		width:200px;
-		overflow: visible;
-	}
-	&.defra-toggletip-target {
-		cursor: help;
-		border-bottom: 1px dashed govuk-colour('black');
-		padding-bottom: 1px;
-		outline: 3px solid transparent;
-		&:focus, &:hover:focus-visible {
-			border-bottom: 1px solid govuk-colour('black');
-			box-shadow: 0 2px 0 govuk-colour('black'), 0 6px 0 govuk-colour('yellow');
-		}
-		&:focus:not(:focus-visible):not(:hover) {
-			border-bottom: 1px dashed govuk-colour('black');
-			box-shadow: none;
-		}
-		&:hover {
-			border-bottom: 1px solid govuk-colour('black');
-			box-shadow: 0 2px 0 govuk-colour('black');
-		}
-	}
-}
-
-	.tooltip {
-		strong {
-			line-height: 30px; 
-    }
-
-		& ~ span {
-			width: auto; 
-			margin-top: auto; 
-			margin-left: auto; 
-			opacity: 0; 
-			visibility: hidden; 
-			z-index: 10; 
-			position: absolute; 
-			-webkit-transition-property: opacity, margin-top, visibility, margin-left; 
-			-webkit-transition-duration: 0.4s, 0.3s, 0.4s, 0.3s; 
-			-webkit-transition-timing-function: ease-in-out, ease-in-out, ease-in-out,
-    ease-in-out; 
-			-moz-transition-property: opacity, margin-top, visibility, margin-left; 
-			-moz-transition-duration: 0.4s, 0.3s, 0.4s, 0.3s; 
-			-moz-transition-timing-function: ease-in-out, ease-in-out, ease-in-out,
-    ease-in-out; 
-			-o-transition-property: opacity, margin-top, visibility, margin-left; 
-			-o-transition-duration: 0.4s, 0.3s, 0.4s, 0.3s; 
-			-o-transition-timing-function: ease-in-out, ease-in-out, ease-in-out,
-    ease-in-out; 
-			transition-property: opacity, margin-top, visibility, margin-left; 
-			transition-duration: 0.4s, 0.3s, 0.4s, 0.3s; 
-			transition-timing-function: ease-in-out, ease-in-out, ease-in-out, ease-in-out; 
-			
-      & ~ .defra-toggletip__info {
-				color: #ffffff; 
-				filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#F0F0F0', endColorstr='#FFFFFF',GradientType=0 ); 
-        margin-left: -87px;
-        pointer-events: none;
-      }
-    }
-    
-		&:hover {
-		
-				& ~ .defra-toggletip__info {
-					opacity: 1; 
-					text-decoration: none;
-					visibility: visible; 
-          margin-left: -87px;
-        }
-      
-    }
-
-		span {
-			b {
-				width: 15px; 
-				height: 15px;
-				margin-left: 20px;
-				margin-top: -19px;
-				display: block;
-				position: absolute; 
-				-webkit-transform: rotate(-45deg); 
-				-moz-transform: rotate(-45deg); 
-				-o-transform: rotate(-45deg); 
-				transform: rotate(-45deg); 
-				-webkit-box-shadow: inset -1px 1px 0 #ffffff; 
-				-moz-box-shadow: inset 0 1px 0 #ffffff; 
-				-o-box-shadow: inset 0 1px 0 #ffffff; 
-				box-shadow: inset 0 1px 0 #ffffff; 				
-				background: #f0f0f0; 
-				border-top: 1px solid #cfb57c; 
-				border-right: 1px solid #cfb57c; 
-      }
-    }
+    // .defra-toggletip__arrow {
+    //   bottom: 100%;
+    //   top: auto;
+    //   margin: 0 0 -15px -5px;
+    // }
   }
 
+  &.defra-toggletip-target {
+    cursor: help;
+    border-bottom: 1px dashed govuk-colour('black');
+    padding-bottom: 1px;
+    outline: 3px solid transparent;
 
-.tipfix ~ span {
-	color: #000000;
-	margin-top: -5px;
+    &:focus,
+    &:hover:focus-visible {
+      border-bottom: 1px solid govuk-colour('black');
+      box-shadow: 0 2px 0 govuk-colour('black'), 0 6px 0 govuk-colour('yellow');
+    }
+
+    &:focus:not(:focus-visible):not(:hover) {
+      border-bottom: 1px dashed govuk-colour('black');
+      box-shadow: none;
+    }
+
+    &:hover {
+      border-bottom: 1px solid govuk-colour('black');
+      box-shadow: 0 2px 0 govuk-colour('black');
+    }
+  }
 }
-
-.defra-toggletip__button:hover ~ .defra-toggletip__info,
-.defra-toggletip__info:hover {
-  opacity:1;
-  visibility:visible;
-  pointer-events:auto
-}
-
 .moj-sub-navigation {
   margin-bottom: govuk-spacing(7);
 }
@@ -744,4 +666,184 @@ width: 100%;
   }
 }
 }
+.gem-c-cards__heading {
+  @include govuk-responsive-margin(6, "bottom");
+}
 
+.gem-c-cards__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-column-gap: govuk-spacing(6); // Use deprecated grid-column-gap for Grade C browser support
+  column-gap: govuk-spacing(6);
+
+  @include govuk-media-query($from: "desktop") {
+    // For browsers that don't support CSS grid, constrain the width to 50% to improve usability
+    // especially for screen magnifier users
+    width: 50%;
+
+    // Reset the width for browsers that support CSS grid
+    @supports (display: grid) {
+      width: initial;
+    }
+  }
+}
+
+.gem-c-cards__list--one-column {
+  .gem-c-cards__list-item {
+    &:first-child {
+      border-top: 0;
+
+      .gem-c-cards__list-item-wrapper {
+        padding-top: 0;
+      }
+    }
+  }
+}
+
+.gem-c-cards__heading--underline + .gem-c-cards__list {
+  border-top: 1px solid $govuk-border-colour;
+
+  .gem-c-cards__list-item {
+    &:first-child {
+      .gem-c-cards__list-item-wrapper {
+        padding-top: 19px;
+      }
+    }
+  }
+}
+
+.gem-c-cards__list--two-column-desktop {
+  @include govuk-media-query($from: "tablet") {
+    grid-auto-rows: fractions(1); // Set all rows to same fractional height of the complete grid
+    grid-template-columns: fractions(2); // Note that browsers that don't support CSS grid display the component as one column on all breakpoints
+  }
+}
+
+.gem-c-cards__list--three-column-desktop {
+  @include govuk-media-query($from: "desktop") {
+    grid-auto-rows: fractions(1); // Set all rows to same fractional height of the complete grid
+    grid-template-columns: fractions(3); // Note that browsers that don't support CSS grid display the component as one column on all breakpoints
+  }
+}
+
+.gem-c-cards__list-item {
+  border-top: 1px solid $govuk-border-colour;
+  padding: govuk-spacing(1) 0 govuk-spacing(4) 0;
+}
+
+.gem-c-cards__list-item-wrapper {
+  // this wrapper ensures that the clickable area of the card only
+  // covers the area of the card containing text so in a grid of cards
+  // there is space above and below each link
+  padding: 19px 0 4px;
+  position: relative;
+}
+
+.gem-c-cards__sub-heading {
+  margin: 0 govuk-spacing(6) govuk-spacing(2) 0;
+
+  // Ensure card content width is constrained to two thirds on desktop
+  @include govuk-media-query($from: "desktop") {
+    max-width: 66.6667%;
+  }
+}
+
+.gem-c-cards__link {
+  // Make the entire list item area clickable
+  &::after {
+    bottom: 0;
+    content: "";
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+
+  &::before {
+    $dimension: 7px;
+    $width: 3px;
+
+    border-right: $width solid $govuk-brand-colour;
+    border-top: $width solid $govuk-brand-colour;
+    content: "";
+    display: block;
+    height: $dimension;
+    position: absolute;
+    right: govuk-spacing(1);
+    top: 50%;
+    margin-top: 5px;
+    transform: rotate(45deg);
+    // @include prefixed-transform($rotate: 45deg);
+    width: $dimension;
+  }
+
+  &:hover {
+    &::before {
+      border-color: $govuk-link-hover-colour;
+    }
+  }
+
+  &:focus {
+    &::before {
+      border-color: $govuk-focus-text-colour;
+    }
+  }
+}
+
+.gem-c-cards__description {
+  margin: 0 govuk-spacing(6) 0 0;
+
+  // Ensure card content width is constrained to two thirds on desktop
+  @include govuk-media-query($from: "desktop") {
+    max-width: 66.6667%;
+  }
+}
+
+.gem-c-cards__list--two-column-desktop,
+.gem-c-cards__list--three-column-desktop {
+  .gem-c-cards__sub-heading {
+    max-width: 100%;
+  }
+
+  .gem-c-cards__description {
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .gem-c-cards__link {
+    &::before {
+      top: 27px;
+      margin: 0;
+    }
+  }
+}
+
+@include govuk-media-query($media-type: print) {
+  .gem-c-cards__list {
+    display: block;
+  }
+
+  .gem-c-cards__list-item {
+    padding: 0;
+  }
+
+  .gem-c-cards__list-item-wrapper {
+    padding: 5mm 0;
+  }
+
+  .gem-c-cards__description {
+    margin: 0;
+  }
+
+  .gem-c-cards__link {
+    &::before {
+      display: none;
+    }
+
+    &::after {
+      position: static;
+    }
+  }
+}
