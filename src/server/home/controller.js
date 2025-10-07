@@ -3,11 +3,12 @@
  * Provided as an example, remove or modify as required.
  * @satisfies {Partial<ServerRoute>}
  */
-import { english } from '~/src/server/data/en/homecontent.js'
+
+import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const homeController = {
   handler(request, h) {
-    const { home } = english
+    const { home } = englishNew
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -20,7 +21,6 @@ export const homeController = {
       pageTitle: home.pageTitle,
       heading: home.heading,
       text: home.texts,
-      links: home.links,
       buttontxt: home.buttonText,
       subheading: home.subheading
     })

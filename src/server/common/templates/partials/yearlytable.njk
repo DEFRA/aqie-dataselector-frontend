@@ -1,13 +1,7 @@
+<script type="module" src="/src/client/javascripts/application.js"></script>
 {% from "toggletip/macro.njk" import toggletip %}
-  {% set dataToggletip %}
-  {{ toggletip(
-    '',
-    'More information about what verified means',
-    'Data is verified when it has been checked for anomalies.
-    ',
-    'Trend'
-  )}}
-{% endset %}
+
+ 
 
 {% set PM10_dailyToggletip %}
   {{ toggletip(
@@ -175,6 +169,7 @@
     
      
       {% if data.annualcount != '-' %} µg/m3 {% endif %}
+      
       {{PM25_annualAvg| safe }}
       {% if data.annualcount > 20 and data.dataCapturePercentage >= 75 %}
         <span class="defra-aq-levels-table__cell--data">
@@ -235,8 +230,11 @@
 
 {% if data.pollutantName == "Sulphur dioxide" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-        {{ data.dailyCount }}
-        {{ SO2_dailyToggletip | safe }}
+      <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about daily exceedances for PM10" data-toggletip-content="Daily average PM10 levels must not reach 50.5 micrograms per cubic metre (µg/m³) or above more than 35 times in a calendar year.">
+                            {{ data.dailyCount }}
+                             </div>
+       
+      
         {% if data.dailyCount > 3 %}
             <span class="defra-aq-levels-table__cell--data">
                 <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
@@ -249,8 +247,12 @@
 
 {% if data.pollutantName == "Nitrogen dioxide" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        {{ data.hourlyCount }}
-        {{ NO2_hourlyToggletip | safe }}
+
+      <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about daily exceedances for PM10" data-toggletip-content="Daily average PM10 levels must not reach 50.5 micrograms per cubic metre (µg/m³) or above more than 35 times in a calendar year.">
+                            {{ data.hourlyCount }}
+                             </div>
+      
+      
         {% if (data.hourlyCount > 18) %}
             <span class="defra-aq-levels-table__cell--data">
                 <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
@@ -397,7 +399,7 @@
                     </a>
                     <br>
                     
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('sdf','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for {{pollutant.pollutantName}}"
                     >
                 
@@ -430,6 +432,7 @@
               <script>
 
       async function getAPIstn_details1(pollutants,freq) {  
+        console.log("comes into getAPIstn_details1")
         
 const scrollY = window.scrollY;
 
@@ -437,7 +440,7 @@ window.scrollTo(0, scrollY);
         
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
-        .then (data => {           
+        .then ( data => {           
            
             window.location.href =data
             window.scrollTo(0, scrollY); 
