@@ -65,10 +65,10 @@ width: 100%;
  
     &__value {
     margin: 5px 0 0 0;
-    font-size: 22px;
+    font-size: 22px !important;
    // @include govuk-font($size: 24);
     @media (max-width: 640px) {
-        font-size: 16px;
+        font-size: 16px !important;
     }
    
     }
