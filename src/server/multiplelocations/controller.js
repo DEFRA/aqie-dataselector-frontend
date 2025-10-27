@@ -1,6 +1,7 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { config } from '~/src/config/config.js'
+// import Wreck from '@hapi/wreck'
 // import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 
@@ -24,6 +25,22 @@ const multipleLocationsController = {
       } catch (error) {
         return error // Rethrow the error so it can be handled appropriately
       }
+
+      // dev
+      //       try {
+      //         const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
+      //         const { res, payload } = await Wreck.post(url, {
+      //           payload: JSON.stringify(nameApiparams),
+      //            headers: {
+      //       'x-api-key': 'aD7SZnwB8zru03wuDw6oSrUSFFp1Eetl'
+      //     },
+      //           json: true
+      //         })
+      // console.log("PAYLOAD",payload)
+      //         return payload
+      //       } catch (error) {
+      //         return error // Rethrow the error so it can be handled appropriately
+      //       }
     }
 
     async function InvokeMonitstnAPI(sValue, lMiles) {
@@ -109,7 +126,7 @@ const multipleLocationsController = {
         locationdetails.length === undefined
       ) {
         const result = await invokeosnameAPI(searchValue)
-        //  logger.info('Result of OSNAMEAPI', result)
+        // console.log('Result of OSNAMEAPI', result.getOSPlaces)
         if (result !== null) {
           request.yar.set('osnameapiresult', result)
         }

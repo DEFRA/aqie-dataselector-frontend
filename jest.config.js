@@ -24,6 +24,7 @@ export default {
     '<rootDir>/src/server/common/',
     '<rootDir>/src/server/data/en/content_aurn.js',
     '<rootDir>/src/client/javascripts/cookies-page.js',
+    '<rootDir>/src/client/javascripts/accessible-autocomplete-p.js',
     '<rootDir>/src/config/',
     '<rootDir>/src/server/health',
     '<rootDir>/src/server/index.js',
@@ -37,6 +38,8 @@ export default {
     '<rootDir>/src/config/config.js',
     '<rootDir>/src/server/common/helpers/logging/logger.js',
     '<rootDir>/src/server/common/helpers/redis-client.js',
+    '<rootDir>/src/server/year_aurn/controller.js',
+    '<rootDir>/src/server/customdataset',
     'index.js'
   ],
   coverageDirectory: '<rootDir>/coverage',

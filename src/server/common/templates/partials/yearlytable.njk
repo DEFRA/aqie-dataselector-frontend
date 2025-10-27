@@ -440,7 +440,8 @@ window.scrollTo(0, scrollY);
         
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
-        .then ( data => {           
+        .then ( data => {       
+          console.log("data",data)    
            
             window.location.href =data
             window.scrollTo(0, scrollY); 

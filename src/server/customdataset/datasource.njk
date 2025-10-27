@@ -1,0 +1,390 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% block content %}
+  {{ appHeading({
+    text: "",
+    caption: ""
+  }) }}
+<a href="create-pollutant.html" class="govuk-back-link">Back</a>
+
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-l">View data sources</h1>
+    
+<!-- TABS UI -->
+<div class="govuk-tabs" data-module="govuk-tabs">
+  <h2 class="govuk-tabs__title">Contents</h2>
+  <ul class="govuk-tabs__list">
+    <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+      <a class="govuk-tabs__tab" href="#tab-relevant">Data sources for the pollutant(s) you selected
+</a>
+    </li>
+    <li class="govuk-tabs__list-item">
+      <a class="govuk-tabs__tab" href="#tab-other">Data sources for other pollutants</a>
+    </li>
+  </ul>
+
+  <div class="govuk-tabs__panel" id="tab-relevant">
+    <div id="networks-relevant"></div>
+  </div>
+
+  <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
+    <div id="networks-other"></div>
+  </div>
+</div>
+<!-- STACKED CONTENT TEMPLATE: one <article> per network -->
+<template id="network-cards-template">
+
+  <!-- Automatic Urban and Rural Network (AURN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Automatic Urban and Rural Network (AURN)" data-start-year="1972">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Automatic Urban and Rural Network (AURN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">UK national automatic network for regulatory and public reporting.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitrogen oxides (NOx), ozone (O3), sulphur dioxide (SO2), carbon monoxide (CO)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1972</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Provisional hourly; ratified after QA/QC</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Chemiluminescence (NOx), UV photometry (O3), UV fluorescence (SO2), NDIR (CO), TEOM-FDMS/BAM and gravimetric (PM)</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=aurn">More information about the Automatic Urban and Rural Network (AURN)</a></p>
+  </article>
+
+  <!-- Automatic Hydrocarbon Network (AHC) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Automatic Hydrocarbon Network (AHC)" data-start-year="1992">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Automatic Hydrocarbon Network (AHC)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Hourly speciated volatile organic compounds (VOCs).</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> benzene (C6H6), 1,3-butadiene (C4H6), toluene (C7H8), ethylbenzene (C8H10), m+p-xylene (C8H10), o-xylene (C8H10), isoprene (C5H8)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1992</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Hourly (provisional); ratified later</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Automatic gas chromatographs</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=automatic-hydrocarbon">More information about the Automatic Hydrocarbon Network (AHC)</a></p>
+  </article>
+
+  <!-- Locally-managed automatic monitoring (Local automatic) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Locally managed automatic monitoring" data-start-year="1973">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Locally-managed automatic monitoring</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">This data is measured at air pollution hot spots across the UK. It mostly comes from local authority monitoring stations. This data is usually published every hour (near real-time). It varies in quality.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitrogen oxides (NOx), ozone (O3), sulphur dioxide (SO2), carbon monoxide (CO)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1973</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Typically hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Varies by provider</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Continuous analysers; BAM/FDMS for PM</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/interactive-map">More information about locally-managed automatic monitoring</a></p>
+  </article>
+
+  <!-- UKEAP: Precipitation Chemistry Network (Precip-Net) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: Precipitation Chemistry Network (Precip-Net)" data-start-year="1986">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: Precipitation Chemistry Network (Precip-Net)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Precipitation chemistry (major ions).</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> sulphate (SO4), nitrate (NO3), chloride (Cl), sodium (Na), potassium (K), calcium (Ca), magnesium (Mg)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1986</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Weekly to fortnightly sampling</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Bulk collectors; wet-only collectors at supersites</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=precip-net">More information about the UKEAP: Precipitation Chemistry Network (Precip-Net)</a></p>
+  </article>
+
+  <!-- UKEAP: Acid Gas and Aerosol Network (AGANet) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: Acid Gas and Aerosol Network (AGANet)" data-start-year="1980">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: Acid Gas and Aerosol Network (AGANet)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Acid gases and aerosol ions (monthly).</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> nitric acid (HNO3), hydrochloric acid (HCl), ammonia (NH3), ammonium (NH4), nitrate (NO3), sulphate (SO4), chloride (Cl)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1980</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Monthly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> DELTA denuder system</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=aganet">More information about the UKEAP: Acid Gas and Aerosol Network (AGANet)</a></p>
+  </article>
+
+  <!-- UKEAP: National Ammonia Monitoring Network (NAMN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: National Ammonia Monitoring Network (NAMN)" data-start-year="1980">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: National Ammonia Monitoring Network (NAMN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">National ammonia and ammonium monitoring.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> ammonia (NH3), ammonium (NH4)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1980</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Monthly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> ALPHA passive tubes; DELTA denuder at some sites</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=namn">More information about the UKEAP: National Ammonia Monitoring Network (NAMN)</a></p>
+  </article>
+
+  <!-- UKEAP: Rural NO2 Network (Rural NO2) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: Rural NO2 Network (Rural NO2)" data-start-year="1980">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: Rural NO2 Network (Rural NO2)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Rural/background nitrogen dioxide using diffusion tubes.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> nitrogen dioxide (NO2)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1980</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> 4-weekly exposure</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Palmes-type open diffusion tubes</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=rural-no2">More information about the UKEAP: Rural NO2 Network (Rural NO2)</a></p>
+  </article>
+
+  <!-- UKEAP: MARGA Network (MARGA) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: MARGA Network (MARGA)" data-start-year="1980">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: MARGA Network (MARGA)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Hourly inorganic ions and related gases at background sites.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> ammonium (NH4), nitrate (NO3), sulphate (SO4), chloride (Cl), sodium (Na), potassium (K), calcium (Ca), magnesium (Mg), nitric acid (HNO3), ammonia (NH3)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1980</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Hourly series; summaries in UKEAP reports</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> MARGA analyser (ion chromatography)</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=marga">More information about the UKEAP: MARGA Network (MARGA)</a></p>
+  </article>
+
+  <!-- UKEAP: Rural Mercury Network (RMN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UKEAP: Rural Mercury Network (RMN)" data-start-year="1980">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UKEAP: Rural Mercury Network (RMN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Speciated atmospheric mercury at rural sites.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> gaseous elemental mercury (Hg0, GEM), particulate-bound mercury (PBM), reactive oxidised mercury (GOM)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1980</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> GEM typically hourly; PBM/GOM periodic</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Periodic uploads</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Tekran 2537x with 1130/1135 speciation</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=rural-mercury">More information about the UKEAP: Rural Mercury Network (RMN)</a></p>
+  </article>
+
+  <!-- Black Carbon Network (BCN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Black Carbon Network (BCN)" data-start-year="2006">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Black Carbon Network (BCN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Black carbon and UV-absorbing PM.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> black carbon (BC), UVPM</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 2006</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly (typical)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Periodic uploads</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Aethalometers (e.g. Magee AE22/AE33)</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=black-carbon">More information about the Black Carbon Network (BCN)</a></p>
+  </article>
+
+  <!-- PAH Network (PAH) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="PAH Network (PAH)" data-start-year="1991">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">PAH Network (PAH)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Non-automatic PAHs with laboratory analysis.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> polycyclic aromatic hydrocarbons (PAHs), e.g. benzo[a]pyrene (BaP)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1991</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Period sampling</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Filters/adsorbents; GC-MS</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=pah">More information about the PAH Network (PAH)</a></p>
+  </article>
+
+  <!-- Toxic Organic Micro-Pollutants (TOMPs) Network -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Toxic Organic Micro Pollutants (TOMPs) Network" data-start-year="1991">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Toxic Organic Micro-Pollutants (TOMPs) Network</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Semi-volatile organic pollutants.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> polychlorinated biphenyls (PCBs), selected pesticides, other semi-volatile organic compounds (SVOCs)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1991</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Period sampling</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Hi-vol/PUF; GC-MS</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=tomp">More information about the Toxic Organic Micro-Pollutants (TOMPs) Network</a></p>
+  </article>
+
+  <!-- Non-Automatic Hydrocarbon Network (NAHC) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Non-Automatic Hydrocarbon Network (NAHC)" data-start-year="2001">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Non-Automatic Hydrocarbon Network (NAHC)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Fortnightly pumped tubes for benzene.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> benzene (C6H6) — historically also 1,3-butadiene (C4H6)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 2001</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Fortnightly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Pumped sorbent tubes (Carbopack X); GC-FID</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=non-automatic-hydrocarbon">More information about the Non-Automatic Hydrocarbon Network (NAHC)</a></p>
+  </article>
+
+  <!-- Particle Concentrations and Numbers Network (PCN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="Particle Concentrations and Numbers Network (PCN)" data-start-year="2001">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Particle Concentrations and Numbers Network (PCN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Particle numbers, size distributions and carbon fractions.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> particle number concentration, size distribution, organic carbon (OC), elemental carbon (EC), elemental composition</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 2001</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Instrument-dependent (many hourly/continuous)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Periodic uploads</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> SMPS, CPC, EC/OC, XRF, ACSM; Digitel PM2.5</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=pcn">More information about the Particle Concentrations and Numbers Network (PCN)</a></p>
+  </article>
+
+  <!-- UK Urban NO2 Network (UUNN) -->
+  <article class="ds-network govuk-!-margin-bottom-6" data-net-key="UK Urban NO2 Network (UUNN)" data-start-year="2020">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">UK Urban NO2 Network (UUNN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">Diffusion-tube NO2 at urban traffic sites.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> nitrogen dioxide (NO2)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 2020</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> 4-weekly exposure</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> After laboratory analysis</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument:</strong> Triplicate diffusion tubes with wind caps</p>
+    <p class="govuk-body"><a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=uk-urban-no2">More information about the UK Urban NO2 Network (UUNN)</a></p>
+  </article>
+
+</template>
+
+
+<style>
+  /* Decorative divider between groupings */
+  .ds-divider {
+    border-top: 1px solid #b1b4b6; /* GOV.UK grey 2 */
+    margin: 24px 0;
+  }
+
+  /* Network titles (no underline, a little extra space already via margin-bottom-2) */
+  .ds-network > .govuk-heading-s { text-decoration: none; }
+</style>
+
+<!-- RENDER SCRIPT: builds the two tab panels with grouped, year-sorted tables -->
+ <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 1) Availability from previous page
+  let available = {};
+  try { available = JSON.parse(sessionStorage.getItem('availableDataSources') || '{}'); } catch {}
+  const hourlyAvail  = Array.isArray(available.hourly)  ? available.hourly  : [];
+  const monthlyAvail = Array.isArray(available.monthly) ? available.monthly : [];
+  const hasLocal     = !!available.hasLocal;
+
+  // ---- NORMALISE names so minor differences still match (keeps old upstream keys working)
+  const norm = (s) => String(s || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\(.*?\)/g, '')          // ignore bracketed abbreviations
+    .replace(/\bnetwork\b/g, '')      // ignore trailing "network"
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  // 2) Build entry + year maps from the stacked template
+  const tpl = document.getElementById('network-cards-template');
+  const rowMap = {};
+  const normToKey = {};
+  const startYearMap = {};
+  const masterOrder = [];
+
+  const toYear = (text) => {
+    const m = String(text || '').match(/\b(19|20)\d{2}\b/);
+    const y = m ? parseInt(m[0], 10) : NaN;
+    return Number.isFinite(y) ? y : Infinity; // unknown years -> last
+  };
+
+  tpl.content.querySelectorAll('[data-net-key]').forEach(el => {
+    const key = el.getAttribute('data-net-key');
+    masterOrder.push(key);
+    rowMap[key] = el.cloneNode(true);
+
+    const ny = parseInt(el.getAttribute('data-start-year'), 10);
+    startYearMap[key] = Number.isFinite(ny) ? ny : toYear(el.textContent);
+
+    normToKey[norm(key)] = key;
+  });
+
+  // 3) Grouping helpers
+  const NONDEF_KEY = 'Locally managed automatic monitoring';
+
+  const defaultGroup = (key) => {
+    if (key === NONDEF_KEY) return 'nonDefra';
+    if (key === 'Automatic Urban and Rural Network (AURN)') return 'hourly';
+    if (key === 'Automatic Hydrocarbon Network (AHC)') return 'hourly';
+    return 'monthly';
+  };
+
+  const byMasterOrder = (a, b) => masterOrder.indexOf(a) - masterOrder.indexOf(b);
+  const byStartThenMaster = (a, b) => {
+    const A = startYearMap[a] ?? Infinity;
+    const B = startYearMap[b] ?? Infinity;
+    if (A !== B) return A - B;
+    return byMasterOrder(a, b);
+  };
+
+  // Resolve possibly-mismatching names from availability to our template keys
+  const resolveKeys = (arr) => (arr || [])
+    .map(name => rowMap[name] ? name : (normToKey[norm(name)] || name))
+    .filter(name => rowMap[name]);
+
+  // ---- makeTable now returns a <div> of stacked articles (kept name to minimise changes)
+  const makeTable = (keys) => {
+    if (!keys.length) return null;
+    const wrap = document.createElement('div');
+    keys.forEach(k => { const node = rowMap[k]; if (node) wrap.appendChild(node.cloneNode(true)); });
+    return wrap;
+  };
+
+  // --- Render sections with <h2 class="govuk-heading-m"> (hidden on desktop via CSS)
+  const renderSection = (root, sectionTitle, buckets) => {
+  const total =
+    (buckets.hourly?.length || 0) + (buckets.monthly?.length || 0) + (buckets.nonDefra?.length || 0);
+  if (!total) return;
+
+  // Keep the panel-level heading visible at all sizes
+/*   const h2 = document.createElement('h2');
+  h2.className = 'govuk-heading-m';
+  h2.textContent = sectionTitle;
+  root.appendChild(h2); */
+
+  // Add a group block with a small-screen-only heading + divider
+  const addGroup = (label, keys) => {
+    if (!keys || !keys.length) return;
+
+    // Small-screen-only group heading (“Near real-time”, “Other data”, “Non-Defra data”)
+    const gh = document.createElement('h2');
+    gh.className = 'govuk-heading-m ds-group-label';
+    gh.textContent = label;
+    root.appendChild(gh);
+
+    const blk = makeTable(keys); // returns a <div> of stacked <article>s
+    if (blk) root.appendChild(blk);
+
+    // Decorative divider (not announced by AT)
+    const div = document.createElement('div');
+    div.className = 'ds-divider';
+    div.setAttribute('aria-hidden', 'true');
+    div.setAttribute('role', 'presentation');
+    root.appendChild(div);
+  };
+
+  addGroup('Near real-time data from Defra', buckets.hourly);
+  addGroup('Other data from Defra',     buckets.monthly);
+  addGroup('Non-Defra data', buckets.nonDefra);
+
+  // Remove trailing divider if present
+  const last = root.lastElementChild;
+  if (last && last.classList.contains('ds-divider')) last.remove();
+};
+
+
+  // 4) Build relevant (from availability) and other (everything else), sort by Start year
+  const relevant = {
+    hourly:   resolveKeys(hourlyAvail).sort(byStartThenMaster),
+    monthly:  resolveKeys(monthlyAvail).sort(byStartThenMaster),
+    nonDefra: hasLocal ? [NONDEF_KEY] : []
+  };
+
+  const relevantSet = new Set([...relevant.hourly, ...relevant.monthly, ...relevant.nonDefra]);
+  const allKeys = masterOrder.filter(k => rowMap[k]);
+  const otherKeys = allKeys.filter(k => !relevantSet.has(k));
+
+  const other = { hourly: [], monthly: [], nonDefra: [] };
+  otherKeys.forEach(k => { other[defaultGroup(k)].push(k); });
+  other.hourly.sort(byStartThenMaster);
+  other.monthly.sort(byStartThenMaster);
+  other.nonDefra.sort(byStartThenMaster);
+
+  // 5) Render into the two tab panels
+  const relRoot   = document.getElementById('networks-relevant');
+  const otherRoot = document.getElementById('networks-other');
+
+  renderSection(relRoot,  'Data sources for the pollutant(s) you selected', relevant);
+  renderSection(otherRoot,'Data sources for other pollutants',              other);
+
+  if (!relRoot.children.length) {
+    const p = document.createElement('p');
+    p.className = 'govuk-body';
+    p.textContent = 'No networks are specifically relevant to your current selection. Showing all networks under “Other data”.';
+    relRoot.appendChild(p);
+  }
+});
+</script>
+
+
+
+
+{% endblock %}

@@ -20,6 +20,7 @@ const ruleTypeAssetResource = 'asset/resource'
 export default {
   context: path.resolve(dirname, 'src/client'),
   entry: {
+    autocomplete_p: './javascripts/accessible-autocomplete-p.js',
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
     }

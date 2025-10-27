@@ -1,14 +1,13 @@
 /**
- * A GDS styled example home page controller.
+ * A GDS styled example customdataset page controller.
  * Provided as an example, remove or modify as required.
  * @satisfies {Partial<ServerRoute>}
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
-export const homeController = {
+export const airpollutantController = {
   handler(request, h) {
-    const { home } = englishNew
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -17,15 +16,10 @@ export const homeController = {
     request.yar.set('nooflocation', '')
     request.yar.set('yearselected', '2024')
     request.yar.set('selectedYear', '2025')
-    request.yar.set('selectedpollutant', '')
-    request.yar.set('selectedyear', '')
-    request.yar.set('selectedlocation', '')
-    return h.view('home/index', {
-      pageTitle: home.pageTitle,
-      heading: home.heading,
-      text: home.texts,
-      buttontxt: home.buttonText,
-      subheading: home.subheading
+    return h.view('add_pollutant/index', {
+      pageTitle: englishNew.custom.pageTitle,
+      heading: englishNew.custom.heading,
+      texts: englishNew.custom.texts
     })
   }
 }
