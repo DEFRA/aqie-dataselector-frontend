@@ -41,7 +41,7 @@ const downloadAurnController = {
         pollutantName: request.yar.get('selectedpollutant'),
         dataSource: 'AURN',
         Region: 'England',
-        Year: '2022',
+        Year: request.yar.get('selectedyear'),
         dataselectorfiltertype: 'dataSelectorHourly'
       }
       const downloadResultaurn = await Invokedownload(apiparams)
