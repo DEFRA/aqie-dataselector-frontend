@@ -45,11 +45,19 @@ export const customdatasetController = {
       request.yar.get('selectedyear') &&
       request.yar.get('selectedpollutant')
     ) {
+      const selectedYear = request.yar.get('selectedyear')
+      // Extract only the year if selectedYear is a range like "1 January to 31 December 2024"
+      const yearOnly =
+        typeof selectedYear === 'string'
+          ? selectedYear.match(/\d{4}/)?.[0]
+          : selectedYear
+
+      request.yar.set('selectedyear', String(yearOnly))
       const stationcountparameters = {
         pollutantName: request.yar.get('selectedpollutant'),
         dataSource: 'AURN',
         Region: 'England',
-        Year: '2022',
+        Year: request.yar.get('selectedyear'),
         dataselectorfiltertype: 'dataSelectorCount'
       }
 

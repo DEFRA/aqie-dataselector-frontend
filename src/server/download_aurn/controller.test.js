@@ -1,10 +1,7 @@
 import { downloadAurnController } from './controller.js'
-// import * as controllerModule from './controller.js'
 import axios from 'axios'
 
-jest.mock('axios', () => ({
-  post: jest.fn()
-}))
+jest.mock('axios')
 
 describe('downloadAurnController', () => {
   let mockRequest
@@ -23,9 +20,10 @@ describe('downloadAurnController', () => {
       type: jest.fn().mockReturnThis(),
       code: jest.fn().mockReturnThis()
     }
-    // Default selectedpollutant
+    // Default session values
     mockRequest.yar.get.mockImplementation((key) => {
       if (key === 'selectedpollutant') return 'NO2'
+      if (key === 'selectedyear') return '2022'
       return undefined
     })
   })
@@ -53,9 +51,20 @@ describe('downloadAurnController', () => {
     expect(result).toBe(mockH)
   })
 
-  it('should use correct pollutant from session', async () => {
+  // it('should handle errors from Invokedownload gracefully', async () => {
+  //   axios.post.mockRejectedValue(new Error('Download failed'))
+  //   const result = await downloadAurnController.handler(mockRequest, mockH)
+  //   // Since error is caught and nothing is returned, result should be undefined
+  //   expect(result).toBeUndefined()
+  //   // Should not call yar.set or h.response
+  //   expect(mockRequest.yar.set).not.toHaveBeenCalled()
+  //   expect(mockH.response).not.toHaveBeenCalled()
+  // })
+
+  it('should use correct pollutant and year from session', async () => {
     mockRequest.yar.get.mockImplementation((key) => {
       if (key === 'selectedpollutant') return 'PM10'
+      if (key === 'selectedyear') return '2023'
       return undefined
     })
     axios.post.mockResolvedValue({ data: { success: true } })
@@ -64,7 +73,7 @@ describe('downloadAurnController', () => {
 
     expect(axios.post).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ pollutantName: 'PM10' })
+      expect.objectContaining({ pollutantName: 'PM10', Year: '2023' })
     )
   })
 })
