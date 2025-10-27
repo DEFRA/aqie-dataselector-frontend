@@ -1,5 +1,6 @@
 import { customdatasetController } from './controller.js'
 import axios from 'axios'
+import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 // Mock axios
 jest.mock('axios')
@@ -14,7 +15,6 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
     }
   }
 }))
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 describe('customdatasetController', () => {
   let mockRequest
@@ -35,7 +35,7 @@ describe('customdatasetController', () => {
       view: jest.fn().mockReturnValue('view-response')
     }
     // Default yar.get returns undefined
-    mockRequest.yar.get.mockImplementation((key) => undefined)
+    // mockRequest.yar.get.mockImplementation((key) => undefined)
   })
 
   it('should set session values and render view with defaults', async () => {

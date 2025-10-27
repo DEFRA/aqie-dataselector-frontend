@@ -1,5 +1,5 @@
 import { airpollutantController } from './controller.js'
-
+import { englishNew } from '~/src/server/data/en/content_aurn.js'
 // Mock englishNew import
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
@@ -10,7 +10,6 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
     }
   }
 }))
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 describe('airpollutantController', () => {
   let mockRequest
