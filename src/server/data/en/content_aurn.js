@@ -23,5 +23,28 @@ export const englishNew = {
       c: 'Create a custom dataset',
       d: 'View and download data by pollutant,year and location.'
     }
+  },
+  custom: {
+    pageTitle: SERVICE_NAME,
+    heading: 'Create a custom dataset',
+    subheading: 'Explore air quality data and insights',
+    buttonText: 'Get Started',
+    texts: {
+      a: 'Clear selections',
+      b: 'Pollutant',
+      c: 'Add',
+      d: 'View',
+      e: ' Data source',
+      f: 'Year',
+      g: 'None selected',
+      h: 'time period',
+      i: 'Location',
+      j: 'location',
+      k: 'Continue',
+      l: 'pollutant',
+      m: 'Any',
+      datasource: 'Near real-time data from Defra',
+      datasource1: 'Automatic Urban and Rural Network (AURN)'
+    }
   }
 }

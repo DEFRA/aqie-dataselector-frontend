@@ -8,7 +8,7 @@ import {
   SkipLink
 } from 'govuk-frontend'
 import CookieBanner from './cookie-banner.js'
-
+import accessibleAutocomplete from 'accessible-autocomplete'
 import {
   getConsentCookie,
   isValidConsentCookie,
@@ -48,5 +48,17 @@ if ($cookiesPage) {
   // Instantiating for side effects (e.g., auto-initialization)
   new CookiesPage($cookiesPage)
 }
+document.addEventListener('DOMContentLoaded', () => {
+  accessibleAutocomplete({
+    element: document.querySelector('#autocomplete-container-p'),
+    id: 'my-autocomplete',
+    source: [
+      // Pollutants
+
+      'Ozone',
+      'Sulphur dioxide'
+    ]
+  })
+})
 
 // initAll()

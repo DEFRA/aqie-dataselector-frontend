@@ -263,7 +263,15 @@ export const config = convict({
     env: 'Table_URL'
   },
 
+  Download_aurn_URL: {
+    doc: 'connect to get table data dev',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelection/`,
+    env: 'Download_aurn_URL'
+  },
+
   // dev //
+
   // OS_NAMES_API_URL: {
   //   doc: 'Osname api url',
   //   format: String,
@@ -271,6 +279,16 @@ export const config = convict({
   //   default: `https://aqie-location-backend.dev.cdp-int.defra.cloud/osnameplaces/`,
 
   //   env: 'Osname api url'
+  // },
+
+  // Download_aurn_URL: {
+  //   doc: 'connect to get table data dev',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelection/`,
+  //   env: 'Download_aurn_URL'
+  // },
+  // cdpXApiKey: {
+  //   default: 'TqiCb1bIXR3R7nRmZbNLLHT7fERKTrWb'
   // },
   // OS_NAMES_API_URL_1: {
   //   doc: 'connect monitoringstn dev',
@@ -289,6 +307,12 @@ export const config = convict({
   //   format: String,
   //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomHistoryexceedence/`,
   //   env: 'Table_URL'
+  // },
+  // Download_aurn_URL: {
+  //   doc: 'connect to get table data dev',
+  //   format: String,
+  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomDataSelection/`,
+  //   env: 'Download_aurn_URL'
   // },
   aqiePassword: {
     doc: 'password for daqie',

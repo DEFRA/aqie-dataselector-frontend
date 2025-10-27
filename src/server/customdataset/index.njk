@@ -1,0 +1,199 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% block content %}
+  {{ appHeading({
+    text: "",
+    caption: ""
+  }) }}
+
+
+
+
+
+
+<a href="../hub" class="govuk-back-link">Back</a>
+
+
+
+
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-three-quarters-from-desktop">
+
+      
+<form action='/download_dataselector' method="post">
+        <h1 class="govuk-heading-l">{{heading}}</h1>
+
+        <p class="govuk-body govuk-!-margin-bottom-6"><a href="#" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
+
+
+        <div id="station-inset-container" aria-live="polite" style="display: none;"></div>
+
+<!-- <p class="govuk-body">Choose pollutant(s)</p> -->
+     
+    <dl class="govuk-summary-list">
+        <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+     {{texts.b}}
+    </dt>
+   
+    <dd class="govuk-summary-list__value" id="pollutant-summary-list">
+      {% if selectedpollutant %}
+      {{selectedpollutant}}
+      {% else %}
+    {{texts.g}}
+    {% endif %}
+    </dd>
+    <dd class="govuk-summary-list__actions">
+      <a class="govuk-link" href="/airpollutant"> {{texts.c}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
+    </dd>
+  </div>
+   <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      {{texts.e}}
+    </dt>
+    <dd class="govuk-summary-list__value" id="data-source-list">
+     {% if selectedpollutant %}
+      {{texts.datasource1}}
+      {{texts.datasource}}
+      {% else %}
+    {{texts.g}}
+    {% endif %}
+    </dd>
+    {% if selectedpollutant %}
+    <dd class="govuk-summary-list__actions" id="data-source-action" hidden>
+        
+  <a class="govuk-link" href="/datasource">View<span class="govuk-visually-hidden"> {{texts.e}}</span></a>
+</dd>
+ {% endif %}
+  </div>
+   
+  
+  
+</dl>  
+
+<!--     <p class="govuk-body">Choose year(s) and location(s)</p> -->
+
+      <dl class="govuk-summary-list">
+    
+   
+  
+  
+  <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      {{texts.f}}
+    </dt>
+
+    <dd class="govuk-summary-list__value" id="time-period-value">
+     {% if selectedyear %}
+      {{selectedyear}}
+      {% else %}
+    {{texts.g}}
+     {% endif %}
+    </dd>
+      {% if selectedpollutant %}
+   <dd class="govuk-summary-list__actions" id="time-period-action" hidden>
+  <a class="govuk-link" href="/year-aurn">Add<span class="govuk-visually-hidden">  {{texts.h}}</span></a>
+</dd>
+{% endif %}
+  </div>
+
+   <div class="govuk-summary-list__row">
+    <dt class="govuk-summary-list__key">
+      {{texts.i}}
+    </dt>
+<dd class="govuk-summary-list__value" id="location-value">
+  {% if selectedlocation %}
+ 
+    <ul class="govuk-list">
+    {% for location in selectedlocation %}
+      <li>{{ location }}</li>
+    {% endfor %}
+    </ul>
+  
+{% else %}
+  {{texts.g}}
+{% endif %}
+ 
+</dd>
+ {% if selectedpollutant %}
+<dd class="govuk-summary-list__actions" id="location-action" hidden>
+  <a class="govuk-link" href="/location-aurn">  {{texts.c}}<span class="govuk-visually-hidden">   {{texts.j}}</span></a>
+</dd>
+ {% endif %}
+
+
+  </div>
+ 
+  
+</dl>
+
+
+
+
+          </div>
+      
+        </div>
+
+        {{ govukButton({
+          text: "Continue"
+        }) }}
+        </form>
+</div>
+</div>
+<script>
+  // =============== 1) Read selections ===============
+  // Pollutants
+  const pollutantsRaw = sessionStorage.getItem('selectedPollutants');
+  let pollutants = [];
+  try { pollutants = pollutantsRaw ? JSON.parse(pollutantsRaw) : []; } catch { pollutants = []; }
+
+  if (!Array.isArray(pollutants) || pollutants.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+document.addEventListener('DOMContentLoaded', () => {
+  const pollutants = JSON.parse(sessionStorage.getItem('selectedPollutants') || '[]');
+  const pollutantListEl = document.getElementById('pollutant-summary-list');
+  const dataSourceEl = document.getElementById('data-source-list');
+
+  if (pollutants.length && pollutantListEl && dataSourceEl) {
+    pollutantListEl.innerHTML = pollutants.map(p => `<div>${p}</div>`).join('');
+
+    // NEW — change "Add" to "Change" if something is selected
+    const pollutantActionCell = document.querySelector(
+      '#pollutant-summary-list + .govuk-summary-list__actions a.govuk-link'
+    );
+    if (pollutantActionCell) {
+      pollutantActionCell.innerHTML = 'Change<span class="govuk-visually-hidden"> pollutant</span>';
+    }
+
+    const merged = [];
+    const seen = new Set();
+    pollutants.forEach(p => {
+      buildNetworksForPollutant(p).forEach(item => {
+        if (!seen.has(item)) { merged.push(item); seen.add(item); }
+      });
+    });
+
+    dataSourceEl.innerHTML = merged.map(dsRowDivHtml).join('');
+  } else if (dataSourceEl) {
+    dataSourceEl.textContent = 'Any';
+
+    // NEW — make sure link says "Add" if none selected
+    const pollutantActionCell = document.querySelector(
+      '#pollutant-summary-list + .govuk-summary-list__actions a.govuk-link'
+    );
+    if (pollutantActionCell) {
+      pollutantActionCell.innerHTML = 'Add<span class="govuk-visually-hidden"> pollutant</span>';
+    }
+  }
+});
+
+ 
+</script>
+
+
+{% endblock %}
+

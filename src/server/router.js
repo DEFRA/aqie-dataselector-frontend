@@ -18,7 +18,13 @@ import { yearId } from '~/src/server/year_pollutiondetails/index.js'
 import { renderTable } from '~/src/server/renderTable/index.js'
 import { download } from '~/src/server/download/index.js'
 import { hubPage } from '~/src/server/hubpage/index.js'
-
+import { customdataset } from '~/src/server/customdataset/index.js'
+import { airpollutant } from '~/src/server/add_pollutant/index.js'
+import { datasource } from '~/src/server/datasource/index.js'
+import { year } from '~/src/server/year_aurn/index.js'
+import { locationaurn } from '~/src/server/location_aurn/index.js'
+import { downloadDataselector } from '~/src/server/download_dataselector/index.js'
+import { downloadAurn } from '~/src/server/download_aurn/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -71,7 +77,14 @@ export const router = {
         renderTable,
         download,
         stationDetailsNojs,
-        hubPage
+        hubPage,
+        customdataset,
+        airpollutant,
+        datasource,
+        year,
+        locationaurn,
+        downloadDataselector,
+        downloadAurn
       ])
 
       // Static assets

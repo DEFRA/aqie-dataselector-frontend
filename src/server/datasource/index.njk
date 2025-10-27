@@ -1,0 +1,35 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% block content %}
+  {{ appHeading({
+    text: "",
+    caption: ""
+  }) }}
+{# <a href="create-pollutant.html" class="govuk-back-link">Back</a> #}
+
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <h1 class="govuk-heading-l">View data sources</h1>
+    <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
+    <p class="govuk-body">This data is automatically measured and published every hour.</p>
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Automatic Urban and Rural Network (AURN)</h3>
+    <p class="govuk-body govuk-!-margin-bottom-3">The most reliable air pollution data in the UK.</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO)</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1972</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Hourly</p>
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument and method:</strong> TEOM-FDMS/BAM and gravimetric (PM2.5, PM10), chemiluminescence (NO2, NO, NOx), UV photometry (O3), UV fluorescence (SO2) and NDIR (CO)</p>
+    <a class="govuk-link" target="_blank" href="https://uk-air.defra.gov.uk/networks/network-info?view=aurn">More information about the Automatic Urban and Rural Network (AURN)</a>
+    
+    
+    </div>
+    </div>
+    
+<!-- TABS UI -->
+{% endblock %}
+
+

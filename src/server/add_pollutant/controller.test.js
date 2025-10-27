@@ -1,7 +1,17 @@
-import { homeController } from './controller.js'
+import { airpollutantController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+// Mock englishNew import
+jest.mock('~/src/server/data/en/content_aurn.js', () => ({
+  englishNew: {
+    custom: {
+      pageTitle: 'Test Add Pollutant Page',
+      heading: 'Test Heading',
+      texts: ['Test text 1', 'Test text 2']
+    }
+  }
+}))
 
-describe('homeController', () => {
+describe('airpollutantController', () => {
   let mockRequest
   let mockH
 
@@ -12,12 +22,12 @@ describe('homeController', () => {
       }
     }
     mockH = {
-      view: jest.fn().mockReturnValue('home-view-response')
+      view: jest.fn().mockReturnValue('add-pollutant-view-response')
     }
   })
 
   it('should set all session values and render the view with correct data', () => {
-    const result = homeController.handler(mockRequest, mockH)
+    const result = airpollutantController.handler(mockRequest, mockH)
 
     expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
     expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
@@ -27,17 +37,12 @@ describe('homeController', () => {
     expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2024')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2025')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedyear', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', '')
 
-    expect(mockH.view).toHaveBeenCalledWith('home/index', {
-      pageTitle: englishNew.home.pageTitle,
-      heading: englishNew.home.heading,
-      text: englishNew.home.texts,
-      buttontxt: englishNew.home.buttonText,
-      subheading: englishNew.home.subheading
+    expect(mockH.view).toHaveBeenCalledWith('add_pollutant/index', {
+      pageTitle: englishNew.custom.pageTitle,
+      heading: englishNew.custom.heading,
+      texts: englishNew.custom.texts
     })
-    expect(result).toBe('home-view-response')
+    expect(result).toBe('add-pollutant-view-response')
   })
 })
