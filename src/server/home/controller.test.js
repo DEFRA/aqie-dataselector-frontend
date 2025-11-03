@@ -1,4 +1,5 @@
 import { homeController } from './controller.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 
 // Mock english import to match controller usage
 jest.mock('~/src/server/data/en/homecontent.js', () => ({
@@ -12,7 +13,6 @@ jest.mock('~/src/server/data/en/homecontent.js', () => ({
     }
   }
 }))
-import { english } from '~/src/server/data/en/homecontent.js'
 
 describe('homeController', () => {
   let mockRequest
