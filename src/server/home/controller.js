@@ -4,11 +4,13 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
+// import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 
 export const homeController = {
   handler(request, h) {
-    const { home } = englishNew
+    // const { home } = englishNew
+    const { home } = english
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
