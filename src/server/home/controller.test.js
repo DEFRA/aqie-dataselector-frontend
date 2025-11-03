@@ -1,5 +1,18 @@
 import { homeController } from './controller.js'
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
+
+// Mock english import to match controller usage
+jest.mock('~/src/server/data/en/homecontent.js', () => ({
+  english: {
+    home: {
+      pageTitle: 'Test Home Page',
+      heading: 'Test Heading',
+      texts: ['Test text 1', 'Test text 2'],
+      buttonText: 'Test Button',
+      subheading: 'Test Subheading'
+    }
+  }
+}))
+import { english } from '~/src/server/data/en/homecontent.js'
 
 describe('homeController', () => {
   let mockRequest
@@ -32,11 +45,11 @@ describe('homeController', () => {
     expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', '')
 
     expect(mockH.view).toHaveBeenCalledWith('home/index', {
-      pageTitle: englishNew.home.pageTitle,
-      heading: englishNew.home.heading,
-      text: englishNew.home.texts,
-      buttontxt: englishNew.home.buttonText,
-      subheading: englishNew.home.subheading
+      pageTitle: english.home.pageTitle,
+      heading: english.home.heading,
+      text: english.home.texts,
+      buttontxt: english.home.buttonText,
+      subheading: english.home.subheading
     })
     expect(result).toBe('home-view-response')
   })
