@@ -397,7 +397,7 @@
                     </a>
                     <br>
                     
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('sdf','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for {{pollutant.pollutantName}}"
                     >
                 
@@ -430,7 +430,7 @@
               <script>
 
       async function getAPIstn_details1(pollutants,freq) {  
-        console.log("comes into getAPIstn_details1")
+      
         
 const scrollY = window.scrollY;
 
@@ -439,7 +439,7 @@ window.scrollTo(0, scrollY);
       fetch(`/downloaddata/${pollutants}/${freq}`)
         .then(response => response.text())
         .then ( data => {       
-          console.log("data",data)    
+          
            
             window.location.href =data
             window.scrollTo(0, scrollY); 
