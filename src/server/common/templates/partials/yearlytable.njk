@@ -230,10 +230,9 @@
 
 {% if data.pollutantName == "Sulphur dioxide" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-      <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about daily exceedances for PM10" data-toggletip-content="Daily average PM10 levels must not reach 50.5 micrograms per cubic metre (µg/m³) or above more than 35 times in a calendar year.">
-                            {{ data.dailyCount }}
-                             </div>
-       
+       {{ data.dailyCount }}
+                           
+         {{ SO2_dailyToggletip | safe }}
       
         {% if data.dailyCount > 3 %}
             <span class="defra-aq-levels-table__cell--data">
@@ -248,9 +247,8 @@
 {% if data.pollutantName == "Nitrogen dioxide" %}
     <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
 
-      <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about daily exceedances for PM10" data-toggletip-content="Daily average PM10 levels must not reach 50.5 micrograms per cubic metre (µg/m³) or above more than 35 times in a calendar year.">
-                            {{ data.hourlyCount }}
-                             </div>
+           {{ data.hourlyCount }}
+                          {{ NO2_hourlyToggletip | safe }}
       
       
         {% if (data.hourlyCount > 18) %}
