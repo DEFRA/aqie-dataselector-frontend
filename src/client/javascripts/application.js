@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Pollutants
 
       'Ozone',
-      'Sulphur dioxide'
+      'Sulphurdioxide'
     ]
   })
 })
