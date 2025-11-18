@@ -1,4 +1,5 @@
 const SERVICE_NAME = 'Get air pollution data'
+const problemtitle = 'There is a problem'
 export const englishNew = {
   home: {
     pageTitle: SERVICE_NAME,
@@ -43,8 +44,26 @@ export const englishNew = {
       k: 'Continue',
       l: 'pollutant',
       m: 'Any',
+      n: 'Change',
       datasource: 'Near real-time data from Defra',
       datasource1: 'Automatic Urban and Rural Network (AURN)'
+    },
+    errorText: {
+      uk: {
+        fields: {
+          title: problemtitle,
+
+          text: 'Please select an option before continuing'
+        }
+      },
+      ni: {
+        fields: {
+          title: problemtitle,
+          list: {
+            text: 'Enter a town or postcode using only numbers and letters'
+          }
+        }
+      }
     }
   }
 }

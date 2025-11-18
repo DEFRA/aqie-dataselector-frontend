@@ -4,7 +4,7 @@ const configureRoutes = (server) => {
   server.route([
     {
       method: 'GET',
-      path: '/download_aurn',
+      path: '/download_aurn/{year}',
       ...downloadAurnController
     }
   ])

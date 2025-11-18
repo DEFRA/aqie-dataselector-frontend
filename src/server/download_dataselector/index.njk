@@ -64,7 +64,10 @@
       {{stationcount}} stations available
     </div>
     </div>
-    <a id="download-link" href="#"  onclick = "getAPIdownload()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+
+ {% if yearrange == 'Single' %}
+
+    <a id="download-link" href="#"  onclick = "getAPIdownload('{{ finalyear }}')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -80,7 +83,41 @@
                         (Visual only)
                       </span>
                     </a>
-                    <br>
+                    {% endif %} 
+                   
+                    {% if yearrange == 'Multiple' %}
+            <table class="govuk-table">
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th scope="col" class="govuk-table__header">Year</th>
+      <th scope="col" class="govuk-table__header">Hourly data</th>
+    </tr>
+  </thead>
+  <tbody class="govuk-table__body">
+    <tr class="govuk-table__row">
+      <th scope="row" class="govuk-table__header">
+        Download all years
+      </th>
+         <td class="govuk-table__cell">
+        <a href="#" onclick = "getAPIdownload()"  class="govuk-link">Request Data</a>
+      </td>
+    </tr>
+    
+    {% for year in finalyear %}
+    <tr class="govuk-table__row">
+      <th scope="row" class="govuk-table__header">
+        {{ year }}
+      </th>
+      <td class="govuk-table__cell">
+        <a href="#" onclick="getAPIdownload('{{ year }}')" class="govuk-link">Download hourly data</a>
+        {# //<a href="#" onclick = "getAPIdownload()"  class="govuk-link">Download hourly data</a> #}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+ {% endif %} 
+
 
                     
   </div>
@@ -104,14 +141,14 @@
   </div>
 </div>
 <script>
-async function getAPIdownload() {  
+async function getAPIdownload(year) {  
         console.log("comes into getAPIdownload")
         
 const scrollY = window.scrollY;
 
-window.scrollTo(0, scrollY); 
-        
-      fetch(`/download_aurn`)
+window.scrollTo(0, scrollY);
+
+      fetch(`/download_aurn/${year}`)
         .then(response => response.text())
         .then ( data => {           
            console.log("DATA FROM DOWNLOAD",data)
