@@ -20,6 +20,11 @@ export const customdataset = {
         },
         {
           method: 'GET',
+          path: '/customdataset/clear',
+          ...customdatasetController
+        },
+        {
+          method: 'GET',
           path: '/customdataset/{pollutants}',
           ...customdatasetController
         },

@@ -13,7 +13,7 @@
 
 
 
-<a href="../hub" class="govuk-back-link">Back</a>
+<a href="/hubpage" class="govuk-back-link">Back</a>
 
 
 
@@ -25,7 +25,7 @@
 <form action='/download_dataselector' method="post">
         <h1 class="govuk-heading-l">{{heading}}</h1>
 
-        <p class="govuk-body govuk-!-margin-bottom-6"><a href="#" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
+        <p class="govuk-body govuk-!-margin-bottom-6"><a href="/customdataset/clear" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
 
 
         <div id="station-inset-container" aria-live="polite" style="display: none;"></div>
@@ -39,14 +39,26 @@
     </dt>
    
     <dd class="govuk-summary-list__value" id="pollutant-summary-list">
-      {% if selectedpollutant %}
-      {{selectedpollutant}}
-      {% else %}
+     {% if selectedpollutant %}
+        <ul class="govuk-list">
+          {% for pollutant in selectedpollutant %}
+        <li>{{ pollutant }}</li>
+          {% endfor %}
+        </ul>
+         {% else %}
     {{texts.g}}
     {% endif %}
+      
+     
     </dd>
     <dd class="govuk-summary-list__actions">
-      <a class="govuk-link" href="/airpollutant"> {{texts.c}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
+       {% if selectedpollutant %}
+      <a class="govuk-link" href="/airpollutant"> {{texts.n}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
+     {% else %}
+ <a class="govuk-link" href="/airpollutant"> {{texts.c}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
+    
+       {% endif %}
+
     </dd>
   </div>
    <div class="govuk-summary-list__row">
@@ -55,8 +67,8 @@
     </dt>
     <dd class="govuk-summary-list__value" id="data-source-list">
      {% if selectedpollutant %}
+     <strong> {{texts.datasource}}</strong>
       {{texts.datasource1}}
-      {{texts.datasource}}
       {% else %}
     {{texts.g}}
     {% endif %}
@@ -94,7 +106,16 @@
     </dd>
       {% if selectedpollutant %}
    <dd class="govuk-summary-list__actions" id="time-period-action" hidden>
-  <a class="govuk-link" href="/year-aurn">Add<span class="govuk-visually-hidden">  {{texts.h}}</span></a>
+    
+  <a class="govuk-link" href="/year-aurn"
+  >
+   {% if selectedyear %}
+  {{texts.n}}
+   {% else %}
+    {{texts.c}}
+     {% endif %}
+  <span class="govuk-visually-hidden">  {{texts.h}}</span></a>
+
 </dd>
 {% endif %}
   </div>
@@ -119,7 +140,16 @@
 </dd>
  {% if selectedpollutant %}
 <dd class="govuk-summary-list__actions" id="location-action" hidden>
-  <a class="govuk-link" href="/location-aurn">  {{texts.c}}<span class="govuk-visually-hidden">   {{texts.j}}</span></a>
+  <a class="govuk-link" href="/location-aurn"> 
+   {% if selectedlocation %}
+   
+      {{texts.n}}
+   {% else %}
+    {{texts.c}}
+     {% endif %}
+   
+   
+   <span class="govuk-visually-hidden">   {{texts.j}}</span></a>
 </dd>
  {% endif %}
 

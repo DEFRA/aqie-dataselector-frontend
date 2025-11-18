@@ -7,104 +7,212 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+// import { error } from 'node:console'
+import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 // import Wreck from '@hapi/wreck'
 export const customdatasetController = {
   handler: async (request, h) => {
-    // const { home } = englishNew.custom
-    request.yar.set('searchQuery', null)
-    request.yar.set('fullSearchQuery', null)
-    request.yar.set('searchLocation', '')
-    request.yar.set('osnameapiresult', '')
-    request.yar.set('selectedLocation', '')
-    request.yar.set('nooflocation', '')
-    request.yar.set('yearselected', '2024')
-    request.yar.set('selectedYear', '2025')
-    if (request.params.pollutants !== undefined) {
-      request.yar.set('selectedpollutant', request.params.pollutants)
-    }
+    // const { hoe } = englishNew.custom
+    if (request.path?.includes('/clear')) {
+      request.yar.set('selectedpollutant', '')
+      request.yar.set('selectedyear', '')
+      request.yar.set('selectedlocation', '')
+      request.yar.set('nooflocation', '')
 
-    if (request.path?.includes('/year')) {
-      request.yar.set('selectedyear', request.params.year)
-    }
-    // if (request.path && request.path.includes('/location')) {
-    //   console.log("URL contains /location:", request.params.locations);
-    //   request.yar.set('selectedlocation', request.params.locations)
-    // }
-    if (request.path?.includes('/location')) {
-      let selectedCountry = request.payload.country
-      if (selectedCountry && !Array.isArray(selectedCountry)) {
-        selectedCountry = [selectedCountry]
+      return h.view('customdataset/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        selectedpollutant: request.yar.get('selectedpollutant'),
+        selectedyear: request.yar.get('selectedyear'),
+        selectedlocation: request.yar.get('selectedlocation'),
+        stationcount: request.yar.get('nooflocation')
+      })
+    } else if (request.params.pollutants === 'null') {
+      const errorData = englishNew.custom.errorText.uk
+      const errorSection = errorData?.fields
+      setErrorMessage(request, errorSection?.title, errorSection?.text)
+      const errors = request.yar?.get('errors')
+      const errorMessage = request.yar?.get('errorMessage')
+      request.yar.set('errors', '')
+      request.yar.set('errorMessage', '')
+      return h.view('add_pollutant/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        errors,
+        errorMessage
+      })
+    } else {
+      if (request.params.pollutants !== undefined) {
+        let selectedpollutant = request.params.pollutants
+        if (
+          selectedpollutant === 'core' ||
+          selectedpollutant === 'compliance'
+        ) {
+          if (selectedpollutant === 'core') {
+            selectedpollutant = [
+              'Fine particulate matter (PM2.5)',
+              'Particulate matter (PM10)',
+              'Nitrogen dioxide (NO2)',
+              'Ozone (O3)',
+              'Sulphur dioxide (SO2)'
+            ]
+          } else if (selectedpollutant === 'compliance') {
+            selectedpollutant = [
+              'Fine particulate matter (PM2.5)',
+              'Particulate matter (PM10)',
+              'Nitrogen dioxide (NO2)',
+              'Ozone (O3)',
+              'Sulphur dioxide (SO2)',
+              'Nitric oxide (NO)',
+              'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+              'Carbon monoxide (CO)'
+            ]
+          }
+        } else {
+          // let selectedpollutant = request.yar.get('selectedpollutant');
+          if (Array.isArray(selectedpollutant)) {
+            if (
+              selectedpollutant.length === 1 &&
+              selectedpollutant[0].includes(',')
+            ) {
+              selectedpollutant = selectedpollutant[0]
+                .split(',')
+                .map((s) => s.trim())
+            }
+          } else if (typeof selectedpollutant === 'string') {
+            selectedpollutant = selectedpollutant
+              .split(',')
+              .map((s) => s.trim())
+          }
+
+          //  request.yar.set('selectedpollutant', selectedpollutant)
+        }
+        request.yar.set('selectedpollutant', selectedpollutant)
       }
-      // const selectedCountry = request.payload.country;
 
-      request.yar.set('selectedlocation', selectedCountry)
-    }
-
-    if (
-      request.yar.get('selectedlocation') &&
-      request.yar.get('selectedyear') &&
-      request.yar.get('selectedpollutant')
-    ) {
-      const selectedYear = request.yar.get('selectedyear')
-      // Extract only the year if selectedYear is a range like "1 January to 31 December 2024"
-      const yearOnly =
-        typeof selectedYear === 'string'
-          ? selectedYear.match(/\d{4}/)?.[0]
-          : selectedYear
-
-      request.yar.set('selectedyear', String(yearOnly))
-      const stationcountparameters = {
-        pollutantName: request.yar.get('selectedpollutant'),
-        dataSource: 'AURN',
-        Region: 'England',
-        Year: request.yar.get('selectedyear'),
-        dataselectorfiltertype: 'dataSelectorCount'
+      if (request.path?.includes('/year')) {
+        request.yar.set('selectedyear', request.params.year)
       }
 
-      const stationcount = await Invokestationcount(stationcountparameters)
+      if (request.path?.includes('/location')) {
+        let selectedCountry = request.payload.country
+        if (selectedCountry && !Array.isArray(selectedCountry)) {
+          selectedCountry = [selectedCountry]
+        }
+        // const selectedCountry = request.payload.country;
 
-      request.yar.set('nooflocation', stationcount)
-    }
-    async function Invokestationcount(stationcountparameters) {
-      // prod
-      try {
-        const response = await axios.post(
-          config.get('Download_aurn_URL'),
-          stationcountparameters
-        )
-        // logger.info(`response data ${JSON.stringify(response.data)}`)
-        return response.data
-      } catch (error) {
-        return error // Rethrow the error so it can be handled appropriately
+        request.yar.set('selectedlocation', selectedCountry)
       }
 
-      // dev
-      // try {
-      //       const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-      //       const { res, payload } = await Wreck.post(url, {
-      //         payload: JSON.stringify(stationcountparameters),
-      //          headers: {
-      //     'x-api-key': 'IRBHPcj245YHRuOcTAw5A2r31mZA9SfE',
-      //     'Content-Type': 'application/json'
-      //   },
-      //   json: true
-      // })
-      // console.log("PAYLOAD", payload)
-      // return payload
-      //     } catch (error) {
-      //       return error // Rethrow the error so it can be handled appropriately
-      //     }
-    }
+      if (
+        request.yar.get('selectedlocation') &&
+        request.yar.get('selectedyear') &&
+        request.yar.get('selectedpollutant')
+      ) {
+        // Extract only the year if selectedYear is a range like "1 January to 31 December 2024"
+        const selectedyear = request.yar.get('selectedyear') // e.g. "1 January to 12 November 2025"
 
-    return h.view('customdataset/index', {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      selectedpollutant: request.yar.get('selectedpollutant'),
-      selectedyear: request.yar.get('selectedyear'),
-      selectedlocation: request.yar.get('selectedlocation'),
-      stationcount: request.yar.get('nooflocation')
-    })
+        const years = selectedyear.match(/\d{4}/g)
+
+        let finalyear
+        if (years && years.length === 2) {
+          request.yar.set('yearrange', 'Multiple')
+          // Range case
+          const start = parseInt(years[0], 10)
+          const end = parseInt(years[1], 10)
+          const yearList = []
+          for (let y = start; y <= end; y++) {
+            yearList.push(y)
+          }
+          finalyear = yearList.join(',')
+          request.yar.set('finalyear', finalyear)
+        } else if (years && years.length === 1) {
+          request.yar.set('yearrange', 'Single')
+          // Only one year present
+          finalyear = years[0]
+          request.yar.set('finalyear', finalyear)
+        } else {
+          finalyear = ''
+        }
+
+        // output will be "2025" for "1 January to 12 November 2025"
+
+        const pollutantNames = {
+          'Fine particulate matter (PM2.5)': 'PM2.5',
+          'Particulate matter (PM10)': 'PM10',
+          'Nitrogen dioxide (NO2)': 'Nitrogen dioxide',
+          'Ozone (O3)': 'Ozone',
+          'Sulphur dioxide (SO2)': 'Sulphur dioxide',
+          'Nitric oxide (NO)': null, // Not in output
+          'Nitrogen oxides as nitrogen dioxide (NOx as NO2)':
+            'Nitrogen oxides as nitrogen dioxide',
+          'Carbon monoxide (CO)': 'Carbon monoxide'
+        }
+
+        const formattedPollutants = request.yar
+          .get('selectedpollutant')
+          .map((p) => pollutantNames[p] || p)
+          .join(',')
+
+        request.yar.set('formattedPollutants', formattedPollutants)
+        const stationcountparameters = {
+          pollutantName: formattedPollutants,
+          dataSource: 'AURN',
+          Region: request.yar.get('selectedlocation').join(','),
+          Year: finalyear,
+          dataselectorfiltertype: 'dataSelectorCount',
+          dataselectordownloadtype: ''
+        }
+
+        const stationcount = await Invokestationcount(stationcountparameters)
+
+        request.yar.set('nooflocation', stationcount)
+      }
+      async function Invokestationcount(stationcountparameters) {
+        // prod
+        try {
+          const response = await axios.post(
+            config.get('Download_aurn_URL'),
+            stationcountparameters
+          )
+
+          return response.data
+        } catch (error) {
+          return error // Rethrow the error so it can be handled appropriately
+        }
+
+        // dev
+        // try {
+        //   const url =
+        //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+        //   const {payload } = await Wreck.post(url, {
+        //     payload: JSON.stringify(stationcountparameters),
+        //     headers: {
+        //       'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+        //       'Content-Type': 'application/json'
+        //     },
+        //     json: true
+        //   })
+
+        //   return payload
+        // } catch (error) {
+        //   //console.error('Error fetching station count:', error)
+        //   return error // Rethrow the error so it can be handled appropriately
+        // }
+      }
+
+      return h.view('customdataset/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        selectedpollutant: request.yar.get('selectedpollutant'),
+        selectedyear: request.yar.get('selectedyear'),
+        selectedlocation: request.yar.get('selectedlocation'),
+        stationcount: request.yar.get('nooflocation')
+      })
+    }
   }
 }
 

@@ -9,56 +9,76 @@ async function Invokedownload(apiparams) {
       apiparams
     )
     // logger.info(`response data ${JSON.stringify(response.data)}`)
-    return response.data
+    //   return response.data
+    // } catch (error) {
+    //   return error // Rethrow the error so it can be handled appropriately
+    // }
+
+    // dev
+    // try {
+    //   const url =
+    //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+    //   const { payload } = await Wreck.post(url, {
+    //     payload: JSON.stringify(apiparams),
+    //     headers: {
+    //       'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+    //       'Content-Type': 'application/json'
+    //     },
+    //     json: true
+    //   })
+
+    const idDownload = response
+    const downloadstatusapiparams = { jobID: idDownload }
+    //
+
+    // Poll the status endpoint every 2 seconds until status is completed
+    let statusResponse
+    // const url1 =
+    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+
+    do {
+      await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
+
+      // const statusResult = await axios.post(url1, downloadstatusapiparams, {
+      //   headers: {
+      //     'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+      //     'Content-Type': 'application/json'
+      //   }
+      // })
+      const statusResult = await axios.post(
+        config.get('Polling_URL'),
+        downloadstatusapiparams
+      )
+      statusResponse = statusResult.data
+    } while (statusResponse.status !== 'Completed')
+
+    return statusResponse.resultUrl
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
-
-  // dev
-  // try {
-  //       const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-  //      const { res, payload } = await Wreck.post(url, {
-  //         payload: JSON.stringify(apiparams),
-  //          headers: {
-  //     'x-api-key': 'IRBHPcj245YHRuOcTAw5A2r31mZA9SfE',
-  //     'Content-Type': 'application/json'
-  //   },
-  //   json: true
-  // })
-  // console.log("PAYLOAD", payload)
-  // return payload
-  //     } catch (error) {
-  //       return error // Rethrow the error so it can be handled appropriately
-  //     }
 }
 
 const downloadAurnController = {
   handler: async (request, h) => {
     try {
+      const selectedyear = request.params.year
       // const stndetails = request.yar.get('stationdetails')
       // Declare apiparams only once here
       const apiparams = {
-        pollutantName: request.yar.get('selectedpollutant'),
+        pollutantName: request.yar.get('formattedPollutants'),
         dataSource: 'AURN',
-        Region: 'England',
-        Year: request.yar.get('selectedyear'),
-        dataselectorfiltertype: 'dataSelectorHourly'
+        Region: request.yar.get('selectedlocation').join(','),
+        Year: selectedyear,
+        dataselectorfiltertype: 'dataSelectorHourly',
+        dataselectordownloadtype: 'dataSelectorSingle'
       }
       const downloadResultaurn = await Invokedownload(apiparams)
 
       request.yar.set('downloadaurnresult', downloadResultaurn)
-      // const viewData = request.yar.get('viewData')
-      // const viewData = {
-      //   ...request.yar.get('viewData'),
-      //   downloadaurnresult
-      // }
-
-      // const url1 = 'https://url'aqie-dataselector-frontend\src\server\stationDetailsNojs\index.njk
 
       return h.response(downloadResultaurn).type('application/json').code(200)
     } catch (error) {
-      // console.error('Error rendering partial content:', error)
-      // return h.response('Error rendering partial content').code(500);
+      return h.response({ error: 'An error occurred' }).code(500)
     }
   }
 }

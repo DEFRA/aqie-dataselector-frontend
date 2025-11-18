@@ -269,6 +269,12 @@ export const config = convict({
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelection/`,
     env: 'Download_aurn_URL'
   },
+  Polling_URL: {
+    doc: 'connect to get job status',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionJobStatus/`,
+    env: 'Polling_URL'
+  },
 
   // dev //
 

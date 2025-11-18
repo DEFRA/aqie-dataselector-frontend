@@ -54,9 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
     id: 'my-autocomplete',
     source: [
       // Pollutants
-
-      'Ozone',
-      'Sulphurdioxide'
+      'Fine particulate matter (PM2.5)',
+      'Particulate matter (PM10)',
+      'Nitrogen dioxide (NO2)',
+      'Ozone (O3)',
+      'Sulphur dioxide (SO2)',
+      'Nitric oxide (NO)',
+      'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+      'Carbon monoxide (CO)',
+      'Sulphur dioxide (SO2)'
     ]
   })
 })

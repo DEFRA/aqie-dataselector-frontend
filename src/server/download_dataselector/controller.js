@@ -8,7 +8,6 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const downloadDataselectorController = {
   handler(request, h) {
-    // console.log('comes here at download dataselector')
     // const { home } = englishNew.custom
 
     // console.log('stationcount in download', request.yar.get('nooflocation'))
@@ -17,7 +16,14 @@ export const downloadDataselectorController = {
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
       downloadaurnresult: request.yar.get('downloadaurnresult'),
-      stationcount: request.yar.get('nooflocation')
+      stationcount: request.yar.get('nooflocation'),
+      yearrange: request.yar.get('yearrange'),
+      finalyear:
+        request.yar
+          .get('finalyear')
+          ?.split(',')
+          .map((year) => year.trim()) ?? []
+      //   finalyear: request.yar.get('finalyear')
     })
   }
 }
