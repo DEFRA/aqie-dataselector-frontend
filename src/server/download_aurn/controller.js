@@ -33,12 +33,17 @@ async function Invokedownload(apiparams) {
   //   json: true
   // })
   try {
+    logger.info(
+      `config.get('Download_aurn_URL')`,
+      config.get('Download_aurn_URL')
+    )
+
     payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
     logger.info(`payload ${JSON.stringify(payload)}`)
     idDownload = payload
     downloadstatusapiparams = { jobID: idDownload }
   } catch (error) {
-    logger.info(`error ${JSON.stringify(error)}`)
+    logger.info(`error `, error)
     return error // Rethrow the error so it can be handled appropriately
   }
 
@@ -58,6 +63,7 @@ async function Invokedownload(apiparams) {
       //     'Content-Type': 'application/json'
       //   }
       // })
+      console.log("config.get('Polling_URL')", config.get('Polling_URL'))
       const statusResult = await axios.post(
         config.get('Polling_URL'),
         downloadstatusapiparams
