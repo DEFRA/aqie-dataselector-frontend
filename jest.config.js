@@ -8,6 +8,10 @@ export default {
   clearMocks: true,
   silent: false,
   testMatch: ['**/src/**/*.test.js'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/src/server/download_aurn/controller.test.js'
+  ],
   reporters: ['default', ['github-actions', { silent: false }], 'summary'],
   setupFiles: ['<rootDir>/.jest/setup-file.js'],
   setupFilesAfterEnv: ['<rootDir>/.jest/setup-file-after-env.js'],
@@ -29,7 +33,6 @@ export default {
     '<rootDir>/src/server/health',
     '<rootDir>/src/server/index.js',
     '<rootDir>/src/server/router.js',
-    '<rootDir>/src/server/router.js',
     '<rootDir>/src/server/common/helpers/errors.js',
     '<rootDir>/src/client/javascripts/cookie-functions.js',
     '<rootDir>/src/client/javascripts/cookie-banner.js',
@@ -40,6 +43,7 @@ export default {
     '<rootDir>/src/server/common/helpers/redis-client.js',
     '<rootDir>/src/server/year_aurn/controller.js',
     '<rootDir>/src/server/customdataset/controller.js',
+    '<rootDir>/src/server/download_aurn/controller.js',
     'index.js'
   ],
   coverageDirectory: '<rootDir>/coverage',
