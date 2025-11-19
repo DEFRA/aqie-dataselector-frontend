@@ -5,6 +5,9 @@ const logger = createLogger()
 // import Wreck from '@hapi/wreck'
 async function Invokedownload(apiparams) {
   logger.info(`apiparams ${JSON.stringify(apiparams)}`)
+  let payload
+  let idDownload
+  let downloadstatusapiparams = {}
   // prod
   // try {
   //   const response = await axios.post(
@@ -18,29 +21,34 @@ async function Invokedownload(apiparams) {
   // }
 
   // dev
+
+  // const url =
+  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+  // const { payload } = await Wreck.post(url, {
+  //   payload: JSON.stringify(apiparams),
+  //   headers: {
+  //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
+  //     'Content-Type': 'application/json'
+  //   },
+  //   json: true
+  // })
   try {
-    // const url =
-    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-    // const { payload } = await Wreck.post(url, {
-    //   payload: JSON.stringify(apiparams),
-    //   headers: {
-    //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   json: true
-    // })
-
-    const payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
+    payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
     logger.info(`payload ${JSON.stringify(payload)}`)
-    const idDownload = payload
-    const downloadstatusapiparams = { jobID: idDownload }
-    //
+    idDownload = payload
+    downloadstatusapiparams = { jobID: idDownload }
+  } catch (error) {
+    logger.info(`error ${JSON.stringify(error)}`)
+    return error // Rethrow the error so it can be handled appropriately
+  }
 
-    // Poll the status endpoint every 2 seconds until status is completed
-    let statusResponse
-    // const url1 =
-    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+  //
 
+  // Poll the status endpoint every 2 seconds until status is completed
+  let statusResponse
+  // const url1 =
+  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+  try {
     do {
       await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
 
