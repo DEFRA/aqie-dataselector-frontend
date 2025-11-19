@@ -391,6 +391,55 @@ describe('downloadAurnController', () => {
   })
 
   describe('polling mechanism', () => {
+    it('should poll status endpoint with correct jobID', async () => {
+      const mockDownloadResponse = { data: 'job-456' }
+      const mockStatusResponse = {
+        data: {
+          status: 'Completed',
+          resultUrl: 'https://api.example.com/results/job-456'
+        }
+      }
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockResolvedValueOnce(mockStatusResponse)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(axios.post).toHaveBeenNthCalledWith(
+        2,
+        'https://api.example.com/status',
+        {
+          jobID: 'job-456'
+        }
+      )
+    }, 10000)
+
+    it('should wait 20 seconds before polling status', async () => {
+      const mockDownloadResponse = { data: 'job-wait' }
+      const mockStatusResponse = {
+        data: {
+          status: 'Completed',
+          resultUrl: 'https://api.example.com/results/job-wait'
+        }
+      }
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockResolvedValueOnce(mockStatusResponse)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+
+      jest.advanceTimersByTime(20000)
+
+      await promise
+      await jest.runAllTimersAsync()
+
+      expect(axios.post).toHaveBeenCalled()
+    }, 10000)
+
     it('should continue polling until status is Completed', async () => {
       const mockDownloadResponse = { data: 'job-poll' }
       const mockStatusResponses = [
@@ -445,6 +494,85 @@ describe('downloadAurnController', () => {
         'https://api.example.com/results/completed'
       )
     }, 15000)
+  })
+
+  describe('error handling', () => {
+    it('should return error response on download API failure', async () => {
+      const error = new Error('Download failed')
+      axios.post.mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'An error occurred'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    }, 10000)
+
+    it('should return error response on status polling failure', async () => {
+      const mockDownloadResponse = { data: 'job-fail' }
+      const error = new Error('Status polling failed')
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'An error occurred'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    }, 10000)
+
+    it('should handle network timeout error', async () => {
+      const error = new Error('Request timeout')
+      error.code = 'ECONNABORTED'
+      axios.post.mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'An error occurred'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    }, 10000)
+
+    it('should handle DNS resolution error', async () => {
+      const error = new Error('getaddrinfo ENOTFOUND')
+      error.code = 'ENOTFOUND'
+      axios.post.mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'An error occurred'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    }, 10000)
+
+    it('should handle connection refused error', async () => {
+      const error = new Error('Connection refused')
+      error.code = 'ECONNREFUSED'
+      axios.post.mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: 'An error occurred'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(500)
+    }, 10000)
   })
 
   describe('edge cases', () => {

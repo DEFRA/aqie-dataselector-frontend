@@ -1,7 +1,10 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+const logger = createLogger()
 // import Wreck from '@hapi/wreck'
 async function Invokedownload(apiparams) {
+  logger.info(`apiparams ${JSON.stringify(apiparams)}`)
   // prod
   // try {
   //   const response = await axios.post(
@@ -28,7 +31,7 @@ async function Invokedownload(apiparams) {
     // })
 
     const payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
-
+    logger.info(`payload ${JSON.stringify(payload)}`)
     const idDownload = payload
     const downloadstatusapiparams = { jobID: idDownload }
     //
@@ -56,6 +59,7 @@ async function Invokedownload(apiparams) {
 
     return statusResponse.resultUrl
   } catch (error) {
+    logger.info(`error ${JSON.stringify(error)}`)
     return error // Rethrow the error so it can be handled appropriately
   }
 }
