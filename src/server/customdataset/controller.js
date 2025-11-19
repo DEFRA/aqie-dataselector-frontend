@@ -167,7 +167,6 @@ export const customdatasetController = {
         }
 
         const stationcount = await Invokestationcount(stationcountparameters)
-
         request.yar.set('nooflocation', stationcount)
       }
       async function Invokestationcount(stationcountparameters) {
@@ -180,6 +179,7 @@ export const customdatasetController = {
 
           return response.data
         } catch (error) {
+          // console.log('Error fetching station count:', error)
           return error // Rethrow the error so it can be handled appropriately
         }
 
@@ -190,7 +190,7 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+        //       'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true

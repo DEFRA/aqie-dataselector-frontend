@@ -3,31 +3,33 @@ import axios from 'axios'
 // import Wreck from '@hapi/wreck'
 async function Invokedownload(apiparams) {
   // prod
+  // try {
+  //   const response = await axios.post(
+  //     config.get('Download_aurn_URL'),
+  //     apiparams
+  //   )
+  // logger.info(`response data ${JSON.stringify(response.data)}`)
+  //   return response.data
+  // } catch (error) {
+  //   return error // Rethrow the error so it can be handled appropriately
+  // }
+
+  // dev
   try {
-    const response = await axios.post(
-      config.get('Download_aurn_URL'),
-      apiparams
-    )
-    // logger.info(`response data ${JSON.stringify(response.data)}`)
-    //   return response.data
-    // } catch (error) {
-    //   return error // Rethrow the error so it can be handled appropriately
-    // }
+    // const url =
+    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+    // const { payload } = await Wreck.post(url, {
+    //   payload: JSON.stringify(apiparams),
+    //   headers: {
+    //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
+    //     'Content-Type': 'application/json'
+    //   },
+    //   json: true
+    // })
 
-    // dev
-    // try {
-    //   const url =
-    //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-    //   const { payload } = await Wreck.post(url, {
-    //     payload: JSON.stringify(apiparams),
-    //     headers: {
-    //       'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
-    //       'Content-Type': 'application/json'
-    //     },
-    //     json: true
-    //   })
+    const payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
 
-    const idDownload = response
+    const idDownload = payload
     const downloadstatusapiparams = { jobID: idDownload }
     //
 
@@ -41,7 +43,7 @@ async function Invokedownload(apiparams) {
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
-      //     'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+      //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
       //     'Content-Type': 'application/json'
       //   }
       // })
