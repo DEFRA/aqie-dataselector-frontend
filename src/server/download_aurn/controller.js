@@ -63,7 +63,7 @@ async function Invokedownload(apiparams) {
       //     'Content-Type': 'application/json'
       //   }
       // })
-      console.log("config.get('Polling_URL')", config.get('Polling_URL'))
+
       const statusResult = await axios.post(
         config.get('Polling_URL'),
         downloadstatusapiparams
