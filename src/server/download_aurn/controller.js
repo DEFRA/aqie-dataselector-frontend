@@ -12,8 +12,8 @@ async function Invokedownload(apiparams) {
       config.get('Download_aurn_URL'),
       apiparams
     )
-    logger.info(`response data ${JSON.stringify(response.data)}`)
-    logger.info(`response  ${JSON.stringify(response)}`)
+    logger.info(`response data new one ${JSON.stringify(response.data)}`)
+    //  logger.info(`response  ${JSON.stringify(response)}`)
     //   return response.data
     // } catch (error) {
     //   return error // Rethrow the error so it can be handled appropriately
@@ -34,7 +34,9 @@ async function Invokedownload(apiparams) {
     // console.log("payload",response)
     // logger.info("PayloadID",payload)
     // logger.info("PayloadID",Json.stringify(payload))
+    logger.info('idDownload entering')
     const idDownload = response.data
+    logger.info('idDownload received')
     const downloadstatusapiparams = { jobID: idDownload }
     logger.info('idDownload', idDownload)
     logger.info('downloadstatusapiparams', downloadstatusapiparams)
@@ -50,7 +52,7 @@ async function Invokedownload(apiparams) {
     //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
 
     do {
-      await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
+      await new Promise((resolve) => setTimeout(resolve, 10000)) // Wait 20 seconds
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
