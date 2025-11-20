@@ -7,6 +7,8 @@ const logger = createLogger()
 async function Invokedownload(apiparams) {
   // prod
   try {
+    logger.info('apiparams', apiparams)
+    logger.info('Download_aurn_URL', config.get('Download_aurn_URL'))
     const { payload } = await axios.post(
       config.get('Download_aurn_URL'),
       apiparams
@@ -29,37 +31,40 @@ async function Invokedownload(apiparams) {
     //     },
     //     json: true
     //   })
+    if (payload) {
+      const idDownload = payload
+      // console.log("payloadID",idDownload)
+      const downloadstatusapiparams = { jobID: idDownload }
+      //
 
-    const idDownload = payload
-    // console.log("payloadID",idDownload)
-    const downloadstatusapiparams = { jobID: idDownload }
-    //
+      // Poll the status endpoint every 2 seconds until status is completed
+      let statusResponse
+      // const url1 =
+      //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
 
-    // Poll the status endpoint every 2 seconds until status is completed
-    let statusResponse
-    // const url1 =
-    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+      do {
+        await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
 
-    do {
-      await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
-
-      // const statusResult = await axios.post(url1, downloadstatusapiparams, {
-      //   headers: {
-      //     'x-api-key': 'x3oRJxmyeyo1uSjRbNspYnveM096ZcyF',
-      //     'Content-Type': 'application/json'
-      //   }
-      // })
-      const statusResult = await axios.post(
-        config.get('Polling_URL'),
-        downloadstatusapiparams
-      )
-      statusResponse = statusResult.data
-      // console.log("Status response", statusResponse)
-    } while (statusResponse.status !== 'Completed')
-    logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
-    return statusResponse.resultUrl
+        // const statusResult = await axios.post(url1, downloadstatusapiparams, {
+        //   headers: {
+        //     'x-api-key': 'x3oRJxmyeyo1uSjRbNspYnveM096ZcyF',
+        //     'Content-Type': 'application/json'
+        //   }
+        // })
+        const statusResult = await axios.post(
+          config.get('Polling_URL'),
+          downloadstatusapiparams
+        )
+        statusResponse = statusResult.data
+        // console.log("Status response", statusResponse)
+      } while (statusResponse.status !== 'Completed')
+      logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
+      return statusResponse.resultUrl
+    } else {
+      logger.info('Error in JOBID:')
+    }
   } catch (error) {
-    logger.error('Error in Invokedownload:', error.message)
+    logger.error('Error in Invokedownload:', error)
     throw new Error(`Download failed: ${error.message}`)
   }
 }
