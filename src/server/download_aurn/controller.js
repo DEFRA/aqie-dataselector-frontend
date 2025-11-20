@@ -34,33 +34,42 @@ async function Invokedownload(apiparams) {
     // console.log("payload",response)
     // logger.info("PayloadID",payload)
     // logger.info("PayloadID",Json.stringify(payload))
-    // const idDownload = response
-    // const downloadstatusapiparams = { jobID: idDownload }
+    const idDownload = response.data
+    const downloadstatusapiparams = { jobID: idDownload }
+    logger.info('idDownload', idDownload)
+    logger.info('downloadstatusapiparams', downloadstatusapiparams)
+    logger.info(`idDownloadstring ${JSON.stringify(idDownload)}`)
+    logger.info(
+      `downloadstatusapiparamsstring  ${JSON.stringify(downloadstatusapiparams)}`
+    )
     //
 
     // Poll the status endpoint every 2 seconds until status is completed
-    //  let statusResponse
+    let statusResponse
     // const url1 =
     //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
 
-    // do {
-    //   await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
+    do {
+      await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
 
-    //   // const statusResult = await axios.post(url1, downloadstatusapiparams, {
-    //   //   headers: {
-    //   //     'x-api-key': 't15WKmUhFiwRNH6LSkJ0Oe4FubJ7bPxW',
-    //   //     'Content-Type': 'application/json'
-    //   //   }
-    //   // })
-    //   const statusResult = await axios.post(
-    //     config.get('Polling_URL'),
-    //     downloadstatusapiparams
-    //   )
-    //   statusResponse = statusResult.data
-    //   console.log("statusResponse",statusResponse)
-    // } while (statusResponse.status !== 'Completed')
-    return response
-    //  return statusResponse.resultUrl
+      // const statusResult = await axios.post(url1, downloadstatusapiparams, {
+      //   headers: {
+      //     'x-api-key': 't15WKmUhFiwRNH6LSkJ0Oe4FubJ7bPxW',
+      //     'Content-Type': 'application/json'
+      //   }
+      // })
+      const statusResult = await axios.post(
+        config.get('Polling_URL'),
+        downloadstatusapiparams
+      )
+      statusResponse = statusResult.data
+    } while (statusResponse.status !== 'Completed')
+    //  return response
+    logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
+    logger.info(
+      `statusResponse.resultUrlstring ${JSON.stringify(statusResponse.resultUrl)}`
+    )
+    return statusResponse.resultUrl
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
