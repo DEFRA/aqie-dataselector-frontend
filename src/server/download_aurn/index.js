@@ -1,16 +1,21 @@
 import { downloadAurnController } from '~/src/server/download_aurn/controller.js'
 
-export const downloadAurn = {
+const configureRoutes = (server) => {
+  server.route([
+    {
+      method: 'GET',
+      path: '/download_aurn/{year}',
+      ...downloadAurnController
+    }
+  ])
+}
+
+const downloadAurn = {
   plugin: {
     name: 'downloadAurn',
-    register(server) {
-      server.route([
-        {
-          method: 'POST',
-          path: '/download_aurn/{year}',
-          ...downloadAurnController
-        }
-      ])
+    register: (server) => {
+      configureRoutes(server)
     }
   }
 }
+export { downloadAurn, configureRoutes }

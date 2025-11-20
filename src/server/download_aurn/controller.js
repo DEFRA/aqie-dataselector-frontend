@@ -1,80 +1,66 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-const logger = createLogger()
 // import Wreck from '@hapi/wreck'
+
+const logger = createLogger()
 async function Invokedownload(apiparams) {
-  logger.info(`apiparams ${JSON.stringify(apiparams)}`)
-  let payload
-  let idDownload
-  let downloadstatusapiparams = {}
   // prod
-  // try {
-  //   const response = await axios.post(
-  //     config.get('Download_aurn_URL'),
-  //     apiparams
-  //   )
-  // logger.info(`response data ${JSON.stringify(response.data)}`)
-  //   return response.data
-  // } catch (error) {
-  //   return error // Rethrow the error so it can be handled appropriately
-  // }
-
-  // dev
-
-  // const url =
-  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-  // const { payload } = await Wreck.post(url, {
-  //   payload: JSON.stringify(apiparams),
-  //   headers: {
-  //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
-  //     'Content-Type': 'application/json'
-  //   },
-  //   json: true
-  // })
   try {
-    logger.info(
-      `config.get('Download_aurn_URL')`,
-      config.get('Download_aurn_URL')
+    const { payload } = await axios.post(
+      config.get('Download_aurn_URL'),
+      apiparams
     )
+    logger.info('PayloadId', payload)
+    //   return response.data
+    // } catch (error) {
+    //   return error // Rethrow the error so it can be handled appropriately
+    // }
 
-    payload = await axios.post(config.get('Download_aurn_URL'), apiparams)
-    logger.info(`payload ${JSON.stringify(payload)}`)
-    idDownload = payload
-    downloadstatusapiparams = { jobID: idDownload }
-  } catch (error) {
-    logger.info(`error `, error)
-    return error // Rethrow the error so it can be handled appropriately
-  }
+    // dev
+    // try {
+    //   const url =
+    //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+    //   const { payload } = await Wreck.post(url, {
+    //     payload: JSON.stringify(apiparams),
+    //     headers: {
+    //       'x-api-key': 'x3oRJxmyeyo1uSjRbNspYnveM096ZcyF',
+    //       'Content-Type': 'application/json'
+    //     },
+    //     json: true
+    //   })
 
-  //
+    const idDownload = payload
+    // console.log("payloadID",idDownload)
+    const downloadstatusapiparams = { jobID: idDownload }
+    //
 
-  // Poll the status endpoint every 2 seconds until status is completed
-  let statusResponse
-  // const url1 =
-  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
-  try {
+    // Poll the status endpoint every 2 seconds until status is completed
+    let statusResponse
+    // const url1 =
+    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+
     do {
       await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
-      //     'x-api-key': 'lJy5Q8p5ObarFi4uitd28fFW4tKz8DdG',
+      //     'x-api-key': 'x3oRJxmyeyo1uSjRbNspYnveM096ZcyF',
       //     'Content-Type': 'application/json'
       //   }
       // })
-
       const statusResult = await axios.post(
         config.get('Polling_URL'),
         downloadstatusapiparams
       )
       statusResponse = statusResult.data
+      // console.log("Status response", statusResponse)
     } while (statusResponse.status !== 'Completed')
-
+    logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
     return statusResponse.resultUrl
   } catch (error) {
-    logger.info(`error ${JSON.stringify(error)}`)
-    return error // Rethrow the error so it can be handled appropriately
+    logger.error('Error in Invokedownload:', error.message)
+    throw new Error(`Download failed: ${error.message}`)
   }
 }
 
@@ -82,7 +68,7 @@ const downloadAurnController = {
   handler: async (request, h) => {
     try {
       const selectedyear = request.params.year
-      // const stndetails = request.yar.get('stationdetails')
+
       // Declare apiparams only once here
       const apiparams = {
         pollutantName: request.yar.get('formattedPollutants'),
@@ -92,13 +78,26 @@ const downloadAurnController = {
         dataselectorfiltertype: 'dataSelectorHourly',
         dataselectordownloadtype: 'dataSelectorSingle'
       }
+
       const downloadResultaurn = await Invokedownload(apiparams)
 
-      request.yar.set('downloadaurnresult', downloadResultaurn)
-
-      return h.response(downloadResultaurn).type('application/json').code(200)
+      // Only store serializable data in session
+      if (typeof downloadResultaurn === 'string') {
+        request.yar.set('downloadaurnresult', downloadResultaurn)
+        return h.response(downloadResultaurn).type('text/plain').code(200)
+      } else {
+        throw new Error('Invalid download result format')
+      }
     } catch (error) {
-      return h.response({ error: 'An error occurred' }).code(500)
+      logger.info('Error in downloadAurnController:', error.message)
+      // Don't store error objects in session - they contain circular references
+      request.yar.set('downloadaurnresult', null)
+      return h
+        .response({
+          error: 'Download failed',
+          message: error.message
+        })
+        .code(500)
     }
   }
 }
