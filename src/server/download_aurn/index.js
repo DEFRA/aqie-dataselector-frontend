@@ -3,7 +3,7 @@ import { downloadAurnController } from '~/src/server/download_aurn/controller.js
 const configureRoutes = (server) => {
   server.route([
     {
-      method: 'POST',
+      method: 'GET',
       path: '/download_aurn/{year}',
       ...downloadAurnController
     }
