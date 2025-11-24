@@ -10,6 +10,7 @@ export const yearController = {
   handler(request, h) {
     // console.log('comes here at year aurn')
     // const { home } = englishNew.custom
+    const backUrl = '/customdataset'
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -29,7 +30,9 @@ export const yearController = {
     return h.view('year_aurn/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: backUrl
       //  selectedpollutant: request.yar.get('selectedpollutant')
     })
   }

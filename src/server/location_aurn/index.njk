@@ -7,7 +7,6 @@
     text: "",
     caption: ""
   }) }}
-<a href="create-pollutant.html" class="govuk-back-link">Back</a>
 
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
@@ -266,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       sessionStorage.setItem('selectedLocations', JSON.stringify(locations));
     }
-console.log("locations saved in sessionStorage", sessionStorage.getItem('selectedLocations'));
+
     // Go back to summary
     window.location.href = '/customdataset/location/' + encodeURIComponent(JSON.stringify(
       selectedRadio.id === 'location-2'

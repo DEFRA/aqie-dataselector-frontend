@@ -33,7 +33,9 @@ describe('datasourceController', () => {
     expect(mockH.view).toHaveBeenCalledWith('datasource/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: '/customdataset'
       // selectedpollutant: undefined
     })
     expect(result).toBe('view-response')
@@ -54,6 +56,18 @@ describe('datasourceController', () => {
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
       'selectedpollutant',
       'NO2'
+    )
+  })
+
+  it('should set displayBacklink to true and hrefq to correct back URL', () => {
+    datasourceController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'datasource/index',
+      expect.objectContaining({
+        displayBacklink: true,
+        hrefq: '/customdataset'
+      })
     )
   })
 })

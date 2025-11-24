@@ -43,7 +43,9 @@ describe('yearController', () => {
     expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: '/customdataset'
     })
     expect(result).toBe('year-aurn-view-response')
   })
@@ -53,6 +55,18 @@ describe('yearController', () => {
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
       'selectedpollutant',
       expect.anything()
+    )
+  })
+
+  it('should set displayBacklink to true and hrefq to correct back URL', () => {
+    yearController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'year_aurn/index',
+      expect.objectContaining({
+        displayBacklink: true,
+        hrefq: '/customdataset'
+      })
     )
   })
 })
