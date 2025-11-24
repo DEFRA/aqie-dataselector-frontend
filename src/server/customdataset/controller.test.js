@@ -70,6 +70,31 @@ describe('customdatasetController', () => {
       expect(result).toBe('view-response')
     })
 
+    it('should set displayBacklink to true and hrefq to correct back URL', async () => {
+      mockRequest.params.pollutants = 'core'
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '2024',
+          selectedlocation: ['England'],
+          nooflocation: 5
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ data: 5 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          displayBacklink: true,
+          hrefq: '/hubpage'
+        })
+      )
+    })
+
     it('should clear all session values when path includes /clear', async () => {
       mockRequest.path = '/customdataset/clear'
 
@@ -263,7 +288,9 @@ describe('customdatasetController', () => {
         selectedpollutant: undefined,
         selectedyear: undefined,
         selectedlocation: undefined,
-        stationcount: undefined
+        stationcount: undefined,
+        displayBacklink: true,
+        hrefq: '/hubpage'
       })
       expect(result).toBe('view-response')
     })
@@ -515,7 +542,9 @@ describe('customdatasetController', () => {
         selectedpollutant: ['Ozone (O3)'],
         selectedyear: '2024',
         selectedlocation: ['England'],
-        stationcount: 5
+        stationcount: 5,
+        displayBacklink: true,
+        hrefq: '/hubpage'
       })
       expect(result).toBe('view-response')
     })
@@ -533,7 +562,9 @@ describe('customdatasetController', () => {
         selectedpollutant: undefined,
         selectedyear: undefined,
         selectedlocation: undefined,
-        stationcount: undefined
+        stationcount: undefined,
+        displayBacklink: true,
+        hrefq: '/hubpage'
       })
       expect(result).toBe('view-response')
     })
@@ -558,7 +589,9 @@ describe('customdatasetController', () => {
         selectedpollutant: ['Ozone (O3)'],
         selectedyear: undefined,
         selectedlocation: ['England'],
-        stationcount: undefined
+        stationcount: undefined,
+        displayBacklink: true,
+        hrefq: '/hubpage'
       })
       expect(result).toBe('view-response')
     })

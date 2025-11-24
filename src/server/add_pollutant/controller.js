@@ -8,6 +8,7 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const airpollutantController = {
   handler(request, h) {
+    const backUrl = '/customdataset'
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -19,7 +20,9 @@ export const airpollutantController = {
     return h.view('add_pollutant/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: backUrl
     })
   }
 }

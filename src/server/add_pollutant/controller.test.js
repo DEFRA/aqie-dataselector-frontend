@@ -41,8 +41,22 @@ describe('airpollutantController', () => {
     expect(mockH.view).toHaveBeenCalledWith('add_pollutant/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: '/customdataset'
     })
     expect(result).toBe('add-pollutant-view-response')
+  })
+
+  it('should set displayBacklink to true and hrefq to correct back URL', () => {
+    airpollutantController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'add_pollutant/index',
+      expect.objectContaining({
+        displayBacklink: true,
+        hrefq: '/customdataset'
+      })
+    )
   })
 })

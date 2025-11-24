@@ -8,6 +8,7 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const datasourceController = {
   handler(request, h) {
+    const backUrl = '/customdataset'
     // console.log("comes here",request.params.pollutants)
     // const { home } = englishNew.custom
     request.yar.set('searchQuery', null)
@@ -29,7 +30,9 @@ export const datasourceController = {
     return h.view('datasource/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: backUrl
       //  selectedpollutant: request.yar.get('selectedpollutant')
     })
   }

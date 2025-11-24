@@ -33,7 +33,9 @@ describe('locationaurnController', () => {
     expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts
+      texts: englishNew.custom.texts,
+      displayBacklink: true,
+      hrefq: '/customdataset'
       // selectedpollutant: undefined (commented out in controller)
     })
     expect(result).toBe('location-aurn-view-response')
@@ -44,6 +46,18 @@ describe('locationaurnController', () => {
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
       'selectedpollutant',
       expect.anything()
+    )
+  })
+
+  it('should set displayBacklink to true and hrefq to correct back URL', () => {
+    locationaurnController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'location_aurn/index',
+      expect.objectContaining({
+        displayBacklink: true,
+        hrefq: '/customdataset'
+      })
     )
   })
 

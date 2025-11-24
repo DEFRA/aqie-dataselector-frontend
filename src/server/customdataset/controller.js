@@ -12,6 +12,7 @@ import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 // import Wreck from '@hapi/wreck'
 export const customdatasetController = {
   handler: async (request, h) => {
+    const backUrl = '/hubpage'
     // const { hoe } = englishNew.custom
     if (request.path?.includes('/clear')) {
       request.yar.set('selectedpollutant', '')
@@ -210,7 +211,9 @@ export const customdatasetController = {
         selectedpollutant: request.yar.get('selectedpollutant'),
         selectedyear: request.yar.get('selectedyear'),
         selectedlocation: request.yar.get('selectedlocation'),
-        stationcount: request.yar.get('nooflocation')
+        stationcount: request.yar.get('nooflocation'),
+        displayBacklink: true,
+        hrefq: backUrl
       })
     }
   }
