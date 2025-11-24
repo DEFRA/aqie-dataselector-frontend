@@ -421,91 +421,121 @@ function clearInlineError(opts = {}) {
   addButton.addEventListener('click', function (e) {
     e.preventDefault();
 
-    const input = document.querySelector('#my-autocomplete');
-    console.log("my-autocomplete",input.value)
-    if (!input) return;
+    // Wait for autocomplete input to be ready if not immediately available
+    const getInput = () => {
+      const input = document.querySelector('#my-autocomplete');
+      if (input) return input;
+      
+      // If input doesn't exist yet, wait a short time for autocomplete to initialize
+      return new Promise(resolve => {
+        const checkInterval = setInterval(() => {
+          const input = document.querySelector('#my-autocomplete');
+          if (input) {
+            clearInterval(checkInterval);
+            resolve(input);
+          }
+        }, 50); // Check every 50ms
+        
+        // Timeout after 2 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve(null);
+        }, 2000);
+      });
+    };
 
-    const value = (input.value || '').trim();
-    if (!value) {
-      showInlineError('Enter a pollutant', { errorId: 'pollutant-error', inputSelector: '#my-autocomplete' });
-       showErrorSummary([{ text: 'Enter a pollutant', href: '#my-autocomplete' }]); // NEW
-      return;
-    }
-
-    const lowerValue = value.toLowerCase();
-    if (addedPollutants.has(lowerValue)) {
-      const errorSummary = document.getElementById('duplicate-error');
-      if (errorSummary) {
-        errorSummary.hidden = false;
-        errorSummary.focus();
-        errorSummary.scrollIntoView({ behavior: 'smooth' });
+    // Get input (either immediately or wait for it)
+    Promise.resolve(getInput()).then(input => {
+      if (!input) {
+        console.error('Autocomplete input not found');
+        showInlineError('Unable to access pollutant input field', { errorId: 'pollutant-error', inputSelector: '#autocomplete-container-p' });
+        return;
       }
-      return;
-    }
 
-    // OPTIONAL: enforce max 5 for specific mode (uncomment to strictly cap)
-    // if (tableBody.children.length >= 5) {
-    //   alert('You can add up to 5 pollutants.');
-    //   return;
-    // }
+      console.log("my-autocomplete", input.value);
+
+      const value = (input.value || '').trim();
+      if (!value) {
+        showInlineError('Enter a pollutant', { errorId: 'pollutant-error', inputSelector: '#my-autocomplete' });
+        showErrorSummary([{ text: 'Enter a pollutant', href: '#my-autocomplete' }]); // NEW
+        return;
+      }
+
+      const lowerValue = value.toLowerCase();
+      if (addedPollutants.has(lowerValue)) {
+        const errorSummary = document.getElementById('duplicate-error');
+        if (errorSummary) {
+          errorSummary.hidden = false;
+          errorSummary.focus();
+          errorSummary.scrollIntoView({ behavior: 'smooth' });
+        }
+        return;
+      }
+
+      // OPTIONAL: enforce max 5 for specific mode (uncomment to strictly cap)
+      // if (tableBody.children.length >= 5) {
+      //   alert('You can add up to 5 pollutants.');
+      //   return;
+      // }
 
       clearInlineError({ inputSelector: '#my-autocomplete' });
       clearErrorSummary();
-    count++;
-    addedPollutants.add(lowerValue);
+      count++;
+      addedPollutants.add(lowerValue);
 
-    if (table.hidden) table.hidden = false;
+      if (table.hidden) table.hidden = false;
 
-    const row = document.createElement('tr');
-    row.className = 'govuk-table__row';
+      const row = document.createElement('tr');
+      row.className = 'govuk-table__row';
 
-    const headerCell = document.createElement('th');
-    headerCell.scope = 'row';
-    headerCell.className = 'govuk-table__header';
-    headerCell.textContent = `Pollutant ${count}`;
+      const headerCell = document.createElement('th');
+      headerCell.scope = 'row';
+      headerCell.className = 'govuk-table__header';
+      headerCell.textContent = `Pollutant ${count}`;
 
-    const valueCell = document.createElement('td');
-    valueCell.className = 'govuk-table__cell';
-    valueCell.textContent = value;
+      const valueCell = document.createElement('td');
+      valueCell.className = 'govuk-table__cell';
+      valueCell.textContent = value;
 
-    const actionCell = document.createElement('td');
-    actionCell.className = 'govuk-table__cell';
+      const actionCell = document.createElement('td');
+      actionCell.className = 'govuk-table__cell';
 
-    const removeLink = document.createElement('a');
-    removeLink.href = '#';
-    removeLink.className = 'govuk-link';
-    removeLink.textContent = 'Remove';
+      const removeLink = document.createElement('a');
+      removeLink.href = '#';
+      removeLink.className = 'govuk-link';
+      removeLink.textContent = 'Remove';
 
-    removeLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      row.remove();
-      addedPollutants.delete(lowerValue);
+      removeLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        row.remove();
+        addedPollutants.delete(lowerValue);
+
+        // Persist updated table-only list
+        persistSpecificFromTable();
+
+        if (tableBody.children.length === 0) {
+          table.hidden = true;
+          count = 0;
+        }
+        updateAddButtonText();
+      });
+
+      actionCell.appendChild(removeLink);
+      row.appendChild(headerCell);
+      row.appendChild(valueCell);
+      row.appendChild(actionCell);
+      tableBody.appendChild(row);
+
+      input.value = '';
+
+      const errorSummary = document.getElementById('duplicate-error');
+      if (errorSummary) errorSummary.hidden = true;
 
       // Persist updated table-only list
       persistSpecificFromTable();
 
-      if (tableBody.children.length === 0) {
-        table.hidden = true;
-        count = 0;
-      }
       updateAddButtonText();
     });
-
-    actionCell.appendChild(removeLink);
-    row.appendChild(headerCell);
-    row.appendChild(valueCell);
-    row.appendChild(actionCell);
-    tableBody.appendChild(row);
-
-    input.value = '';
-
-    const errorSummary = document.getElementById('duplicate-error');
-    if (errorSummary) errorSummary.hidden = true;
-
-    // Persist updated table-only list
-    persistSpecificFromTable();
-
-    updateAddButtonText();
   });
 
  

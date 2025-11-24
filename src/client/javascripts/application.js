@@ -61,8 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       'Sulphur dioxide (SO2)',
       'Nitric oxide (NO)',
       'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-      'Carbon monoxide (CO)',
-      'Sulphur dioxide (SO2)'
+      'Carbon monoxide (CO)'
     ]
   })
 })
