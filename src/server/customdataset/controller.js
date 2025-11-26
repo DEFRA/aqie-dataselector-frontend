@@ -27,7 +27,9 @@ export const customdatasetController = {
         selectedpollutant: request.yar.get('selectedpollutant'),
         selectedyear: request.yar.get('selectedyear'),
         selectedlocation: request.yar.get('selectedlocation'),
-        stationcount: request.yar.get('nooflocation')
+        stationcount: request.yar.get('nooflocation'),
+        displayBacklink: true,
+        hrefq: backUrl
       })
     } else if (request.params.pollutants === 'null') {
       const errorData = englishNew.custom.errorText.uk
@@ -42,7 +44,9 @@ export const customdatasetController = {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         errors,
-        errorMessage
+        errorMessage,
+        displayBacklink: true,
+        hrefq: '/customdataset'
       })
     } else {
       if (request.params.pollutants !== undefined) {
