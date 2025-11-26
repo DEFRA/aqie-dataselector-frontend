@@ -255,6 +255,17 @@ GROUPS.compliance = Array.from(new Set([
     addButton.textContent = tableBody.children.length > 0 ? 'Add another pollutant' : 'Add pollutant';
   }
 
+  // 🔁 Helper to update row numbers after removal
+  function updateRowNumbers() {
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    rows.forEach((row, index) => {
+      const headerCell = row.querySelector('th');
+      if (headerCell) {
+        headerCell.textContent = `Pollutant ${index + 1}`;
+      }
+    });
+  }
+
   // 🔁 Persist the current table rows into the table-only list
   function persistSpecificFromTable() {
     const rows = Array.from(tableBody.querySelectorAll('tr'));
@@ -302,6 +313,9 @@ GROUPS.compliance = Array.from(new Set([
         e.preventDefault();
         row.remove();
         addedPollutants.delete((value || '').toLowerCase());
+
+        // Update row numbers after removal
+        updateRowNumbers();
 
         // Persist updated table-only list
         persistSpecificFromTable();
@@ -417,6 +431,43 @@ function clearInlineError(opts = {}) {
     const root = document.getElementById('page-error-summary');
     if (root) root.innerHTML = '';
   }
+
+  // Helper function to check if a pollutant is allowed
+  function isAllowed(value) {
+    // Define allowed pollutants (should match your autocomplete source)
+    const allowedPollutants = [
+      'Fine particulate matter (PM2.5)',
+      'Particulate matter (PM10)',
+      'Nitrogen dioxide (NO2)', 
+      'Ozone (O3)',
+      'Sulphur dioxide (SO2)',
+      'Nitric oxide (NO)',
+      'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+      'Carbon monoxide (CO)',
+      // Additional variations for better matching
+      'Particulate matter (PM2.5)',
+      'PM2.5',
+      'PM10', 
+      'Nitrogen dioxide',
+      'NO2',
+      'Ozone',
+      'O3',
+      'Sulphur dioxide',
+      'SO2',
+      'Nitric oxide',
+      'NO',
+      'Nitrogen oxides as nitrogen dioxide',
+      'NOx as NO2',
+      'Carbon monoxide',
+      'CO'
+    ];
+    
+    const lowerValue = (value || '').toLowerCase().trim();
+    return allowedPollutants.some(pollutant => 
+      pollutant.toLowerCase().trim() === lowerValue
+    );
+  }
+
   // 2) Add new pollutant with duplicate check (specific mode)
   addButton.addEventListener('click', function (e) {
     e.preventDefault();
@@ -458,6 +509,11 @@ function clearInlineError(opts = {}) {
       if (!value) {
         showInlineError('Enter a pollutant', { errorId: 'pollutant-error', inputSelector: '#my-autocomplete' });
         showErrorSummary([{ text: 'Enter a pollutant', href: '#my-autocomplete' }]); // NEW
+        return;
+      }
+if (!isAllowed(value)) {
+        showInlineError('Select a pollutant from the list', { errorId: 'pollutant-error', inputSelector: '#my-autocomplete' });
+        showErrorSummary([{ text: 'Select a pollutant from the list', href: '#my-autocomplete' }]); // NEW
         return;
       }
 
@@ -509,6 +565,9 @@ function clearInlineError(opts = {}) {
         e.preventDefault();
         row.remove();
         addedPollutants.delete(lowerValue);
+
+        // Update row numbers after removal
+        updateRowNumbers();
 
         // Persist updated table-only list
         persistSpecificFromTable();
