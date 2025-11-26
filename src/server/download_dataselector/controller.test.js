@@ -46,6 +46,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/12345',
       stationcount: 5,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2021', '2022', '2023', '2024', '2025']
     })
     expect(result).toBe('download-dataselector-view-response')
@@ -71,6 +73,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: undefined,
       stationcount: 3,
       yearrange: 'Single',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2024']
     })
   })
@@ -95,6 +99,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/67890',
       stationcount: undefined,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2022', '2023']
     })
   })
@@ -119,6 +125,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/11111',
       stationcount: 10,
       yearrange: undefined,
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2024']
     })
   })
@@ -143,6 +151,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/22222',
       stationcount: 7,
       yearrange: 'Single',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: []
     })
   })
@@ -167,6 +177,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/33333',
       stationcount: 2,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: []
     })
   })
@@ -191,6 +203,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/44444',
       stationcount: 8,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2020', '2021', '2022', '2023']
     })
   })
@@ -215,6 +229,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/55555',
       stationcount: 4,
       yearrange: 'Single',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2023']
     })
   })
@@ -231,6 +247,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: undefined,
       stationcount: undefined,
       yearrange: undefined,
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: []
     })
   })
@@ -247,6 +265,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: undefined,
       stationcount: undefined,
       yearrange: undefined,
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: []
     })
   })
@@ -290,6 +310,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/66666',
       stationcount: 1,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2021', '2022', '2023', '2024', '2025', '2026']
     })
   })
@@ -314,6 +336,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/77777',
       stationcount: 6,
       yearrange: 'Single',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['']
     })
   })
@@ -338,6 +362,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/88888',
       stationcount: 9,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2019', '2020', '2021']
     })
   })
@@ -364,6 +390,8 @@ describe('downloadDataselectorController', () => {
       downloadaurnresult: 'https://api.example.com/download/99999',
       stationcount: nooflocationValue,
       yearrange: 'Multiple',
+      displayBacklink: true,
+      hrefq: '/customdataset',
       finalyear: ['2020', '2021']
     })
   })
