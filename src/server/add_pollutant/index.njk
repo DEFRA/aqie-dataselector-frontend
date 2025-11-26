@@ -202,6 +202,18 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Clear session storage on page refresh/reload
+  // Detect if this is a page refresh by checking if the performance navigation type is reload
+  // or by checking if there's no referrer (direct navigation or refresh)
+
+    
+    sessionStorage.removeItem('selectedPollutants');
+    sessionStorage.removeItem('selectedPollutantGroup');
+    sessionStorage.removeItem('selectedPollutantsSpecific');
+    sessionStorage.removeItem('selectedDataSources');
+    sessionStorage.removeItem('dsPollutantHash');
+
+
   // ---- storage helpers + keys
   const KEY_SELECTED = 'selectedPollutants';           // full list used everywhere downstream
   const KEY_GROUP    = 'selectedPollutantGroup';       // which group (if any) was last chosen
