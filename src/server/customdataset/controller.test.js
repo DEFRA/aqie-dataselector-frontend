@@ -65,7 +65,9 @@ describe('customdatasetController', () => {
         selectedpollutant: undefined,
         selectedyear: undefined,
         selectedlocation: undefined,
-        stationcount: undefined
+        stationcount: undefined,
+        displayBacklink: true,
+        hrefq: '/hubpage'
       })
       expect(result).toBe('view-response')
     })
@@ -127,7 +129,9 @@ describe('customdatasetController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         errors: 'Error Title',
-        errorMessage: 'Error Text'
+        errorMessage: 'Error Text',
+        displayBacklink: true,
+        hrefq: '/customdataset'
       })
       expect(result).toBe('view-response')
     })
