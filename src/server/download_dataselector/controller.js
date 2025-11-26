@@ -11,6 +11,7 @@ export const downloadDataselectorController = {
     // const { home } = englishNew.custom
 
     // console.log('stationcount in download', request.yar.get('nooflocation'))
+    const backUrl = '/customdataset'
     return h.view('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
@@ -18,6 +19,8 @@ export const downloadDataselectorController = {
       downloadaurnresult: request.yar.get('downloadaurnresult'),
       stationcount: request.yar.get('nooflocation'),
       yearrange: request.yar.get('yearrange'),
+      displayBacklink: true,
+      hrefq: backUrl,
       finalyear:
         request.yar
           .get('finalyear')
