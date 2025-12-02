@@ -170,9 +170,9 @@ export const customdatasetController = {
           dataselectorfiltertype: 'dataSelectorCount',
           dataselectordownloadtype: ''
         }
-
+        request.yar.set('finalyear1', finalyear)
         const stationcount = await Invokestationcount(stationcountparameters)
-
+        request.yar.set('Region', request.yar.get('selectedlocation').join(','))
         request.yar.set('nooflocation', stationcount)
       }
       async function Invokestationcount(stationcountparameters) {
@@ -195,7 +195,7 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'BKmUodxidjpPxcYNKpcig4LId0WUE6WT',
+        //       'x-api-key': 'NOfQY8mlK2PmvF2vkIII46D1AOFPOsH8',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true

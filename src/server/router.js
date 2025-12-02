@@ -25,6 +25,7 @@ import { year } from '~/src/server/year_aurn/index.js'
 import { locationaurn } from '~/src/server/location_aurn/index.js'
 import { downloadDataselector } from '~/src/server/download_dataselector/index.js'
 import { downloadAurn } from '~/src/server/download_aurn/index.js'
+import { emailrequest } from '~/src/server/emailrequest/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -84,7 +85,8 @@ export const router = {
         year,
         locationaurn,
         downloadDataselector,
-        downloadAurn
+        downloadAurn,
+        emailrequest
       ])
 
       // Static assets

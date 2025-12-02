@@ -202,16 +202,42 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Check the referrer URL to determine which page called this one
+  const referrerUrl = document.referrer;
+  const currentUrl = window.location.href;
+
+  console.log('Referrer URL:', referrerUrl);
+  console.log('Current URL:', currentUrl);
+
+  // Extract the path from referrer for easier checking
+  let referrerPath = '';
+  try {
+    if (referrerUrl) {
+      const url = new URL(referrerUrl);
+      referrerPath = url.pathname;
+    }
+  } catch (e) {
+    console.warn('Could not parse referrer URL:', e);
+  }
+
+  console.log('Referrer path:', referrerPath);
+
+  // You can now check for specific pages that might have called this one
+  if (referrerPath.includes('/clear')) {
+    console.log('Came from custom dataset page clear');
+      sessionStorage.removeItem('selectedPollutants');
+    sessionStorage.removeItem('selectedPollutantGroup');
+    sessionStorage.removeItem('selectedPollutantsSpecific');
+    sessionStorage.removeItem('selectedDataSources');
+  } 
   // Clear session storage on page refresh/reload
   // Detect if this is a page refresh by checking if the performance navigation type is reload
   // or by checking if there's no referrer (direct navigation or refresh)
 
-    
-    sessionStorage.removeItem('selectedPollutants');
-    sessionStorage.removeItem('selectedPollutantGroup');
-    sessionStorage.removeItem('selectedPollutantsSpecific');
-    sessionStorage.removeItem('selectedDataSources');
-    sessionStorage.removeItem('dsPollutantHash');
+    console.log('Page refresh detected - clearing session storage');
+  
+    // Only clear specific session items, not on page refresh
+    // sessionStorage.removeItem('dsPollutantHash');
 
 
   // ---- storage helpers + keys
@@ -272,6 +298,8 @@ GROUPS.compliance = Array.from(new Set([
         headerCell.textContent = `Pollutant ${index + 1}`;
       }
     });
+    // Update count to match the actual number of rows
+    count = rows.length;
   }
 
   // 🔁 Persist the current table rows into the table-only list
@@ -293,8 +321,7 @@ GROUPS.compliance = Array.from(new Set([
 
     if (!Array.isArray(pollutants) || pollutants.length === 0) { updateAddButtonText(); return; }
 
-    pollutants.forEach((value) => {
-      count++;
+    pollutants.forEach((value, index) => {
       addedPollutants.add((value || '').toLowerCase());
 
       const row = document.createElement('tr');
@@ -303,7 +330,7 @@ GROUPS.compliance = Array.from(new Set([
       const headerCell = document.createElement('th');
       headerCell.scope = 'row';
       headerCell.className = 'govuk-table__header';
-      headerCell.textContent = `Pollutant ${count}`;
+      headerCell.textContent = `Pollutant ${index + 1}`;
 
       const valueCell = document.createElement('td');
       valueCell.className = 'govuk-table__cell';
@@ -330,7 +357,7 @@ GROUPS.compliance = Array.from(new Set([
 
         if (tableBody.children.length === 0) {
           table.hidden = true;
-          count = 0;
+          // count is already updated in updateRowNumbers()
         }
         updateAddButtonText();
       });
@@ -344,6 +371,8 @@ GROUPS.compliance = Array.from(new Set([
       table.hidden = false;
     });
 
+    // Set count to match the actual number of restored rows
+    count = pollutants.length;
     updateAddButtonText();
   })();
 function showInlineError(message, opts = {}) {
@@ -544,7 +573,6 @@ if (!isAllowed(value)) {
 
       clearInlineError({ inputSelector: '#my-autocomplete' });
       clearErrorSummary();
-      count++;
       addedPollutants.add(lowerValue);
 
       if (table.hidden) table.hidden = false;
@@ -555,7 +583,8 @@ if (!isAllowed(value)) {
       const headerCell = document.createElement('th');
       headerCell.scope = 'row';
       headerCell.className = 'govuk-table__header';
-      headerCell.textContent = `Pollutant ${count}`;
+      // Use the current number of rows + 1 for the new pollutant number
+      headerCell.textContent = `Pollutant ${tableBody.children.length + 1}`;
 
       const valueCell = document.createElement('td');
       valueCell.className = 'govuk-table__cell';
@@ -582,7 +611,7 @@ if (!isAllowed(value)) {
 
         if (tableBody.children.length === 0) {
           table.hidden = true;
-          count = 0;
+          // count is already updated in updateRowNumbers()
         }
         updateAddButtonText();
       });
