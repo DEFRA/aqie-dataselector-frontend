@@ -35,7 +35,7 @@ export const englishNew = {
       b: 'Pollutant',
       c: 'Add',
       d: 'View',
-      e: ' Data source',
+      e: ' Data sources',
       f: 'Year',
       g: 'None selected',
       h: 'time period',
