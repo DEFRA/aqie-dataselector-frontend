@@ -176,6 +176,12 @@
     return n >= MIN_YEAR && n <= MAX_YEAR;
   }
 
+  // Function to check if year range is within 5 years
+  function isValidYearRange(startYear, endYear) {
+    const yearCount = endYear - startYear + 1;
+    return yearCount <= 5;
+  }
+
   // ===== Validations that produce BOTH inline + summary =====
   function validateAnyYear() {
     const items = [];
@@ -199,6 +205,7 @@
       showErrorSummary(items);
       return null;
     }
+    
     // no errors
     clearErrorSummary();
     return Number(year);
@@ -222,6 +229,11 @@
     } else if (!withinRange(start)) {
       showError('range-start-group', 'range-start-year', `Start year must be between ${MIN_YEAR} and ${MAX_YEAR}.`);
       items.push({ text: `Start year must be between ${MIN_YEAR} and ${MAX_YEAR}.`, href: '#range-start-year' });
+      ok = false;
+    }
+    else if (!isValidYearRange(start,end)) {
+      showError('range-start-group', 'range-start-year', `Choose up to 5 whole years at a time`);
+      items.push({ text: `Choose up to 5 whole years at a time`, href: '#range-start-year' });
       ok = false;
     }
 
