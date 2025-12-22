@@ -323,9 +323,20 @@ export const config = convict({
   // Download_aurn_URL: {
   //   doc: 'connect to get table data dev',
   //   format: String,
-  //   default: `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomDataSelection/`,
+  //   `default:` `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomDataSelection/`,
   //   env: 'Download_aurn_URL'
   // },
+  laqmAPIkey: {
+    doc: 'laqmAPIkey',
+    format: String,
+    default: '5444af89cc52380a81111d5623ea74d5'
+  },
+  laqmAPIPartnerId: {
+    doc: 'laqmAPIPartnerId',
+    format: String,
+    default: '1035'
+  },
+
   aqiePassword: {
     doc: 'password for daqie',
     format: '*',

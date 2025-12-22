@@ -17,6 +17,11 @@ export const year = {
           method: 'GET',
           path: '/year-aurn',
           ...yearController
+        },
+        {
+          method: 'POST',
+          path: '/year-aurn',
+          ...yearController
         }
       ])
     }

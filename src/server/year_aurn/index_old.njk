@@ -1,0 +1,417 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% block content %}
+
+<!-- Error Summary -->
+{% if errors and errors.list.length > 0 %}
+  {{ govukErrorSummary({
+    titleText: "There is a problem",
+    errorList: errors.list
+  }) }}
+{% endif %}
+
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+
+    <form method="post" action="/year-aurn" novalidate>
+    <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
+      <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
+        <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+          <h1 class="govuk-heading-l">
+            Add year(s)
+          </h1>
+           
+        {% if errors.details.time %}
+          <p class="govuk-error-message" id="time-error">
+            <span class="govuk-visually-hidden">Error:</span> {{ errors.details.time }}
+          </p>
+        {% endif %}
+           
+       <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
+  <!-- Year to date -->
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="time-ytd" name="time" type="radio" value="ytd"{% if formData.time == 'ytd' %} checked{% endif %}>
+    <label class="govuk-label govuk-radios__label" for="time-ytd">
+      Year to date (1 January to <span id="ytd-today"></span>)
+    </label>
+  </div>
+
+  <!-- Any year (single year) -->
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="time-any" name="time" type="radio" value="any" data-aria-controls="conditional-time-any"{% if formData.time == 'any' %} checked{% endif %}>
+    <label class="govuk-label govuk-radios__label" for="time-any">
+      Any year
+    </label>
+    <div id="time-any-hint" class="govuk-hint govuk-radios__hint">
+      Choose a single whole year
+    </div>
+  </div>
+  <div class="govuk-radios__conditional{% if formData.time != 'any' %} govuk-radios__conditional--hidden{% endif %}" id="conditional-time-any">
+    <div class="govuk-form-group{% if errors.details['any-year'] %} govuk-form-group--error{% endif %}" id="any-year-group">
+      <label class="govuk-label" for="any-year-input">Year</label>
+      <div id="any-year-hint" class="govuk-hint">For example: 2009</div>
+      {% if errors.details['any-year'] %}
+        <p class="govuk-error-message" id="any-year-input-error">
+          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['any-year'] }}
+        </p>
+      {% endif %}
+      <input class="govuk-input govuk-input--width-4{% if errors.details['any-year'] %} govuk-input--error{% endif %}" id="any-year-input" name="any-year-input" type="text" inputmode="numeric" aria-describedby="any-year-hint{% if errors.details['any-year'] %} any-year-input-error{% endif %}" value="{{ formData['any-year-input'] or '' }}">
+    </div>
+  </div>
+
+  <!-- Range of years -->
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="time-range" name="time" type="radio" value="range" data-aria-controls="conditional-time-range"{% if formData.time == 'range' %} checked{% endif %}>
+    <label class="govuk-label govuk-radios__label" for="time-range">
+      Range of years
+    </label>
+    <div id="time-range-hint" class="govuk-hint govuk-radios__hint">
+      Choose up to 5 whole years at a time
+    </div>
+  </div>
+  <div class="govuk-radios__conditional{% if formData.time != 'range' %} govuk-radios__conditional--hidden{% endif %}" id="conditional-time-range">
+    <div class="govuk-form-group{% if errors.details['range-start'] %} govuk-form-group--error{% endif %}" id="range-start-group">
+      <label class="govuk-label" for="range-start-year">Enter start year</label>
+      <div id="range-start-hint" class="govuk-hint">For example: 2009</div>
+      {% if errors.details['range-start'] %}
+        <p class="govuk-error-message" id="range-start-year-error">
+          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-start'] }}
+        </p>
+      {% endif %}
+      <div class="govuk-date-input">
+        <div class="govuk-date-input__item">
+          <div class="govuk-form-group">
+            <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-start'] %} govuk-input--error{% endif %}" id="range-start-year" name="range-start-year" type="text" inputmode="numeric" aria-describedby="range-start-hint{% if errors.details['range-start'] %} range-start-year-error{% endif %}" value="{{ formData['range-start-year'] or '' }}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="govuk-form-group{% if errors.details['range-end'] %} govuk-form-group--error{% endif %}" id="range-end-group">
+      <label class="govuk-label" for="range-end-year">Enter end year</label>
+      <div id="range-end-hint" class="govuk-hint">For example: 2010</div>
+      {% if errors.details['range-end'] %}
+        <p class="govuk-error-message" id="range-end-year-error">
+          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-end'] }}
+        </p>
+      {% endif %}
+      <div class="govuk-date-input">
+        <div class="govuk-date-input__item">
+          <div class="govuk-form-group">
+            <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-end'] %} govuk-input--error{% endif %}" id="range-end-year" name="range-end-year" type="text" inputmode="numeric" aria-describedby="range-end-hint{% if errors.details['range-end'] %} range-end-year-error{% endif %}" value="{{ formData['range-end-year'] or '' }}">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+         
+      </fieldset>
+      
+    </div>
+
+    {{ govukButton({
+       attributes: { id: "continuebutton" },
+      text: "Continue"
+    }) }}
+    </form>
+   
+      </div>
+    </div>
+   
+      </div>
+    </div>
+  <script>
+(function () {
+  const MIN_YEAR = 1973;
+  const MAX_YEAR = 2025; // keep as-is; change to (new Date().getFullYear()) if you prefer it dynamic
+
+  // ===== Error summary helpers (adds summary ABOVE the H1) =====
+  function ensureErrorSummaryRoot() {
+    let root = document.getElementById('page-error-summary');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'page-error-summary';
+      const h1 = document.querySelector('.govuk-heading-l');
+      if (h1 && h1.parentNode) {
+        h1.parentNode.insertBefore(root, h1); // place ABOVE H1
+      } else {
+        document.body.insertBefore(root, document.body.firstChild);
+      }
+    }
+    return root;
+  }
+  function showErrorSummary(items) {
+    const root = ensureErrorSummaryRoot();
+    root.innerHTML = `
+      <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" data-module="govuk-error-summary" tabindex="-1">
+        <h2 class="govuk-error-summary__title" id="error-summary-title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            ${items.map(i => `<li><a href="${i.href}">${i.text}</a></li>`).join('')}
+          </ul>
+        </div>
+      </div>`;
+    root.querySelector('.govuk-error-summary')?.focus?.();
+  }
+  function clearErrorSummary() {
+    const root = document.getElementById('page-error-summary');
+    if (root) root.innerHTML = '';
+  }
+
+  // ===== Inline error utilities (kept as in your page, with a small tidy) =====
+  function clearErrors() {
+    document.querySelectorAll('.govuk-form-group--error').forEach(el => el.classList.remove('govuk-form-group--error'));
+    document.querySelectorAll('.govuk-input--error').forEach(el => el.classList.remove('govuk-input--error'));
+    document.querySelectorAll('.govuk-error-message').forEach(el => el.remove());
+    // remove error ids from describedby
+    document.querySelectorAll('[aria-describedby]').forEach(input => {
+      const ids = (input.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+      input.setAttribute('aria-describedby', ids.filter(id => !id.endsWith('-error')).join(' '));
+    });
+    clearErrorSummary(); // NEW: also clear the page summary
+  }
+
+  function showError(groupId, inputId, message) {
+    const group = document.getElementById(groupId);
+    const input = document.getElementById(inputId);
+    if (!group || !input) return;
+
+    group.classList.add('govuk-form-group--error');
+    input.classList.add('govuk-input--error');
+
+    const errorId = inputId + '-error';
+    const p = document.createElement('p');
+    p.className = 'govuk-error-message';
+    p.id = errorId;
+    p.innerHTML = '<span class="govuk-visually-hidden">Error:</span> ' + message;
+
+    const where = input.parentElement; // inner form-group
+    where.insertBefore(p, input);
+
+    const describedby = (input.getAttribute('aria-describedby') || '').trim();
+    input.setAttribute('aria-describedby', (describedby ? describedby + ' ' : '') + errorId);
+  }
+
+  function isFourDigitYear(value) {
+    return /^\d{4}$/.test(value);
+  }
+  function withinRange(year) {
+    const n = Number(year);
+    return n >= MIN_YEAR && n <= MAX_YEAR;
+  }
+
+  // Function to check if year range is within 5 years
+  function isValidYearRange(startYear, endYear) {
+    const yearCount = endYear - startYear + 1;
+    return yearCount <= 5;
+  }
+
+  // ===== Validations that produce BOTH inline + summary =====
+  function validateAnyYear() {
+    const items = [];
+    const year = (document.getElementById('any-year-input').value || '').trim();
+
+    if (!year) {
+      showError('any-year-group', 'any-year-input', 'Enter a year.');
+      items.push({ text: 'Enter a year.', href: '#any-year-input' });
+      showErrorSummary(items);
+      return null;
+    }
+    if (!isFourDigitYear(year)) {
+      showError('any-year-group', 'any-year-input', 'Enter a 4-digit year, for example 2009.');
+      items.push({ text: 'Enter a 4-digit year, for example 2009.', href: '#any-year-input' });
+      showErrorSummary(items);
+      return null;
+    }
+    if (!withinRange(year)) {
+      showError('any-year-group', 'any-year-input', `Year must be between ${MIN_YEAR} and ${MAX_YEAR}.`);
+      items.push({ text: `Year must be between ${MIN_YEAR} and ${MAX_YEAR}.`, href: '#any-year-input' });
+      showErrorSummary(items);
+      return null;
+    }
+    
+    // no errors
+    clearErrorSummary();
+    return Number(year);
+  }
+
+  function validateRangeYears() {
+    const start = (document.getElementById('range-start-year').value || '').trim();
+    const end   = (document.getElementById('range-end-year').value || '').trim();
+
+    const items = [];
+    let ok = true;
+
+    if (!start) {
+      showError('range-start-group', 'range-start-year', 'Enter a start year.');
+      items.push({ text: 'Enter a start year.', href: '#range-start-year' });
+      ok = false;
+    } else if (!isFourDigitYear(start)) {
+      showError('range-start-group', 'range-start-year', 'Start year must be 4 digits, for example 2009.');
+      items.push({ text: 'Start year must be 4 digits, for example 2009.', href: '#range-start-year' });
+      ok = false;
+    } else if (!withinRange(start)) {
+      showError('range-start-group', 'range-start-year', `Start year must be between ${MIN_YEAR} and ${MAX_YEAR}.`);
+      items.push({ text: `Start year must be between ${MIN_YEAR} and ${MAX_YEAR}.`, href: '#range-start-year' });
+      ok = false;
+    }
+    else if (!isValidYearRange(start,end)) {
+      showError('range-start-group', 'range-start-year', `Choose up to 5 whole years at a time`);
+      items.push({ text: `Choose up to 5 whole years at a time`, href: '#range-start-year' });
+      ok = false;
+    }
+
+    if (!end) {
+      showError('range-end-group', 'range-end-year', 'Enter an end year.');
+      items.push({ text: 'Enter an end year.', href: '#range-end-year' });
+      ok = false;
+    } else if (!isFourDigitYear(end)) {
+      showError('range-end-group', 'range-end-year', 'End year must be 4 digits, for example 2010.');
+      items.push({ text: 'End year must be 4 digits, for example 2010.', href: '#range-end-year' });
+      ok = false;
+    } else if (!withinRange(end)) {
+      showError('range-end-group', 'range-end-year', `End year must be between ${MIN_YEAR} and ${MAX_YEAR}.`);
+      items.push({ text: `End year must be between ${MIN_YEAR} and ${MAX_YEAR}.`, href: '#range-end-year' });
+      ok = false;
+    }
+
+    if (ok) {
+      const s = Number(start), e = Number(end);
+      if (s > e) {
+        showError('range-start-group', 'range-start-year', 'Start year must be the same as or before the end year.');
+        showError('range-end-group',   'range-end-year',   'End year must be the same as or after the start year.');
+        items.push({ text: 'Start year must be the same as or before the end year.', href: '#range-start-year' });
+        items.push({ text: 'End year must be the same as or after the start year.', href: '#range-end-year' });
+        showErrorSummary(items);
+        return null;
+      }
+      // If you want to enforce the “up to 5 years” rule, uncomment:
+      // if ((e - s + 1) > 5) {
+      //   showError('range-end-group', 'range-end-year', 'Choose a range of up to 5 years.');
+      //   items.push({ text: 'Choose a range of up to 5 years.', href: '#range-end-year' });
+      //   showErrorSummary(items);
+      //   return null;
+      // }
+      clearErrorSummary();
+      return { start: s, end: e };
+    } else {
+      showErrorSummary(items);
+      return null;
+    }
+  }
+
+  // ===== Continue button handler =====
+  document.querySelector('#continuebutton').addEventListener('click', function (e) {
+    console.log("continue bt")
+    e.preventDefault();
+    clearErrors();
+
+    const selected = document.querySelector('input[name="time"]:checked');
+    if (!selected) {
+      // Show ONLY a page-level summary (no inline) when no radio is selected
+      showErrorSummary([{ text: 'Select an option before continuing', href: '#time-ytd' }]);
+      const first = document.getElementById('time-ytd') || document.getElementById('time-any') || document.getElementById('time-range');
+      if (first) first.focus();
+      return;
+    } else {
+      clearErrorSummary();
+    }
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const formattedToday = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    }).format(today);
+
+    let timePeriod = 'None selected';
+
+    if (selected.id === 'time-ytd') {
+      timePeriod = `1 January to ${formattedToday}`;
+    }
+    else if (selected.id === 'time-any') {
+      const year = validateAnyYear();
+      if (year === null) return; // stop on error (summary already shown)
+      if (year === currentYear) {
+        timePeriod = `1 January to ${formattedToday}`;
+      } else {
+        timePeriod = `1 January to 31 December ${year}`;
+      }
+    }
+    else if (selected.id === 'time-range') {
+      const range = validateRangeYears();
+      if (range === null) return; // stop on error (summary already shown)
+      if (range.end === currentYear) {
+        timePeriod = `1 January ${range.start} to ${formattedToday}`;
+      } else {
+        timePeriod = `1 January ${range.start} to 31 December ${range.end}`;
+      }
+    }
+
+    // Store for summary page and redirect
+    sessionStorage.setItem('selectedTimePeriod', timePeriod);
+    window.location.href = `/customdataset/year/${timePeriod}`;
+  });
+
+  // Limit to 4 digits while typing (kept)
+  ['any-year-input','range-start-year','range-end-year'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/\D/g, '').slice(0, 4);
+    });
+  });
+
+  // ===== Clear page summary (and any inline for that control) as the user interacts =====
+  function attachClearOnChange(inputId, groupId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('input', () => { clearErrorSummary(); removeInlineFor(inputId, groupId); });
+    el.addEventListener('change', () => { clearErrorSummary(); removeInlineFor(inputId, groupId); });
+    el.addEventListener('blur', () => { /* no-op; inline cleared on input/change already */ });
+  }
+  function removeInlineFor(inputId, groupId) {
+    const group = document.getElementById(groupId);
+    const input = document.getElementById(inputId);
+    if (!group || !input) return;
+    group.classList.remove('govuk-form-group--error');
+    input.classList.remove('govuk-input--error');
+    const err = document.getElementById(inputId + '-error');
+    if (err) err.remove();
+    const ids = (input.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+    input.setAttribute('aria-describedby', ids.filter(id => id !== (inputId + '-error')).join(' '));
+  }
+
+  attachClearOnChange('any-year-input', 'any-year-group');
+  attachClearOnChange('range-start-year', 'range-start-group');
+  attachClearOnChange('range-end-year', 'range-end-group');
+
+  // Clear summary when picking a top-level radio
+  document.querySelectorAll('input[name="time"]').forEach(r => {
+    r.addEventListener('change', () => {
+      clearErrorSummary();
+    });
+  });
+})();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Set "Year to date" label date
+  const today = new Date();
+  const formatted =
+    new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(today);
+
+  const span = document.getElementById('ytd-today');
+  if (span) span.textContent = formatted;
+});
+</script>
+
+
+
+{% endblock %}

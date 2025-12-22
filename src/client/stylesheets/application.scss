@@ -2,7 +2,7 @@ $govuk-assets-path: "../assets/";
 $govuk-global-styles: true;
 @warn "Loading app.scss"; 
 @import "govuk-frontend";
-
+@import "accessible-autocomplete/dist/accessible-autocomplete.min.css";
 
 @import "variables";
 @import "helpers";

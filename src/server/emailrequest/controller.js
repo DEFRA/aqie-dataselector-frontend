@@ -28,7 +28,7 @@ async function Invokestationcount(stationcountparameters) {
   //   const {payload } = await Wreck.post(url, {
   //     payload: JSON.stringify(stationcountparameters),
   //     headers: {
-  //       'x-api-key': 'NOfQY8mlK2PmvF2vkIII46D1AOFPOsH8',
+  //       'x-api-key': 'r4Rmu3MxFjnsgLSGtVkH6FLLSfTzhIak',
   //       'Content-Type': 'application/json'
   //     },
   //     json: true
@@ -51,6 +51,7 @@ export const emailrequestController = {
 
       // Get email from form payload
       const email = request.payload?.email
+      request.yar.set('email', email)
 
       // Email validation function
       const isValidEmail = (email) => {
@@ -94,10 +95,11 @@ export const emailrequestController = {
         pollutantName: request.yar.get('formattedPollutants'),
         dataSource: 'AURN',
         Region: request.yar.get('selectedlocation').join(','),
+        regiontype: request.yar.get('Location'),
         Year: request.yar.get('finalyear1'),
         dataselectorfiltertype: 'dataSelectorCount',
         dataselectordownloadtype: 'dataSelectorMultiple',
-        email // Use the validated email instead of hardcoded value
+        email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
       const result = await Invokestationcount(stationcountparameters)
       //  console.log('comes into confirm', result)

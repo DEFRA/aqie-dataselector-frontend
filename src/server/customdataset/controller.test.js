@@ -2,7 +2,7 @@ import { customdatasetController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-// import Wreck from '@hapi/wreck'
+import Wreck from '@hapi/wreck'
 import axios from 'axios'
 
 jest.mock('~/src/server/data/en/content_aurn.js')
@@ -46,6 +46,16 @@ describe('customdatasetController', () => {
 
     mockRequest.yar.get.mockReturnValue(undefined)
     config.get.mockReturnValue('https://api.example.com/download')
+
+    // Mock Wreck.post
+    Wreck.post = jest.fn().mockResolvedValue({
+      payload: 5
+    })
+
+    // Mock axios.post
+    axios.post = jest.fn().mockResolvedValue({
+      data: 5
+    })
   })
 
   describe('/clear path', () => {
@@ -84,7 +94,7 @@ describe('customdatasetController', () => {
         return values[key]
       })
 
-      axios.post.mockResolvedValue({ data: 5 })
+      Wreck.post.mockResolvedValue({ payload: 5 })
 
       await customdatasetController.handler(mockRequest, mockH)
 
@@ -254,29 +264,6 @@ describe('customdatasetController', () => {
   })
 
   describe('location selection', () => {
-    it('should set selectedlocation from string payload', async () => {
-      mockRequest.path = '/customdataset/location'
-      mockRequest.payload.country = 'England'
-
-      await customdatasetController.handler(mockRequest, mockH)
-
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'England'
-      ])
-    })
-
-    it('should set selectedlocation from array payload', async () => {
-      mockRequest.path = '/customdataset/location'
-      mockRequest.payload.country = ['England', 'Wales']
-
-      await customdatasetController.handler(mockRequest, mockH)
-
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'England',
-        'Wales'
-      ])
-    })
-
     it('should handle undefined country payload', async () => {
       mockRequest.path = '/customdataset/location'
       mockRequest.payload.country = undefined
@@ -314,7 +301,7 @@ describe('customdatasetController', () => {
         return values[key]
       })
 
-      axios.post.mockResolvedValue({ data: 10 })
+      Wreck.post.mockResolvedValue({ payload: 10 })
 
       await customdatasetController.handler(mockRequest, mockH)
 
@@ -338,7 +325,7 @@ describe('customdatasetController', () => {
         return values[key]
       })
 
-      axios.post.mockResolvedValue({ data: 15 })
+      Wreck.post.mockResolvedValue({ payload: 15 })
 
       await customdatasetController.handler(mockRequest, mockH)
 
@@ -362,7 +349,7 @@ describe('customdatasetController', () => {
         return values[key]
       })
 
-      axios.post.mockResolvedValue({ data: 5 })
+      Wreck.post.mockResolvedValue({ payload: 5 })
 
       await customdatasetController.handler(mockRequest, mockH)
 

@@ -32,7 +32,7 @@ const multipleLocationsController = {
       //         const { res, payload } = await Wreck.post(url, {
       //           payload: JSON.stringify(nameApiparams),
       //            headers: {
-      //       'x-api-key': 'aD7SZnwB8zru03wuDw6oSrUSFFp1Eetl'
+      //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
       //     },
       //           json: true
       //         })
@@ -58,6 +58,22 @@ const multipleLocationsController = {
       } catch (error) {
         return error // Rethrow the error so it can be handled appropriately
       }
+
+      // dev
+      // try {
+      //         const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
+      //         const { res, payload } = await Wreck.post(url, {
+      //           payload: JSON.stringify(locationvalues),
+      //            headers: {
+      //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
+      //     },
+      //           json: true
+      //         })
+      // console.log("PAYLOAD",payload)
+      //         return payload
+      //       } catch (error) {
+      //         return error // Rethrow the error so it can be handled appropriately
+      //       }
     }
     // const logger = createLogger()
     const searchlocationurl = '/search-location'

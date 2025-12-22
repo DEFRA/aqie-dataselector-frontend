@@ -49,7 +49,13 @@ export const customdatasetController = {
         hrefq: '/customdataset'
       })
     } else {
-      if (request.params.pollutants !== undefined) {
+      // Check for pollutants from session (from add_pollutant page)
+      const sessionPollutants = request.yar.get('selectedPollutants')
+      if (sessionPollutants && sessionPollutants.length > 0) {
+        request.yar.set('selectedpollutant', sessionPollutants)
+        // Clear the session pollutants to prevent reuse
+        request.yar.set('selectedPollutants', null)
+      } else if (request.params.pollutants !== undefined) {
         let selectedpollutant = request.params.pollutants
         if (
           selectedpollutant === 'core' ||
@@ -97,7 +103,13 @@ export const customdatasetController = {
         request.yar.set('selectedpollutant', selectedpollutant)
       }
 
-      if (request.path?.includes('/year')) {
+      // Check for time period from session (from year_aurn page)
+      const sessionTimePeriod = request.yar.get('selectedTimePeriod')
+      if (sessionTimePeriod) {
+        request.yar.set('selectedyear', sessionTimePeriod)
+        // Clear the session time period to prevent reuse
+        request.yar.set('selectedTimePeriod', null)
+      } else if (request.path?.includes('/year')) {
         request.yar.set('selectedyear', request.params.year)
       }
 
@@ -106,9 +118,6 @@ export const customdatasetController = {
         if (selectedCountry && !Array.isArray(selectedCountry)) {
           selectedCountry = [selectedCountry]
         }
-        // const selectedCountry = request.payload.country;
-
-        request.yar.set('selectedlocation', selectedCountry)
       }
 
       if (
@@ -142,8 +151,6 @@ export const customdatasetController = {
           finalyear = ''
         }
 
-        // output will be "2025" for "1 January to 12 November 2025"
-
         const pollutantNames = {
           'Fine particulate matter (PM2.5)': 'PM2.5',
           'Particulate matter (PM10)': 'PM10',
@@ -162,14 +169,32 @@ export const customdatasetController = {
           .join(',')
 
         request.yar.set('formattedPollutants', formattedPollutants)
-        const stationcountparameters = {
-          pollutantName: formattedPollutants,
-          dataSource: 'AURN',
-          Region: request.yar.get('selectedlocation').join(','),
-          Year: finalyear,
-          dataselectorfiltertype: 'dataSelectorCount',
-          dataselectordownloadtype: ''
+
+        let stationcountparameters
+        if (request.yar.get('Location') === 'Country') {
+          stationcountparameters = {
+            pollutantName: formattedPollutants,
+            dataSource: 'AURN',
+            Region: request.yar.get('selectedlocation').join(','),
+            regiontype: 'Country',
+            Year: finalyear,
+            dataselectorfiltertype: 'dataSelectorCount',
+            dataselectordownloadtype: ''
+          }
+        } else {
+          stationcountparameters = {
+            pollutantName: formattedPollutants,
+            dataSource: 'AURN',
+            Region: request.yar.get('selectedLAIDs'),
+            // Region: '1,359,360,4',
+            regiontype: 'LocalAuthority',
+            Year: finalyear,
+            dataselectorfiltertype: 'dataSelectorCount',
+            dataselectordownloadtype: ''
+          }
         }
+
+        //  console.log('stationcountparameters', stationcountparameters)
         request.yar.set('finalyear1', finalyear)
         const stationcount = await Invokestationcount(stationcountparameters)
         request.yar.set('Region', request.yar.get('selectedlocation').join(','))
@@ -195,7 +220,7 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'NOfQY8mlK2PmvF2vkIII46D1AOFPOsH8',
+        //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true
@@ -207,7 +232,7 @@ export const customdatasetController = {
         //   return error // Rethrow the error so it can be handled appropriately
         // }
       }
-
+      //  console.log(' selectedlocationyar', request.yar.get('selectedlocation'))
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
