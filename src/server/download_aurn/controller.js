@@ -56,7 +56,7 @@ async function Invokedownload(apiparams) {
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
-      //     'x-api-key': 't15WKmUhFiwRNH6LSkJ0Oe4FubJ7bPxW',
+      //     'x-api-key': 'r4Rmu3MxFjnsgLSGtVkH6FLLSfTzhIak',
       //     'Content-Type': 'application/json'
       //   }
       // })
@@ -68,6 +68,7 @@ async function Invokedownload(apiparams) {
     } while (statusResponse.status !== 'Completed')
     //  return response
     logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
+    // console.log('statusResponse.resultUrl', statusResponse.resultUrl)
     logger.info(
       `statusResponse.resultUrlstring ${JSON.stringify(statusResponse.resultUrl)}`
     )
@@ -87,6 +88,7 @@ const downloadAurnController = {
         pollutantName: request.yar.get('formattedPollutants'),
         dataSource: 'AURN',
         Region: request.yar.get('selectedlocation').join(','),
+        regiontype: request.yar.get('Location'),
         Year: selectedyear,
         dataselectorfiltertype: 'dataSelectorHourly',
         dataselectordownloadtype: 'dataSelectorSingle'

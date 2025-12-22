@@ -17,6 +17,11 @@ export const locationaurn = {
           method: 'GET',
           path: '/location-aurn',
           ...locationaurnController
+        },
+        {
+          method: 'POST',
+          path: '/location-aurn',
+          ...locationaurnController
         }
       ])
     }

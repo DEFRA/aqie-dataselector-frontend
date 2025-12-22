@@ -228,7 +228,7 @@ width: 100%;
     opacity: 0;
     transition: opacity 0.2s ease, visibility 0.2s ease;
     bottom: 100%;
-    left: 0;
+    left: -85px;
     padding-bottom: 10px;
     text-align: left;
     z-index: 99;
@@ -248,8 +248,6 @@ width: 100%;
     }
   }
 
-  
-
   &__arrow {
 		position: absolute;
 		box-sizing: border-box;
@@ -267,7 +265,6 @@ width: 100%;
 		-o-transform: rotate(135deg);
 		transform: rotate(135deg);
 	}
-  
 
   &--bottom {
     .defra-toggletip__info {
@@ -276,16 +273,12 @@ width: 100%;
       padding-top: 10px;
       padding-bottom: 0;
     }
-&__arrow {
+    
+    &__arrow {
 		bottom: 100%;
 		top: auto;
 		margin: 0px 0px -15px -5px;
 	}
-    // .defra-toggletip__arrow {
-    //   bottom: 100%;
-    //   top: auto;
-    //   margin: 0 0 -15px -5px;
-    // }
   }
 
   &.defra-toggletip-target {

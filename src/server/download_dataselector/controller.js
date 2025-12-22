@@ -8,10 +8,83 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const downloadDataselectorController = {
   handler(request, h) {
-    // const { home } = englishNew.custom
-
-    // console.log('stationcount in download', request.yar.get('nooflocation'))
     const backUrl = '/customdataset'
+    // Helper function to render error state
+    // console.log('In download controller', request.yar.get('nooflocation'))
+    const renderErrorState = (
+      errormsg,
+      errorref1,
+      errorhref1,
+      errorref2,
+      errorhref2
+    ) => {
+      return h.view('customdataset/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        error: true,
+        errormsg,
+        errorref1,
+        errorhref1,
+        errorref2,
+        errorhref2,
+        selectedpollutant: request.yar.get('selectedpollutant'),
+        selectedyear: request.yar.get('selectedyear'),
+        selectedlocation: request.yar.get('selectedlocation'),
+        stationcount: request.yar.get('nooflocation'),
+        displayBacklink: true,
+        hrefq: backUrl
+      })
+    }
+
+    // Validation checks
+    const selectedYear = request.yar.get('selectedyear')
+    const selectedLocation = request.yar.get('selectedlocation')
+
+    if (!selectedYear) {
+      return renderErrorState(
+        'Select a year to continue',
+        'Add year',
+        '/year-aurn',
+        '',
+        ''
+      )
+    }
+
+    if (!selectedLocation) {
+      return renderErrorState(
+        'Select a location to continue',
+        'Add location',
+        '/location-aurn',
+        '',
+        ''
+      )
+    }
+
+    const numberOfLocations = request.yar.get('nooflocation')
+    // console.log(
+    //   'Number of locations:',
+    //   numberOfLocations,
+    //   'Type:',
+    //   typeof numberOfLocations
+    // )
+
+    if (
+      numberOfLocations === 0 ||
+      numberOfLocations === '0' ||
+      !numberOfLocations
+    ) {
+      // console.log('no stations found')
+      // return renderErrorState(
+      //   'There are no stations available based on your selection. Change the year or location',
+      //   'Change the year',
+      //   '/year-aurn',
+      //   'Change the location',
+      //   '/location-aurn'
+      // )
+    }
+
+    // Success case - render download page
     return h.view('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
@@ -26,7 +99,6 @@ export const downloadDataselectorController = {
           .get('finalyear')
           ?.split(',')
           .map((year) => year.trim()) ?? []
-      //   finalyear: request.yar.get('finalyear')
     })
   }
 }

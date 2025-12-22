@@ -1,8 +1,18 @@
 import { downloadAurnController } from './controller.js'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
-// import Wreck from '@hapi/wreck'
 
+// Mock logger dependencies first (before other imports)
+jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  })
+}))
+
+// Mock config and axios
 jest.mock('~/src/config/config.js')
 jest.mock('axios')
 jest.mock('@hapi/wreck')

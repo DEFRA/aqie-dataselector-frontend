@@ -54,7 +54,7 @@ export const englishNew = {
         fields: {
           title: problemtitle,
 
-          text: 'Please select an option before continuing'
+          text: 'Select an option before continuing'
         }
       },
       ni: {

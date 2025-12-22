@@ -7,274 +7,521 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
 
+    <!-- Server-side validation errors -->
+    {% if errors.list %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <h2 class="govuk-error-summary__title">There is a problem</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for error in errors.list %}
+              <li>
+                <a href="{{ error.href }}">{{ error.text }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Client-side duplicate error (for UX only) -->
+    <div id="duplicate-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#my-autocomplete">This local authority has already been added</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client-side maximum limit error -->
+    <div id="max-limit-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#my-autocomplete">Add up to 10 local authorities</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <h1 class="govuk-heading-l">
       Add location(s)
     </h1>
-<form action='/customdataset/location' method="post">
-   
-    <div class="govuk-form-group">
-      <fieldset class="govuk-fieldset" aria-describedby="contact-hint">
-        
-       <div class="govuk-radios" data-module="govuk-radios">
-  <!-- Countries -->
-  <div class="govuk-radios__item">
-    <input class="govuk-radios__input" id="location-2" name="location" type="radio" value="countries" data-aria-controls="conditional-location-2">
-    <label class="govuk-label govuk-radios__label" for="location-2">
-      Countries
-    </label>
-    <div class="govuk-hint govuk-radios__hint">
-      Choose one or more: England, Scotland, Wales or Northern Ireland
-    </div>
-  </div>
 
-  <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-location-2">
-    <div class="govuk-form-group">
-      <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="country-england" name="country" type="checkbox" value="England">
-          <label class="govuk-label govuk-checkboxes__label" for="country-england">England</label>
-        </div>
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="country-scotland" name="country" type="checkbox" value="Scotland">
-          <label class="govuk-label govuk-checkboxes__label" for="country-scotland">Scotland</label>
-        </div>
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="country-wales" name="country" type="checkbox" value="Wales">
-          <label class="govuk-label govuk-checkboxes__label" for="country-wales">Wales</label>
-        </div>
-        <div class="govuk-checkboxes__item">
-          <input class="govuk-checkboxes__input" id="country-ni" name="country" type="checkbox" value="Northern Ireland">
-          <label class="govuk-label govuk-checkboxes__label" for="country-ni">Northern Ireland</label>
-        </div>
+    <form action="/location-aurn" method="post">
+      <div class="govuk-form-group {% if errors.details.location %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="contact-hint">
+          
+          {% if errors.details.location %}
+          <p id="location-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span> {{ errors.details.location }}
+          </p>
+          {% endif %}
+
+          <div class="govuk-radios" data-module="govuk-radios">
+            <!-- Countries -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" 
+                     id="location-2" 
+                     name="location" 
+                     type="radio" 
+                     value="countries" 
+                     data-aria-controls="conditional-location-2"
+                     {% if formData.location == "countries" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-2">
+                Countries
+              </label>
+              <div class="govuk-hint govuk-radios__hint">
+                Choose one or more: England, Scotland, Wales or Northern Ireland
+              </div>
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "countries" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-2">
+              <div class="govuk-form-group {% if errors.details.country %}govuk-form-group--error{% endif %}">
+                {% if errors.details.country %}
+                <p id="country-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details.country }}
+                </p>
+                {% endif %}
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-england" 
+                           name="country" 
+                           type="checkbox" 
+                           value="England"
+                           {% if formData.country and (formData.country == "England" or (formData.country | length and "England" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-england">England</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-scotland" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Scotland"
+                           {% if formData.country and (formData.country == "Scotland" or (formData.country | length and "Scotland" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-scotland">Scotland</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-wales" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Wales"
+                           {% if formData.country and (formData.country == "Wales" or (formData.country | length and "Wales" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-wales">Wales</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-ni" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Northern Ireland"
+                           {% if formData.country and (formData.country == "Northern Ireland" or (formData.country | length and "Northern Ireland" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-ni">Northern Ireland</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Local authority -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="location-4"
+                     name="location"
+                     type="radio"
+                     value="la"
+                     data-aria-controls="conditional-location-4"
+                     {% if formData.location == "la" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-4">Local authority</label>
+              <div class="govuk-hint govuk-radios__hint">Add up to 10 local authorities</div>
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
+              <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
+                <label class="govuk-label" for="my-autocomplete">
+                  Local authority name
+                </label>
+                {% if errors.details['local-authority'] %}
+                <p id="la-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
+                </p>
+                {% endif %}
+                <div id="autocomplete-container" class="govuk-body"></div>
+
+                <div class="govuk-button-group govuk-!-margin-top-3">
+                  <button type="button" class="govuk-button govuk-button--secondary" id="add-more-locations-button">
+                    Add local authority
+                  </button>
+                </div>
+              </div>
+
+              <!-- Hidden inputs for selected locations -->
+              <div id="selected-locations-inputs"></div>
+
+              <table class="govuk-table govuk-!-margin-top-4" id="location-table" style="display: none;">
+                <caption class="govuk-table__caption govuk-table__caption--m" id="location-table-caption" style="display: none;">Added local authorities</caption>
+                <tbody class="govuk-table__body"></tbody>
+              </table>
+            </div>
+          </div>
+        </fieldset>
       </div>
-    </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "Continue",
+          attributes: { id: "add-location-button" }
+        }) }}
+      </div>
+    </form>
   </div>
-
-  <!-- Local authority -->
-  
-      
-    </div>
- 
-    
-
-      </fieldset>
-    </div>
-
-    
-
-  
-
-<div class="govuk-button-group">
-  {{ govukButton({
-    text: "Continue",
-    attributes: { id: "add-location-button" }
-  }) }}
-
-  
 </div>
-   </form>
 
-   
-
-
-
-      </div>
-    </div>
-<!-- end of second row-->
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const submitButton = document.getElementById('add-location-button');
-  const addMoreButton = document.getElementById('add-more-locations-button');
+console.log('🚀 LOCATION AURN - Clean UI Only');
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Get server data
+  const serverData = {{ localAuthorityNames | dump | safe }};
+  const autocompleteSource = (serverData && serverData.length > 0) ? serverData : [ 'No local authorities available' ];
 
   // Elements
+  const radio = document.getElementById('location-4');
+  const conditional = document.getElementById('conditional-location-4');
+  const container = document.getElementById('autocomplete-container');
+  const addMoreButton = document.getElementById('add-more-locations-button');
   const table = document.getElementById('location-table');
   const tableBody = table.querySelector('tbody');
-
-  // Radios / conditionals
-  const countriesRadio = document.getElementById('location-2');
-  const laRadio = document.getElementById('location-4');
-  const countriesConditional = document.getElementById('conditional-location-2');
-  const laConditional = document.getElementById('conditional-location-4');
-
-  // State for LA table
+  const tableCaption = document.getElementById('location-table-caption');
+  const selectedInputsContainer = document.getElementById('selected-locations-inputs');
+  
+  let autocompleteInitialized = false;
   let count = 0;
-  const addedLocations = new Set();
-
-  // ---- NEW: helper to keep the button label in sync ----
-  function updateAddButtonLabel() {
-    if (!addMoreButton) return;
-    if (tableBody.children.length === 0) {
-      addMoreButton.textContent = 'Add local authority';
-    } else {
-      addMoreButton.textContent = 'Add another local authority';
-    }
+  
+  // Track added local authorities to prevent duplicates
+  const addedLocalAuthorities = new Set();
+  
+  // Clear any existing content from container on page load
+  if (container) {
+    container.innerHTML = '';
   }
-
-  // ---------- Restore previously saved selection ----------
-  const savedCountries = sessionStorage.getItem('selectedCountries');
-  const savedLAList = sessionStorage.getItem('selectedLocations');
-  const savedUK = sessionStorage.getItem('selectedLocation'); // legacy single value like 'United Kingdom'
-
-  if (savedCountries) {
-    countriesRadio.checked = true;
-    countriesConditional.classList.remove('govuk-radios__conditional--hidden');
-  } else if (savedLAList) {
-    laRadio.checked = true;
-    laConditional.classList.remove('govuk-radios__conditional--hidden');
-    try {
-      const locations = JSON.parse(savedLAList);
-      locations.forEach(value => addLocationRow(value)); // updateAddButtonLabel() is called inside
-    } catch {}
-  } else if (savedUK === 'United Kingdom') {
-    countriesRadio.checked = true;
-    countriesConditional.classList.remove('govuk-radios__conditional--hidden');
-    ['country-england','country-scotland','country-wales','country-ni'].forEach(id => {
-      const cb = document.getElementById(id);
-      if (cb) cb.checked = true;
+  
+  // Ensure table and caption are hidden on page load
+  if (table) {
+    table.style.display = 'none';
+  }
+  if (tableCaption) {
+    tableCaption.style.display = 'none';
+  }
+  
+  // Initialize autocomplete only once
+  function initializeAutocomplete() {
+    if (autocompleteInitialized || !container) {
+      console.log('Autocomplete already initialized or container not found');
+      return;
+    }
+    
+    console.log('Initializing autocomplete...');
+    
+    // Clear container to ensure clean state
+    container.innerHTML = '';
+    
+    if (typeof window.accessibleAutocomplete === 'function') {
+      try {
+        window.accessibleAutocomplete({
+          element: container,
+          id: 'my-autocomplete',
+          name: 'local-authority-autocomplete',
+          source: autocompleteSource,
+          minLength: 3,
+          onConfirm: function(confirmed) {
+            // Handle selection directly when user confirms/selects an option
+            if (confirmed && confirmed.trim()) {
+              addLocationToTable(confirmed.trim());
+              
+              // Clear the input after selection
+              setTimeout(() => {
+                const input = document.getElementById('my-autocomplete');
+                if (input) {
+                  input.value = '';
+                }
+              }, 50);
+            }
+          }
+        });
+        autocompleteInitialized = true;
+        console.log('✅ Autocomplete initialized');
+        
+        // Add additional event listeners after initialization
+        setTimeout(() => {
+          const input = document.getElementById('my-autocomplete');
+          if (input) {
+            // Handle Enter key selection
+            input.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = this.value.trim();
+                if (value) {
+                  addLocationToTable(value);
+                  this.value = '';
+                }
+              }
+            });
+          }
+        }, 100);
+        
+        return;
+      } catch (error) {
+        console.error('❌ Error with accessibleAutocomplete:', error);
+      }
+    }
+    
+    // Fallback input
+    container.innerHTML = `
+      <input type="text" 
+             id="my-autocomplete" 
+             name="local-authority-autocomplete" 
+             class="govuk-input" 
+             placeholder="Enter a local authority name" 
+             list="la-datalist"
+             autocomplete="off">
+      <datalist id="la-datalist">
+        ${autocompleteSource.map(item => `<option value="${item}"></option>`).join('')}
+      </datalist>
+    `;
+    autocompleteInitialized = true;
+    console.log('✅ Fallback input created');
+  }
+  
+  function updateHiddenInputs() {
+    selectedInputsContainer.innerHTML = '';
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+      const name = row.querySelector('td')?.textContent?.trim();
+      if (name) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'selected-locations';
+        input.value = name;
+        selectedInputsContainer.appendChild(input);
+      }
     });
   }
-
-  // Keep label correct when user switches to LA option
-  laRadio.addEventListener('change', updateAddButtonLabel);
-
-  // Ensure correct initial label
-  updateAddButtonLabel();
-
-  // ---------- Helpers ----------
-  function addLocationRow(value) {
+  
+  function updateButtonLabel() {
+    if (addMoreButton) {
+      addMoreButton.textContent = tableBody.children.length === 0 
+        ? 'Add local authority' 
+        : 'Add another local authority';
+    }
+  }
+  
+  function renumberTableRows() {
+    const rows = tableBody.querySelectorAll('tr');
+    rows.forEach((row, index) => {
+      const header = row.querySelector('th');
+      if (header) {
+        header.textContent = `Local authority ${index + 1}`;
+      }
+    });
+    count = rows.length;
+  }
+  
+  function addLocationToTable(value) {
+    if (!tableBody || !value.trim()) return;
+    
+    const trimmedValue = value.trim();
+    const lowerValue = trimmedValue.toLowerCase();
+    
+    // Check for maximum limit (10 local authorities)
+    if (tableBody.children.length >= 10) {
+      const maxLimitError = document.getElementById('max-limit-error');
+      if (maxLimitError) {
+        maxLimitError.hidden = false;
+        maxLimitError.focus();
+      }
+      // Hide other errors
+      const duplicateError = document.getElementById('duplicate-error');
+      if (duplicateError) duplicateError.hidden = true;
+      return; // Don't add more than 10
+    }
+    
+    // Check for duplicates
+    if (addedLocalAuthorities.has(lowerValue)) {
+      const duplicateError = document.getElementById('duplicate-error');
+      if (duplicateError) {
+        duplicateError.hidden = false;
+        duplicateError.focus();
+      }
+      // Hide other errors
+      const maxLimitError = document.getElementById('max-limit-error');
+      if (maxLimitError) maxLimitError.hidden = true;
+      return; // Don't add duplicate
+    }
+    
+    // Hide all error messages if adding valid item
+    const duplicateError = document.getElementById('duplicate-error');
+    if (duplicateError) duplicateError.hidden = true;
+    const maxLimitError = document.getElementById('max-limit-error');
+    if (maxLimitError) maxLimitError.hidden = true;
+    
+    // Add to tracking set
+    addedLocalAuthorities.add(lowerValue);
+    
     count++;
-    addedLocations.add(value.toLowerCase());
-
     const row = document.createElement('tr');
     row.className = 'govuk-table__row';
 
-    const headerCell = document.createElement('th');
-    headerCell.scope = 'row';
-    headerCell.className = 'govuk-table__header';
-    headerCell.textContent = `Local authority ${count}`;
-
-    const valueCell = document.createElement('td');
-    valueCell.className = 'govuk-table__cell';
-    valueCell.textContent = value;
-
-    const actionCell = document.createElement('td');
-    actionCell.className = 'govuk-table__cell';
-
-    const removeLink = document.createElement('a');
-    removeLink.href = '#';
-    removeLink.className = 'govuk-link';
-    removeLink.textContent = 'Remove';
-
-    removeLink.addEventListener('click', function (e) {
+    row.innerHTML = `
+      <th scope="row" class="govuk-table__header">Local authority ${count}</th>
+      <td class="govuk-table__cell">${trimmedValue}</td>
+      <td class="govuk-table__cell">
+        <a href="#" class="govuk-link remove-location">Remove</a>
+      </td>
+    `;
+    
+    // Add remove functionality
+    row.querySelector('.remove-location').addEventListener('click', function(e) {
       e.preventDefault();
       row.remove();
-      addedLocations.delete(value.toLowerCase());
+      
+      // Remove from tracking set
+      addedLocalAuthorities.delete(lowerValue);
+      
+      // Hide max limit error when removing items (user can now add more)
+      const maxLimitError = document.getElementById('max-limit-error');
+      if (maxLimitError) maxLimitError.hidden = true;
+      
+      // Renumber all remaining rows to maintain sequential order
+      renumberTableRows();
+      
       if (tableBody.children.length === 0) {
-        table.hidden = true;
+        table.style.display = 'none';
+        if (tableCaption) tableCaption.style.display = 'none';
         count = 0;
       }
-      updateAddButtonLabel(); // <-- keep label in sync after removal
+      updateButtonLabel();
+      updateHiddenInputs();
     });
 
-    actionCell.appendChild(removeLink);
-    row.appendChild(headerCell);
-    row.appendChild(valueCell);
-    row.appendChild(actionCell);
     tableBody.appendChild(row);
-
-    table.hidden = false;
-    updateAddButtonLabel(); // <-- keep label in sync after addition
+    table.style.display = 'table';
+    if (tableCaption) tableCaption.style.display = 'table-caption';
+    updateButtonLabel();
+    updateHiddenInputs();
   }
-
-  // ---------- Add more local authorities ----------
+  
+  // Radio button handlers - simplified to avoid timing issues
+  if (radio) {
+    function handleRadioChange() {
+      if (radio.checked && conditional) {
+        conditional.classList.remove('govuk-radios__conditional--hidden');
+        // Initialize autocomplete immediately when radio is checked
+        initializeAutocomplete();
+      }
+    }
+    
+    radio.addEventListener('change', handleRadioChange);
+    
+    // Initialize immediately on page load if already selected
+    if (radio.checked && conditional) {
+      handleRadioChange();
+    }
+  }
+  
+  // Handle other radio buttons to clean up state
+  const allRadios = document.querySelectorAll('input[name="location"]');
+  allRadios.forEach(r => {
+    if (r !== radio) {
+      r.addEventListener('change', function() {
+        if (this.checked && conditional) {
+          conditional.classList.add('govuk-radios__conditional--hidden');
+          // Don't reset autocomplete state to avoid re-initialization issues
+        }
+      });
+    }
+  });
+  
+  // Add button handler (UI only - no validation)
   if (addMoreButton) {
-    addMoreButton.addEventListener('click', function (e) {
+    addMoreButton.addEventListener('click', function(e) {
       e.preventDefault();
-
-      const input = document.querySelector('#my-autocomplete');
-      if (!input) return;
-
-      const value = input.value.trim();
-      if (!value) {
-        alert('Please enter a local authority.');
-        return;
-      }
-
-      const lowerValue = value.toLowerCase();
-      if (addedLocations.has(lowerValue)) {
-        alert('This location has already been added.');
-        return;
-      }
-
-      addLocationRow(value);
+      
+      const input = document.getElementById('my-autocomplete');
+      if (!input || !input.value.trim()) return;
+      
+      addLocationToTable(input.value.trim());
+      
+      // Clear the input properly for both regular input and accessible autocomplete
       input.value = '';
+      
+      // For accessible autocomplete, also clear any hidden input or internal state
+      const hiddenInput = container.querySelector('input[type="hidden"]');
+      if (hiddenInput) {
+        hiddenInput.value = '';
+      }
+      
+      // Clear any autocomplete specific input elements
+      const autocompleteInputs = container.querySelectorAll('input');
+      autocompleteInputs.forEach(inp => {
+        inp.value = '';
+      });
+      
+      // Force a change event to notify the autocomplete component
+      if (input) {
+        const event = new Event('input', { bubbles: true });
+        input.dispatchEvent(event);
+      }
+      
+      // Additional clearing for accessible-autocomplete internal state
+      setTimeout(() => {
+        if (input) {
+          input.value = '';
+          input.setAttribute('value', '');
+          
+          // Clear any aria-expanded or other autocomplete states
+          input.removeAttribute('aria-expanded');
+          input.removeAttribute('aria-activedescendant');
+          
+          input.focus();
+        }
+      }, 10);
     });
   }
-
-  // ---------- Submit ----------
-  submitButton.addEventListener('click', function (e) {
-    e.preventDefault();
-
-    const selectedRadio = document.querySelector('input[name="location"]:checked');
-    if (!selectedRadio) {
-      alert('Please select Countries or Local authority.');
-      return;
-    }
-
-    // Clear mutually exclusive keys first
-    sessionStorage.removeItem('selectedLocation');  // legacy single
-    sessionStorage.removeItem('selectedLocations'); // LA list
-    sessionStorage.removeItem('selectedCountries'); // countries list
-
-    if (selectedRadio.id === 'location-2') {
-      // Countries
-      const checked = Array.from(document.querySelectorAll('input[name="country"]:checked'))
-        .map(cb => cb.value.trim());
-      if (checked.length === 0) {
-        alert('Please select at least one country.');
-        return;
+  
+  // Restore locations from form data (after server validation errors)
+  {% if formData and formData['selected-locations'] %}
+  const formLocations = {{ formData['selected-locations'] | dump | safe }};
+  if (formLocations && formLocations.length > 0) {
+    const locationsArray = Array.isArray(formLocations) ? formLocations : [formLocations];
+    locationsArray.forEach(location => {
+      if (location && location.trim()) {
+        addLocationToTable(location.trim());
       }
-      sessionStorage.setItem('selectedCountries', JSON.stringify(checked));
-
-    } else if (selectedRadio.id === 'location-4') {
-      // Local authorities
-      let locations = [];
-      if (!table.hidden && tableBody.children.length > 0) {
-        const rows = tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-          const name = row.querySelector('td').textContent.trim();
-          locations.push(name);
-        });
-      } else {
-        const input = document.querySelector('#my-autocomplete');
-        if (input && input.value.trim()) {
-          const value = input.value.trim();
-          if (!addedLocations.has(value.toLowerCase())) {
-            locations.push(value);
-          }
-        }
+    });
+  }
+  {% endif %}
+  
+  // Initialize tracking set with any existing table entries (for server-restored data)
+  if (tableBody) {
+    const existingRows = tableBody.querySelectorAll('tr');
+    existingRows.forEach(row => {
+      const locationName = row.querySelector('td')?.textContent?.trim();
+      if (locationName) {
+        addedLocalAuthorities.add(locationName.toLowerCase());
       }
-      if (locations.length === 0) {
-        alert('Please add at least one local authority.');
-        return;
-      }
-      sessionStorage.setItem('selectedLocations', JSON.stringify(locations));
-    }
-
-    // Go back to summary
-    window.location.href = '/customdataset/location/' + encodeURIComponent(JSON.stringify(
-      selectedRadio.id === 'location-2'
-        ? JSON.parse(sessionStorage.getItem('selectedCountries') || '[]')
-        : JSON.parse(sessionStorage.getItem('selectedLocations') || '[]')
-    ))
-    ;
-  });
+    });
+  }
+  
+  updateButtonLabel();
+  console.log('✅ Clean UI setup complete - server handles all validation');
 });
 </script>
-
-
-
-
 
 {% endblock %}

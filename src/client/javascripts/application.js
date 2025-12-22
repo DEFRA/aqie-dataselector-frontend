@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   accessibleAutocomplete({
     element: document.querySelector('#autocomplete-container-p'),
     id: 'my-autocomplete',
+    minLength: 2,
     source: [
       // Pollutants
       'Fine particulate matter (PM2.5)',
@@ -65,5 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ]
   })
 })
+
+// Make accessibleAutocomplete available globally for use in page-specific scripts
+window.accessibleAutocomplete = accessibleAutocomplete
 
 // initAll()

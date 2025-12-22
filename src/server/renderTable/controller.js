@@ -1,7 +1,7 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
-
+// import Wreck from '@hapi/wreck'
 async function Invoketable(params) {
   // Renamed parameter to avoid shadowing
   try {
@@ -10,54 +10,31 @@ async function Invoketable(params) {
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
+
+  // dev
+  // try {
+  //   const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryexceedence/'
+  //   const { res, payload } = await Wreck.post(url, {
+  //     payload: JSON.stringify(params),
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
+  //     },
+  //     json: true
+  //   })
+  //   console.log("PAYLOAD", payload)
+  //   return payload
+  // } catch (error) {
+  //   // Return a safe error object instead of the full error which may contain circular references
+  //   console.error('API Error:', error.message)
+  //   return { error: error.message || 'API request failed' }
+  // }
 }
 
 const rendertablecontroller = {
   handler: async (request, h) => {
     try {
       request.yar.set('selectedYear', request.params.year)
-      // const tabledata1 = [
-      //   {
-      //     pollutantName: 'PM2.5',
-      //     hourlyCount: 'n/a',
-      //     dailyCount: 23,
-      //     annualcount: 24,
-      //     dataVerifiedTag: 'Data has been verified',
-      //     dataCapturePercentage: 97
-      //   },
-      //   {
-      //     pollutantName: 'PM10',
-      //     hourlyCount: 'n/a',
-      //     dailyCount: 36,
-      //     annualcount: 42,
-      //     dataVerifiedTag: 'Data has been verified',
-      //     dataCapturePercentage: 97
-      //   },
-      //   {
-      //     pollutantName: 'Nitrogen dioxide',
-      //     hourlyCount: 19,
-      //     dailyCount: 'n/a',
-      //     annualcount: 45,
-      //     dataVerifiedTag: 'Data has been verified',
-      //     dataCapturePercentage: 99
-      //   },
-      //   {
-      //     pollutantName: 'Ozone',
-      //     hourlyCount: 'n/a',
-      //     dailyCount: 'n/a',
-      //     annualcount: 90,
-      //     dataVerifiedTag: 'Data has been verified',
-      //     dataCapturePercentage: 91
-      //   },
-      //   {
-      //     pollutantName: 'Sulphur dioxide',
-      //     hourlyCount: '0',
-      //     dailyCount: 4,
-      //     annualcount: 91,
-      //     dataVerifiedTag: 'Data has been verified',
-      //     dataCapturePercentage: 92
-      //   }
-      // ]
 
       const apiparams = {
         siteId: request.yar.get('stationdetails').localSiteID,

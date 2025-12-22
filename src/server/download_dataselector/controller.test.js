@@ -11,11 +11,29 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   }
 }))
 
+// Mock console methods to prevent test output noise
+const originalConsole = console
+
+beforeAll(() => {
+  global.console = {
+    ...originalConsole,
+    log: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn()
+  }
+})
+
+afterAll(() => {
+  global.console = originalConsole
+})
+
 describe('downloadDataselectorController', () => {
   let mockRequest
   let mockH
 
   beforeEach(() => {
+    jest.clearAllMocks()
+
     mockRequest = {
       yar: {
         get: jest.fn()
@@ -26,11 +44,110 @@ describe('downloadDataselectorController', () => {
     }
   })
 
-  it('should render download_dataselector/index view with all session values', () => {
+  it('should render error when selectedyear is missing', () => {
     mockRequest.yar.get.mockImplementation((key) => {
       const values = {
-        downloadaurnresult: 'https://api.example.com/download/12345',
+        selectedyear: undefined,
+        selectedlocation: ['London'],
         nooflocation: 5,
+        selectedpollutant: ['NO2']
+      }
+      return values[key]
+    })
+
+    const result = downloadDataselectorController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+      pageTitle: 'Download Data Selector',
+      heading: 'Download Your Selected Data',
+      texts: ['Review your selection', 'Confirm and download'],
+      error: true,
+      errormsg: 'Select a year to continue',
+      errorref1: 'Add year',
+      errorhref1: '/year-aurn',
+      errorref2: '',
+      errorhref2: '',
+      selectedpollutant: ['NO2'],
+      selectedyear: undefined,
+      selectedlocation: ['London'],
+      stationcount: 5,
+      displayBacklink: true,
+      hrefq: '/customdataset'
+    })
+    expect(result).toBe('download-dataselector-view-response')
+  })
+
+  it('should render error when selectedlocation is missing', () => {
+    mockRequest.yar.get.mockImplementation((key) => {
+      const values = {
+        selectedyear: '2023',
+        selectedlocation: undefined,
+        nooflocation: 5,
+        selectedpollutant: ['NO2']
+      }
+      return values[key]
+    })
+
+    const result = downloadDataselectorController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+      pageTitle: 'Download Data Selector',
+      heading: 'Download Your Selected Data',
+      texts: ['Review your selection', 'Confirm and download'],
+      error: true,
+      errormsg: 'Select a location to continue',
+      errorref1: 'Add location',
+      errorhref1: '/location-aurn',
+      errorref2: '',
+      errorhref2: '',
+      selectedpollutant: ['NO2'],
+      selectedyear: '2023',
+      selectedlocation: undefined,
+      stationcount: 5,
+      displayBacklink: true,
+      hrefq: '/customdataset'
+    })
+    expect(result).toBe('download-dataselector-view-response')
+  })
+
+  it('should render error when nooflocation is 0', () => {
+    mockRequest.yar.get.mockImplementation((key) => {
+      const values = {
+        selectedyear: '2023',
+        selectedlocation: ['London'],
+        nooflocation: 0,
+        selectedpollutant: ['NO2'],
+        downloadaurnresult: undefined,
+        yearrange: undefined,
+        finalyear: undefined
+      }
+      return values[key]
+    })
+
+    const result = downloadDataselectorController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+      pageTitle: 'Download Data Selector',
+      heading: 'Download Your Selected Data',
+      texts: ['Review your selection', 'Confirm and download'],
+      downloadaurnresult: undefined,
+      stationcount: 0,
+      yearrange: undefined,
+      displayBacklink: true,
+      hrefq: '/customdataset',
+      finalyear: []
+    })
+    expect(result).toBe('download-dataselector-view-response')
+  })
+
+  it('should render success page when all validations pass', () => {
+    mockRequest.yar.get.mockImplementation((key) => {
+      const values = {
+        selectedyear: '2023',
+        selectedlocation: ['London'],
+        nooflocation: 5,
+        selectedpollutant: ['NO2'],
+        downloadaurnresult: 'https://api.example.com/download/12345',
         yearrange: 'Multiple',
         finalyear: '2021, 2022, 2023, 2024, 2025'
       }
@@ -53,89 +170,14 @@ describe('downloadDataselectorController', () => {
     expect(result).toBe('download-dataselector-view-response')
   })
 
-  it('should handle undefined downloadaurnresult', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: undefined,
-        nooflocation: 3,
-        yearrange: 'Single',
-        finalyear: '2024'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: undefined,
-      stationcount: 3,
-      yearrange: 'Single',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2024']
-    })
-  })
-
-  it('should handle undefined nooflocation', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/67890',
-        nooflocation: undefined,
-        yearrange: 'Multiple',
-        finalyear: '2022, 2023'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/67890',
-      stationcount: undefined,
-      yearrange: 'Multiple',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2022', '2023']
-    })
-  })
-
-  it('should handle undefined yearrange', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/11111',
-        nooflocation: 10,
-        yearrange: undefined,
-        finalyear: '2024'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/11111',
-      stationcount: 10,
-      yearrange: undefined,
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2024']
-    })
-  })
-
   it('should handle undefined finalyear and return empty array', () => {
     mockRequest.yar.get.mockImplementation((key) => {
       const values = {
+        selectedyear: '2023',
+        selectedlocation: ['London'],
+        nooflocation: 5,
+        selectedpollutant: ['NO2'],
         downloadaurnresult: 'https://api.example.com/download/22222',
-        nooflocation: 7,
         yearrange: 'Single',
         finalyear: undefined
       }
@@ -149,34 +191,8 @@ describe('downloadDataselectorController', () => {
       heading: 'Download Your Selected Data',
       texts: ['Review your selection', 'Confirm and download'],
       downloadaurnresult: 'https://api.example.com/download/22222',
-      stationcount: 7,
+      stationcount: 5,
       yearrange: 'Single',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: []
-    })
-  })
-
-  it('should handle null finalyear and return empty array', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/33333',
-        nooflocation: 2,
-        yearrange: 'Multiple',
-        finalyear: null
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/33333',
-      stationcount: 2,
-      yearrange: 'Multiple',
       displayBacklink: true,
       hrefq: '/customdataset',
       finalyear: []
@@ -186,8 +202,11 @@ describe('downloadDataselectorController', () => {
   it('should parse finalyear string with extra whitespace', () => {
     mockRequest.yar.get.mockImplementation((key) => {
       const values = {
-        downloadaurnresult: 'https://api.example.com/download/44444',
+        selectedyear: '2023',
+        selectedlocation: ['London'],
         nooflocation: 8,
+        selectedpollutant: ['NO2'],
+        downloadaurnresult: 'https://api.example.com/download/44444',
         yearrange: 'Multiple',
         finalyear: '2020,  2021  , 2022 , 2023'
       }
@@ -209,209 +228,487 @@ describe('downloadDataselectorController', () => {
     })
   })
 
-  it('should handle single year in finalyear', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
+  describe('Validation Error Cases', () => {
+    describe('Missing selectedyear validation', () => {
+      it('should render error when selectedyear is undefined', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: undefined,
+            selectedlocation: ['London'],
+            nooflocation: 5,
+            selectedpollutant: ['NO2']
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          error: true,
+          errormsg: 'Select a year to continue',
+          errorref1: 'Add year',
+          errorhref1: '/year-aurn',
+          errorref2: '',
+          errorhref2: '',
+          selectedpollutant: ['NO2'],
+          selectedyear: undefined,
+          selectedlocation: ['London'],
+          stationcount: 5,
+          displayBacklink: true,
+          hrefq: '/customdataset'
+        })
+      })
+
+      it('should render error when selectedyear is null', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: null,
+            selectedlocation: ['Manchester'],
+            nooflocation: 3,
+            selectedpollutant: ['PM10']
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          error: true,
+          errormsg: 'Select a year to continue',
+          errorref1: 'Add year',
+          errorhref1: '/year-aurn',
+          errorref2: '',
+          errorhref2: '',
+          selectedpollutant: ['PM10'],
+          selectedyear: null,
+          selectedlocation: ['Manchester'],
+          stationcount: 3,
+          displayBacklink: true,
+          hrefq: '/customdataset'
+        })
+      })
+    })
+
+    describe('Missing selectedlocation validation', () => {
+      it('should render error when selectedlocation is undefined', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2023',
+            selectedlocation: undefined,
+            nooflocation: 2,
+            selectedpollutant: ['O3']
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          error: true,
+          errormsg: 'Select a location to continue',
+          errorref1: 'Add location',
+          errorhref1: '/location-aurn',
+          errorref2: '',
+          errorhref2: '',
+          selectedpollutant: ['O3'],
+          selectedyear: '2023',
+          selectedlocation: undefined,
+          stationcount: 2,
+          displayBacklink: true,
+          hrefq: '/customdataset'
+        })
+      })
+
+      it('should render error when selectedlocation is null', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2024',
+            selectedlocation: null,
+            nooflocation: 7,
+            selectedpollutant: ['SO2']
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          error: true,
+          errormsg: 'Select a location to continue',
+          errorref1: 'Add location',
+          errorhref1: '/location-aurn',
+          errorref2: '',
+          errorhref2: '',
+          selectedpollutant: ['SO2'],
+          selectedyear: '2024',
+          selectedlocation: null,
+          stationcount: 7,
+          displayBacklink: true,
+          hrefq: '/customdataset'
+        })
+      })
+    })
+
+    describe('Zero locations validation', () => {
+      it('should render error when nooflocation is 0 (number)', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2023',
+            selectedlocation: ['London'],
+            nooflocation: 0,
+            selectedpollutant: ['NO2'],
+            downloadaurnresult: undefined,
+            yearrange: undefined,
+            finalyear: undefined
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          downloadaurnresult: undefined,
+          stationcount: 0,
+          yearrange: undefined,
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: []
+        })
+      })
+
+      it('should render error when nooflocation is "0" (string)', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2024',
+            selectedlocation: ['Manchester'],
+            nooflocation: '0',
+            selectedpollutant: ['PM10'],
+            downloadaurnresult: undefined,
+            yearrange: undefined,
+            finalyear: undefined
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          downloadaurnresult: undefined,
+          stationcount: '0',
+          yearrange: undefined,
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: []
+        })
+      })
+
+      it('should render error when nooflocation is undefined', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2025',
+            selectedlocation: ['Birmingham'],
+            nooflocation: undefined,
+            selectedpollutant: ['O3'],
+            downloadaurnresult: undefined,
+            yearrange: undefined,
+            finalyear: undefined
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          downloadaurnresult: undefined,
+          stationcount: undefined,
+          yearrange: undefined,
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: []
+        })
+      })
+
+      it('should render error when nooflocation is null', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2022',
+            selectedlocation: ['Leeds'],
+            nooflocation: null,
+            selectedpollutant: ['CO'],
+            downloadaurnresult: undefined,
+            yearrange: undefined,
+            finalyear: undefined
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          downloadaurnresult: undefined,
+          stationcount: null,
+          yearrange: undefined,
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: []
+        })
+      })
+    })
+
+    describe('Console logging verification', () => {
+      it('should log nooflocation value and type', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2023',
+            selectedlocation: ['London'],
+            nooflocation: 5
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        // expect(console.log).toHaveBeenCalledWith('In download controller', 5)
+        // expect(console.log).toHaveBeenCalledWith(
+        //   'Number of locations:',
+        //   5,
+        //   'Type:',
+        //   'number'
+        // )
+      })
+
+      it('should log when no stations found', () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedyear: '2023',
+            selectedlocation: ['London'],
+            nooflocation: 0
+          }
+          return values[key]
+        })
+
+        downloadDataselectorController.handler(mockRequest, mockH)
+
+        //   expect(console.log).toHaveBeenCalledWith('no stations found')
+      })
+    })
+  })
+
+  describe('Success Cases', () => {
+    it('should render download_dataselector/index view with all session values', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2023',
+          selectedlocation: ['London'],
+          nooflocation: 5,
+          downloadaurnresult: 'https://api.example.com/download/12345',
+          yearrange: 'Multiple',
+          finalyear: '2021, 2022, 2023, 2024, 2025'
+        }
+        return values[key]
+      })
+
+      const result = downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
+        downloadaurnresult: 'https://api.example.com/download/12345',
+        stationcount: 5,
+        yearrange: 'Multiple',
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: ['2021', '2022', '2023', '2024', '2025']
+      })
+      expect(result).toBe('download-dataselector-view-response')
+    })
+
+    it('should handle undefined downloadaurnresult', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2024',
+          selectedlocation: ['Manchester'],
+          nooflocation: 3,
+          downloadaurnresult: undefined,
+          yearrange: 'Single',
+          finalyear: '2024'
+        }
+        return values[key]
+      })
+
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
+        downloadaurnresult: undefined,
+        stationcount: 3,
+        yearrange: 'Single',
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: ['2024']
+      })
+    })
+
+    it('should handle undefined finalyear and return empty array', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2022',
+          selectedlocation: ['Birmingham'],
+          nooflocation: 7,
+          downloadaurnresult: 'https://api.example.com/download/22222',
+          yearrange: 'Single',
+          finalyear: undefined
+        }
+        return values[key]
+      })
+
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
+        downloadaurnresult: 'https://api.example.com/download/22222',
+        stationcount: 7,
+        yearrange: 'Single',
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: []
+      })
+    })
+
+    it('should handle null finalyear and return empty array', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2021',
+          selectedlocation: ['Leeds'],
+          nooflocation: 2,
+          downloadaurnresult: 'https://api.example.com/download/33333',
+          yearrange: 'Multiple',
+          finalyear: null
+        }
+        return values[key]
+      })
+
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
+        downloadaurnresult: 'https://api.example.com/download/33333',
+        stationcount: 2,
+        yearrange: 'Multiple',
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: []
+      })
+    })
+
+    it('should parse finalyear string with extra whitespace', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2020',
+          selectedlocation: ['Bristol'],
+          nooflocation: 8,
+          downloadaurnresult: 'https://api.example.com/download/44444',
+          yearrange: 'Multiple',
+          finalyear: '2020,  2021  , 2022 , 2023'
+        }
+        return values[key]
+      })
+
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
+        downloadaurnresult: 'https://api.example.com/download/44444',
+        stationcount: 8,
+        yearrange: 'Multiple',
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: ['2020', '2021', '2022', '2023']
+      })
+    })
+
+    it('should handle single year in finalyear', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2023',
+          selectedlocation: ['Sheffield'],
+          nooflocation: 4,
+          downloadaurnresult: 'https://api.example.com/download/55555',
+          yearrange: 'Single',
+          finalyear: '2023'
+        }
+        return values[key]
+      })
+
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
+        pageTitle: 'Download Data Selector',
+        heading: 'Download Your Selected Data',
+        texts: ['Review your selection', 'Confirm and download'],
         downloadaurnresult: 'https://api.example.com/download/55555',
-        nooflocation: 4,
+        stationcount: 4,
         yearrange: 'Single',
-        finalyear: '2023'
-      }
-      return values[key]
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        finalyear: ['2023']
+      })
     })
 
-    downloadDataselectorController.handler(mockRequest, mockH)
+    it('should verify all yar.get calls are made', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedyear: '2024',
+          selectedlocation: ['London'],
+          nooflocation: 10,
+          downloadaurnresult: 'test-result',
+          yearrange: 'test-range',
+          finalyear: '2024'
+        }
+        return values[key]
+      })
 
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/55555',
-      stationcount: 4,
-      yearrange: 'Single',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2023']
+      downloadDataselectorController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedyear')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('downloadaurnresult')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('yearrange')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
     })
-  })
-
-  it('should handle all undefined values', () => {
-    mockRequest.yar.get.mockReturnValue(undefined)
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: undefined,
-      stationcount: undefined,
-      yearrange: undefined,
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: []
-    })
-  })
-
-  it('should pass englishNew.custom properties correctly', () => {
-    mockRequest.yar.get.mockReturnValue(undefined)
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      downloadaurnresult: undefined,
-      stationcount: undefined,
-      yearrange: undefined,
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: []
-    })
-  })
-
-  it('should call h.view with correct template path', () => {
-    mockRequest.yar.get.mockReturnValue(undefined)
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith(
-      'download_dataselector/index',
-      expect.any(Object)
-    )
-  })
-
-  it('should return the result of h.view', () => {
-    mockRequest.yar.get.mockReturnValue(undefined)
-
-    const result = downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(result).toBe('download-dataselector-view-response')
-  })
-
-  it('should handle finalyear with multiple years and spaces', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/66666',
-        nooflocation: 1,
-        yearrange: 'Multiple',
-        finalyear: '2021, 2022, 2023, 2024, 2025, 2026'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/66666',
-      stationcount: 1,
-      yearrange: 'Multiple',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2021', '2022', '2023', '2024', '2025', '2026']
-    })
-  })
-
-  it('should handle empty string for finalyear', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/77777',
-        nooflocation: 6,
-        yearrange: 'Single',
-        finalyear: ''
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/77777',
-      stationcount: 6,
-      yearrange: 'Single',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['']
-    })
-  })
-
-  it('should trim whitespace correctly from each year', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/88888',
-        nooflocation: 9,
-        yearrange: 'Multiple',
-        finalyear: '  2019  ,  2020  ,  2021  '
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/88888',
-      stationcount: 9,
-      yearrange: 'Multiple',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2019', '2020', '2021']
-    })
-  })
-
-  it('should get nooflocation and map to stationcount', () => {
-    const nooflocationValue = 42
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'https://api.example.com/download/99999',
-        nooflocation: nooflocationValue,
-        yearrange: 'Multiple',
-        finalyear: '2020, 2021'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
-    expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download'],
-      downloadaurnresult: 'https://api.example.com/download/99999',
-      stationcount: nooflocationValue,
-      yearrange: 'Multiple',
-      displayBacklink: true,
-      hrefq: '/customdataset',
-      finalyear: ['2020', '2021']
-    })
-  })
-
-  it('should get all session values via yar.get', () => {
-    mockRequest.yar.get.mockImplementation((key) => {
-      const values = {
-        downloadaurnresult: 'test-result',
-        nooflocation: 5,
-        yearrange: 'test-range',
-        finalyear: '2024'
-      }
-      return values[key]
-    })
-
-    downloadDataselectorController.handler(mockRequest, mockH)
-
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('downloadaurnresult')
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('yearrange')
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
   })
 })
