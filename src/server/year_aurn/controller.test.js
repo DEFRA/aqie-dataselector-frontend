@@ -52,7 +52,8 @@ describe('yearController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/customdataset'
+        hrefq: '/customdataset',
+        formData: {}
       })
       expect(result).toBe('year-aurn-view-response')
     })

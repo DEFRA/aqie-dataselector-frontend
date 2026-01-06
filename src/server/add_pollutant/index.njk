@@ -4,6 +4,11 @@
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 
 {% block content %}
+<!-- Redirect users without JavaScript to the no-JS version -->
+<noscript>
+  <meta http-equiv="refresh" content="0; url=/airpollutant/nojs">
+</noscript>
+
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
     <form action='/addpollutants' method="post">
@@ -216,6 +221,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Define allowed pollutants for client-side validation
+  const allowedPollutants = [
+    'Fine particulate matter (PM2.5)',
+    'Particulate matter (PM10)',
+    'Nitrogen dioxide (NO2)',
+    'Ozone (O3)',
+    'Sulphur dioxide (SO2)',
+    'Nitric oxide (NO)',
+    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+    'Carbon monoxide (CO)'
+  ];
+
+  // Helper function to check if a pollutant is allowed
+  const isAllowedPollutant = (value) => {
+    const trimmedValue = (value || '').trim();
+    return allowedPollutants.some(
+      (pollutant) => pollutant.toLowerCase() === trimmedValue.toLowerCase()
+    );
+  };
+
   // Cache key elements
   const addButton = document.getElementById('add-pollutant-button');
   const continueButton = document.getElementById('continue-button');
@@ -269,7 +294,38 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!input) return;
 
       const value = (input.value || '').trim();
-      if (!value) return;
+      
+      // Check if no pollutant is entered
+      if (!value) {
+        // Show error for empty input
+        const errorSummary = document.getElementById('duplicate-error');
+        if (errorSummary) {
+          // Update error message for empty input
+          const errorLink = errorSummary.querySelector('a');
+          if (errorLink) {
+            errorLink.textContent = 'Please add a pollutant';
+          }
+          errorSummary.hidden = false;
+          errorSummary.focus();
+        }
+        return;
+      }
+
+      // Check if pollutant is in the allowed list
+      if (!isAllowedPollutant(value)) {
+        // Show error for invalid pollutant
+        const errorSummary = document.getElementById('duplicate-error');
+        if (errorSummary) {
+          // Update error message for invalid pollutant
+          const errorLink = errorSummary.querySelector('a');
+          if (errorLink) {
+            errorLink.textContent = 'Please select a pollutant from the allowed list';
+          }
+          errorSummary.hidden = false;
+          errorSummary.focus();
+        }
+        return;
+      }
 
       const lowerValue = value.toLowerCase();
       
@@ -277,6 +333,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (addedPollutants.has(lowerValue)) {
         const errorSummary = document.getElementById('duplicate-error');
         if (errorSummary) {
+          // Reset error message to duplicate message
+          const errorLink = errorSummary.querySelector('a');
+          if (errorLink) {
+            errorLink.textContent = 'This pollutant has already been added';
+          }
           errorSummary.hidden = false;
           errorSummary.focus();
         }

@@ -115,7 +115,7 @@
      {% endif %}
     </dd>
       {% if selectedpollutant %}
-   <dd class="govuk-summary-list__actions" id="time-period-action" hidden>
+   <dd class="govuk-summary-list__actions" id="time-period-action">
     
   <a class="govuk-link" href="/year-aurn"
   >
@@ -149,8 +149,8 @@
  
 </dd>
  {% if selectedpollutant %}
-<dd class="govuk-summary-list__actions" id="location-action" hidden>
-  <a class="govuk-link" href="/location-aurn"> 
+<dd class="govuk-summary-list__actions" id="location-action">
+  <a class="govuk-link" href="/location-aurn?change=true"> 
    {% if selectedlocation %}
    
       {{texts.n}}

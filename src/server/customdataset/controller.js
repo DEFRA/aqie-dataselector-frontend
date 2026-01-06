@@ -15,10 +15,26 @@ export const customdatasetController = {
     const backUrl = '/hubpage'
     // const { hoe } = englishNew.custom
     if (request.path?.includes('/clear')) {
+      // Clear all selected options and pollutants
       request.yar.set('selectedpollutant', '')
       request.yar.set('selectedyear', '')
       request.yar.set('selectedlocation', '')
       request.yar.set('nooflocation', '')
+
+      // Clear pollutant-specific session variables
+      request.yar.set('selectedPollutants', null)
+      request.yar.set('selectedPollutantMode', '')
+      request.yar.set('selectedPollutantGroup', '')
+      request.yar.set('formattedPollutants', '')
+
+      // Clear other related session variables including time period
+      request.yar.set('selectedTimePeriod', null)
+      request.yar.set('yearrange', '')
+      request.yar.set('finalyear', '')
+      request.yar.set('finalyear1', '')
+      request.yar.set('Region', '')
+      request.yar.set('selectedLAIDs', '')
+      request.yar.set('Location', '')
 
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
@@ -39,7 +55,18 @@ export const customdatasetController = {
       const errorMessage = request.yar?.get('errorMessage')
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
-      return h.view('add_pollutant/index', {
+
+      // Check if JavaScript is disabled by looking for noscript indicator
+      const isNoJS =
+        request.headers['user-agent']?.includes('noscript') ||
+        request.query?.nojs === 'true' ||
+        !request.headers.accept?.includes('text/javascript')
+
+      const templatePath = isNoJS
+        ? 'add_pollutant/index_nojs'
+        : 'add_pollutant/index'
+
+      return h.view(templatePath, {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
@@ -53,8 +80,8 @@ export const customdatasetController = {
       const sessionPollutants = request.yar.get('selectedPollutants')
       if (sessionPollutants && sessionPollutants.length > 0) {
         request.yar.set('selectedpollutant', sessionPollutants)
-        // Clear the session pollutants to prevent reuse
-        request.yar.set('selectedPollutants', null)
+        // Don't clear the session pollutants - keep them for form pre-population
+        // request.yar.set('selectedPollutants', null)
       } else if (request.params.pollutants !== undefined) {
         let selectedpollutant = request.params.pollutants
         if (
@@ -107,8 +134,8 @@ export const customdatasetController = {
       const sessionTimePeriod = request.yar.get('selectedTimePeriod')
       if (sessionTimePeriod) {
         request.yar.set('selectedyear', sessionTimePeriod)
-        // Clear the session time period to prevent reuse
-        request.yar.set('selectedTimePeriod', null)
+        // Don't clear the session time period - keep it for form pre-population
+        // when user clicks "change" to go back to year selection
       } else if (request.path?.includes('/year')) {
         request.yar.set('selectedyear', request.params.year)
       }
