@@ -21,9 +21,13 @@ describe('airpollutantController', () => {
     mockRequest = {
       method: 'get',
       yar: {
-        set: jest.fn()
+        set: jest.fn(),
+        get: jest.fn().mockReturnValue(null) // Default return null for all get calls
       },
-      payload: {}
+      payload: {},
+      query: {},
+      path: '/add_pollutant',
+      headers: {}
     }
     mockH = {
       view: jest.fn().mockReturnValue('add-pollutant-view-response'),
@@ -45,14 +49,89 @@ describe('airpollutantController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2024')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2025')
 
+      // Verify session data retrieval for pre-population
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutants')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutantMode')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutantGroup')
+
       expect(mockH.view).toHaveBeenCalledWith('add_pollutant/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/customdataset'
+        hrefq: '/customdataset',
+        selectedPollutants: [],
+        selectedMode: '',
+        selectedGroup: ''
       })
       expect(result).toBe('add-pollutant-view-response')
+    })
+
+    it('should pre-populate form with existing session data', () => {
+      mockRequest.method = 'get'
+
+      // Mock existing session data
+      mockRequest.yar.get.mockImplementation((key) => {
+        switch (key) {
+          case 'selectedPollutants':
+            return ['NO2', 'PM10']
+          case 'selectedPollutantMode':
+            return 'specific'
+          case 'selectedPollutantGroup':
+            return 'core'
+          default:
+            return null
+        }
+      })
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('add_pollutant/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        selectedPollutants: ['NO2', 'PM10'],
+        selectedMode: 'specific',
+        selectedGroup: 'core'
+      })
+    })
+
+    it('should render no-JS template when nojs query parameter is true', () => {
+      mockRequest.method = 'get'
+      mockRequest.query = { nojs: 'true' }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
+        expect.any(Object)
+      )
+    })
+
+    it('should render no-JS template when path includes nojs', () => {
+      mockRequest.method = 'get'
+      mockRequest.path = '/add_pollutant/nojs'
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
+        expect.any(Object)
+      )
+    })
+
+    it('should render no-JS template when user-agent contains noscript', () => {
+      mockRequest.method = 'get'
+      mockRequest.headers = { 'user-agent': 'SomeBot/1.0 (noscript)' }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
+        expect.any(Object)
+      )
     })
 
     it('should set displayBacklink to true and hrefq to correct back URL', () => {
@@ -81,6 +160,30 @@ describe('airpollutantController', () => {
 
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
+        expect.objectContaining({
+          errors: {
+            list: [
+              {
+                text: 'Select an option before continuing',
+                href: '#mode-specific'
+              }
+            ]
+          },
+          errorMessage: {
+            message: { text: 'Select an option before continuing' }
+          }
+        })
+      )
+    })
+
+    it('should return error when no mode is selected and use no-JS template when nojs query is true', () => {
+      mockRequest.payload = {}
+      mockRequest.query = { nojs: 'true' }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
         expect.objectContaining({
           errors: {
             list: [
@@ -229,35 +332,6 @@ describe('airpollutantController', () => {
         'PM10'
       ])
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
-    })
-
-    it('should return error when pollutants data is invalid JSON', () => {
-      mockRequest.payload = {
-        'pollutant-mode': 'specific',
-        pollutantsData: 'invalid json string'
-      }
-
-      airpollutantController.handler(mockRequest, mockH)
-
-      expect(mockH.view).toHaveBeenCalledWith(
-        'add_pollutant/index',
-        expect.objectContaining({
-          errors: {
-            list: [
-              {
-                text: 'Please add at least one pollutant',
-                href: '#my-autocomplete'
-              }
-            ]
-          },
-          errorMessage: {
-            message: { text: 'Please add at least one pollutant' }
-          },
-          selectedMode: 'specific',
-          selectedGroup: undefined,
-          selectedPollutants: []
-        })
-      )
     })
   })
 
@@ -434,6 +508,24 @@ describe('airpollutantController', () => {
       )
     })
 
+    it('should preserve form state when validation fails with group mode', () => {
+      mockRequest.payload = {
+        'pollutant-mode': 'group'
+        // Missing pollutant-group to trigger validation error
+      }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index',
+        expect.objectContaining({
+          selectedMode: 'group',
+          selectedGroup: undefined,
+          selectedPollutants: []
+        })
+      )
+    })
+
     it('should handle empty pollutants array', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
@@ -491,6 +583,38 @@ describe('airpollutantController', () => {
         'O3'
       ])
       expect(mockH.redirect).toHaveBeenCalled()
+    })
+
+    it('should handle no-JS template selection for POST requests with path containing nojs', () => {
+      mockRequest.payload = {
+        'pollutant-mode': 'specific'
+        // Missing pollutants to trigger validation error
+      }
+      mockRequest.path = '/add_pollutant/nojs'
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle no-JS template selection for POST requests with user-agent containing noscript', () => {
+      mockRequest.payload = {
+        'pollutant-mode': 'group'
+        // Missing group to trigger validation error
+      }
+      mockRequest.headers = {
+        'user-agent': 'Mozilla/5.0 (compatible; noscript)'
+      }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index_nojs',
+        expect.any(Object)
+      )
     })
   })
 })

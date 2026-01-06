@@ -12,7 +12,7 @@ export const yearController = {
     const MIN_YEAR = 1973
     const MAX_YEAR = 2025
 
-    // Clear session data on GET requests only
+    // Clear session data on GET requests only (but preserve time period selections)
     if (request.method === 'get') {
       request.yar.set('searchQuery', null)
       request.yar.set('fullSearchQuery', null)
@@ -22,16 +22,75 @@ export const yearController = {
       request.yar.set('nooflocation', '')
       request.yar.set('yearselected', '2024')
       request.yar.set('selectedYear', '2025')
+      // Don't clear selectedTimePeriod - keep it for form pre-population
     }
 
     // Handle GET request
     if (request.method === 'get') {
+      // Get existing time period from session for form pre-population
+      const existingTimePeriod = request.yar.get('selectedTimePeriod') || ''
+
+      // Parse existing time period to determine form values
+      const formData = {}
+      if (existingTimePeriod) {
+        const currentYear = new Date().getFullYear()
+        const today = new Date()
+        const formattedToday = new Intl.DateTimeFormat('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(today)
+
+        if (existingTimePeriod === `1 January to ${formattedToday}`) {
+          formData.time = 'ytd'
+        } else if (existingTimePeriod.includes(' to ')) {
+          const parts = existingTimePeriod.split(' to ')
+          if (parts.length === 2) {
+            const startPart = parts[0].trim()
+            const endPart = parts[1].trim()
+
+            // Check if it's a single year
+            if (
+              startPart.startsWith('1 January') &&
+              endPart.includes('31 December')
+            ) {
+              const yearMatch = endPart.match(/31 December (\d{4})/)
+              if (yearMatch) {
+                formData.time = 'any'
+                formData['any-year-input'] = yearMatch[1]
+              }
+            }
+            // Check if it's a year range
+            else if (
+              startPart.match(/1 January (\d{4})/) &&
+              (endPart.includes('31 December') || endPart.includes(currentYear))
+            ) {
+              const startYearMatch = startPart.match(/1 January (\d{4})/)
+              let endYear
+              if (endPart.includes('31 December')) {
+                const endYearMatch = endPart.match(/31 December (\d{4})/)
+                endYear = endYearMatch ? endYearMatch[1] : null
+              } else {
+                endYear = currentYear.toString()
+              }
+
+              if (startYearMatch && endYear) {
+                formData.time = 'range'
+                formData['range-start-year'] = startYearMatch[1]
+                formData['range-end-year'] = endYear
+              }
+            }
+          }
+        }
+      }
+
       return h.view('year_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: backUrl
+        hrefq: backUrl,
+        formData
       })
     }
 

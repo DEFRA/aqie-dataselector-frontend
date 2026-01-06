@@ -11,16 +11,13 @@ export const locationaurnController = {
   handler: async (request, h) => {
     const backUrl = '/customdataset'
 
-    // Clear session data on GET requests only
+    // DON'T clear session data - preserve previous selections for "change" functionality
+    // Only clear specific search-related temporary data
     if (request.method === 'get') {
       request.yar.set('searchQuery', null)
       request.yar.set('fullSearchQuery', null)
-      request.yar.set('searchLocation', '')
       request.yar.set('osnameapiresult', '')
-      request.yar.set('selectedLocation', '')
-      request.yar.set('nooflocation', '')
-      request.yar.set('yearselected', '2024')
-      request.yar.set('selectedYear', '2025')
+      // Keep selectedLocation, selectedLocations, selectedCountries, etc. for pre-population
     }
 
     async function Invokelocalauthority() {
@@ -55,6 +52,47 @@ export const locationaurnController = {
 
     // Handle GET request
     if (request.method === 'get') {
+      // Prepare form data from session for pre-population
+      const formData = {}
+
+      // Check session data to pre-populate the form
+      const selectedLocation = request.yar.get('Location')
+      const selectedCountries = request.yar.get('selectedCountries')
+      const selectedlocations = request.yar.get('selectedlocation') // This could be countries or local authorities
+      const selectedLocalAuthorities = request.yar.get('selectedLocations')
+
+      // Determine which radio option should be selected and what data to pre-populate
+      if (selectedLocation === 'Country' && selectedCountries) {
+        formData.location = 'countries'
+        formData.country = selectedCountries
+      } else if (
+        selectedLocation === 'LocalAuthority' &&
+        selectedLocalAuthorities
+      ) {
+        formData.location = 'la'
+        formData['selected-locations'] = selectedLocalAuthorities
+      } else if (selectedlocations && Array.isArray(selectedlocations)) {
+        // Fallback: try to determine from selectedlocation data
+        // If it looks like countries (common country names), use countries
+        const countryNames = [
+          'england',
+          'scotland',
+          'wales',
+          'northern ireland'
+        ]
+        const isCountries = selectedlocations.some((loc) =>
+          countryNames.includes(loc.toLowerCase())
+        )
+
+        if (isCountries) {
+          formData.location = 'countries'
+          formData.country = selectedlocations
+        } else {
+          formData.location = 'la'
+          formData['selected-locations'] = selectedlocations
+        }
+      }
+
       return h.view('location_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
@@ -62,7 +100,8 @@ export const locationaurnController = {
         displayBacklink: true,
         hrefq: backUrl,
         laResult,
-        localAuthorityNames
+        localAuthorityNames,
+        formData
       })
     }
 

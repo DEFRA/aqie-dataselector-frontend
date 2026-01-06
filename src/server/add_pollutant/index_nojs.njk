@@ -1,0 +1,80 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+    <form action='/addpollutants' method="post">
+      
+      <!-- Hidden input to set default mode to group since this form only has group options -->
+      <input type="hidden" name="pollutant-mode" value="group">
+      
+      <!-- Server-side validation errors -->
+      {% if errors.list %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">There is a problem</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors.list %}
+                <li>
+                  <a href="{{ error.href }}">{{ error.text }}</a>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l">Add pollutant(s)</h1>
+    
+      <div class="govuk-form-group {% if errors.list and errors.list | length > 0 %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="pollutant-group-hint">
+          <div id="pollutant-group-hint" class="govuk-hint">Select one option</div>
+
+          <div class="govuk-radios govuk-!-margin-top-3" data-module="govuk-radios">
+            <!-- Core / DAQI -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" 
+                     id="pg-core" 
+                     name="pollutant-group" 
+                     type="radio" 
+                     value="core" 
+                     {% if selectedGroup == "core" %}checked{% endif %}
+                     aria-describedby="pg-core-hint">
+              <label class="govuk-label govuk-radios__label" for="pg-core">Daily Air Quality Index (DAQI) pollutants</label>
+              <div id="pg-core-hint" class="govuk-hint govuk-radios__hint">
+                fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide, ozone, sulphur dioxide
+              </div>
+            </div>
+
+            <!-- Compliance -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" 
+                     id="pg-compliance" 
+                     name="pollutant-group" 
+                     type="radio" 
+                     value="compliance" 
+                     {% if selectedGroup == "compliance" %}checked{% endif %}
+                     aria-describedby="pg-compliance-hint">
+              <label class="govuk-label govuk-radios__label" for="pg-compliance">Pollutants in the Air Quality Standards Regulations 2010</label>
+              <div id="pg-compliance-hint" class="govuk-hint govuk-radios__hint">
+                fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide, ozone, sulphur dioxide, nitric oxide, nitrogen oxides as nitrogen dioxide, carbon monoxide
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      {{ govukButton({
+        text: "Continue",
+        classes: "govuk-!-margin-top-3"
+      }) }}
+    </form>
+  </div>
+</div>
+
+{% endblock %}

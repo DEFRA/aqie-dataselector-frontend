@@ -16,6 +16,7 @@ export const hubController = {
     request.yar.set('nooflocation', '')
     request.yar.set('yearselected', '2024')
     request.yar.set('selectedYear', '2025')
+
     return h.view('hubpage/index', {
       pageTitle: englishNew.hub.pageTitle,
       texts: englishNew.hub.texts

@@ -19,6 +19,11 @@ export const airpollutant = {
           ...airpollutantController
         },
         {
+          method: 'GET',
+          path: '/airpollutant/nojs',
+          ...airpollutantController
+        },
+        {
           method: 'POST',
           path: '/addpollutants',
           ...airpollutantController

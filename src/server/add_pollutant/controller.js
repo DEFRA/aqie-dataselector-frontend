@@ -182,7 +182,18 @@ export const airpollutantController = {
       // If there are validation errors, return to form with errors
       if (errors.length > 0) {
         // console.log('Validation errors found:', errors)
-        return h.view('add_pollutant/index', {
+
+        // Check for no-JS indicators
+        const isNoJS =
+          request.query?.nojs === 'true' ||
+          request.path?.includes('nojs') ||
+          request.headers['user-agent']?.toLowerCase().includes('noscript')
+
+        const templatePath = isNoJS
+          ? 'add_pollutant/index_nojs'
+          : 'add_pollutant/index'
+
+        return h.view(templatePath, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
@@ -228,12 +239,31 @@ export const airpollutantController = {
     request.yar.set('yearselected', '2024')
     request.yar.set('selectedYear', '2025')
 
-    return h.view('add_pollutant/index', {
+    // Get existing pollutants and mode from session to pre-populate form
+    const existingPollutants = request.yar.get('selectedPollutants') || []
+    const existingMode = request.yar.get('selectedPollutantMode') || ''
+    const existingGroup = request.yar.get('selectedPollutantGroup') || ''
+
+    // Check for no-JS indicators
+    const isNoJS =
+      request.query?.nojs === 'true' ||
+      request.path?.includes('nojs') ||
+      request.headers['user-agent']?.toLowerCase().includes('noscript')
+
+    const templatePath = isNoJS
+      ? 'add_pollutant/index_nojs'
+      : 'add_pollutant/index'
+
+    return h.view(templatePath, {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
       displayBacklink: true,
-      hrefq: backUrl
+      hrefq: backUrl,
+      // Pre-populate form with existing selections
+      selectedPollutants: existingPollutants,
+      selectedMode: existingMode,
+      selectedGroup: existingGroup
     })
   }
 }
