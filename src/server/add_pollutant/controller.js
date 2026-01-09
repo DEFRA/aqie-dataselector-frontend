@@ -236,8 +236,8 @@ export const airpollutantController = {
     request.yar.set('osnameapiresult', '')
     request.yar.set('selectedLocation', '')
     request.yar.set('nooflocation', '')
-    request.yar.set('yearselected', '2024')
-    request.yar.set('selectedYear', '2025')
+    request.yar.set('yearselected', new Date().getFullYear().toString())
+    request.yar.set('selectedYear', new Date().getFullYear().toString())
 
     // Get existing pollutants and mode from session to pre-populate form
     const existingPollutants = request.yar.get('selectedPollutants') || []

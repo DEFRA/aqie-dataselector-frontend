@@ -1,6 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
-// import Wreck from '@hapi/wreck'
+import Wreck from '@hapi/wreck'
 import axios from 'axios'
 const getLocationDetailsController = {
   handler: async (request, h) => {
@@ -67,31 +67,31 @@ async function fetchMonitoringStations(location, miles) {
     userLocation: location,
     usermiles: miles
   }
-  try {
-    const response = await axios.post(
-      config.get('OS_NAMES_API_URL_1'),
-      locationvalues
-    )
-
-    return response.data
-  } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
-  }
-  // dev
   // try {
-  //             const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
-  //             const { res, payload } = await Wreck.post(url, {
-  //               payload: JSON.stringify(locationvalues),
-  //                headers: {
-  //           'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
-  //         },
-  //               json: true
-  //             })
-  //     console.log("PAYLOAD",payload)
-  //             return payload
-  //           } catch (error) {
-  //             return error // Rethrow the error so it can be handled appropriately
-  //           }
+  //   const response = await axios.post(
+  //     config.get('OS_NAMES_API_URL_1'),
+  //     locationvalues
+  //   )
+
+  //   return response.data
+  // } catch (error) {
+  //   return error // Rethrow the error so it can be handled appropriately
+  // }
+  // dev
+  try {
+              const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
+              const { res, payload } = await Wreck.post(url, {
+                payload: JSON.stringify(locationvalues),
+                 headers: {
+            'x-api-key': 'E5u7Pq9NBl7WOMK3xedmjgu5aG7okT1O'
+          },
+                json: true
+              })
+      console.log("PAYLOAD",payload)
+              return payload
+            } catch (error) {
+              return error // Rethrow the error so it can be handled appropriately
+            }
 }
 
 function buildPollutantMap(stations) {

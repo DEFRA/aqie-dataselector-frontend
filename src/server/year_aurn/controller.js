@@ -10,7 +10,7 @@ export const yearController = {
   handler(request, h) {
     const backUrl = '/customdataset'
     const MIN_YEAR = 1973
-    const MAX_YEAR = 2025
+    const MAX_YEAR = new Date().getFullYear()
 
     // Clear session data on GET requests only (but preserve time period selections)
     if (request.method === 'get') {
@@ -20,8 +20,8 @@ export const yearController = {
       request.yar.set('osnameapiresult', '')
       request.yar.set('selectedLocation', '')
       request.yar.set('nooflocation', '')
-      request.yar.set('yearselected', '2024')
-      request.yar.set('selectedYear', '2025')
+      request.yar.set('yearselected', new Date().getFullYear().toString())
+      request.yar.set('selectedYear', new Date().getFullYear().toString())
       // Don't clear selectedTimePeriod - keep it for form pre-population
     }
 

@@ -63,7 +63,7 @@
 
  {% if yearrange == 'Single' %}
 
-    <a id="download-link" href="#"  onclick = "getAPIdownload('{{ finalyear }}')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}"  onclick="getAPIdownload('{{ finalyear }}'); return false;" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -139,25 +139,26 @@
 </div>
 <script>
 async function getAPIdownload(year) {  
-        console.log("comes into getAPIdownload")
+        console.log("comes into getAPIdownload with year:", year)
         
-const scrollY = window.scrollY;
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY);
 
-window.scrollTo(0, scrollY);
-
-      fetch(`/download_aurn/${year}`)
-        .then(response => response.text())
-        .then ( data => {           
-           console.log("DATA FROM DOWNLOAD",data)
-            window.location.href =data
+        try {
+            const response = await fetch(`/download_aurn/${year}`);
+            const data = await response.text();
+            console.log("DATA FROM DOWNLOAD", data);
+            window.location.href = data;
             window.scrollTo(0, scrollY); 
-        })
-        .catch(error => console.error('Error fetching partial content:', error));      
+        } catch (error) {
+            console.error('Error fetching download:', error);
+            // Fallback to no-JS route if AJAX fails
+            window.location.href = `/download_aurn_nojs/${year}`;
         }
-        document.addEventListener('DOMContentLoaded', () => {
-    //document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-    
-   
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM loaded, JavaScript download functionality ready");
 });  
 
 </script>

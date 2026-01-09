@@ -82,6 +82,7 @@ const downloadAurnController = {
   handler: async (request, h) => {
     try {
       const selectedyear = request.params.year
+      console.log("Comes into download_Aurn",selectedyear    )
       // const stndetails = request.yar.get('stationdetails')
       // Declare apiparams only once here
       const apiparams = {
