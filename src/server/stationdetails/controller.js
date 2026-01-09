@@ -114,7 +114,7 @@ const stationDetailsController = {
       (_, i) => 2018 + i
     )
     const today = new Date()
-    const currentDate = `${today.getDate()} ${today.toLocaleString('en-GB', { month: 'long' })}`
+    const currentDateString = `${today.getDate()} ${today.toLocaleString('en-GB', { month: 'long' })}`
     const lat = stationDetails.location.coordinates[0]
     const lon = stationDetails.location.coordinates[1]
     const mapLocation = `https://www.google.co.uk/maps?q=${lat},${lon}`
@@ -153,8 +153,8 @@ const stationDetailsController = {
       displayBacklink: true,
       fullSearchQuery,
       apiparams: apiParams,
-      years,
-      currentdate: currentDate,
+      years: years,
+      currentdate: currentDateString,
       pollutantKeys: stationDetails.pollutants,
       maptoggletips: getToggletip(stationDetails.siteType),
       selectedYear: request.yar.get('selectedYear'),
