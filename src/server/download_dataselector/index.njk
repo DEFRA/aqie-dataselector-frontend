@@ -136,5 +136,16 @@ window.scrollTo(0, scrollY);
    window.location.href = url;
   </script>
    {% endif  %}
+{% if finalyear == currentYear %}
+<script>
+  var year = {{ currentYear }};
+  console.log("Current Year:", year);
+
+  // You can now use the 'year' variable in your JavaScript code
+  if (year == {{ currentYear }}) {
+    // Your code here
+  }
+</script>
+{% endif %}
 {% endblock %}
 

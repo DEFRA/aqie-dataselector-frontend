@@ -37,8 +37,14 @@ describe('yearController', () => {
     expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2024')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2025')
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'yearselected',
+      new Date().getFullYear().toString()
+    )
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedYear',
+      new Date().getFullYear().toString()
+    )
 
     expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
       pageTitle: englishNew.custom.pageTitle,

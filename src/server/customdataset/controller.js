@@ -17,8 +17,8 @@ export const customdatasetController = {
     request.yar.set('osnameapiresult', '')
     request.yar.set('selectedLocation', '')
     request.yar.set('nooflocation', '')
-    request.yar.set('yearselected', '2024')
-    request.yar.set('selectedYear', '2025')
+    request.yar.set('yearselected', new Date().getFullYear().toString())
+    request.yar.set('selectedYear', new Date().getFullYear().toString())
     if (request.params.pollutants !== undefined) {
       request.yar.set('selectedpollutant', request.params.pollutants)
     }

@@ -107,7 +107,12 @@ const stationDetailsController = {
     request.yar.set('latesttime', formattedDate)
     const updatedTime = parseDateFormat(formattedDate)
 
-    const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    // Generate years array dynamically from 2018 to current year
+    const currentYear = new Date().getFullYear()
+    const years = Array.from(
+      { length: currentYear - 2018 + 1 },
+      (_, i) => 2018 + i
+    )
     const today = new Date()
     const currentDate = `${today.getDate()} ${today.toLocaleString('en-GB', { month: 'long' })}`
     const lat = stationDetails.location.coordinates[0]

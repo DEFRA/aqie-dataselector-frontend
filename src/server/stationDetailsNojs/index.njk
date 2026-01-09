@@ -91,7 +91,8 @@
     
      
      
-{% if selectedYear == 2025 %}
+{% set currentYear = moment().format('YYYY') | int %}
+{% if selectedYear == currentYear %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
@@ -587,7 +588,8 @@
     const currentDate = new Date();
     const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
   
-    if( year === '2025' || year === 2025)
+    const currentYear = new Date().getFullYear();
+    if( year === currentYear.toString() || year === currentYear)
     {
  document.getElementById('duration_current').textContent = '1 January to ' + formattedDate;
  }else
