@@ -25,20 +25,157 @@ export const locationaurnController = {
     async function Invokelocalauthority() {
       try {
         logger.info('Enters the InvokeLocalauthority')
+
+        // Log configuration values (mask sensitive data)
+        const apiKey = config.get('laqmAPIkey')
+        const partnerId = config.get('laqmAPIPartnerId')
+
+        logger.info('API Key exists:', !!apiKey)
+        logger.info('API Key length:', apiKey ? apiKey.length : 0)
+        logger.info('Partner ID:', partnerId)
+
+        if (!apiKey || !partnerId) {
+          throw new Error(
+            `Missing configuration: APIKey=${!!apiKey}, PartnerId=${!!partnerId}`
+          )
+        }
+
         const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
-        const { payload } = await Wreck.get(url, {
+        logger.info('Making request to:', url)
+
+        // Add timeout and more detailed options
+        const options = {
           headers: {
-            'X-API-Key': config.get('laqmAPIkey'),
-            'X-API-PartnerId': config.get('laqmAPIPartnerId')
-          }
+            'X-API-Key': apiKey,
+            'X-API-PartnerId': partnerId,
+            'User-Agent': 'AQIE-DataSelector/1.0',
+            Accept: 'application/json'
+          },
+          timeout: 30000, // 30 second timeout
+          json: false // Get raw payload to debug
+        }
+
+        logger.info('Request headers:', {
+          'X-API-Key': apiKey ? `${apiKey.substring(0, 4)}...` : 'missing',
+          'X-API-PartnerId': partnerId,
+          'User-Agent': options.headers['User-Agent'],
+          Accept: options.headers.Accept
         })
-        logger.info('payload', payload)
+
+        const startTime = Date.now()
+        const { res, payload } = await Wreck.get(url, options)
+        const duration = Date.now() - startTime
+
+        logger.info('Request completed in:', `${duration}ms`)
+        logger.info('Response status:', res.statusCode)
+        logger.info('Response headers:', res.headers)
+        logger.info('Raw payload length:', payload ? payload.length : 0)
+        logger.info('Raw payload type:', typeof payload)
+
+        // Check HTTP status
+        if (res.statusCode !== 200) {
+          const errorBody = payload
+            ? payload.toString('utf8')
+            : 'No response body'
+          logger.error('HTTP Error:', {
+            status: res.statusCode,
+            statusMessage: res.statusMessage,
+            body: errorBody,
+            headers: res.headers
+          })
+          throw new Error(
+            `HTTP ${res.statusCode}: ${res.statusMessage}. Body: ${errorBody}`
+          )
+        }
+
+        // Check if payload exists
+        if (!payload) {
+          logger.error('No payload received from API')
+          throw new Error('Empty response from API')
+        }
+
+        // Parse JSON
         const jsonString = payload.toString('utf8')
-        const parsedData = JSON.parse(jsonString)
-        logger.info('parsedData', parsedData)
+        logger.info('JSON string length:', jsonString.length)
+        logger.info(
+          'JSON string preview:',
+          jsonString.substring(0, 200) + '...'
+        )
+
+        let parsedData
+        try {
+          parsedData = JSON.parse(jsonString)
+        } catch (parseError) {
+          logger.error('JSON Parse Error:', {
+            error: parseError.message,
+            jsonPreview: jsonString.substring(0, 500)
+          })
+          throw new Error(`Failed to parse JSON: ${parseError.message}`)
+        }
+
+        logger.info('Parsed data structure:', {
+          type: typeof parsedData,
+          keys: parsedData ? Object.keys(parsedData) : [],
+          dataExists: !!parsedData?.data,
+          dataLength: Array.isArray(parsedData?.data)
+            ? parsedData.data.length
+            : 'not array'
+        })
+
+        // Validate response structure
+        if (!parsedData || typeof parsedData !== 'object') {
+          logger.error('Invalid response structure:', typeof parsedData)
+          throw new Error('Invalid response structure from API')
+        }
+
+        if (!parsedData.data || !Array.isArray(parsedData.data)) {
+          logger.warn('Unexpected data structure:', {
+            hasData: !!parsedData.data,
+            dataType: typeof parsedData.data,
+            isArray: Array.isArray(parsedData.data)
+          })
+          // Don't throw error here, just log and return empty data
+          return { data: [] }
+        }
+
+        logger.info(
+          'Successfully fetched local authorities:',
+          parsedData.data.length
+        )
         return parsedData
       } catch (error) {
-        logger.error('Error fetching local authorities:', error)
+        // Enhanced error logging
+        logger.error('Error in Invokelocalauthority:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack,
+          code: error.code,
+          errno: error.errno,
+          syscall: error.syscall,
+          hostname: error.hostname,
+          // For Wreck/HTTP errors
+          statusCode: error.statusCode,
+          data: error.data,
+          // For network errors
+          address: error.address,
+          port: error.port,
+          // Additional context
+          timestamp: new Date().toISOString(),
+          environment: process.env.NODE_ENV
+        })
+
+        // Check for specific error types
+        if (error.code === 'ENOTFOUND') {
+          logger.error('DNS lookup failed - check network connectivity and URL')
+        } else if (error.code === 'ECONNREFUSED') {
+          logger.error('Connection refused - service might be down')
+        } else if (error.code === 'ETIMEDOUT') {
+          logger.error('Request timed out - service might be slow or down')
+        } else if (error.statusCode) {
+          logger.error('HTTP error:', error.statusCode)
+        }
+
+        // Return empty data instead of throwing to prevent controller crash
         return { data: [] }
       }
     }
