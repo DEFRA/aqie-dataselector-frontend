@@ -42,7 +42,7 @@ async function Invokestationcount(stationcountparameters) {
 }
 export const emailrequestController = {
   handler: async (request, h) => {
-    const backUrl = '/customdataset'
+    const backUrl = '/download_dataselector'
     // console.log('comes here into email')
     // const { home } = englishNew.custom
     if (request.path?.includes('/confirm')) {

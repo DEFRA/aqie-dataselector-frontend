@@ -1,0 +1,157 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% block content %}
+ 
+
+
+
+
+
+{# <a href="../hub" class="govuk-back-link">Back</a> #}
+
+
+
+
+    <div class="govuk-grid-row">
+  <div class="govuk-grid-column-three-quarters-from-desktop">
+
+    <h2 class="govuk-heading-l">Download your data</h2>
+    <details class="govuk-details govuk-!-margin-top-0">
+  <summary class="govuk-details__summary">
+    <span class="govuk-details__summary-text">
+      File format and metadata
+    </span>
+  </summary>
+  <div class="govuk-details__text">
+   <h3 class="govuk-heading-s">File format</h3>
+                  <p class="govuk-body">This data will download in a long format (CSV).</p>
+              <p class="govuk-body">Data in a long format is stacked vertically.</p>
+           <!--    <p class="govuk-body">You can use wide format when you want to interpret and analyse data.</p> -->
+
+                 <h3 class="govuk-heading-s">Metadata</h3>
+                 <p class="govuk-body">These files could contain the following metadata:</p>
+                 <ul class="govuk-body govuk-list--bullet">
+                  <li>name of monitoring station</li>
+                  <li>site type</li>
+                  <li>site ID</li>
+                  <li>map coordinates</li>
+                  <li>local authority</li>
+                  <li>region</li>
+                  <li>instrument type</li>
+                  <li>inlet height</li>
+                 </ul>
+  </div>
+</details>
+                
+
+
+<div class="govuk-grid-row govuk-!-margin-top-3">
+  <div class="govuk-grid-column-full">
+    
+  <div class="govuk-!-margin-top-3">
+    <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
+    <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
+<h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
+<p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
+   
+   <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen" >
+      {{stationcount}} stations available
+    </div>
+    </div>
+
+ {% if yearrange == 'Single' %}
+
+    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      
+                        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
+                
+                <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                    Download hourly data 
+          
+                        <span class="govuk-visually-hidden">
+                        (Visual only)
+                      </span>
+                    </a>
+                    {% endif %} 
+                   
+                    {% if yearrange == 'Multiple' %}
+            <table class="govuk-table">
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th scope="col" class="govuk-table__header">Year</th>
+      <th scope="col" class="govuk-table__header">Hourly data</th>
+    </tr>
+  </thead>
+  <tbody class="govuk-table__body">
+    <tr class="govuk-table__row">
+      <th scope="row" class="govuk-table__header">
+        Download all years
+      </th>
+         <td class="govuk-table__cell">
+        <a href="/emailrequest"  class="govuk-link">Request Data</a>
+      </td>
+    </tr>
+    
+    {% for year in finalyear %}
+    <tr class="govuk-table__row">
+      <th scope="row" class="govuk-table__header">
+        {{ year }}
+      </th>
+      <td class="govuk-table__cell">
+        <a href="/download_aurn_nojs/{{ year }}" class="govuk-link">Download hourly data</a>
+        {# //<a href="#" onclick = "getAPIdownload()"  class="govuk-link">Download hourly data</a> #}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+ {% endif %} 
+
+
+                    
+  </div>
+</div>
+ 
+  <div class="govuk-grid-column-full" id="download-content-container">
+ 
+   
+      
+    <div class="govuk-inset-text govuk-!-margin-top-0">
+  <h3 class="govuk-heading-s">Save your search</h3>
+<p class="govuk-body">Bookmark this URL to save your selections for next time.</p>
+
+<p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p>
+{# <p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p> #}
+
+</div>
+</div>
+      
+    </div>
+    
+  </div>
+</div>
+
+  {% if downloadresult %}
+  <script>
+  
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
+   window.location.href = url;
+  </script>
+  <noscript>
+  <meta http-equiv="refresh" content="0; url={{ downloadresult }}">
+  <!-- Or provide a manual link -->
+  {# <p>
+    <a href="{{ downloadresult }}"></a>
+  </p> #}
+</noscript>
+{% endif %}
+{% endblock %}
+

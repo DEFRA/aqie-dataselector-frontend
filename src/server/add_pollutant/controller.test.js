@@ -46,8 +46,14 @@ describe('airpollutantController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', new Date().getFullYear().toString())
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', new Date().getFullYear().toString())
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'yearselected',
+        new Date().getFullYear().toString()
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedYear',
+        new Date().getFullYear().toString()
+      )
 
       // Verify session data retrieval for pre-population
       expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutants')

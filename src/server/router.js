@@ -24,6 +24,7 @@ import { datasource } from '~/src/server/datasource/index.js'
 import { year } from '~/src/server/year_aurn/index.js'
 import { locationaurn } from '~/src/server/location_aurn/index.js'
 import { downloadDataselector } from '~/src/server/download_dataselector/index.js'
+import { downloadDataselectornojs } from '~/src/server/download_dataselector_nojs/index.js'
 import { downloadAurn } from '~/src/server/download_aurn/index.js'
 import { emailrequest } from '~/src/server/emailrequest/index.js'
 /**
@@ -85,6 +86,7 @@ export const router = {
         year,
         locationaurn,
         downloadDataselector,
+        downloadDataselectornojs,
         downloadAurn,
         emailrequest
       ])

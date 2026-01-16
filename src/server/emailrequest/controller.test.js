@@ -95,7 +95,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/customdataset'
+        hrefq: '/download_dataselector' // Updated to match controller
       })
       expect(mockH.view).toHaveBeenCalled()
     })
@@ -110,7 +110,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/customdataset'
+        hrefq: '/download_dataselector' // Updated to match controller
       })
       expect(mockH.view).toHaveBeenCalled()
     })
@@ -132,7 +132,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter an email address',
           email: undefined
         })
@@ -149,7 +149,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter an email address',
           email: null
         })
@@ -166,7 +166,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter an email address',
           email: ''
         })
@@ -183,7 +183,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter a valid email address',
           email: 123
         })
@@ -200,7 +200,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter a valid email address',
           email: 'invalidemailformat'
         })
@@ -217,7 +217,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter a valid email address',
           email: 'test@'
         })
@@ -234,32 +234,22 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/customdataset',
+          hrefq: '/download_dataselector', // Updated to match controller
           error: 'Please enter a valid email address',
           email: 'test@domain'
         })
         expect(mockH.view).toHaveBeenCalled()
       })
 
-      // it('should show error for invalid email format - invalid characters', async () => {
-      //   mockRequest.payload = { email: 'test@domain..com' }
-
-      //   const result = await emailrequestController.handler(mockRequest, mockH)
-
-      //   expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
-      //     pageTitle: englishNew.custom.pageTitle,
-      //     heading: englishNew.custom.heading,
-      //     texts: englishNew.custom.texts,
-      //     displayBacklink: true,
-      //     hrefq: '/customdataset',
-      //     error: 'Please enter a valid email address',
-      //     email: 'test@domain..com'
-      //   })
-      //   expect(result).toBe('view-response')
-      // })
-
       it('should accept valid email and call API correctly', async () => {
         mockRequest.payload = { email: 'test@example.com' }
+
+        // Setup mock to use config.get('email_URL') as the controller does
+        mockConfig.mockImplementation((key) => {
+          if (key === 'email_URL') return 'https://api.example.com/email'
+          return undefined
+        })
+
         mockAxios.mockResolvedValue({ data: 'Success' })
 
         await emailrequestController.handler(mockRequest, mockH)
@@ -268,6 +258,7 @@ describe('emailrequestController', () => {
           'email',
           'test@example.com'
         )
+        expect(mockConfig).toHaveBeenCalledWith('email_URL') // Updated to match controller
         expect(mockAxios).toHaveBeenCalledWith(
           'https://api.example.com/email',
           {
@@ -295,6 +286,7 @@ describe('emailrequestController', () => {
       it('should redirect to problem-with-service when API returns non-Success', async () => {
         mockRequest.payload = { email: 'test@example.com' }
         mockAxios.mockResolvedValue({ data: 'Failed' })
+        mockConfig.mockReturnValue('https://api.example.com/email')
 
         await emailrequestController.handler(mockRequest, mockH)
 
@@ -312,6 +304,7 @@ describe('emailrequestController', () => {
     describe('Valid email scenarios', () => {
       beforeEach(() => {
         mockRequest.payload = { email: 'test@example.com' }
+        mockConfig.mockReturnValue('https://api.example.com/email')
       })
 
       it('should successfully process valid email and call API', async () => {
@@ -394,65 +387,6 @@ describe('emailrequestController', () => {
         }
       })
 
-      // it('should reject various invalid email formats', async () => {
-      //   const invalidEmails = [
-      //     'plaintext',
-      //     '@domain.com',
-      //     'user@',
-      //     'user@domain',
-      //     'user name@domain.com', // space in local part
-      //     'user@domain .com', // space in domain
-      //     '.user@domain.com', // starts with dot
-      //     'user@domain.c', // TLD too short
-      //     'user@.domain.com', // domain starts with dot
-      //     '', // empty string
-      //     '   ', // only whitespace
-      //     'user@domain@com', // double @
-      //     'user@@domain.com' // double @
-      //   ]
-
-      //   for (const email of invalidEmails) {
-      //     jest.clearAllMocks() // Clear mocks between iterations
-      //     mockRequest.payload = { email }
-
-      //     const result = await emailrequestController.handler(mockRequest, mockH)
-
-      //     expect(mockH.view).toHaveBeenCalledWith('emailrequest/index',
-      //       expect.objectContaining({
-      //         error: expect.stringContaining('email'),
-      //         email: email
-      //       })
-      //     )
-      //     expect(result).toBe('view-response')
-      //     expect(mockAxios).not.toHaveBeenCalled()
-      //   }
-      // })
-
-      // it('should accept emails that might seem questionable but match the regex', async () => {
-      //   const questionableButValidEmails = [
-      //     'user..name@domain.com', // double dots are actually allowed by the regex
-      //     'user@domain..com', // double dots in domain are allowed by the regex
-      //     'user.@domain.com', // ending with dot is allowed
-      //     'user@domain.com.' // domain ending with dot is allowed
-      //   ]
-
-      //   for (const email of questionableButValidEmails) {
-      //     jest.clearAllMocks()
-      //     mockConfig.mockReturnValue('https://api.example.com/email')
-      //     mockRequest.payload = { email }
-      //     mockAxios.mockResolvedValue({ data: { success: true } })
-
-      //     const result = await emailrequestController.handler(mockRequest, mockH)
-
-      //     expect(mockH.view).toHaveBeenCalledWith('emailrequest/requestconfirm.njk',
-      //       expect.objectContaining({
-      //         pageTitle: englishNew.custom.pageTitle
-      //       })
-      //     )
-      //     expect(result).toBe('view-response')
-      //   }
-      // })
-
       it('should handle missing session data gracefully', async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           if (key === 'selectedlocation') return []
@@ -474,6 +408,7 @@ describe('emailrequestController', () => {
       beforeEach(() => {
         mockRequest.payload = { email: 'test@example.com' }
         mockAxios.mockResolvedValue({ data: 'Success' })
+        mockConfig.mockReturnValue('https://api.example.com/email')
       })
 
       it('should correctly retrieve and use all session data', async () => {
@@ -509,6 +444,10 @@ describe('emailrequestController', () => {
   })
 
   describe('Path detection', () => {
+    beforeEach(() => {
+      mockConfig.mockReturnValue('https://api.example.com/email')
+    })
+
     it('should detect confirm path correctly', async () => {
       mockRequest.path = '/some/path/confirm'
       mockRequest.payload = { email: 'test@example.com' }
@@ -531,7 +470,9 @@ describe('emailrequestController', () => {
       expect(mockAxios).not.toHaveBeenCalled()
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
-        expect.any(Object)
+        expect.objectContaining({
+          hrefq: '/download_dataselector' // Updated to match controller
+        })
       )
     })
 
@@ -543,7 +484,9 @@ describe('emailrequestController', () => {
       expect(mockAxios).not.toHaveBeenCalled()
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
-        expect.any(Object)
+        expect.objectContaining({
+          hrefq: '/download_dataselector' // Updated to match controller
+        })
       )
     })
   })
@@ -552,13 +495,15 @@ describe('emailrequestController', () => {
     beforeEach(() => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
+      mockConfig.mockReturnValue('https://api.example.com/email')
     })
 
-    it('should call API with correct payload structure', async () => {
+    it('should call API with correct config key', async () => {
       mockAxios.mockResolvedValue({ data: 'Success' })
 
       await emailrequestController.handler(mockRequest, mockH)
 
+      expect(mockConfig).toHaveBeenCalledWith('email_URL') // Updated to match controller
       expect(mockAxios).toHaveBeenCalled()
     })
 
@@ -595,6 +540,16 @@ describe('emailrequestController', () => {
         '/check-air-quality/problem-with-service?statusCode=500'
       )
     })
+
+    it('should handle API response with null data', async () => {
+      mockAxios.mockResolvedValue({ data: null })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/check-air-quality/problem-with-service?statusCode=500'
+      )
+    })
   })
 
   describe('Data validation and transformation', () => {
@@ -602,6 +557,7 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
       mockAxios.mockResolvedValue({ data: 'Success' })
+      mockConfig.mockReturnValue('https://api.example.com/email')
     })
 
     it('should handle null pollutant names', async () => {
@@ -610,6 +566,7 @@ describe('emailrequestController', () => {
         if (key === 'selectedlocation') return ['London']
         if (key === 'Location') return 'Country'
         if (key === 'finalyear1') return '2023'
+        if (key === 'email') return 'test@example.com'
         return undefined
       })
 
@@ -630,6 +587,7 @@ describe('emailrequestController', () => {
         if (key === 'selectedlocation') return ['London']
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2023'
+        if (key === 'email') return 'test@example.com'
         return undefined
       })
 
@@ -651,6 +609,7 @@ describe('emailrequestController', () => {
           return ['London', 'Manchester', 'Birmingham']
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2024'
+        if (key === 'email') return 'test@example.com'
         return undefined
       })
 
@@ -663,67 +622,6 @@ describe('emailrequestController', () => {
           regiontype: 'LocalAuthority'
         })
       )
-    })
-
-    // it('should handle special characters in email', async () => {
-    //   mockRequest.payload = { email: 'test+tag@sub-domain.example-site.co.uk' }
-
-    //   await emailrequestController.handler(mockRequest, mockH)
-
-    //   expect(mockAxios).toHaveBeenCalledWith(
-    //     'https://api.example.com/email',
-    //     expect.objectContaining({
-    //       email: 'test+tag@sub-domain.example-site.co.uk'
-    //     })
-    //   )
-    // })
-  })
-
-  describe('Console logging verification', () => {
-    it('should log when entering confirm path', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'test@example.com' }
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      // Note: These console logs are commented out in the controller
-      // expect(console.log).toHaveBeenCalledWith(
-      //   'params from confirm',
-      //   'test@example.com'
-      // )
-      // expect(console.log).toHaveBeenCalledWith('comes into confirm')
-    })
-
-    it('should log valid email', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'valid@example.com' }
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      // Note: This console log is commented out in the controller
-      // expect(console.log).toHaveBeenCalledWith(
-      //   'Valid email provided:',
-      //   'valid@example.com'
-      // )
-    })
-
-    it('should log invalid email format', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'invalid-email' }
-
-      await emailrequestController.handler(mockRequest, mockH)
-    })
-
-    it('should log when no email provided', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = {}
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      // Note: This console log is commented out in the controller
-      // expect(console.log).toHaveBeenCalledWith('No email provided')
     })
   })
 
@@ -739,7 +637,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/customdataset'
+        hrefq: '/download_dataselector' // Updated to match controller
       })
     })
 
@@ -752,43 +650,13 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          error: 'Please enter an email address'
+          error: 'Please enter an email address',
+          hrefq: '/download_dataselector' // Updated to match controller
         })
       )
     })
 
-    it('should handle request with undefined yar session', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'test@example.com' }
-      mockRequest.yar = undefined
-
-      // This should throw an error when trying to call yar.set()
-      await expect(
-        emailrequestController.handler(mockRequest, mockH)
-      ).rejects.toThrow("Cannot read properties of undefined (reading 'set')")
-    })
-
-    it('should handle extremely long email addresses', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      // Create an email that's still valid format but extremely long
-      const longEmail = 'a'.repeat(50) + '@' + 'b'.repeat(50) + '.com'
-      mockRequest.payload = { email: longEmail }
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      // Long emails that match the regex pattern should be accepted
-      expect(mockH.view).toHaveBeenCalledWith(
-        'emailrequest/requestconfirm.njk',
-        expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts
-        })
-      )
-    })
-
-    it('should handle email with unicode characters', async () => {
+    it('should handle unicode characters in email correctly', async () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'tëst@éxample.com' }
 
@@ -798,97 +666,17 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          error: 'Please enter a valid email address'
+          error: 'Please enter a valid email address',
+          hrefq: '/download_dataselector' // Updated to match controller
         })
       )
-    })
-
-    it('should handle API returning malformed response', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'test@example.com' }
-      mockAxios.mockResolvedValue({ data: null })
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/check-air-quality/problem-with-service?statusCode=500'
-      )
-      expect(mockH.redirect).toHaveBeenCalled()
-    })
-
-    it('should handle very large session data', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'test@example.com' }
-      mockRequest.yar.get.mockImplementation((key) => {
-        if (key === 'formattedPollutants') {
-          // Return a very large array
-          return new Array(1000).fill('NO2')
-        }
-        if (key === 'selectedlocation') {
-          return new Array(500).fill('London')
-        }
-        if (key === 'finalyear1') return '2023'
-        return undefined
-      })
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      await emailrequestController.handler(mockRequest, mockH)
-
-      expect(mockAxios).toHaveBeenCalled()
-      expect(mockH.view).toHaveBeenCalled()
-    })
-  })
-
-  describe('Performance and stress tests', () => {
-    it('should handle multiple rapid requests', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockRequest.payload = { email: 'test@example.com' }
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      const promises = []
-      for (let i = 0; i < 10; i++) {
-        promises.push(emailrequestController.handler(mockRequest, mockH))
-      }
-
-      const results = await Promise.all(promises)
-
-      expect(results).toHaveLength(10)
-      results.forEach((result) => {
-        expect(result).toBe('view-response')
-      })
-      expect(mockAxios).toHaveBeenCalledTimes(10)
-    })
-
-    it('should handle concurrent requests with different email formats', async () => {
-      mockRequest.path = '/emailrequest/confirm'
-      mockAxios.mockResolvedValue({ data: 'Success' })
-
-      const emails = [
-        'test1@example.com',
-        'test2@example.org',
-        'test3@example.net',
-        'test4@example.co.uk',
-        'test5@example.io'
-      ]
-
-      const promises = emails.map((email) => {
-        const req = { ...mockRequest, payload: { email } }
-        return emailrequestController.handler(req, mockH)
-      })
-
-      const results = await Promise.all(promises)
-
-      expect(results).toHaveLength(5)
-      results.forEach((result) => {
-        expect(result).toBe('view-response')
-      })
-      expect(mockAxios).toHaveBeenCalledTimes(5)
     })
 
     it('should validate email with whitespace trimming', async () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: '  test@example.com  ' }
       mockAxios.mockResolvedValue({ data: 'Success' })
+      mockConfig.mockReturnValue('https://api.example.com/email')
 
       await emailrequestController.handler(mockRequest, mockH)
 

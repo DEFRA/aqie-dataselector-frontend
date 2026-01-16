@@ -221,9 +221,10 @@ export const customdatasetController = {
           }
         }
 
-        //  console.log('stationcountparameters', stationcountparameters)
+        // console.log('stationcountparameters', stationcountparameters)
         request.yar.set('finalyear1', finalyear)
         const stationcount = await Invokestationcount(stationcountparameters)
+        //  console.log("stationcount",stationcount)
         request.yar.set('Region', request.yar.get('selectedlocation').join(','))
         request.yar.set('nooflocation', stationcount)
       }
@@ -234,12 +235,10 @@ export const customdatasetController = {
             config.get('Download_aurn_URL'),
             stationcountparameters
           )
-
           return response.data
         } catch (error) {
           return error // Rethrow the error so it can be handled appropriately
         }
-
         // dev
         // try {
         //   const url =
@@ -247,12 +246,11 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'E5u7Pq9NBl7WOMK3xedmjgu5aG7okT1O',
+        //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true
         //   })
-
         //   return payload
         // } catch (error) {
         //   //console.error('Error fetching station count:', error)

@@ -7,14 +7,12 @@
 
 {# <a href="/hubpage" class="govuk-back-link">Back</a> #}
 
-
-
-
     <div class="govuk-grid-row">
       <div class="govuk-grid-column-three-quarters-from-desktop">
 
       
-<form action='/download_dataselector' method="post">
+<!-- DEFAULT to no-JS version, JavaScript will change it -->
+<form action='/download_dataselectornojs' method="post" id="customdataset-form">
         <h1 class="govuk-heading-l">{{heading}}</h1>
 
         <p class="govuk-body govuk-!-margin-bottom-6"><a href="/customdataset/clear" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
@@ -169,9 +167,6 @@
   
 </dl>
 
-
-
-
           </div>
       
         </div>
@@ -182,58 +177,89 @@
         </form>
 </div>
 </div>
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+  // =============== PROGRESSIVE ENHANCEMENT: Change form action for JS users ===============
+  const form = document.getElementById('customdataset-form');
+  if (form) {
+    // Change to JS-enabled route when JavaScript is available
+    form.action = '/download_dataselector';
+    console.log('JavaScript enabled: Form action set to /download_dataselector');
+  }
+
   // =============== 1) Read selections ===============
   // Pollutants
   const pollutantsRaw = sessionStorage.getItem('selectedPollutants');
   let pollutants = [];
-  try { pollutants = pollutantsRaw ? JSON.parse(pollutantsRaw) : []; } catch { pollutants = []; }
-
-  if (!Array.isArray(pollutants) || pollutants.length === 0) {
-    container.innerHTML = '';
-    return;
+  try { 
+    pollutants = pollutantsRaw ? JSON.parse(pollutantsRaw) : []; 
+  } catch (error) { 
+    console.error('Error parsing pollutants from sessionStorage:', error);
+    pollutants = []; 
   }
-document.addEventListener('DOMContentLoaded', () => {
-  const pollutants = JSON.parse(sessionStorage.getItem('selectedPollutants') || '[]');
+
   const pollutantListEl = document.getElementById('pollutant-summary-list');
   const dataSourceEl = document.getElementById('data-source-list');
 
-  if (pollutants.length && pollutantListEl && dataSourceEl) {
-    pollutantListEl.innerHTML = pollutants.map(p => `<div>${p}</div>`).join('');
+  if (Array.isArray(pollutants) && pollutants.length && pollutantListEl && dataSourceEl) {
+    // Update pollutants display
+    pollutantListEl.innerHTML = '<ul class="govuk-list">' + 
+      pollutants.map(p => `<li>${p}</li>`).join('') + 
+      '</ul>';
 
-    // NEW — change "Add" to "Change" if something is selected
+    // Change "Add" to "Change" if something is selected
     const pollutantActionCell = document.querySelector(
-      '#pollutant-summary-list + .govuk-summary-list__actions a.govuk-link'
+      '.govuk-summary-list__row:first-child .govuk-summary-list__actions a.govuk-link'
     );
     if (pollutantActionCell) {
-      pollutantActionCell.innerHTML = 'Change<span class="govuk-visually-hidden"> pollutant</span>';
+      pollutantActionCell.innerHTML = '{{texts.n}}<span class="govuk-visually-hidden">  {{texts.l}}</span>';
     }
 
-    const merged = [];
-    const seen = new Set();
-    pollutants.forEach(p => {
-      buildNetworksForPollutant(p).forEach(item => {
-        if (!seen.has(item)) { merged.push(item); seen.add(item); }
+    // Update data source if needed
+    if (typeof buildNetworksForPollutant === 'function' && typeof dsRowDivHtml === 'function') {
+      const merged = [];
+      const seen = new Set();
+      pollutants.forEach(p => {
+        buildNetworksForPollutant(p).forEach(item => {
+          if (!seen.has(item)) { merged.push(item); seen.add(item); }
+        });
       });
-    });
-
-    dataSourceEl.innerHTML = merged.map(dsRowDivHtml).join('');
-  } else if (dataSourceEl) {
-    dataSourceEl.textContent = 'Any';
-
-    // NEW — make sure link says "Add" if none selected
+      dataSourceEl.innerHTML = merged.map(dsRowDivHtml).join('');
+    }
+  } else if (pollutantListEl) {
+    // Make sure link says "Add" if none selected
     const pollutantActionCell = document.querySelector(
-      '#pollutant-summary-list + .govuk-summary-list__actions a.govuk-link'
+      '.govuk-summary-list__row:first-child .govuk-summary-list__actions a.govuk-link'
     );
     if (pollutantActionCell) {
-      pollutantActionCell.innerHTML = 'Add<span class="govuk-visually-hidden"> pollutant</span>';
+      pollutantActionCell.innerHTML = '{{texts.c}}<span class="govuk-visually-hidden">  {{texts.l}}</span>';
     }
   }
 });
 
- 
+// Helper functions (define these if they don't exist elsewhere)
+function buildNetworksForPollutant(pollutant) {
+  // Return array of networks/data sources for this pollutant
+  return ['AURN']; // placeholder - implement your logic
+}
+
+function dsRowDivHtml(dataSource) {
+  // Return HTML for data source row
+  return `<div><strong>${dataSource}</strong> - Network description</div>`; // placeholder
+}
 </script>
 
+<!-- Add noscript fallback to confirm no-JS behavior -->
+<noscript>
+  <style>
+    #customdataset-form::after {
+      content: " (No-JS mode)";
+      font-size: 0.875rem;
+      color: #626a6e;
+    }
+  </style>
+</noscript>
 
 {% endblock %}
 

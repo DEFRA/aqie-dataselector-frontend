@@ -1,7 +1,7 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { config } from '~/src/config/config.js'
- import Wreck from '@hapi/wreck'
+// import Wreck from '@hapi/wreck'
 // import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 
@@ -14,33 +14,34 @@ const multipleLocationsController = {
       const nameApiparams = {
         userLocation: searchv
       }
-      // try {
-      //   const response = await axios.post(
-      //     config.get('OS_NAMES_API_URL'),
-      //     nameApiparams
-      //   )
+      try {
+        const response = await axios.post(
+          config.get('OS_NAMES_API_URL'),
+          nameApiparams
+        )
 
-      //   // logger.info('repsonse of osnameAPI', response)
-      //   return response.data
+        // logger.info('repsonse of osnameAPI', response)
+        return response.data
+      } catch (error) {
+        return error // Rethrow the error so it can be handled appropriately
+      }
+
+      // dev
+      // try {
+      //   const url =
+      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
+      //   const { res, payload } = await Wreck.post(url, {
+      //     payload: JSON.stringify(nameApiparams),
+      //     headers: {
+      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
+      //     },
+      //     json: true
+      //   })
+      //   console.log('PAYLOAD', payload)
+      //   return payload
       // } catch (error) {
       //   return error // Rethrow the error so it can be handled appropriately
       // }
-
-      // dev
-            try {
-              const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
-              const { res, payload } = await Wreck.post(url, {
-                payload: JSON.stringify(nameApiparams),
-                 headers: {
-            'x-api-key': 'E5u7Pq9NBl7WOMK3xedmjgu5aG7okT1O'
-          },
-                json: true
-              })
-      console.log("PAYLOAD",payload)
-              return payload
-            } catch (error) {
-              return error // Rethrow the error so it can be handled appropriately
-            }
     }
 
     async function InvokeMonitstnAPI(sValue, lMiles) {
@@ -48,32 +49,33 @@ const multipleLocationsController = {
         userLocation: sValue,
         usermiles: lMiles
       }
-      // try {
-      //   const response = await axios.post(
-      //     config.get('OS_NAMES_API_URL_1'),
-      //     locationvalues
-      //   )
+      try {
+        const response = await axios.post(
+          config.get('OS_NAMES_API_URL_1'),
+          locationvalues
+        )
 
-      //   return response.data
+        return response.data
+      } catch (error) {
+        return error // Rethrow the error so it can be handled appropriately
+      }
+
+      // dev
+      // try {
+      //   const url =
+      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
+      //   const { res, payload } = await Wreck.post(url, {
+      //     payload: JSON.stringify(locationvalues),
+      //     headers: {
+      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
+      //     },
+      //     json: true
+      //   })
+      //   console.log('PAYLOAD', payload)
+      //   return payload
       // } catch (error) {
       //   return error // Rethrow the error so it can be handled appropriately
       // }
-
-      // dev
-      try {
-              const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
-              const { res, payload } = await Wreck.post(url, {
-                payload: JSON.stringify(locationvalues),
-                 headers: {
-            'x-api-key': 'E5u7Pq9NBl7WOMK3xedmjgu5aG7okT1O'
-          },
-                json: true
-              })
-      console.log("PAYLOAD",payload)
-              return payload
-            } catch (error) {
-              return error // Rethrow the error so it can be handled appropriately
-            }
     }
     // const logger = createLogger()
     const searchlocationurl = '/search-location'

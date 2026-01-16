@@ -82,7 +82,7 @@ const downloadAurnController = {
   handler: async (request, h) => {
     try {
       const selectedyear = request.params.year
-      console.log("Comes into download_Aurn",selectedyear    )
+      // console.log('Comes into download_Aurn', selectedyear)
       // const stndetails = request.yar.get('stationdetails')
       // Declare apiparams only once here
       const apiparams = {
@@ -96,8 +96,16 @@ const downloadAurnController = {
       }
       const downloadResultaurn = await Invokedownload(apiparams)
 
+      //  request.yar.set('downloadaurnresult', downloadResultaurn)
+      const viewData = {
+        ...request.yar.get('downloadViewData'),
+        downloadresult: downloadResultaurn
+      }
       request.yar.set('downloadaurnresult', downloadResultaurn)
-
+      if (request.url.pathname.includes('/download_aurn_nojs/')) {
+        // console.log('comeshere')
+        return h.view('download_dataselector_nojs/index', viewData)
+      }
       return h.response(downloadResultaurn).type('application/json').code(200)
     } catch (error) {
       return h.response({ error: 'An error occurred' }).code(500)

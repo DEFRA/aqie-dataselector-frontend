@@ -109,7 +109,7 @@ const stationDetailsNojsController = {
     // Generate years array dynamically from 2018 to current year
     const currentYear = new Date().getFullYear()
     const years = Array.from({ length: currentYear - 2017 }, (_, i) => 2018 + i)
-    
+
     const today = new Date()
     const currentDate = `${today.getDate()} ${today.toLocaleString('en-GB', { month: 'long' })}`
     const lat = stationDetails.location.coordinates[0]
@@ -185,7 +185,7 @@ const stationDetailsNojsController = {
 
       years,
       currentdate: currentDate,
-      currentYear: currentYear,
+      currentYear,
       pollutantKeys: stationDetails.pollutants,
       maptoggletips: getToggletip(stationDetails.siteType),
       selectedYear: request.yar.get('selectedYear'),

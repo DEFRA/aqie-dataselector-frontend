@@ -6,8 +6,9 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
-export const downloadDataselectorController = {
+export const downloadDataselectornojsController = {
   handler(request, h) {
+    // console.log('comes to controllernojs of dataselector')
     const backUrl = '/customdataset'
     // Helper function to render error state
     // console.log('In download controller', request.yar.get('nooflocation'))
@@ -18,7 +19,7 @@ export const downloadDataselectorController = {
       errorref2,
       errorhref2
     ) => {
-      const errorViewData = {
+      return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
@@ -34,12 +35,7 @@ export const downloadDataselectorController = {
         stationcount: request.yar.get('nooflocation'),
         displayBacklink: true,
         hrefq: backUrl
-      }
-
-      // Store error view data in session
-      request.yar.set('errorViewData', errorViewData)
-
-      return h.view('customdataset/index', errorViewData)
+      })
     }
 
     // Validation checks
@@ -89,8 +85,8 @@ export const downloadDataselectorController = {
       )
     }
 
-    // Success case - prepare view data
-    const successViewData = {
+    // Success case - render download page
+    return h.view('download_dataselector_nojs/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
@@ -104,15 +100,7 @@ export const downloadDataselectorController = {
           .get('finalyear')
           ?.split(',')
           .map((year) => year.trim()) ?? []
-    }
-
-    // Store success view data in session
-    request.yar.set('downloadViewData', successViewData)
-
-    // Also store individual components for easier access
-
-    // Success case - render download page
-    return h.view('download_dataselector/index', successViewData)
+    })
   }
 }
 
