@@ -6,6 +6,11 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/download_aurn/{year}',
       ...downloadAurnController
+    },
+    {
+      method: 'GET',
+      path: '/download_aurn_nojs/{year}',
+      ...downloadAurnController
     }
   ])
 }

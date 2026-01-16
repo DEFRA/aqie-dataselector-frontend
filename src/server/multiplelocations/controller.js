@@ -27,20 +27,21 @@ const multipleLocationsController = {
       }
 
       // dev
-      //       try {
-      //         const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
-      //         const { res, payload } = await Wreck.post(url, {
-      //           payload: JSON.stringify(nameApiparams),
-      //            headers: {
-      //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
+      // try {
+      //   const url =
+      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
+      //   const { res, payload } = await Wreck.post(url, {
+      //     payload: JSON.stringify(nameApiparams),
+      //     headers: {
+      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
       //     },
-      //           json: true
-      //         })
-      // console.log("PAYLOAD",payload)
-      //         return payload
-      //       } catch (error) {
-      //         return error // Rethrow the error so it can be handled appropriately
-      //       }
+      //     json: true
+      //   })
+      //   console.log('PAYLOAD', payload)
+      //   return payload
+      // } catch (error) {
+      //   return error // Rethrow the error so it can be handled appropriately
+      // }
     }
 
     async function InvokeMonitstnAPI(sValue, lMiles) {
@@ -61,19 +62,20 @@ const multipleLocationsController = {
 
       // dev
       // try {
-      //         const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
-      //         const { res, payload } = await Wreck.post(url, {
-      //           payload: JSON.stringify(locationvalues),
-      //            headers: {
-      //       'x-api-key': '7y46uRQC244tKKawWFY1Xs7rVnDThE5i'
+      //   const url =
+      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
+      //   const { res, payload } = await Wreck.post(url, {
+      //     payload: JSON.stringify(locationvalues),
+      //     headers: {
+      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
       //     },
-      //           json: true
-      //         })
-      // console.log("PAYLOAD",payload)
-      //         return payload
-      //       } catch (error) {
-      //         return error // Rethrow the error so it can be handled appropriately
-      //       }
+      //     json: true
+      //   })
+      //   console.log('PAYLOAD', payload)
+      //   return payload
+      // } catch (error) {
+      //   return error // Rethrow the error so it can be handled appropriately
+      // }
     }
     // const logger = createLogger()
     const searchlocationurl = '/search-location'

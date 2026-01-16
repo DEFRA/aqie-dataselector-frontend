@@ -7,10 +7,12 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import Wreck from '@hapi/wreck'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+
 export const locationaurnController = {
   handler: async (request, h) => {
     const backUrl = '/customdataset'
-
+    const logger = createLogger()
     // DON'T clear session data - preserve previous selections for "change" functionality
     // Only clear specific search-related temporary data
     if (request.method === 'get') {
@@ -22,6 +24,7 @@ export const locationaurnController = {
 
     async function Invokelocalauthority() {
       try {
+        logger.info('Enters the InvokeLocalauthority')
         const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
         const { payload } = await Wreck.get(url, {
           headers: {
@@ -29,12 +32,13 @@ export const locationaurnController = {
             'X-API-PartnerId': config.get('laqmAPIPartnerId')
           }
         })
-
+        logger.info('payload', payload)
         const jsonString = payload.toString('utf8')
         const parsedData = JSON.parse(jsonString)
+        logger.info('parsedData', parsedData)
         return parsedData
       } catch (error) {
-        // console.error('Error fetching local authorities:', error)
+        logger.error('Error fetching local authorities:', error)
         return { data: [] }
       }
     }

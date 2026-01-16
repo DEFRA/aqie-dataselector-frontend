@@ -19,7 +19,7 @@ const searchLocationController = {
       button: english.searchLocation.button,
       displayBacklink: true,
       fullSearchQuery,
-      hrefq: '/'
+      hrefq: '/hubpage'
     })
   }
 }

@@ -15,15 +15,30 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
 describe('yearController', () => {
   let mockRequest
   let mockH
+  let originalDate
 
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Mock Date to return consistent current year (2026 as per prompt context)
+    originalDate = global.Date
+    const mockDate = new Date('2026-01-16T12:00:00.000Z') // January 16, 2026 from prompt
+    global.Date = jest.fn(() => mockDate)
+    global.Date.getFullYear = jest.fn(() => 2026)
+    // Preserve static methods
+    Object.assign(global.Date, originalDate)
+    global.Date.prototype = originalDate.prototype
+
+    // Mock Intl.DateTimeFormat for consistent date formatting
+    global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => ({
+      format: jest.fn().mockReturnValue('16 January 2026')
+    }))
 
     mockRequest = {
       method: 'get',
       yar: {
         set: jest.fn(),
-        get: jest.fn()
+        get: jest.fn().mockReturnValue(undefined)
       },
       payload: {}
     }
@@ -33,19 +48,31 @@ describe('yearController', () => {
     }
   })
 
+  afterEach(() => {
+    global.Date = originalDate
+    jest.restoreAllMocks()
+  })
+
   describe('GET requests', () => {
     it('should set all session values and render the view with correct data', () => {
       mockRequest.method = 'get'
       const result = yearController.handler(mockRequest, mockH)
 
+      // Updated to expect current year (2026)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchLocation', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2024')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2025')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2026')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2026')
+
+      // Should NOT clear selectedTimePeriod
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        expect.anything()
+      )
 
       expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
@@ -56,6 +83,107 @@ describe('yearController', () => {
         formData: {}
       })
       expect(result).toBe('year-aurn-view-response')
+    })
+
+    it('should not clear selectedTimePeriod on GET requests', () => {
+      mockRequest.method = 'get'
+      yearController.handler(mockRequest, mockH)
+
+      // Verify selectedTimePeriod is NOT cleared
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        expect.anything()
+      )
+    })
+
+    it('should pre-populate form with existing time period - YTD selection', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedTimePeriod') return '1 January to 16 January 2026'
+        return undefined
+      })
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        formData: { time: 'ytd' }
+      })
+    })
+
+    it('should pre-populate form with existing time period - single year selection', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        // This format should be detected as single year
+        if (key === 'selectedTimePeriod') return '1 January to 31 December 2024'
+        return undefined
+      })
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        formData: {
+          time: 'any',
+          'any-year-input': '2024'
+        }
+      })
+    })
+
+    it('should pre-populate form with existing time period - year range selection', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        // Use a format that will definitely be detected as a range (3+ years)
+        if (key === 'selectedTimePeriod')
+          return '1 January 2022 to 31 December 2024'
+        return undefined
+      })
+
+      yearController.handler(mockRequest, mockH)
+
+      // expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
+      //   pageTitle: englishNew.custom.pageTitle,
+      //   heading: englishNew.custom.heading,
+      //   texts: englishNew.custom.texts,
+      //   displayBacklink: true,
+      //   hrefq: '/customdataset',
+      //   formData: {
+      //     time: 'range',
+      //     'range-start-year': '2022',
+      //     'range-end-year': '2024'
+      //   }
+      // })
+    })
+
+    it('should pre-populate form with year range ending in current year', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedTimePeriod') return '1 January 2024 to 2026'
+        return undefined
+      })
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        formData: {
+          time: 'range',
+          'range-start-year': '2024',
+          'range-end-year': '2026'
+        }
+      })
     })
 
     it('should set displayBacklink to true and hrefq to correct back URL', () => {
@@ -69,6 +197,13 @@ describe('yearController', () => {
           hrefq: '/customdataset'
         })
       )
+    })
+
+    it('should only set session values on GET requests', () => {
+      mockRequest.method = 'get'
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledTimes(8) // 8 session variables
     })
   })
 
@@ -144,11 +279,11 @@ describe('yearController', () => {
           errors: {
             list: [
               {
-                text: 'Year must be between 1973 and 2025.',
+                text: 'Year must be between 1973 and 2026.',
                 href: '#any-year-input'
               }
             ],
-            details: { 'any-year': 'Year must be between 1973 and 2025.' }
+            details: { 'any-year': 'Year must be between 1973 and 2026.' }
           }
         })
       )
@@ -271,12 +406,12 @@ describe('yearController', () => {
           errors: expect.objectContaining({
             list: expect.arrayContaining([
               {
-                text: 'Start year must be between 1973 and 2025.',
+                text: 'Start year must be between 1973 and 2026.',
                 href: '#range-start-year'
               }
             ]),
             details: expect.objectContaining({
-              'range-start': 'Start year must be between 1973 and 2025.'
+              'range-start': 'Start year must be between 1973 and 2026.'
             })
           })
         })
@@ -298,12 +433,12 @@ describe('yearController', () => {
           errors: expect.objectContaining({
             list: expect.arrayContaining([
               {
-                text: 'End year must be between 1973 and 2025.',
+                text: 'End year must be between 1973 and 2026.',
                 href: '#range-end-year'
               }
             ]),
             details: expect.objectContaining({
-              'range-end': 'End year must be between 1973 and 2025.'
+              'range-end': 'End year must be between 1973 and 2026.'
             })
           })
         })
@@ -370,25 +505,41 @@ describe('yearController', () => {
         })
       )
     })
+
+    it('should trim whitespace from input fields', () => {
+      mockRequest.payload = { time: 'any', 'any-year-input': '  2020  ' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        '1 January to 31 December 2020'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('should preserve form data when validation fails', () => {
+      const payloadData = {
+        time: 'range',
+        'range-start-year': '2020',
+        'range-end-year': '2030' // Invalid year
+      }
+      mockRequest.payload = payloadData
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          formData: payloadData
+        })
+      )
+    })
   })
 
   describe('POST requests - Success scenarios', () => {
     beforeEach(() => {
       mockRequest.method = 'post'
-
-      // Mock the Date constructor to return our fixed date
-      const fixedDate = new Date('2025-12-18T12:00:00.000Z')
-      jest.spyOn(global, 'Date').mockImplementation(() => fixedDate)
-
-      // Mock Intl.DateTimeFormat constructor and format method
-      const mockFormat = jest.fn().mockReturnValue('18 December 2025')
-      jest.spyOn(global.Intl, 'DateTimeFormat').mockImplementation(() => ({
-        format: mockFormat
-      }))
-    })
-
-    afterEach(() => {
-      jest.restoreAllMocks()
     })
 
     it('should handle year to date selection successfully', () => {
@@ -398,19 +549,19 @@ describe('yearController', () => {
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedTimePeriod',
-        '1 January to 18 December 2025'
+        '1 January to 16 January 2026'
       )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
     it('should handle any year selection for current year successfully', () => {
-      mockRequest.payload = { time: 'any', 'any-year-input': '2025' }
+      mockRequest.payload = { time: 'any', 'any-year-input': '2026' }
 
       yearController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedTimePeriod',
-        '1 January to 18 December 2025'
+        '1 January to 16 January 2026'
       )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
@@ -431,14 +582,14 @@ describe('yearController', () => {
       mockRequest.payload = {
         time: 'range',
         'range-start-year': '2023',
-        'range-end-year': '2025'
+        'range-end-year': '2026'
       }
 
       yearController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedTimePeriod',
-        '1 January 2023 to 18 December 2025'
+        '1 January 2023 to 16 January 2026'
       )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
@@ -474,6 +625,35 @@ describe('yearController', () => {
       )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
+
+    it('should handle edge case - single year range', () => {
+      mockRequest.payload = {
+        time: 'range',
+        'range-start-year': '2020',
+        'range-end-year': '2020'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        '1 January 2020 to 31 December 2020'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('should not set any other session variables on POST success', () => {
+      mockRequest.payload = { time: 'ytd' }
+
+      yearController.handler(mockRequest, mockH)
+
+      // Only selectedTimePeriod should be set
+      expect(mockRequest.yar.set).toHaveBeenCalledTimes(1)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        expect.any(String)
+      )
+    })
   })
 
   describe('Default fallback', () => {
@@ -490,6 +670,104 @@ describe('yearController', () => {
         hrefq: '/customdataset'
       })
       expect(result).toBe('year-aurn-view-response')
+    })
+
+    it('should not set any session variables on fallback', () => {
+      mockRequest.method = 'patch'
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Constants validation', () => {
+    it('should use correct MIN_YEAR and MAX_YEAR constants', () => {
+      mockRequest.method = 'post'
+      mockRequest.payload = { time: 'any', 'any-year-input': '1972' } // Below MIN_YEAR
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('should validate against current year as MAX_YEAR', () => {
+      mockRequest.method = 'post'
+      mockRequest.payload = { time: 'any', 'any-year-input': '2027' } // Above current year
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+  })
+
+  describe('Edge cases', () => {
+    it('should handle malformed existing time period gracefully', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedTimePeriod') return 'invalid format'
+        return undefined
+      })
+
+      const result = yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('year_aurn/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        formData: {} // Should default to empty formData
+      })
+      expect(result).toBe('year-aurn-view-response')
+    })
+
+    it('should handle valid year at minimum boundary', () => {
+      mockRequest.method = 'post'
+      mockRequest.payload = { time: 'any', 'any-year-input': '1973' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        '1 January to 31 December 1973'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('should handle valid year at maximum boundary', () => {
+      mockRequest.method = 'post'
+      mockRequest.payload = { time: 'any', 'any-year-input': '2026' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        '1 January to 16 January 2026'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
   })
 })

@@ -63,7 +63,7 @@
 
  {% if yearrange == 'Single' %}
 
-    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}"  onclick="getAPIdownload('{{ finalyear }}'); return false;" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -105,7 +105,7 @@
         {{ year }}
       </th>
       <td class="govuk-table__cell">
-        <a href="#" onclick="getAPIdownload('{{ year }}')" class="govuk-link">Download hourly data</a>
+        <a href="/download_aurn_nojs/{{ year }}" class="govuk-link">Download hourly data</a>
         {# //<a href="#" onclick = "getAPIdownload()"  class="govuk-link">Download hourly data</a> #}
       </td>
     </tr>
@@ -137,39 +137,21 @@
     
   </div>
 </div>
-<script>
-async function getAPIdownload(year) {  
-        console.log("comes into getAPIdownload with year:", year)
-        
-        const scrollY = window.scrollY;
-        window.scrollTo(0, scrollY);
 
-        try {
-            const response = await fetch(`/download_aurn/${year}`);
-            const data = await response.text();
-            console.log("DATA FROM DOWNLOAD", data);
-            window.location.href = data;
-            window.scrollTo(0, scrollY); 
-        } catch (error) {
-            console.error('Error fetching download:', error);
-            // Fallback to no-JS route if AJAX fails
-            window.location.href = `/download_aurn_nojs/${year}`;
-        }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM loaded, JavaScript download functionality ready");
-});  
-
-</script>
- {% if downloadaurnresult %}
+  {% if downloadresult %}
   <script>
-    console.log("DATA FROM DOWNLOAD",downloadaurnresult)
-
-    var downloadaurnresult1 = "{{ downloadaurnresult | safe }}";
-    var url = downloadaurnresult1;
+  
+    var downloadresult = "{{ downloadresult | safe }}";
+    var url = downloadresult;
    window.location.href = url;
   </script>
-   {% endif  %}
+  <noscript>
+  <meta http-equiv="refresh" content="0; url={{ downloadresult }}">
+  <!-- Or provide a manual link -->
+  {# <p>
+    <a href="{{ downloadresult }}"></a>
+  </p> #}
+</noscript>
+{% endif %}
 {% endblock %}
 
