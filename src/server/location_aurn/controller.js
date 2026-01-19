@@ -41,7 +41,7 @@ export const locationaurnController = {
 
         const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
         logger.info('Making request to:', url)
-  logger.info(`Making request to: ${url}`)
+        logger.info(`Making request to: ${url}`)
         // Add timeout and more detailed options
         const options = {
           headers: {
@@ -83,10 +83,10 @@ export const locationaurnController = {
             body: errorBody,
             headers: res.headers
           })
-           logger.error(`HTTP Error: ${res.statusCode}`)
-              logger.error(`statusMessage: ${res.statusMessage}`)
-                 logger.error(`body: ${errorBody}`)
-                    logger.error(`headers: ${res.headers}`)
+          logger.error(`HTTP Error: ${res.statusCode}`)
+          logger.error(`statusMessage: ${res.statusMessage}`)
+          logger.error(`body: ${errorBody}`)
+          //  logger.error(`headers: ${res.headers}`)
 
           throw new Error(
             `HTTP ${res.statusCode}: ${res.statusMessage}. Body: ${errorBody}`
