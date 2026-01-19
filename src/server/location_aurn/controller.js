@@ -150,7 +150,11 @@ export const locationaurnController = {
         return parsedData
       } catch (error) {
         // Enhanced error logging
-
+        logger.error(`error.name: ${error.name} `)
+        logger.error(`error.message: ${error.message} `)
+        logger.error(`error.stack: ${error.stack} `)
+        logger.error(`error.code: ${error.code} `)
+        logger.error(`data: error.data: ${error.data} `)
         logger.error(`Error in Invokelocalauthority: ${error.message} `, {
           message: error.message,
           name: error.name,
