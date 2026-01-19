@@ -30,9 +30,8 @@ export const locationaurnController = {
         const apiKey = config.get('laqmAPIkey')
         const partnerId = config.get('laqmAPIPartnerId')
 
-        logger.info('API Key exists:', !!apiKey)
-        logger.info('API Key length:', apiKey ? apiKey.length : 0)
-        logger.info('Partner ID:', partnerId)
+        logger.info(`API Key exists: ${!!apiKey}`)
+        logger.info(`Partner ID: ${partnerId}`)
 
         if (!apiKey || !partnerId) {
           throw new Error(
