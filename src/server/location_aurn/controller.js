@@ -30,7 +30,7 @@ export const locationaurnController = {
         const apiKey = config.get('laqmAPIkey')
         const partnerId = config.get('laqmAPIPartnerId')
 
-        logger.info(`API Key exists: ${!!apiKey}`)
+        logger.info(`API Key exists: ${apiKey}`)
         logger.info(`Partner ID: ${partnerId}`)
 
         if (!apiKey || !partnerId) {
@@ -144,7 +144,8 @@ export const locationaurnController = {
         return parsedData
       } catch (error) {
         // Enhanced error logging
-        logger.error('Error in Invokelocalauthority:', {
+
+        logger.error(`Error in Invokelocalauthority: ${error.message} `, {
           message: error.message,
           name: error.name,
           stack: error.stack,
