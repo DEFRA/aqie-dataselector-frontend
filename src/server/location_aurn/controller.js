@@ -8,6 +8,8 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import https from 'node:https'
+import http from 'node:http'
 
 export const locationaurnController = {
   handler: async (request, h) => {
@@ -26,157 +28,100 @@ export const locationaurnController = {
       try {
         logger.info('Enters the InvokeLocalauthority')
 
-        // Log configuration values (mask sensitive data)
         const apiKey = config.get('laqmAPIkey')
         const partnerId = config.get('laqmAPIPartnerId')
-
-        logger.info(`API Key exists: ${apiKey}`)
-        logger.info(`Partner ID: ${partnerId}`)
-
         if (!apiKey || !partnerId) {
-          throw new Error(
+          logger.error(
             `Missing configuration: APIKey=${!!apiKey}, PartnerId=${!!partnerId}`
           )
+          return { data: [] }
         }
 
         const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
+        logger.info(`Request started url: ${url}`)
 
-        logger.info(`Making request to: ${url}`)
-        // Add timeout and more detailed options
-        const options = {
+        // Keep-alive agents (important in CDP)
+        const httpsAgent = new https.Agent({ keepAlive: true })
+        const httpAgent = new http.Agent({ keepAlive: true })
+
+        // Optional proxy support from config/env (CDP)
+        const proxy =
+          config.get('httpsProxy') ||
+          process.env.HTTPS_PROXY ||
+          process.env.HTTP_PROXY ||
+          undefined
+
+        const response = await axios.get(url, {
           headers: {
             'X-API-Key': apiKey,
-            'X-API-PartnerId': partnerId
-          }
-          // 30 second timeout
-          // Get raw payload to debug
-        }
-        // logger.info(` X-API-Key: ${options.headers['X-API-Key']}`)
-        // logger.info(` X-API-PartnerId: ${options.headers['X-API-PartnerId']}`)
-
-        const startTime = Date.now()
-        logger.info(` Request started at: ${startTime}`)
-        logger.info(` Request started url: ${url}`)
-        const { res, payload } = await axios.get(url, options)
-        logger.info(` Request ended at: ${Date.now()}`)
-        // logger.info(` Request ended url: ${options}`)
-        // const duration = Date.now() - startTime
-
-        // Check HTTP status
-        if (res.statusCode !== 200) {
-          const errorBody = payload
-            ? payload.toString('utf8')
-            : 'No response body'
-          logger.error('HTTP Error:', {
-            status: res.statusCode,
-            statusMessage: res.statusMessage,
-            body: errorBody,
-            headers: res.headers
-          })
-          logger.error(`HTTP Error: ${res.statusCode}`)
-          logger.error(`statusMessage: ${res.statusMessage}`)
-          logger.error(`body: ${errorBody}`)
-          //  logger.error(`headers: ${res.headers}`)
-
-          throw new Error(
-            `HTTP ${res.statusCode}: ${res.statusMessage}. Body: ${errorBody}`
-          )
-        }
-
-        // Check if payload exists
-        if (!payload) {
-          logger.error('No payload received from API')
-          throw new Error('Empty response from API')
-        }
-
-        // Parse JSON
-        const jsonString = payload.toString('utf8')
-        logger.info('JSON string length:', jsonString.length)
-        logger.info(
-          'JSON string preview:',
-          jsonString.substring(0, 200) + '...'
-        )
-
-        let parsedData
-        try {
-          parsedData = JSON.parse(jsonString)
-        } catch (parseError) {
-          logger.error('JSON Parse Error:', {
-            error: parseError.message,
-            jsonPreview: jsonString.substring(0, 500)
-          })
-          throw new Error(`Failed to parse JSON: ${parseError.message}`)
-        }
-
-        logger.info('Parsed data structure:', {
-          type: typeof parsedData,
-          keys: parsedData ? Object.keys(parsedData) : [],
-          dataExists: !!parsedData?.data,
-          dataLength: Array.isArray(parsedData?.data)
-            ? parsedData.data.length
-            : 'not array'
+            'X-API-PartnerId': partnerId,
+            Accept: 'application/json',
+            'User-Agent': 'AQIE-DataSelector/1.0'
+          },
+          timeout: 30000, // 30s
+          maxRedirects: 3,
+          // If your platform needs proxy, set it; otherwise leave undefined
+          proxy: proxy
+            ? {
+                protocol: proxy.startsWith('https') ? 'https' : 'http',
+                host: new URL(proxy).hostname,
+                port: Number(
+                  new URL(proxy).port || (proxy.startsWith('https') ? 443 : 80)
+                )
+              }
+            : false,
+          // Agents
+          httpsAgent,
+          httpAgent,
+          // Expect JSON directly
+          responseType: 'json',
+          transitional: { clarifyTimeoutError: true }
         })
 
-        // Validate response structure
-        if (!parsedData || typeof parsedData !== 'object') {
-          logger.error('Invalid response structure:', typeof parsedData)
-          throw new Error('Invalid response structure from API')
+        // Axios returns { data, status, statusText, headers }
+        const { status, data } = response
+        logger.info(`LAQM status: ${status}`)
+
+        if (status !== 200 || !data) {
+          logger.error(
+            `Unexpected response: status=${status}, hasData=${!!data}`
+          )
+          return { data: [] }
         }
 
-        if (!parsedData.data || !Array.isArray(parsedData.data)) {
-          logger.warn('Unexpected data structure:', {
-            hasData: !!parsedData.data,
-            dataType: typeof parsedData.data,
-            isArray: Array.isArray(parsedData.data)
-          })
-          // Don't throw error here, just log and return empty data
+        // Validate shape
+        if (!data || typeof data !== 'object') {
+          logger.error(`Invalid response structure: ${typeof data}`)
+          return { data: [] }
+        }
+        if (!Array.isArray(data.data)) {
+          logger.warn('No data array in response')
           return { data: [] }
         }
 
         logger.info(
-          'Successfully fetched local authorities:',
-          parsedData.data.length
+          `Successfully fetched local authorities: ${data.data.length}`
         )
-        return parsedData
+        return data
       } catch (error) {
-        // Enhanced error logging
-        logger.error(`error.name: ${error.name} `)
-        logger.error(`error.message: ${error.message} `)
-        logger.error(`error.stack: ${error.stack} `)
-        logger.error(`error.code: ${error.code} `)
-        logger.error(`error.statusCode: ${error.statusCode} `)
-        logger.error(`data: error.data: ${error.data} `)
-        logger.error(`Error in Invokelocalauthority: ${error.message} `, {
-          message: error.message,
-          name: error.name,
-          stack: error.stack,
-          code: error.code,
-          errno: error.errno,
-          syscall: error.syscall,
-          hostname: error.hostname,
-          // For Wreck/HTTP errors
-          statusCode: error.statusCode,
-          data: error.data,
-          // For network errors
-          address: error.address,
-          port: error.port,
-          // Additional context
-          timestamp: new Date().toISOString(),
-          environment: process.env.NODE_ENV
-        })
-
-        // Check for specific error types
-        if (error.code === 'ENOTFOUND') {
-          logger.error('DNS lookup failed - check network connectivity and URL')
-        } else if (error.code === 'ECONNREFUSED') {
-          logger.error('Connection refused - service might be down')
-        } else if (error.code === 'ETIMEDOUT') {
-          logger.error('Request timed out - service might be slow or down')
-        } else if (error.statusCode) {
-          logger.error('HTTP error:', error.statusCode)
-        }
-
-        // Return empty data instead of throwing to prevent controller crash
+        // Normalize axios/network errors for CDP diagnostics
+        const status = error?.response?.status
+        const statusText = error?.response?.statusText
+        const code = error?.code
+        const isTimeout =
+          code === 'ECONNABORTED' ||
+          code === 'ETIMEDOUT' ||
+          /timeout/i.test(error?.message || '')
+        logger.error(
+          `InvokeLocalauthority failed: code=${code}, status=${status}, statusText=${statusText}, timeout=${isTimeout}`
+        )
+        // If proxy misconfig causes hang, log proxy settings presence
+        const hasProxy = Boolean(
+          config.get('httpsProxy') ||
+            process.env.HTTPS_PROXY ||
+            process.env.HTTP_PROXY
+        )
+        logger.error(`Proxy configured: ${hasProxy}`)
         return { data: [] }
       }
     }
