@@ -70,18 +70,16 @@ describe('locationaurnController', () => {
       }
     })
 
-    // Default axios.get mock: return 200 + valid payload buffer
+    // Default axios.get mock: 200 + JSON body
     axios.get.mockResolvedValue({
-      res: { statusCode: 200 },
-      payload: Buffer.from(
-        JSON.stringify({
-          data: [
-            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
-            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
-            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
-          ]
-        })
-      )
+      status: 200,
+      data: {
+        data: [
+          { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+          { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+          { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+        ]
+      }
     })
   })
 
@@ -129,11 +127,8 @@ describe('locationaurnController', () => {
       )
     })
 
-    it('should handle malformed JSON response gracefully', async () => {
-      axios.get.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: Buffer.from('invalid json')
-      })
+    it('should handle malformed response structure gracefully', async () => {
+      axios.get.mockResolvedValue({ status: 200, data: 'not-an-object' })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
 
@@ -148,10 +143,7 @@ describe('locationaurnController', () => {
     })
 
     it('should handle HTTP error status gracefully', async () => {
-      axios.get.mockResolvedValue({
-        res: { statusCode: 500, statusMessage: 'Internal Server Error' },
-        payload: Buffer.from('Server Error')
-      })
+      axios.get.mockResolvedValue({ status: 500, data: { message: 'Internal Server Error' } })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
 
@@ -440,15 +432,13 @@ describe('locationaurnController', () => {
 
     it('should handle local authorities without LA IDs gracefully', async () => {
       axios.get.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: Buffer.from(
-          JSON.stringify({
-            data: [
-              { 'Local Authority Name': 'City of London' },
-              { 'Local Authority Name': 'Westminster' }
-            ]
-          })
-        )
+        status: 200,
+        data: {
+          data: [
+            { 'Local Authority Name': 'City of London' },
+            { 'Local Authority Name': 'Westminster' }
+          ]
+        }
       })
       mockRequest.payload = {
         location: 'la',
@@ -483,10 +473,7 @@ describe('locationaurnController', () => {
     })
 
     it('should handle empty API response', async () => {
-      axios.get.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: Buffer.from(JSON.stringify({ data: [] }))
-      })
+      axios.get.mockResolvedValue({ status: 200, data: { data: [] } })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -515,7 +502,7 @@ describe('locationaurnController', () => {
     })
 
     it('should handle null payload from API', async () => {
-      axios.get.mockResolvedValue({ res: { statusCode: 200 }, payload: null })
+      axios.get.mockResolvedValue({ status: 200, data: undefined })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -538,10 +525,7 @@ describe('locationaurnController', () => {
           { 'Local Authority Name': 'Test Authority 3', 'LA ID': 'T3' }
         ]
       }
-      axios.get.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: Buffer.from(JSON.stringify(mockApiData))
-      })
+      axios.get.mockResolvedValue({ status: 200, data: mockApiData })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -559,15 +543,8 @@ describe('locationaurnController', () => {
 
     it('should handle API response without Local Authority Name field', async () => {
       axios.get.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: Buffer.from(
-          JSON.stringify({
-            data: [
-              { Name: 'Authority 1', 'LA ID': '1' },
-              { Name: 'Authority 2', 'LA ID': '2' }
-            ]
-          })
-        )
+        status: 200,
+        data: { data: [{ Name: 'Authority 1', 'LA ID': '1' }, { Name: 'Authority 2', 'LA ID': '2' }] }
       })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
