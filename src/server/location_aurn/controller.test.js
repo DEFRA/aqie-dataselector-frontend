@@ -143,7 +143,10 @@ describe('locationaurnController', () => {
     })
 
     it('should handle HTTP error status gracefully', async () => {
-      axios.get.mockResolvedValue({ status: 500, data: { message: 'Internal Server Error' } })
+      axios.get.mockResolvedValue({
+        status: 500,
+        data: { message: 'Internal Server Error' }
+      })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
 
@@ -544,7 +547,12 @@ describe('locationaurnController', () => {
     it('should handle API response without Local Authority Name field', async () => {
       axios.get.mockResolvedValue({
         status: 200,
-        data: { data: [{ Name: 'Authority 1', 'LA ID': '1' }, { Name: 'Authority 2', 'LA ID': '2' }] }
+        data: {
+          data: [
+            { Name: 'Authority 1', 'LA ID': '1' },
+            { Name: 'Authority 2', 'LA ID': '2' }
+          ]
+        }
       })
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
