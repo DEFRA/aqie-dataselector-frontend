@@ -40,37 +40,27 @@ export const locationaurnController = {
         }
 
         const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
-        logger.info('Making request to:', url)
+
         logger.info(`Making request to: ${url}`)
         // Add timeout and more detailed options
         const options = {
           headers: {
             'X-API-Key': apiKey,
-            'X-API-PartnerId': partnerId,
-            'User-Agent': 'AQIE-DataSelector/1.0',
-            Accept: 'application/json'
-          },
-          timeout: 30000, // 30 second timeout
-          json: false // Get raw payload to debug
+            'X-API-PartnerId': partnerId
+          }
+          // 30 second timeout
+          // Get raw payload to debug
         }
-
-        logger.info('Request headers:', {
-          'X-API-Key': apiKey ? `${apiKey.substring(0, 4)}...` : 'missing',
-          'X-API-PartnerId': partnerId,
-          'User-Agent': options.headers['User-Agent'],
-          Accept: options.headers.Accept
-        })
+        // logger.info(` X-API-Key: ${options.headers['X-API-Key']}`)
+        // logger.info(` X-API-PartnerId: ${options.headers['X-API-PartnerId']}`)
 
         const startTime = Date.now()
+        logger.info(` Request started at: ${startTime}`)
+        logger.info(` Request started url: ${url}`)
         const { res, payload } = await Wreck.get(url, options)
-        const duration = Date.now() - startTime
-
-        logger.info('Request completed in:', `${duration}ms`)
-        logger.info(`Request completed in:: ${duration}`)
-        logger.info(`Response status: ${res.statusCode}`)
-        logger.info(`Response headers: ${JSON.stringify(res.headers)}`)
-        logger.info(`Raw payload length: ${payload ? payload.length : 0}`)
-        logger.info(`Raw payload type: ${typeof payload}`)
+        logger.info(` Request ended at: ${Date.now()}`)
+        // logger.info(` Request ended url: ${options}`)
+        // const duration = Date.now() - startTime
 
         // Check HTTP status
         if (res.statusCode !== 200) {
