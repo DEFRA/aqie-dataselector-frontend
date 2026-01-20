@@ -1,30 +1,24 @@
 import { locationaurnController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
-import Wreck from '@hapi/wreck'
+import axios from 'axios'
 
-// Mock Wreck
-jest.mock('@hapi/wreck')
+// Mock axios (controller uses axios.get)
+jest.mock('axios')
 
-// Mock config - This needs to be more comprehensive to support logger config
+// Mock config
 jest.mock('~/src/config/config.js', () => ({
-  config: {
-    get: jest.fn()
-  }
+  config: { get: jest.fn() }
 }))
 
-// Mock logger configuration to prevent the "enabled" error
+// Mock logger options and logger
 jest.mock('~/src/server/common/helpers/logging/logger-options.js', () => ({
   loggerOptions: {
     enabled: true,
     ignorePaths: ['/health'],
-    redact: {
-      paths: []
-    }
+    redact: { paths: [] }
   }
 }))
-
-// Mock the logger itself
 jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: jest.fn(() => ({
     info: jest.fn(),
@@ -34,7 +28,7 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   }))
 }))
 
-// Mock englishNew import to match controller usage
+// Mock englishNew
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
@@ -48,7 +42,6 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
 describe('locationaurnController', () => {
   let mockRequest
   let mockH
-  let mockWreck
   let mockConfig
 
   beforeEach(() => {
@@ -56,10 +49,7 @@ describe('locationaurnController', () => {
 
     mockRequest = {
       method: 'get',
-      yar: {
-        set: jest.fn(),
-        get: jest.fn().mockReturnValue(null)
-      },
+      yar: { set: jest.fn(), get: jest.fn().mockReturnValue(null) },
       params: {},
       payload: {}
     }
@@ -68,7 +58,6 @@ describe('locationaurnController', () => {
       redirect: jest.fn().mockReturnValue('redirect-response')
     }
 
-    // Mock config with comprehensive config values including logger config
     mockConfig = jest.mocked(config.get)
     mockConfig.mockImplementation((key) => {
       switch (key) {
@@ -76,25 +65,13 @@ describe('locationaurnController', () => {
           return 'test-api-key'
         case 'laqmAPIPartnerId':
           return 'test-partner-id'
-        // Logger config mocks
-        case 'log':
-          return {
-            enabled: true,
-            redact: []
-          }
-        case 'logConfig':
-          return {
-            enabled: true,
-            redact: []
-          }
         default:
           return undefined
       }
     })
 
-    // Mock Wreck.get
-    mockWreck = jest.mocked(Wreck.get)
-    mockWreck.mockResolvedValue({
+    // Default axios.get mock: return 200 + valid payload buffer
+    axios.get.mockResolvedValue({
       res: { statusCode: 200 },
       payload: Buffer.from(
         JSON.stringify({
@@ -113,7 +90,6 @@ describe('locationaurnController', () => {
       mockRequest.method = 'get'
       const result = await locationaurnController.handler(mockRequest, mockH)
 
-      // Only these specific session values are cleared in GET requests
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
@@ -137,23 +113,8 @@ describe('locationaurnController', () => {
       expect(result).toBe('location-aurn-view-response')
     })
 
-    // it('should call local authority API with correct headers', async () => {
-    //   mockRequest.method = 'get'
-    //   await locationaurnController.handler(mockRequest, mockH)
-
-    //   expect(mockWreck).toHaveBeenCalledWith(
-    //     'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json',
-    //     {
-    //       headers: {
-    //         'X-API-Key': 'test-api-key',
-    //         'X-API-PartnerId': 'test-partner-id'
-    //       }
-    //     }
-    //   )
-    // })
-
     it('should handle API error gracefully and return empty data', async () => {
-      mockWreck.mockRejectedValue(new Error('API Error'))
+      axios.get.mockRejectedValue(new Error('API Error'))
       mockRequest.method = 'get'
 
       await locationaurnController.handler(mockRequest, mockH)
@@ -169,12 +130,11 @@ describe('locationaurnController', () => {
     })
 
     it('should handle malformed JSON response gracefully', async () => {
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 200 },
         payload: Buffer.from('invalid json')
       })
       mockRequest.method = 'get'
-
       await locationaurnController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith(
@@ -188,12 +148,11 @@ describe('locationaurnController', () => {
     })
 
     it('should handle HTTP error status gracefully', async () => {
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 500, statusMessage: 'Internal Server Error' },
         payload: Buffer.from('Server Error')
       })
       mockRequest.method = 'get'
-
       await locationaurnController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith(
@@ -286,35 +245,9 @@ describe('locationaurnController', () => {
       mockRequest.method = 'post'
     })
 
-    // it('should return error when no location option is selected', async () => {
-    //   mockRequest.payload = {}
-
-    //   await locationaurnController.handler(mockRequest, mockH)
-
-    //   expect(mockH.view).toHaveBeenCalledWith(
-    //     'location_aurn/index',
-    //     expect.objectContaining({
-    //       errors: {
-    //         list: [
-    //           {
-    //             text: 'Select an option before continuing',
-    //             href: '#location-2'
-    //           }
-    //         ],
-    //         details: { location: 'Select an option before continuing' }
-    //       },
-    //       formData: {},
-    //       laResult: { data: [] },
-    //       localAuthorityNames: []
-    //     })
-    //   )
-    // })
-
     it('should return error when countries is selected but no country is chosen', async () => {
       mockRequest.payload = { location: 'countries' }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -331,9 +264,7 @@ describe('locationaurnController', () => {
 
     it('should return error when countries is selected with empty array', async () => {
       mockRequest.payload = { location: 'countries', country: [] }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -350,9 +281,7 @@ describe('locationaurnController', () => {
 
     it('should return error when local authority is selected but no authority is provided', async () => {
       mockRequest.payload = { location: 'la' }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -370,45 +299,12 @@ describe('locationaurnController', () => {
       )
     })
 
-    // it('should return error when too many local authorities are selected', async () => {
-    //   const manyLAs = Array(11).fill().map((_, i) => `Authority ${i + 1}`)
-    //   mockRequest.payload = {
-    //     location: 'la',
-    //     'selected-locations': manyLAs
-    //   }
-
-    //   await locationaurnController.handler(mockRequest, mockH)
-
-    //   expect(mockH.view).toHaveBeenCalledWith(
-    //     'location_aurn/index',
-    //     expect.objectContaining({
-    //       errors: {
-    //         list: [
-    //           {
-    //             text: 'You can only select up to 10 local authorities',
-    //             href: '#my-autocomplete'
-    //           }
-    //         ],
-    //         details: {
-    //           'local-authority': 'You can only select up to 10 local authorities'
-    //         }
-    //       },
-    //       formData: {
-    //         location: 'la',
-    //         'selected-locations': manyLAs
-    //       }
-    //     })
-    //   )
-    // })
-
     it('should return error when invalid local authorities are selected', async () => {
       mockRequest.payload = {
         location: 'la',
         'selected-locations': ['Invalid Authority', 'Another Invalid']
       }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -436,13 +332,11 @@ describe('locationaurnController', () => {
         location: 'la',
         'selected-locations': [
           'City of London',
-          'city of london', // Different case
+          'city of london',
           'Westminster'
         ]
       }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -453,9 +347,7 @@ describe('locationaurnController', () => {
                 href: '#my-autocomplete'
               }
             ],
-            details: {
-              'local-authority': 'Remove duplicate local authorities'
-            }
+            details: { 'local-authority': 'Remove duplicate local authorities' }
           }
         })
       )
@@ -468,14 +360,10 @@ describe('locationaurnController', () => {
         country: []
       }
       mockRequest.payload = payloadData
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
-        expect.objectContaining({
-          formData: payloadData
-        })
+        expect.objectContaining({ formData: payloadData })
       )
     })
   })
@@ -490,9 +378,7 @@ describe('locationaurnController', () => {
         location: 'countries',
         country: ['England', 'Wales']
       }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
         'England',
         'Wales'
@@ -511,9 +397,7 @@ describe('locationaurnController', () => {
 
     it('should handle single country selection successfully', async () => {
       mockRequest.payload = { location: 'countries', country: 'Scotland' }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
         'Scotland'
       ])
@@ -533,9 +417,7 @@ describe('locationaurnController', () => {
         location: 'la',
         'selected-locations': ['City of London', 'Westminster']
       }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocations', [
         'City of London',
         'Westminster'
@@ -557,8 +439,7 @@ describe('locationaurnController', () => {
     })
 
     it('should handle local authorities without LA IDs gracefully', async () => {
-      // Mock API response without LA IDs
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 200 },
         payload: Buffer.from(
           JSON.stringify({
@@ -569,40 +450,20 @@ describe('locationaurnController', () => {
           })
         )
       })
-
       mockRequest.payload = {
         location: 'la',
         'selected-locations': ['City of London']
       }
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '')
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
-
-    // it('should trim and normalize input values', async () => {
-    //   mockRequest.payload = {
-    //     location: 'countries',
-    //     country: [' England ', ' Wales ']
-    //   }
-
-    //   await locationaurnController.handler(mockRequest, mockH)
-
-    //   expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
-    //     'England',
-    //     'Wales'
-    //   ])
-    //   expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
-    // })
   })
 
   describe('Edge cases', () => {
     it('should handle default fallback when method is neither GET nor POST', async () => {
       mockRequest.method = 'put'
-
       const result = await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
@@ -622,14 +483,12 @@ describe('locationaurnController', () => {
     })
 
     it('should handle empty API response', async () => {
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 200 },
         payload: Buffer.from(JSON.stringify({ data: [] }))
       })
       mockRequest.method = 'get'
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -642,11 +501,9 @@ describe('locationaurnController', () => {
 
     it('should handle missing config values', async () => {
       mockConfig.mockReturnValue(undefined)
-      mockWreck.mockRejectedValue(new Error('Missing API key'))
+      axios.get.mockRejectedValue(new Error('Missing API key'))
       mockRequest.method = 'get'
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -658,14 +515,9 @@ describe('locationaurnController', () => {
     })
 
     it('should handle null payload from API', async () => {
-      mockWreck.mockResolvedValue({
-        res: { statusCode: 200 },
-        payload: null
-      })
+      axios.get.mockResolvedValue({ res: { statusCode: 200 }, payload: null })
       mockRequest.method = 'get'
-
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -686,15 +538,12 @@ describe('locationaurnController', () => {
           { 'Local Authority Name': 'Test Authority 3', 'LA ID': 'T3' }
         ]
       }
-
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 200 },
         payload: Buffer.from(JSON.stringify(mockApiData))
       })
-
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
@@ -709,7 +558,7 @@ describe('locationaurnController', () => {
     })
 
     it('should handle API response without Local Authority Name field', async () => {
-      mockWreck.mockResolvedValue({
+      axios.get.mockResolvedValue({
         res: { statusCode: 200 },
         payload: Buffer.from(
           JSON.stringify({
@@ -720,15 +569,11 @@ describe('locationaurnController', () => {
           })
         )
       })
-
       mockRequest.method = 'get'
       await locationaurnController.handler(mockRequest, mockH)
-
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
-        expect.objectContaining({
-          localAuthorityNames: []
-        })
+        expect.objectContaining({ localAuthorityNames: [] })
       )
     })
   })

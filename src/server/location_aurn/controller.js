@@ -6,7 +6,7 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
-import Wreck from '@hapi/wreck'
+import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 export const locationaurnController = {
@@ -57,7 +57,7 @@ export const locationaurnController = {
         const startTime = Date.now()
         logger.info(` Request started at: ${startTime}`)
         logger.info(` Request started url: ${url}`)
-        const { res, payload } = await Wreck.get(url, options)
+        const { res, payload } = await axios.get(url, options)
         logger.info(` Request ended at: ${Date.now()}`)
         // logger.info(` Request ended url: ${options}`)
         // const duration = Date.now() - startTime
@@ -144,6 +144,7 @@ export const locationaurnController = {
         logger.error(`error.message: ${error.message} `)
         logger.error(`error.stack: ${error.stack} `)
         logger.error(`error.code: ${error.code} `)
+        logger.error(`error.statusCode: ${error.statusCode} `)
         logger.error(`data: error.data: ${error.data} `)
         logger.error(`Error in Invokelocalauthority: ${error.message} `, {
           message: error.message,
