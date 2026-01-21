@@ -61,9 +61,10 @@
     </dd>
     <dd class="govuk-summary-list__actions">
        {% if selectedpollutant %}
-      <a class="govuk-link" href="/airpollutant"> {{texts.n}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
-     {% else %}
- <a class="govuk-link" href="/airpollutant"> {{texts.c}}<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
+     <a class="govuk-link" href="/airpollutant">  Change</a>
+      {# <a class="govuk-link" href="/airpollutant"> Change<span class="govuk-visually-hidden">  {{texts.l}}</span></a> #}
+     {% else %} 
+ <a class="govuk-link" href="/airpollutant"> Add<span class="govuk-visually-hidden">  {{texts.l}}</span></a>
     
        {% endif %}
 

@@ -257,7 +257,7 @@ export const customdatasetController = {
         //   return error // Rethrow the error so it can be handled appropriately
         // }
       }
-      //  console.log(' selectedlocationyar', request.yar.get('selectedlocation'))
+      // console.log(' selectedpollutant', request.yar.get('selectedpollutant'))
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,

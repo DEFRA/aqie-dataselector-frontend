@@ -6,15 +6,13 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
-import axios from 'axios'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import https from 'node:https'
-import http from 'node:http'
+
+import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
 
 export const locationaurnController = {
   handler: async (request, h) => {
     const backUrl = '/customdataset'
-    const logger = createLogger()
+    // const logger = createLogger()
     // DON'T clear session data - preserve previous selections for "change" functionality
     // Only clear specific search-related temporary data
     if (request.method === 'get') {
@@ -24,112 +22,116 @@ export const locationaurnController = {
       // Keep selectedLocation, selectedLocations, selectedCountries, etc. for pre-population
     }
 
+    //   async function Invokelocalauthority() {
+    //     try {
+    //       logger.info('Enters the InvokeLocalauthority')
+
+    //       const apiKey = config.get('laqmAPIkey')
+    //       const partnerId = config.get('laqmAPIPartnerId')
+    //       if (!apiKey || !partnerId) {
+    //         logger.error(
+    //           `Missing configuration: APIKey=${!!apiKey}, PartnerId=${!!partnerId}`
+    //         )
+    //         return { data: [] }
+    //       }
+
+    //       const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
+    //       logger.info(`Request started url: ${url}`)
+
+    //       // Keep-alive agents (important in CDP)
+    //      const options = {
+    //   method: 'get',
+    //   'X-API-Key': apiKey,
+    //           'X-API-PartnerId': partnerId,
+    //   headers: { 'Content-Type': 'text/json', preserveWhitespace: true }
+    // }
+    //       const response = await proxyFetch(url, {
+    //         method: 'GET',
+    //         headers: {
+    //           'X-API-Key': '5444af89cc52380a81111d5623ea74d5',
+    //           'X-API-PartnerId': '1035',
+    //           'Content-Type': 'text/json',
+    //           preserveWhitespace: true
+    //         }
+    //       })
+
+    //       // Axios returns { data, status, statusText, headers }
+    //       const { status, data } = response
+    //       console.log('LAQM API response :', response)
+    //       console.log('LAQM API response json:', response.json)
+    //       console.log('LAQM API response data:', response.data)
+    //       logger.info(`LAQM status: ${status}`)
+
+    //       if (status !== 200 || !data) {
+    //         logger.error(
+    //           `Unexpected response: status=${status}, hasData=${!!data}`
+    //         )
+    //         return { data: [] }
+    //       }
+
+    //       // Validate shape
+    //       if (!data || typeof data !== 'object') {
+    //         logger.error(`Invalid response structure: ${typeof data}`)
+    //         return { data: [] }
+    //       }
+    //       if (!Array.isArray(data.data)) {
+    //         logger.warn('No data array in response')
+    //         return { data: [] }
+    //       }
+
+    //       logger.info(
+    //         `Successfully fetched local authorities: ${data.data.length}`
+    //       )
+    //       return data
+    //     } catch (error) {
+    //       // Normalize axios/network errors for CDP diagnostics
+    //       const status = error?.response?.status
+    //       const statusText = error?.response?.statusText
+    //       const code = error?.code
+    //       const isTimeout =
+    //         code === 'ECONNABORTED' ||
+    //         code === 'ETIMEDOUT' ||
+    //         /timeout/i.test(error?.message || '')
+    //       logger.error(
+    //         `InvokeLocalauthority failed: code=${code}, status=${status}, statusText=${statusText}, timeout=${isTimeout}`
+    //       )
+    //       // If proxy misconfig causes hang, log proxy settings presence
+
+    //       return { data: [] }
+    //     }
+    //   }
     async function Invokelocalauthority() {
-      try {
-        logger.info('Enters the InvokeLocalauthority')
-
-        const apiKey = config.get('laqmAPIkey')
-        const partnerId = config.get('laqmAPIPartnerId')
-        if (!apiKey || !partnerId) {
-          logger.error(
-            `Missing configuration: APIKey=${!!apiKey}, PartnerId=${!!partnerId}`
-          )
-          return { data: [] }
+      const laqmurl =
+        'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
+      const apiKey = config.get('laqmAPIkey')
+      const partnerId = config.get('laqmAPIPartnerId')
+      // const laqmurl = config.get('laqmurl')
+      const optionslaqm = {
+        method: 'get',
+        headers: {
+          'Content-Type': 'text/json',
+          preserveWhitespace: true,
+          'X-API-Key': apiKey,
+          'X-API-PartnerId': partnerId
         }
-
-        const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
-        logger.info(`Request started url: ${url}`)
-
-        // Keep-alive agents (important in CDP)
-        const httpsAgent = new https.Agent({ keepAlive: true })
-        const httpAgent = new http.Agent({ keepAlive: true })
-
-        // Optional proxy support from config/env (CDP)
-        const proxy =
-          config.get('httpsProxy') ||
-          process.env.HTTPS_PROXY ||
-          process.env.HTTP_PROXY ||
-          undefined
-
-        const response = await axios.get(url, {
-          headers: {
-            'X-API-Key': apiKey,
-            'X-API-PartnerId': partnerId,
-            Accept: 'application/json',
-            'User-Agent': 'AQIE-DataSelector/1.0'
-          },
-          timeout: 30000, // 30s
-          maxRedirects: 3,
-          // If your platform needs proxy, set it; otherwise leave undefined
-          proxy: proxy
-            ? {
-                protocol: proxy.startsWith('https') ? 'https' : 'http',
-                host: new URL(proxy).hostname,
-                port: Number(
-                  new URL(proxy).port || (proxy.startsWith('https') ? 443 : 80)
-                )
-              }
-            : false,
-          // Agents
-          httpsAgent,
-          httpAgent,
-          // Expect JSON directly
-          responseType: 'json',
-          transitional: { clarifyTimeoutError: true }
-        })
-
-        // Axios returns { data, status, statusText, headers }
-        const { status, data } = response
-        logger.info(`LAQM status: ${status}`)
-
-        if (status !== 200 || !data) {
-          logger.error(
-            `Unexpected response: status=${status}, hasData=${!!data}`
-          )
-          return { data: [] }
-        }
-
-        // Validate shape
-        if (!data || typeof data !== 'object') {
-          logger.error(`Invalid response structure: ${typeof data}`)
-          return { data: [] }
-        }
-        if (!Array.isArray(data.data)) {
-          logger.warn('No data array in response')
-          return { data: [] }
-        }
-
-        logger.info(
-          `Successfully fetched local authorities: ${data.data.length}`
-        )
-        return data
-      } catch (error) {
-        // Normalize axios/network errors for CDP diagnostics
-        const status = error?.response?.status
-        const statusText = error?.response?.statusText
-        const code = error?.code
-        const isTimeout =
-          code === 'ECONNABORTED' ||
-          code === 'ETIMEDOUT' ||
-          /timeout/i.test(error?.message || '')
-        logger.error(
-          `InvokeLocalauthority failed: code=${code}, status=${status}, statusText=${statusText}, timeout=${isTimeout}`
-        )
-        // If proxy misconfig causes hang, log proxy settings presence
-        const hasProxy = Boolean(
-          config.get('httpsProxy') ||
-            process.env.HTTPS_PROXY ||
-            process.env.HTTP_PROXY
-        )
-        logger.error(`Proxy configured: ${hasProxy}`)
+      }
+      // console.log('laqmurl', laqmurl)
+      const [statuslaqm, responselaqm] = await catchProxyFetchError(
+        laqmurl,
+        optionslaqm
+      )
+      // console.log('statuslaqm', statuslaqm)
+      //  console.log('responselaqm', responselaqm)
+      if (statuslaqm !== 200) {
         return { data: [] }
       }
-    }
 
+      return responselaqm
+    }
     const laResult = await Invokelocalauthority()
     // console.log('local authority result', laResult)
 
-    // Extract local authority names for autocomplete
+    // Extract local authority names for autocomplet
     let localAuthorityNames = []
     if (laResult?.data && Array.isArray(laResult.data)) {
       localAuthorityNames = laResult.data
