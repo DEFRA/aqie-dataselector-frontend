@@ -15,13 +15,15 @@ export const airpollutantController = {
         'pollutant-group': selectedGroup,
         selectedPollutants: pollutantsData
       } = request.payload || {}
-
-      // console.log('Form data received:', {
-      //   selectedMode,
-      //   selectedGroup,
-      //   pollutantsData
-      // })
-
+      // let pollutantsData_;
+      // if(selectedMode=='specific'){
+      //  pollutantsData=request.yar.get('selectedpollutants_specific')
+      // }else{
+      //   pollutantsData=request.yar.get('selectedpollutants_group')
+      // }
+      // console.log('selectedMode:', selectedMode)
+      // console.log('Received pollutants data:', pollutantsData)
+      // console.log('selectedGroup:', selectedGroup)
       // Define allowed pollutants for validation
       const allowedPollutants = [
         'Fine particulate matter (PM2.5)',
@@ -58,7 +60,8 @@ export const airpollutantController = {
         )
       }
 
-      let finalPollutants = []
+      let finalPollutantsGr = []
+      let finalPollutantsSp = []
       const errors = []
 
       // VALIDATION 1: Check if mode is selected
@@ -98,80 +101,60 @@ export const airpollutantController = {
             ]
           }
 
-          finalPollutants = groups[selectedGroup] || []
-          // console.log(
-          //   `Selected group '${selectedGroup}' with pollutants:`,
-          //   finalPollutants
-          // )
+          finalPollutantsGr = groups[selectedGroup] || []
         }
       }
       // Handle specific pollutants selection
       else if (selectedMode === 'specific') {
-        if (pollutantsData) {
-          try {
-            // Try to parse JSON if it's a string
-            if (typeof pollutantsData === 'string') {
-              finalPollutants = JSON.parse(pollutantsData)
-            } else if (Array.isArray(pollutantsData)) {
-              finalPollutants = pollutantsData
-            }
-            // console.log('Parsed specific pollutants:', finalPollutants)
+        // Prefer payload, fallback to legacy name, then session
+        const rawFromPayload =
+          pollutantsData ??
+          request.payload?.['selected-pollutants'] ??
+          request.yar.get('selectedpollutants_specific')
 
-            // VALIDATION 3: Validate each selected pollutant
-            const invalidPollutants = []
-            const duplicates = []
-            const seen = new Set()
-
-            finalPollutants.forEach((pollutant) => {
-              const trimmed = (pollutant || '').trim()
-
-              // Check if pollutant is valid
-              if (!isAllowed(trimmed)) {
-                invalidPollutants.push(trimmed)
-              }
-
-              // Check for duplicates
-              const lowerPollutant = trimmed.toLowerCase()
-              if (seen.has(lowerPollutant)) {
-                duplicates.push(trimmed)
-              } else {
-                seen.add(lowerPollutant)
-              }
-            })
-
-            // Add validation errors
-            if (invalidPollutants.length > 0) {
-              errors.push({
-                text: `Invalid pollutant(s): ${invalidPollutants.join(', ')}. Select from the allowed list.`,
-                href: '#my-autocomplete'
-              })
-            }
-
-            if (duplicates.length > 0) {
-              errors.push({
-                text: `Duplicate pollutant(s): ${duplicates.join(', ')} have already been added.`,
-                href: '#my-autocomplete'
-              })
-            }
-
-            // VALIDATION 4: Check maximum limit (10 pollutants)
-            if (finalPollutants.length > 10) {
-              errors.push({
-                text: 'You can add up to 10 pollutants maximum.',
-                href: '#my-autocomplete'
-              })
-            }
-          } catch (error) {
-            // console.error('Error parsing pollutants data:', error)
-            errors.push({
-              text: 'Invalid pollutants data format.',
-              href: '#my-autocomplete'
-            })
+        try {
+          if (typeof rawFromPayload === 'string') {
+            // JSON string from hidden input
+            finalPollutantsSp = JSON.parse(rawFromPayload)
+          } else if (Array.isArray(rawFromPayload)) {
+            finalPollutantsSp = rawFromPayload
+          } else {
+            finalPollutantsSp = []
           }
+        } catch {
+          finalPollutantsSp = []
+          errors.push({
+            text: 'Invalid pollutants data format.',
+            href: '#my-autocomplete'
+          })
         }
 
-        // VALIDATION 5: Check if at least one pollutant is added in specific mode
-        if (!finalPollutants || finalPollutants.length === 0) {
+        // VALIDATION
+        const invalidPollutants = []
+        const duplicates = []
+        const seen = new Set()
+
+        finalPollutantsSp.forEach((pollutant) => {
+          const trimmed = (pollutant || '').trim()
+          if (!isAllowed(trimmed)) invalidPollutants.push(trimmed)
+          const lower = trimmed.toLowerCase()
+          if (seen.has(lower)) duplicates.push(trimmed)
+          else seen.add(lower)
+        })
+
+        if (invalidPollutants.length > 0) {
+          errors.push({
+            text: `Invalid pollutant(s): ${invalidPollutants.join(', ')}. Select from the allowed list.`,
+            href: '#my-autocomplete'
+          })
+        }
+        if (duplicates.length > 0) {
+          errors.push({
+            text: `Duplicate pollutant(s): ${duplicates.join(', ')} have already been added.`,
+            href: '#my-autocomplete'
+          })
+        }
+        if (finalPollutantsSp.length === 0) {
           errors.push({
             text: 'Please add at least one pollutant',
             href: '#my-autocomplete'
@@ -181,8 +164,6 @@ export const airpollutantController = {
 
       // If there are validation errors, return to form with errors
       if (errors.length > 0) {
-        // console.log('Validation errors found:', errors)
-
         // Check for no-JS indicators
         const isNoJS =
           request.query?.nojs === 'true' ||
@@ -192,6 +173,10 @@ export const airpollutantController = {
         const templatePath = isNoJS
           ? 'add_pollutant/index_nojs'
           : 'add_pollutant/index'
+
+        // Use pollutants list based on selected mode
+        const selectedForView =
+          selectedMode === 'group' ? finalPollutantsGr : finalPollutantsSp
 
         return h.view(templatePath, {
           pageTitle: englishNew.custom.pageTitle,
@@ -208,21 +193,35 @@ export const airpollutantController = {
           // Preserve form state
           selectedMode,
           selectedGroup,
-          selectedPollutants: finalPollutants
+          selectedPollutants: selectedForView
         })
       }
 
-      // Store in session
-      request.yar.set('selectedPollutants', finalPollutants)
-      request.yar.set('selectedPollutantMode', selectedMode)
-      if (selectedGroup) {
-        request.yar.set('selectedPollutantGroup', selectedGroup)
+      // Clear session when switching modes
+      const previousMode = request.yar.get('selectedPollutantMode')
+      if (previousMode && previousMode !== selectedMode) {
+        // Wipe prior selections regardless of mode
+        request.yar.set('selectedPollutants', [])
+        request.yar.set('selectedPollutantGroup', '')
       }
 
-      // console.log('Final pollutants stored in session:', finalPollutants)
-      // console.log('Selected mode:', selectedMode)
+      // Decide final pollutants based on mode
+      const finalPollutants =
+        selectedMode === 'group' ? finalPollutantsGr : finalPollutantsSp
 
-      // Redirect to customdataset without pollutants in URL
+      // Store in session for the current mode
+      request.yar.set('selectedPollutants', finalPollutants)
+      request.yar.set('selectedPollutantMode', selectedMode)
+      if (selectedMode === 'group') {
+        request.yar.set('selectedPollutantGroup', selectedGroup || '')
+        request.yar.set('selectedpollutants_group', finalPollutantsGr)
+        request.yar.set('selectedpollutants_specific', [])
+      } else {
+        request.yar.set('selectedPollutantGroup', '')
+        request.yar.set('selectedpollutants_specific', finalPollutantsSp)
+        request.yar.set('selectedpollutants_group', [])
+      }
+
       return h.redirect('/customdataset')
     }
 
@@ -239,10 +238,13 @@ export const airpollutantController = {
     request.yar.set('yearselected', new Date().getFullYear().toString())
     request.yar.set('selectedYear', new Date().getFullYear().toString())
 
-    // Get existing pollutants and mode from session to pre-populate form
+    // Pre-populate strictly from session
     const existingPollutants = request.yar.get('selectedPollutants') || []
     const existingMode = request.yar.get('selectedPollutantMode') || ''
-    const existingGroup = request.yar.get('selectedPollutantGroup') || ''
+    const existingGroup =
+      existingMode === 'group'
+        ? request.yar.get('selectedPollutantGroup') || ''
+        : ''
 
     // Check for no-JS indicators
     const isNoJS =
@@ -260,7 +262,6 @@ export const airpollutantController = {
       texts: englishNew.custom.texts,
       displayBacklink: true,
       hrefq: backUrl,
-      // Pre-populate form with existing selections
       selectedPollutants: existingPollutants,
       selectedMode: existingMode,
       selectedGroup: existingGroup
