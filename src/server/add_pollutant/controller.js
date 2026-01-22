@@ -211,6 +211,7 @@ export const airpollutantController = {
 
       // Store in session for the current mode
       request.yar.set('selectedPollutants', finalPollutants)
+
       request.yar.set('selectedPollutantMode', selectedMode)
       if (selectedMode === 'group') {
         request.yar.set('selectedPollutantGroup', selectedGroup || '')
@@ -235,8 +236,6 @@ export const airpollutantController = {
     request.yar.set('osnameapiresult', '')
     request.yar.set('selectedLocation', '')
     request.yar.set('nooflocation', '')
-    request.yar.set('yearselected', new Date().getFullYear().toString())
-    request.yar.set('selectedYear', new Date().getFullYear().toString())
 
     // Pre-populate strictly from session
     const existingPollutants = request.yar.get('selectedPollutants') || []

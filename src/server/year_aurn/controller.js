@@ -27,12 +27,18 @@ export const yearController = {
 
     // Handle GET request
     if (request.method === 'get') {
-      // Get existing time period from session for form pre-population
       const existingTimePeriod = request.yar.get('selectedTimePeriod') || ''
-
-      // Parse existing time period to determine form values
+      // const selectedYear = request.yar.get('selectedYear') || '' // do NOT default to current year
       const formData = {}
-      if (existingTimePeriod) {
+
+      // Prefer explicit "Any year" only if it exists
+      // if (selectedYear) {
+      //   formData.time = 'any'
+      //   formData['any-year-input'] = selectedYear
+      // }
+
+      // Only parse range/YTD if not already "any"
+      if (!formData.time && existingTimePeriod) {
         const currentYear = new Date().getFullYear()
         const today = new Date()
         const formattedToday = new Intl.DateTimeFormat('en-GB', {
@@ -44,42 +50,25 @@ export const yearController = {
         if (existingTimePeriod === `1 January to ${formattedToday}`) {
           formData.time = 'ytd'
         } else if (existingTimePeriod.includes(' to ')) {
-          const parts = existingTimePeriod.split(' to ')
-          if (parts.length === 2) {
-            const startPart = parts[0].trim()
-            const endPart = parts[1].trim()
+          const [startPartRaw, endPartRaw] = existingTimePeriod.split(' to ')
+          const startPart = (startPartRaw || '').trim()
+          const endPart = (endPartRaw || '').trim()
 
-            // Check if it's a single year
-            if (
-              startPart.startsWith('1 January') &&
-              endPart.includes('31 December')
-            ) {
-              const yearMatch = endPart.match(/31 December (\d{4})/)
-              if (yearMatch) {
-                formData.time = 'any'
-                formData['any-year-input'] = yearMatch[1]
-              }
-            }
-            // Check if it's a year range
-            else if (
-              startPart.match(/1 January (\d{4})/) &&
-              (endPart.includes('31 December') || endPart.includes(currentYear))
-            ) {
-              const startYearMatch = startPart.match(/1 January (\d{4})/)
-              let endYear
-              if (endPart.includes('31 December')) {
-                const endYearMatch = endPart.match(/31 December (\d{4})/)
-                endYear = endYearMatch ? endYearMatch[1] : null
-              } else {
-                endYear = currentYear.toString()
-              }
+          const startYearMatch = startPart.match(/1 January (\d{4})/)
+          const endYearDecMatch = endPart.match(/31 December (\d{4})/)
+          const startYear = startYearMatch ? startYearMatch[1] : null
+          const endYearDec = endYearDecMatch ? endYearDecMatch[1] : null
+          const endIsToday = endPart === formattedToday
 
-              if (startYearMatch && endYear) {
-                formData.time = 'range'
-                formData['range-start-year'] = startYearMatch[1]
-                formData['range-end-year'] = endYear
-              }
-            }
+          if (startYear && endYearDec && startYear === endYearDec) {
+            formData.time = 'any'
+            formData['any-year-input'] = endYearDec
+          } else if (startYear && (endYearDec || endIsToday)) {
+            formData.time = 'range'
+            formData['range-start-year'] = startYear
+            formData['range-end-year'] = endIsToday
+              ? currentYear.toString()
+              : endYearDec || ''
           }
         }
       }
@@ -96,6 +85,39 @@ export const yearController = {
 
     // Handle POST request - Server-side validation and processing
     if (request.method === 'post') {
+      const {
+        time,
+        'any-year-input': anyYear,
+        'range-start-year': rs,
+        'range-end-year': re
+      } = request.payload || {}
+
+      if (time === 'any' && anyYear) {
+        const period = `1 January ${anyYear} to 31 December ${anyYear}`
+        request.yar.set('selectedTimePeriod', period)
+        request.yar.set('selectedYear', String(anyYear))
+        return h.redirect('/customdataset')
+      }
+
+      if (time === 'range' && rs && re) {
+        const period = `1 January ${rs} to 31 December ${re}`
+        request.yar.set('selectedTimePeriod', period)
+        request.yar.set('selectedYear', '') // clear single year
+        return h.redirect('/customdataset')
+      }
+
+      if (time === 'ytd' && rs) {
+        const today = new Intl.DateTimeFormat('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(new Date())
+        const period = `1 January ${rs} to ${today}`
+        request.yar.set('selectedTimePeriod', period)
+        request.yar.set('selectedYear', '') // clear single year
+        return h.redirect('/customdataset')
+      }
+
       const payload = request.payload
       const errors = { list: [], details: {} }
 

@@ -184,8 +184,6 @@
 </div>
 
 <script>
-console.log('🚀 LOCATION AURN - Clean UI Only');
-
 document.addEventListener('DOMContentLoaded', function() {
   // Get server data
   const serverData = {{ localAuthorityNames | dump | safe }};
@@ -333,43 +331,68 @@ document.addEventListener('DOMContentLoaded', function() {
     count = rows.length;
   }
   
+  // Add: validate against allowed list (server-provided names)
+  function isValidAuthority(name) {
+    const n = (name || '').trim().toLowerCase()
+    return Array.isArray(autocompleteSource) &&
+           autocompleteSource.some(item => String(item).trim().toLowerCase() === n)
+  }
+
   function addLocationToTable(value) {
-    if (!tableBody || !value.trim()) return;
-    
-    const trimmedValue = value.trim();
-    const lowerValue = trimmedValue.toLowerCase();
-    
+    if (!tableBody || !value.trim()) return
+
+    const trimmedValue = value.trim()
+    const lowerValue = trimmedValue.toLowerCase()
+
+    // Add: block values not from list and show top summary (reuse duplicate-error)
+    if (!isValidAuthority(trimmedValue)) {
+      const duplicateError = document.getElementById('duplicate-error')
+      const maxLimitError = document.getElementById('max-limit-error')
+      if (duplicateError) {
+        const errorLink = duplicateError.querySelector('a')
+        if (errorLink) errorLink.textContent = 'Select local authorities from the list'
+        duplicateError.hidden = false
+        duplicateError.focus()
+        duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      if (maxLimitError) maxLimitError.hidden = true
+      return
+    }
+
     // Check for maximum limit (10 local authorities)
     if (tableBody.children.length >= 10) {
-      const maxLimitError = document.getElementById('max-limit-error');
+      const maxLimitError = document.getElementById('max-limit-error')
       if (maxLimitError) {
-        maxLimitError.hidden = false;
-        maxLimitError.focus();
+        maxLimitError.hidden = false
+        maxLimitError.focus()
+        maxLimitError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-      // Hide other errors
-      const duplicateError = document.getElementById('duplicate-error');
-      if (duplicateError) duplicateError.hidden = true;
-      return; // Don't add more than 10
+      const duplicateError = document.getElementById('duplicate-error')
+      if (duplicateError) duplicateError.hidden = true
+      return
     }
-    
+
     // Check for duplicates
     if (addedLocalAuthorities.has(lowerValue)) {
-      const duplicateError = document.getElementById('duplicate-error');
+      const duplicateError = document.getElementById('duplicate-error')
       if (duplicateError) {
-        duplicateError.hidden = false;
-        duplicateError.focus();
+        // Reset message for duplicate case
+        const errorLink = duplicateError.querySelector('a')
+        if (errorLink) errorLink.textContent = 'This local authority has already been added'
+        duplicateError.hidden = false
+        duplicateError.focus()
+        duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-      // Hide other errors
-      const maxLimitError = document.getElementById('max-limit-error');
-      if (maxLimitError) maxLimitError.hidden = true;
-      return; // Don't add duplicate
+      const maxLimitError = document.getElementById('max-limit-error')
+      if (maxLimitError) maxLimitError.hidden = true
+      return
     }
-    
-    // Hide all error messages if adding valid item
-    const duplicateError = document.getElementById('duplicate-error');
-    if (duplicateError) duplicateError.hidden = true;
-    const maxLimitError = document.getElementById('max-limit-error');
-    if (maxLimitError) maxLimitError.hidden = true;
+
+    // Hide all error messages for valid add
+    const duplicateError = document.getElementById('duplicate-error')
+    if (duplicateError) duplicateError.hidden = true
+    const maxLimitError = document.getElementById('max-limit-error')
+    if (maxLimitError) maxLimitError.hidden = true
     
     // Add to tracking set
     addedLocalAuthorities.add(lowerValue);
