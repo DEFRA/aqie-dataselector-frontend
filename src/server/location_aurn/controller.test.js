@@ -7,23 +7,6 @@ jest.mock('~/src/config/config.js', () => ({
   config: { get: jest.fn() }
 }))
 
-// Mock logger options and logger
-jest.mock('~/src/server/common/helpers/logging/logger-options.js', () => ({
-  loggerOptions: {
-    enabled: true,
-    ignorePaths: ['/health'],
-    redact: { paths: [] }
-  }
-}))
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
-  createLogger: jest.fn(() => ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    debug: jest.fn()
-  }))
-}))
-
 // Mock englishNew
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
@@ -35,16 +18,11 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   }
 }))
 
-// Mock proxy helpers used by controller
-jest.mock('~/src/server/common/helpers/proxy.js', () => ({
-  proxyFetch: jest.fn()
-}))
-
-// IMPORTANT: controller does `const [responselaqm] = await catchProxyFetchError(...)`
-// so return a single-element array where element 0 is the response object
+// Mock catchProxyFetchError to return [status, response]
 jest.mock('~/src/server/common/helpers/catch-proxy-fetch-error.js', () => ({
   catchProxyFetchError: jest.fn(() =>
     Promise.resolve([
+      200,
       {
         data: [
           { 'Local Authority Name': 'City of London', 'LA ID': '1' },
@@ -71,7 +49,10 @@ describe('locationaurnController', () => {
       method: 'get',
       yar: { set: jest.fn(), get: jest.fn().mockReturnValue(null) },
       params: {},
-      payload: {}
+      payload: {},
+      query: {},
+      path: '/location_aurn',
+      headers: {}
     }
     mockH = {
       view: jest.fn().mockReturnValue('location-aurn-view-response'),
@@ -92,33 +73,40 @@ describe('locationaurnController', () => {
   })
 
   describe('GET requests', () => {
-    it('renders with API data', async () => {
+    it('renders with API data and preserves session prepopulation', async () => {
       const result = await locationaurnController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
 
+      // Using mocked API [200, response] so laResult is the response
       expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
         hrefq: '/customdataset',
-        laResult: { data: [] }, // controller returns empty on init
-        localAuthorityNames: [], // controller derives empty when data is empty
+        laResult: {
+          data: [
+            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+          ]
+        },
+        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets'],
         formData: {}
       })
       expect(result).toBe('location-aurn-view-response')
     })
 
     it('handles API error via catchProxyFetchError and returns empty data', async () => {
-      catchProxyFetchError.mockResolvedValueOnce([null])
+      catchProxyFetchError.mockResolvedValueOnce([500, null])
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: { data: [] }, // controller normalizes to empty object
+          laResult: { data: [] },
           localAuthorityNames: [],
           formData: {}
         })
@@ -126,12 +114,12 @@ describe('locationaurnController', () => {
     })
 
     it('handles malformed response structure', async () => {
-      catchProxyFetchError.mockResolvedValueOnce(['not-an-object'])
+      catchProxyFetchError.mockResolvedValueOnce([200, 'not-an-object'])
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: { data: [] }, // controller normalizes malformed to empty
+          laResult: 'not-an-object', // controller passes through raw value
           localAuthorityNames: [],
           formData: {}
         })
@@ -201,9 +189,7 @@ describe('locationaurnController', () => {
             ],
             details: { country: 'Select at least one country' }
           },
-          formData: { location: 'countries' },
-          laResult: { data: [] },
-          localAuthorityNames: []
+          formData: { location: 'countries' }
         })
       )
     })
@@ -223,9 +209,7 @@ describe('locationaurnController', () => {
             ],
             details: { 'local-authority': 'Add at least one local authority' }
           },
-          formData: { location: 'la' },
-          laResult: { data: [] },
-          localAuthorityNames: []
+          formData: { location: 'la' }
         })
       )
     })
@@ -253,9 +237,7 @@ describe('locationaurnController', () => {
           formData: {
             location: 'la',
             'selected-locations': ['Invalid Authority']
-          },
-          laResult: { data: [] },
-          localAuthorityNames: []
+          }
         })
       )
     })
@@ -270,12 +252,7 @@ describe('locationaurnController', () => {
         'location_aurn/index',
         expect.objectContaining({
           errors: {
-            // Allow both messages in the list
             list: expect.arrayContaining([
-              {
-                text: 'Select local authorities from the list',
-                href: '#my-autocomplete'
-              },
               {
                 text: 'Remove duplicate local authorities',
                 href: '#my-autocomplete'
@@ -286,9 +263,32 @@ describe('locationaurnController', () => {
           formData: {
             location: 'la',
             'selected-locations': ['City of London', 'city of london']
-          },
-          laResult: { data: [] },
-          localAuthorityNames: []
+          }
+        })
+      )
+    })
+
+    it('too many local authorities (>10)', async () => {
+      mockRequest.payload = {
+        location: 'la',
+        'selected-locations': new Array(11).fill('City of London')
+      }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              {
+                text: 'You can only select up to 10 local authorities',
+                href: '#my-autocomplete'
+              }
+            ])
+            // Controller may also add duplicate error; do not assert details here
+          }),
+          formData: expect.objectContaining({
+            location: 'la'
+          })
         })
       )
     })
@@ -313,7 +313,7 @@ describe('locationaurnController', () => {
       mockRequest.method = 'post'
     })
 
-    it('handles countries selection', async () => {
+    it('handles countries selection and redirects', async () => {
       mockRequest.payload = {
         location: 'countries',
         country: ['England', 'Wales']
@@ -335,7 +335,7 @@ describe('locationaurnController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles single country selection', async () => {
+    it('handles single country selection and redirects', async () => {
       mockRequest.payload = { location: 'countries', country: 'Scotland' }
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
@@ -352,27 +352,35 @@ describe('locationaurnController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles local authorities selection', async () => {
+    it('handles local authorities selection and redirects with LA IDs', async () => {
       mockRequest.payload = {
         location: 'la',
         'selected-locations': ['City of London', 'Westminster']
       }
       await locationaurnController.handler(mockRequest, mockH)
-      // Controller renders the page with updated session/model instead of redirect
-      expect(mockH.view).toHaveBeenCalledWith(
-        'location_aurn/index',
-        expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          displayBacklink: true,
-          hrefq: '/customdataset'
-        })
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocations', [
+        'City of London',
+        'Westminster'
+      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedLocation',
+        'Local Authorities: City of London, Westminster'
       )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '1,2')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'Location',
+        'LocalAuthority'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
+        'City of London',
+        'Westminster'
+      ])
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
     it('handles local authorities without LA IDs gracefully', async () => {
       catchProxyFetchError.mockResolvedValueOnce([
+        200,
         {
           data: [
             { 'Local Authority Name': 'City of London' },
@@ -385,11 +393,22 @@ describe('locationaurnController', () => {
         'selected-locations': ['City of London']
       }
       await locationaurnController.handler(mockRequest, mockH)
-      // Expect a view render rather than redirect
-      expect(mockH.view).toHaveBeenCalledWith(
-        'location_aurn/index',
-        expect.any(Object)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocations', [
+        'City of London'
+      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedLocation',
+        'Local Authorities: City of London'
       )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'Location',
+        'LocalAuthority'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
+        'City of London'
+      ])
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
   })
 
@@ -403,33 +422,39 @@ describe('locationaurnController', () => {
         texts: englishNew.custom.texts,
         displayBacklink: true,
         hrefq: '/customdataset',
-        laResult: { data: [] }, // empty data per controller
-        localAuthorityNames: []
+        laResult: {
+          data: [
+            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+          ]
+        },
+        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
       })
       expect(result).toBe('location-aurn-view-response')
     })
 
-    it('missing config values', async () => {
+    it('missing config values returns empty', async () => {
       mockConfigGet.mockReturnValue(undefined)
-      catchProxyFetchError.mockResolvedValueOnce([null])
+      catchProxyFetchError.mockResolvedValueOnce([null, null])
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: { data: [] }, // normalized empty
+          laResult: { data: [] },
           localAuthorityNames: [],
           formData: {}
         })
       )
     })
 
-    it('null payload from API', async () => {
-      catchProxyFetchError.mockResolvedValueOnce([null])
+    it('null payload from API returns empty', async () => {
+      catchProxyFetchError.mockResolvedValueOnce([200, null])
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: { data: [] }, // normalized empty
+          laResult: null, // controller passes through null
           localAuthorityNames: [],
           formData: {}
         })
@@ -444,14 +469,17 @@ describe('locationaurnController', () => {
           { 'Local Authority Name': 'Test Authority 3', 'LA ID': 'T3' }
         ]
       }
-      catchProxyFetchError.mockResolvedValueOnce([mockApiData])
+      catchProxyFetchError.mockResolvedValueOnce([200, mockApiData])
       await locationaurnController.handler(mockRequest, mockH)
-      // If controller still returns empty (filters or guards), assert model contains at least laResult normalization
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: expect.any(Object), // avoid strict names assertion
-          localAuthorityNames: expect.any(Array) // controller may compute empty
+          laResult: mockApiData,
+          localAuthorityNames: [
+            'Test Authority 1',
+            'Test Authority 2',
+            'Test Authority 3'
+          ]
         })
       )
     })

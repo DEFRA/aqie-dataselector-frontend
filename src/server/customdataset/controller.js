@@ -257,7 +257,33 @@ export const customdatasetController = {
         //   return error // Rethrow the error so it can be handled appropriately
         // }
       }
-      // console.log(' selectedpollutant', request.yar.get('selectedpollutant'))
+      const mode = request.yar.get('selectedPollutantMode') || ''
+      let selectedpollutant = []
+
+      if (mode === 'specific') {
+        selectedpollutant =
+          request.yar.get('selectedpollutants_specific') ??
+          request.yar.get('selectedPollutants') ??
+          []
+      } else if (mode === 'group') {
+        selectedpollutant =
+          request.yar.get('selectedpollutants_group') ??
+          request.yar.get('selectedPollutants') ??
+          []
+      } else {
+        selectedpollutant = request.yar.get('selectedPollutants') ?? []
+      }
+
+      // Coerce to array
+      if (typeof selectedpollutant === 'string') {
+        try {
+          selectedpollutant = JSON.parse(selectedpollutant)
+        } catch {
+          selectedpollutant = []
+        }
+      }
+      if (!Array.isArray(selectedpollutant)) selectedpollutant = []
+
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,

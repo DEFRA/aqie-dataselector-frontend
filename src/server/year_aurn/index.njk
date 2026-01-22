@@ -58,7 +58,25 @@
           <span class="govuk-visually-hidden">Error:</span> {{ errors.details['any-year'] }}
         </p>
       {% endif %}
-      <input class="govuk-input govuk-input--width-4{% if errors.details['any-year'] %} govuk-input--error{% endif %}" id="any-year-input" name="any-year-input" type="text" inputmode="numeric" aria-describedby="any-year-hint{% if errors.details['any-year'] %} any-year-input-error{% endif %}" value="{{ formData['any-year-input'] or '' }}">
+
+      {# Set value only if user previously chose "Any year" #}
+      {% set anyYearValue = '' %}
+           {% if formData and formData.time == 'any' and formData['any-year-input'] %}
+        {% set anyYearValue = formData['any-year-input'] %}
+      {% endif %}
+
+      {{ govukInput({
+        id: "any-year-input",
+        name: "any-year-input",
+        classes: "govuk-input govuk-input--width-4",
+        label: { text: "Year" },
+        inputmode: "numeric",
+        pattern: "[0-9]*",
+        value: anyYearValue
+      }) }}
+
+{# If using plain input #}
+{# <input id="any-year-input" name="any-year-input" class="govuk-input govuk-input--width-4" value="{{ anyYearValue }}"> #}
     </div>
   </div>
 
