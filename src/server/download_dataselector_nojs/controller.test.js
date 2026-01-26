@@ -124,10 +124,7 @@ describe('downloadDataselectornojsController', () => {
         selectedyear: '2023',
         selectedlocation: ['London'],
         nooflocation: 0,
-        selectedpollutant: ['NO2'],
-        downloadaurnresult: undefined,
-        yearrange: undefined,
-        finalyear: undefined
+        selectedpollutant: ['NO2']
       }
       return values[key]
     })
@@ -398,10 +395,7 @@ describe('downloadDataselectornojsController', () => {
             selectedyear: '2023',
             selectedlocation: ['London'],
             nooflocation: 0,
-            selectedpollutant: ['NO2'],
-            downloadaurnresult: undefined,
-            yearrange: undefined,
-            finalyear: undefined
+            selectedpollutant: ['NO2']
           }
           return values[key]
         })
@@ -434,10 +428,7 @@ describe('downloadDataselectornojsController', () => {
             selectedyear: '2024',
             selectedlocation: ['Manchester'],
             nooflocation: '0',
-            selectedpollutant: ['PM10'],
-            downloadaurnresult: undefined,
-            yearrange: undefined,
-            finalyear: undefined
+            selectedpollutant: ['PM10']
           }
           return values[key]
         })
@@ -470,10 +461,7 @@ describe('downloadDataselectornojsController', () => {
             selectedyear: '2025',
             selectedlocation: ['Birmingham'],
             nooflocation: undefined,
-            selectedpollutant: ['O3'],
-            downloadaurnresult: undefined,
-            yearrange: undefined,
-            finalyear: undefined
+            selectedpollutant: ['O3']
           }
           return values[key]
         })
@@ -506,10 +494,7 @@ describe('downloadDataselectornojsController', () => {
             selectedyear: '2022',
             selectedlocation: ['Leeds'],
             nooflocation: null,
-            selectedpollutant: ['CO'],
-            downloadaurnresult: undefined,
-            yearrange: undefined,
-            finalyear: undefined
+            selectedpollutant: ['CO']
           }
           return values[key]
         })
@@ -751,6 +736,76 @@ describe('downloadDataselectornojsController', () => {
       expect(mockRequest.yar.get).toHaveBeenCalledWith('downloadaurnresult')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('yearrange')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
+    })
+  })
+
+  describe('GET requests', () => {
+    it('renders download view on GET with all session values', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          downloadaurnresult: 'https://api.example.com/download/77777',
+          nooflocation: 6,
+          yearrange: 'Multiple',
+          finalyear: '2019, 2020, 2021'
+        }
+        return values[key]
+      })
+
+      const result = downloadDataselectornojsController.handler(
+        mockRequest,
+        mockH
+      )
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        {
+          pageTitle: 'Download Data Selector',
+          heading: 'Download Your Selected Data',
+          texts: ['Review your selection', 'Confirm and download'],
+          downloadaurnresult: 'https://api.example.com/download/77777',
+          stationcount: 6,
+          yearrange: 'Multiple',
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: ['2019', '2020', '2021']
+        }
+      )
+      expect(result).toBe('download-dataselector-nojs-view-response')
+    })
+
+    it('renders download view on GET with undefined finalyear as empty array', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          downloadaurnresult: 'https://api.example.com/download/99999',
+          nooflocation: 3,
+          yearrange: 'Single',
+          finalyear: undefined
+        }
+        return values[key]
+      })
+
+      const result = downloadDataselectornojsController.handler(
+        mockRequest,
+        mockH
+      )
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        {
+          pageTitle: 'Download Data Selector',
+          heading: 'Download Your Selected Data',
+          texts: ['Review your selection', 'Confirm and download'], // fix expected texts
+          downloadaurnresult: 'https://api.example.com/download/99999',
+          stationcount: 3,
+          yearrange: 'Single',
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: []
+        }
+      )
+      expect(result).toBe('download-dataselector-nojs-view-response')
     })
   })
 })

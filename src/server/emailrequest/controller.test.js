@@ -95,7 +95,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/download_dataselector' // Updated to match controller
+        hrefq: '/download_dataselectornojs' // match controller
       })
       expect(mockH.view).toHaveBeenCalled()
     })
@@ -110,7 +110,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/download_dataselector' // Updated to match controller
+        hrefq: '/download_dataselectornojs' // match controller
       })
       expect(mockH.view).toHaveBeenCalled()
     })
@@ -132,7 +132,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter an email address',
           email: undefined
         })
@@ -149,7 +149,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter an email address',
           email: null
         })
@@ -166,7 +166,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter an email address',
           email: ''
         })
@@ -183,7 +183,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter a valid email address',
           email: 123
         })
@@ -200,7 +200,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter a valid email address',
           email: 'invalidemailformat'
         })
@@ -217,7 +217,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter a valid email address',
           email: 'test@'
         })
@@ -234,7 +234,7 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselector', // Updated to match controller
+          hrefq: '/download_dataselectornojs', // match controller
           error: 'Please enter a valid email address',
           email: 'test@domain'
         })
@@ -471,7 +471,7 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          hrefq: '/download_dataselector' // Updated to match controller
+          hrefq: '/download_dataselectornojs' // match controller
         })
       )
     })
@@ -485,7 +485,7 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          hrefq: '/download_dataselector' // Updated to match controller
+          hrefq: '/download_dataselectornojs' // match controller
         })
       )
     })
@@ -637,7 +637,7 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/download_dataselector' // Updated to match controller
+        hrefq: '/download_dataselectornojs' // match controller
       })
     })
 
@@ -651,7 +651,7 @@ describe('emailrequestController', () => {
         'emailrequest/index',
         expect.objectContaining({
           error: 'Please enter an email address',
-          hrefq: '/download_dataselector' // Updated to match controller
+          hrefq: '/download_dataselectornojs' // match controller
         })
       )
     })
@@ -667,7 +667,7 @@ describe('emailrequestController', () => {
         'emailrequest/index',
         expect.objectContaining({
           error: 'Please enter a valid email address',
-          hrefq: '/download_dataselector' // Updated to match controller
+          hrefq: '/download_dataselectornojs' // match controller
         })
       )
     })

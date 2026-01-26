@@ -14,6 +14,11 @@ export const downloadDataselectornojs = {
     register(server) {
       server.route([
         {
+          method: 'GET',
+          path: '/download_dataselectornojs',
+          ...downloadDataselectornojsController
+        },
+        {
           method: 'POST',
           path: '/download_dataselectornojs',
           ...downloadDataselectornojsController

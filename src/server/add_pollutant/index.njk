@@ -93,23 +93,31 @@
                   }) }}
                 </div>
 
+                {% set list = selectedPollutants or [] %}
+                {% set isSpecific = (selectedMode == 'specific') %}
+                {% set hasSpecific = isSpecific and (list | length) > 0 %}
+
                 <!-- Dynamic pollutants table -->
-                <table class="govuk-table govuk-!-margin-top-4" id="pollutant-table" {% if not selectedPollutants or selectedPollutants | length == 0 %}hidden{% endif %}>
-                  <caption class="govuk-table__caption govuk-table__caption--m">Added pollutants</caption>
+                <table
+                  class="govuk-table govuk-!-margin-top-4"
+                  id="pollutant-table"
+                  {% if not hasSpecific %}hidden{% endif %}
+                >
+                  {% if hasSpecific %}
+                    <caption class="govuk-table__caption govuk-table__caption--m">Added pollutants</caption>
+                  {% endif %}
                   <tbody class="govuk-table__body">
-                     {% if selectedMode == 'specific' %} 
-                    {% if selectedPollutants and selectedPollutants | length > 0 %}
-                      {% for pollutant in selectedPollutants %}
-                      <tr class="govuk-table__row">
-                        <th scope="row" class="govuk-table__header">Pollutant {{ loop.index }}</th>
-                        <td class="govuk-table__cell">{{ pollutant }}</td>
-                        <td class="govuk-table__cell">
-                          <a href="#" class="govuk-link remove-pollutant">Remove</a>
-                        </td>
-                      </tr>
+                    {% if hasSpecific %}
+                      {% for pollutant in list %}
+                        <tr class="govuk-table__row">
+                          <th scope="row" class="govuk-table__header">Pollutant {{ loop.index }}</th>
+                          <td class="govuk-table__cell">{{ pollutant }}</td>
+                          <td class="govuk-table__cell">
+                            <a href="#" class="govuk-link remove-pollutant">Remove</a>
+                          </td>
+                        </tr>
                       {% endfor %}
                     {% endif %}
-                      {% endif %}
                   </tbody>
                 </table>
               </div>
@@ -192,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- Storage helpers + keys (for session persistence)
   const KEY_SELECTED = 'selectedPollutants';
   const KEY_GROUP = 'selectedPollutantGroup';  
-  const KEY_SPECIFIC = 'selectedPollutantsSpecific';
+  const KEY_SPECIFIC = 'selectedPollutants';
 
   const readJSON = (k, fb = null) => {
     try { return JSON.parse(sessionStorage.getItem(k) || JSON.stringify(fb)); } catch { return fb; }
@@ -255,7 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Helper to update add button text
   function updateAddButtonText() {
     if (!addButton) return;
-    addButton.textContent = tableBody?.children.length > 0 ? 'Add another pollutant' : 'Add pollutant';
+    const hasRows = !!(tableBody && tableBody.children && tableBody.children.length > 0)
+    addButton.textContent = hasRows ? 'Add another pollutant' : 'Add pollutant';
   }
 
   // Helper to update row numbers after removal
@@ -454,6 +463,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Sync table visibility with selected mode and row existence
+  function syncTableVisibility() {
+    const selectedModeRadio = document.querySelector('input[name="pollutant-mode"]:checked')
+    const isSpecific = selectedModeRadio && selectedModeRadio.value === 'specific'
+    const hasRows = !!(tableBody && tableBody.children && tableBody.children.length > 0)
+    if (table) {
+      table.hidden = !(isSpecific && hasRows)
+    }
+  }
+
   // Initialize state from server-rendered pollutants
   if (tableBody) {
     const rows = tableBody.querySelectorAll('tr');
@@ -464,18 +483,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   updateAddButtonText();
+  syncTableVisibility();
 
-  // Handle radio button changes to show/hide conditionals and initialize autocomplete
+  // Handle radio button changes
   const modeRadios = document.querySelectorAll('input[name="pollutant-mode"]');
   modeRadios.forEach(radio => {
     radio.addEventListener('change', function() {
+      syncTableVisibility();
       if (this.value === 'specific' && this.checked) {
-        // Small delay to ensure the conditional is shown before initializing autocomplete
-        setTimeout(() => {
-          initializeAutocomplete();
-        }, 100);
+        setTimeout(() => { initializeAutocomplete(); }, 100);
       }
     });
   });
