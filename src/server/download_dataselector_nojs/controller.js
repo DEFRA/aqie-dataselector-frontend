@@ -8,8 +8,29 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 export const downloadDataselectornojsController = {
   handler(request, h) {
-    // console.log('comes to controllernojs of dataselector')
     const backUrl = '/customdataset'
+
+    if (request.method === 'get') {
+      return h.view('download_dataselector_nojs/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        downloadaurnresult: request.yar.get('downloadaurnresult'),
+        stationcount: request.yar.get('nooflocation'),
+        yearrange: request.yar.get('yearrange'),
+        displayBacklink: true,
+        hrefq: backUrl,
+        finalyear:
+          request.yar
+            .get('finalyear')
+            ?.split(',')
+            .map((year) => year.trim()) ?? []
+      })
+    }
+
+    //  const calledFrom = request.headers.referer || request.info.referrer || ''
+    // console.log('comes to controllernojs of dataselector', request.url?.href || request.path)
+    // console.log('Referrer (page called from):', calledFrom)
     // Helper function to render error state
     // console.log('In download controller', request.yar.get('nooflocation'))
     const renderErrorState = (
