@@ -3,10 +3,15 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
 {% block content %}
 
-<!-- Error Summary -->
-{% if errors and errors.list.length > 0 %}
+{# Safe defaults so template doesn’t break if controller didn’t pass these #}
+{% set errors = errors or { list: [], details: {} } %}
+{% set formData = formData or {} %}
+
+{# Error Summary #}
+{% if errors.list and errors.list.length > 0 %}
   {{ govukErrorSummary({
     titleText: "There is a problem",
     errorList: errors.list
@@ -17,146 +22,165 @@
   <div class="govuk-grid-column-full">
 
     <form method="post" action="/year-aurn" novalidate>
-    <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
-      <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
-        <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-          <h1 class="govuk-heading-l">
-            Add year(s)
-          </h1>
-           
-        {% if errors.details.time %}
-          <p class="govuk-error-message" id="time-error">
-            <span class="govuk-visually-hidden">Error:</span> {{ errors.details.time }}
-          </p>
-        {% endif %}
-           
-       <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
-  <!-- Year to date -->
-  <div class="govuk-radios__item">
-    <input class="govuk-radios__input" id="time-ytd" name="time" type="radio" value="ytd"{% if formData.time == 'ytd' %} checked{% endif %}>
-    <label class="govuk-label govuk-radios__label" for="time-ytd">
-      Year to date (1 January to <span id="ytd-today"></span>)
-    </label>
-  </div>
+      <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
+          <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+            <h1 class="govuk-heading-l">Add year(s)</h1>
+          </legend>
 
-  <!-- Any year (single year) -->
-  <div class="govuk-radios__item">
-    <input class="govuk-radios__input" id="time-any" name="time" type="radio" value="any" data-aria-controls="conditional-time-any"{% if formData.time == 'any' %} checked{% endif %}>
-    <label class="govuk-label govuk-radios__label" for="time-any">
-      Any year
-    </label>
-    <div id="time-any-hint" class="govuk-hint govuk-radios__hint">
-      Choose a single whole year
-    </div>
-  </div>
-  <div class="govuk-radios__conditional{% if formData.time != 'any' %} govuk-radios__conditional--hidden{% endif %}" id="conditional-time-any">
-    <div class="govuk-form-group{% if errors.details['any-year'] %} govuk-form-group--error{% endif %}" id="any-year-group">
-      <label class="govuk-label" for="any-year-input">Year</label>
-      <div id="any-year-hint" class="govuk-hint">For example: 2009</div>
-      {% if errors.details['any-year'] %}
-        <p class="govuk-error-message" id="any-year-input-error">
-          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['any-year'] }}
-        </p>
-      {% endif %}
+          {% if errors.details.time %}
+            <p class="govuk-error-message" id="time-error">
+              <span class="govuk-visually-hidden">Error:</span> {{ errors.details.time }}
+            </p>
+          {% endif %}
 
-      {# Set value only if user previously chose "Any year" #}
-      {% set anyYearValue = '' %}
-           {% if formData and formData.time == 'any' and formData['any-year-input'] %}
-        {% set anyYearValue = formData['any-year-input'] %}
-      {% endif %}
+          <div id="time-hint" class="govuk-hint">Choose how you want to add years</div>
 
-      {{ govukInput({
-        id: "any-year-input",
-        name: "any-year-input",
-        classes: "govuk-input govuk-input--width-4",
-        label: { text: "Year" },
-        inputmode: "numeric",
-        pattern: "[0-9]*",
-        value: anyYearValue
+          <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
+            {# Year to date #}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="time-ytd"
+                     name="time"
+                     type="radio"
+                     value="ytd"
+                     {% if formData.time == 'ytd' %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="time-ytd">
+                Year to date (1 January to <span id="ytd-today"></span>)
+              </label>
+            </div>
+
+            {# Any single year #}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="time-any"
+                     name="time"
+                     type="radio"
+                     value="any"
+                     data-aria-controls="conditional-time-any"
+                     {% if formData.time == 'any' %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="time-any">Any year</label>
+              <div id="time-any-hint" class="govuk-hint govuk-radios__hint">Choose a single whole year</div>
+            </div>
+
+            <div class="govuk-radios__conditional{% if formData.time != 'any' %} govuk-radios__conditional--hidden{% endif %}"
+                 id="conditional-time-any">
+              <div class="govuk-form-group{% if errors.details['any-year'] %} govuk-form-group--error{% endif %}" id="any-year-group">
+                <label class="govuk-label" for="any-year-input">Year</label>
+                <div id="any-year-hint" class="govuk-hint">For example: 2009</div>
+
+                {% if errors.details['any-year'] %}
+                  <p class="govuk-error-message" id="any-year-input-error">
+                    <span class="govuk-visually-hidden">Error:</span> {{ errors.details['any-year'] }}
+                  </p>
+                {% endif %}
+
+                {% set anyYearValue = '' %}
+                {% if formData.time == 'any' and formData['any-year-input'] %}
+                  {% set anyYearValue = formData['any-year-input'] %}
+                {% endif %}
+
+                {# Build classes without using JS ternary #}
+                {% set anyYearClasses = "govuk-input govuk-input--width-4" %}
+                {% if errors.details['any-year'] %}
+                  {% set anyYearClasses = anyYearClasses + " govuk-input--error" %}
+                {% endif %}
+
+                {{ govukInput({
+                  id: "any-year-input",
+                  name: "any-year-input",
+                  classes: anyYearClasses,
+                  label: { text: "Year" },
+                  inputmode: "numeric",
+                  pattern: "[0-9]*",
+                  value: anyYearValue
+                }) }}
+              </div>
+            </div>
+
+            {# Range of years #}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="time-range"
+                     name="time"
+                     type="radio"
+                     value="range"
+                     data-aria-controls="conditional-time-range"
+                     {% if formData.time == 'range' %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="time-range">Range of years</label>
+              <div id="time-range-hint" class="govuk-hint govuk-radios__hint">Choose up to 5 whole years at a time</div>
+            </div>
+
+            <div class="govuk-radios__conditional{% if formData.time != 'range' %} govuk-radios__conditional--hidden{% endif %}"
+                 id="conditional-time-range">
+              <div class="govuk-form-group{% if errors.details['range-start'] %} govuk-form-group--error{% endif %}" id="range-start-group">
+                <label class="govuk-label" for="range-start-year">Enter start year</label>
+                <div id="range-start-hint" class="govuk-hint">For example: 2009</div>
+                {% if errors.details['range-start'] %}
+                  <p class="govuk-error-message" id="range-start-year-error">
+                    <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-start'] }}
+                  </p>
+                {% endif %}
+                <div class="govuk-date-input">
+                  <div class="govuk-date-input__item">
+                    <div class="govuk-form-group">
+                      <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-start'] %} govuk-input--error{% endif %}"
+                             id="range-start-year"
+                             name="range-start-year"
+                             type="text"
+                             inputmode="numeric"
+                             aria-describedby="range-start-hint{% if errors.details['range-start'] %} range-start-year-error{% endif %}"
+                             value="{{ formData['range-start-year'] or '' }}">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="govuk-form-group{% if errors.details['range-end'] %} govuk-form-group--error{% endif %}" id="range-end-group">
+                <label class="govuk-label" for="range-end-year">Enter end year</label>
+                <div id="range-end-hint" class="govuk-hint">For example: 2010</div>
+                {% if errors.details['range-end'] %}
+                  <p class="govuk-error-message" id="range-end-year-error">
+                    <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-end'] }}
+                  </p>
+                {% endif %}
+                <div class="govuk-date-input">
+                  <div class="govuk-date-input__item">
+                    <div class="govuk-form-group">
+                      <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-end'] %} govuk-input--error{% endif %}"
+                             id="range-end-year"
+                             name="range-end-year"
+                             type="text"
+                             inputmode="numeric"
+                             aria-describedby="range-end-hint{% if errors.details['range-end'] %} range-end-year-error{% endif %}"
+                             value="{{ formData['range-end-year'] or '' }}">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      {{ govukButton({
+        attributes: { id: "continuebutton" },
+        text: "Continue"
       }) }}
+    </form>
 
-{# If using plain input #}
-{# <input id="any-year-input" name="any-year-input" class="govuk-input govuk-input--width-4" value="{{ anyYearValue }}"> #}
-    </div>
-  </div>
-
-  <!-- Range of years -->
-  <div class="govuk-radios__item">
-    <input class="govuk-radios__input" id="time-range" name="time" type="radio" value="range" data-aria-controls="conditional-time-range"{% if formData.time == 'range' %} checked{% endif %}>
-    <label class="govuk-label govuk-radios__label" for="time-range">
-      Range of years
-    </label>
-    <div id="time-range-hint" class="govuk-hint govuk-radios__hint">
-      Choose up to 5 whole years at a time
-    </div>
-  </div>
-  <div class="govuk-radios__conditional{% if formData.time != 'range' %} govuk-radios__conditional--hidden{% endif %}" id="conditional-time-range">
-    <div class="govuk-form-group{% if errors.details['range-start'] %} govuk-form-group--error{% endif %}" id="range-start-group">
-      <label class="govuk-label" for="range-start-year">Enter start year</label>
-      <div id="range-start-hint" class="govuk-hint">For example: 2009</div>
-      {% if errors.details['range-start'] %}
-        <p class="govuk-error-message" id="range-start-year-error">
-          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-start'] }}
-        </p>
-      {% endif %}
-      <div class="govuk-date-input">
-        <div class="govuk-date-input__item">
-          <div class="govuk-form-group">
-            <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-start'] %} govuk-input--error{% endif %}" id="range-start-year" name="range-start-year" type="text" inputmode="numeric" aria-describedby="range-start-hint{% if errors.details['range-start'] %} range-start-year-error{% endif %}" value="{{ formData['range-start-year'] or '' }}">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="govuk-form-group{% if errors.details['range-end'] %} govuk-form-group--error{% endif %}" id="range-end-group">
-      <label class="govuk-label" for="range-end-year">Enter end year</label>
-      <div id="range-end-hint" class="govuk-hint">For example: 2010</div>
-      {% if errors.details['range-end'] %}
-        <p class="govuk-error-message" id="range-end-year-error">
-          <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-end'] }}
-        </p>
-      {% endif %}
-      <div class="govuk-date-input">
-        <div class="govuk-date-input__item">
-          <div class="govuk-form-group">
-            <input class="govuk-input govuk-date-input__input govuk-input--width-4{% if errors.details['range-end'] %} govuk-input--error{% endif %}" id="range-end-year" name="range-end-year" type="text" inputmode="numeric" aria-describedby="range-end-hint{% if errors.details['range-end'] %} range-end-year-error{% endif %}" value="{{ formData['range-end-year'] or '' }}">
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
-          
-        
-         
-      </fieldset>
-      
-    </div>
-
-    {{ govukButton({
-       attributes: { id: "continuebutton" },
-      text: "Continue"
-    }) }}
-    </form>
-   
-      </div>
-    </div>
 
 <script>
-// Simple script for setting date and input filtering only
 document.addEventListener('DOMContentLoaded', function () {
-  // Set "Year to date" label date
   const today = new Date();
-  const formatted = new Intl.DateTimeFormat('en-GB', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
+  const formatted = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric', month: 'long', year: 'numeric'
   }).format(today);
-
   const span = document.getElementById('ytd-today');
   if (span) span.textContent = formatted;
 
-  // Limit input to 4 digits for year fields
   ['any-year-input', 'range-start-year', 'range-end-year'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;

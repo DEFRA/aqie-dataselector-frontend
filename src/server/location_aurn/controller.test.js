@@ -2,12 +2,10 @@ import { locationaurnController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 
-// Mock config
 jest.mock('~/src/config/config.js', () => ({
   config: { get: jest.fn() }
 }))
 
-// Mock englishNew
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
@@ -18,7 +16,6 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   }
 }))
 
-// Mock catchProxyFetchError to return [status, response]
 jest.mock('~/src/server/common/helpers/catch-proxy-fetch-error.js', () => ({
   catchProxyFetchError: jest.fn(() =>
     Promise.resolve([
@@ -80,7 +77,6 @@ describe('locationaurnController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
 
-      // Using mocked API [200, response] so laResult is the response
       expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
@@ -119,7 +115,7 @@ describe('locationaurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: 'not-an-object', // controller passes through raw value
+          laResult: 'not-an-object',
           localAuthorityNames: [],
           formData: {}
         })
@@ -284,11 +280,8 @@ describe('locationaurnController', () => {
                 href: '#my-autocomplete'
               }
             ])
-            // Controller may also add duplicate error; do not assert details here
           }),
-          formData: expect.objectContaining({
-            location: 'la'
-          })
+          formData: expect.objectContaining({ location: 'la' })
         })
       )
     })
@@ -413,13 +406,13 @@ describe('locationaurnController', () => {
   })
 
   describe('Edge cases', () => {
-    it('default fallback for non-GET/POST', async () => {
+    it('default fallback for non-GET/POST returns view with API data', async () => {
       mockRequest.method = 'put'
       const result = await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
         pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
+        heading: 'Test Heading',
+        texts: ['Test text 1', 'Test text 2'],
         displayBacklink: true,
         hrefq: '/customdataset',
         laResult: {
@@ -448,13 +441,13 @@ describe('locationaurnController', () => {
       )
     })
 
-    it('null payload from API returns empty', async () => {
+    it('null payload from API returns empty names', async () => {
       catchProxyFetchError.mockResolvedValueOnce([200, null])
       await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          laResult: null, // controller passes through null
+          laResult: null,
           localAuthorityNames: [],
           formData: {}
         })

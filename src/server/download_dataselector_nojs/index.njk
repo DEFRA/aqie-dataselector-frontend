@@ -3,18 +3,11 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% block content %}
- 
 
+{# Explicit back link so it always shows #}
+<a href="{{ hrefq }}" class="govuk-back-link">Back</a>
 
-
-
-
-{# <a href="../hub" class="govuk-back-link">Back</a> #}
-
-
-
-
-    <div class="govuk-grid-row">
+<div class="govuk-grid-row">
   <div class="govuk-grid-column-three-quarters-from-desktop">
 
     <h2 class="govuk-heading-l">Download your data</h2>
@@ -56,9 +49,12 @@
 <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
 <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
    
-   <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen" >
-      {{stationcount}} stations available
-    </div>
+   {# Embed the initial count in a data attribute so JS can restore it #}
+   <div id="station-count"
+        class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
+        data-initial-count="{{ stationcount | default(0) }}">
+      {{ stationcount | default(0) }} stations available
+   </div>
     </div>
 
  {% if yearrange == 'Single' %}
@@ -138,20 +134,76 @@
   </div>
 </div>
 
-  {% if downloadresult %}
+{# keep your fetch-based download (no navigation) #}
+<script>
+  (function () {
+    var countEl = document.getElementById('station-count');
+    if (!countEl) return;
+
+    // Prefer cached value from a previous render; otherwise use data-initial-count
+    var cached = sessionStorage.getItem('download_station_count');
+    var cachedNum = cached ? parseInt(cached, 10) : NaN;
+    var dataInitial = parseInt(countEl.getAttribute('data-initial-count'), 10);
+
+    // If we have a positive cached value, keep it for reuse
+    if (Number.isFinite(cachedNum) && cachedNum > 0) {
+      countEl.textContent = cachedNum + ' stations available';
+    } else if (Number.isFinite(dataInitial) && dataInitial > 0) {
+      // Store for later (e.g. after download)
+      sessionStorage.setItem('download_station_count', String(dataInitial));
+      countEl.textContent = dataInitial + ' stations available';
+    } else {
+      // If both are zero/invalid, keep 0
+      countEl.textContent = '0 stations available';
+    }
+  })();
+</script>
+
+{% if downloadresult %}
   <script>
-  
-    var downloadresult = "{{ downloadresult | safe }}";
-    var url = downloadresult;
-   window.location.href = url;
+    (function () {
+      var countEl = document.getElementById('station-count');
+      if (countEl) {
+        var match = countEl.textContent.trim().match(/^(\d+)/);
+        var initialCount = match ? parseInt(match[1], 10) : 0;
+        if (Number.isFinite(initialCount) && initialCount > 0) {
+          sessionStorage.setItem('download_station_count', String(initialCount));
+        }
+      }
+
+      var url = "{{ downloadresult | safe }}";
+      var fileName = (url.split('/').pop() || 'download.csv');
+
+      fetch(url, { credentials: 'same-origin' })
+        .then(function (res) { if (!res.ok) throw new Error('Download failed'); return res.blob(); })
+        .then(function (blob) {
+          var objectUrl = window.URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = objectUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(objectUrl);
+
+          // Ensure count stays correct after download
+          var cached = sessionStorage.getItem('download_station_count');
+          var cachedNum = cached ? parseInt(cached, 10) : 0;
+          if (countEl && Number.isFinite(cachedNum) && cachedNum > 0) {
+            countEl.textContent = cachedNum + ' stations available';
+          }
+        })
+        .catch(function () {
+          var msg = document.createElement('p');
+          msg.className = 'govuk-body';
+          msg.textContent = 'There was a problem starting your download.';
+          document.getElementById('download-content-container')?.appendChild(msg);
+        });
+    })();
   </script>
   <noscript>
-  <meta http-equiv="refresh" content="0; url={{ downloadresult }}">
-  <!-- Or provide a manual link -->
-  {# <p>
-    <a href="{{ downloadresult }}"></a>
-  </p> #}
-</noscript>
+    <p><a href="{{ downloadresult }}" class="govuk-link">Download your file</a></p>
+  </noscript>
 {% endif %}
 {% endblock %}
 

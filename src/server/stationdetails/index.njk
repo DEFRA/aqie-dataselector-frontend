@@ -42,26 +42,24 @@
             <div class="govuk-grid-column-full">
           <dl class="defra-aq-features__list govuk-!-margin-top-3">
             <div class="defra-aq-features__item" >
-              <dt class="defra-aq-features__key govuk-caption-m" >Monitoring network</dt>
+              <dt class="defra-aq-features__key " >Monitoring network</dt>
               <dd class="defra-aq-features__value govuk-body" >Automatic Urban and Rural Network (AURN)</dd>
             </div>
             <div class="defra-aq-features__item" >
-              <dt class="defra-aq-features__key govuk-caption-m" >Region</dt>
+              <dt class="defra-aq-features__key " >Region</dt>
               <dd class="defra-aq-features__value govuk-body" >{{stationdetails.region}}</dd>
             </div>
             <div class="defra-aq-features__item" >
-              <dt class="defra-aq-features__key govuk-caption-m">Site type</dt>
+              <dt class="defra-aq-features__key ">Site type</dt>
              
-              <dd class="defra-aq-features__value govuk-body" >
-               
-                  {{stationdetails.siteType}}
-                   
-                    {{mapToggletip | safe}}
+              <dd class="defra-aq-features__value govuk-body defra-aq-features__value--wrap">
+  <span class="defra-aq-features__value-text">{{ stationdetails.siteType }}</span>
+  <span class="defra-aq-features__value-tip">{{ mapToggletip | safe }}</span>
 
-                  <p class="govuk-body govuk-!-margin-top-1"><a href={{maplocation}} class="govuk-link" target="_blank" >View on Google Maps (opens in new tab)</a></p>
-              
-
-                </dd>
+  <p class="govuk-body govuk-!-margin-top-1">
+    <a href={{maplocation}} class="govuk-link" target="_blank">View on Google Maps (opens in new tab)</a>
+  </p>
+</dd>
              
             </div>
             </dl>

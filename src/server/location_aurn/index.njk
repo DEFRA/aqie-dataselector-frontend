@@ -144,9 +144,7 @@
 
             <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
               <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
-                <label class="govuk-label" for="my-autocomplete">
-                  Local authority name
-                </label>
+               
                 {% if errors.details['local-authority'] %}
                 <p id="la-error" class="govuk-error-message">
                   <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
@@ -238,18 +236,12 @@ document.addEventListener('DOMContentLoaded', function() {
           name: 'local-authority-autocomplete',
           source: autocompleteSource,
           minLength: 3,
+          // Do not add to table on confirm; just populate the input
           onConfirm: function(confirmed) {
-            // Handle selection directly when user confirms/selects an option
-            if (confirmed && confirmed.trim()) {
-              addLocationToTable(confirmed.trim());
-              
-              // Clear the input after selection
-              setTimeout(() => {
-                const input = document.getElementById('my-autocomplete');
-                if (input) {
-                  input.value = '';
-                }
-              }, 50);
+            const value = (confirmed || '').trim()
+            const input = document.getElementById('my-autocomplete')
+            if (input) {
+              input.value = value // user must click "Add local authority" to add
             }
           }
         });
@@ -285,8 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <input type="text" 
              id="my-autocomplete" 
              name="local-authority-autocomplete" 
-             class="govuk-input" 
-             placeholder="Enter a local authority name" 
+             class="govuk-input"            
              list="la-datalist"
              autocomplete="off">
       <datalist id="la-datalist">
