@@ -10,15 +10,22 @@ export const downloadDataselectornojsController = {
   handler(request, h) {
     const backUrl = '/customdataset'
 
+    const getStationCount = () => {
+      const raw =
+        request.yar.get('nooflocation') ?? request.yar.get('stationcount') ?? 0
+      const num = Number(raw)
+      return Number.isFinite(num) ? num : 0
+    }
+
     if (request.method === 'get') {
       return h.view('download_dataselector_nojs/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         downloadaurnresult: request.yar.get('downloadaurnresult'),
-        stationcount: request.yar.get('nooflocation'),
+        stationcount: getStationCount(), // always a number
         yearrange: request.yar.get('yearrange'),
-        displayBacklink: true,
+        //  displayBacklink: true,
         hrefq: backUrl,
         finalyear:
           request.yar
@@ -54,7 +61,7 @@ export const downloadDataselectornojsController = {
         selectedyear: request.yar.get('selectedyear'),
         selectedlocation: request.yar.get('selectedlocation'),
         stationcount: request.yar.get('nooflocation'),
-        displayBacklink: true,
+        //  displayBacklink: true,
         hrefq: backUrl
       })
     }
@@ -112,9 +119,9 @@ export const downloadDataselectornojsController = {
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
       downloadaurnresult: request.yar.get('downloadaurnresult'),
-      stationcount: request.yar.get('nooflocation'),
+      stationcount: getStationCount(), // always a number
       yearrange: request.yar.get('yearrange'),
-      displayBacklink: true,
+      // displayBacklink: true,
       hrefq: backUrl,
       finalyear:
         request.yar
