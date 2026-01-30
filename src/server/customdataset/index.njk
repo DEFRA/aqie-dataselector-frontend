@@ -180,6 +180,14 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Upgrade NO-JS action to JS route
+  const form = document.getElementById('customdataset-form')
+  if (form) {
+    form.setAttribute('action', '/download_dataselector') // JS route
+    form.setAttribute('method', 'post')                   // ensure POST
+    form.dataset.enhanced = 'true'
+  }
+
   // Source of truth = SSR list from DOM
   const listEl = document.getElementById('pollutant-summary-list')
   const actionEl = document.getElementById('pollutant-action-link')
@@ -205,9 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
       ? '{{texts.n}}<span class="govuk-visually-hidden"> {{texts.l}}</span>'
       : '{{texts.c}}<span class="govuk-visually-hidden"> {{texts.l}}</span>'
   }
-
-  // If other UI depends on pollutants, use serverItems here (not sessionStorage)
-  // e.g., rebuild data sources, years, etc.
 })
 </script>
 

@@ -112,9 +112,9 @@ export const downloadDataselectornojsController = {
         '/location-aurn'
       )
     }
-
+    //  console.log("from controller", request.yar.get('downloadaurnresult'))
     // Success case - render download page
-    return h.view('download_dataselector_nojs/index', {
+    const viewData = {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
@@ -128,7 +128,11 @@ export const downloadDataselectornojsController = {
           .get('finalyear')
           ?.split(',')
           .map((year) => year.trim()) ?? []
-    })
+    }
+
+    request.yar.set('viewDatanojs', viewData)
+
+    return h.view('download_dataselector_nojs/index', viewData)
   }
 }
 

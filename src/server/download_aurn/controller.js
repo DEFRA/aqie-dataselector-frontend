@@ -98,8 +98,8 @@ const downloadAurnController = {
 
       //  request.yar.set('downloadaurnresult', downloadResultaurn)
       const viewData = {
-        ...request.yar.get('downloadViewData'),
-        downloadresult: downloadResultaurn
+        ...request.yar.get('viewDatanojs'),
+        downloadresultnojs: downloadResultaurn
       }
       request.yar.set('downloadaurnresult', downloadResultaurn)
       if (request.url.pathname.includes('/download_aurn_nojs/')) {
