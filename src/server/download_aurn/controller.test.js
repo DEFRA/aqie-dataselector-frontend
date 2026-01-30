@@ -186,7 +186,8 @@ describe('downloadAurnController', () => {
       mockRequest.yar.get.mockImplementation((key) => {
         const values = {
           formattedPollutants: 'PM2.5',
-          selectedlocation: ['1', '2', '3'],
+          // Controller uses selectedLAIDs for non-Country
+          selectedLAIDs: '1,2,3',
           Location: 'LocalAuthority',
           viewDatanojs: { pageTitle: 'Test' }
         }
