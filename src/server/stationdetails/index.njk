@@ -68,4 +68,17 @@
          
 
  
+  <script>
+  (function () {
+    var base = window.devicePixelRatio || 1;
+    function updateZoomFlag() {
+      var dpr = window.devicePixelRatio || 1;
+      var zoomed = Math.abs(dpr - base) > 0.05;
+      document.body.classList.toggle('is-zoomed', zoomed);
+    }
+    window.addEventListener('resize', updateZoomFlag);
+    window.addEventListener('orientationchange', updateZoomFlag);
+    updateZoomFlag();
+  })();
+</script>
 {% endblock %}

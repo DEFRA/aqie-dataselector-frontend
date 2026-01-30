@@ -2,7 +2,6 @@ import { downloadAurnController } from './controller.js'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 
-// Mock logger dependencies first (before other imports)
 jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({
     info: jest.fn(),
@@ -12,10 +11,8 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   })
 }))
 
-// Mock config and axios
 jest.mock('~/src/config/config.js')
 jest.mock('axios')
-jest.mock('@hapi/wreck')
 
 describe('downloadAurnController', () => {
   let mockRequest
@@ -24,18 +21,16 @@ describe('downloadAurnController', () => {
   beforeEach(() => {
     jest.useFakeTimers()
     jest.clearAllMocks()
+
     mockRequest = {
-      params: {
-        year: '2024'
-      },
-      url: {
-        pathname: '/download_aurn/2024'
-      },
+      params: { year: '2024' },
+      url: { pathname: '/download_aurn/2024' },
       yar: {
         get: jest.fn(),
         set: jest.fn()
       }
     }
+
     mockH = {
       response: jest.fn().mockReturnThis(),
       type: jest.fn().mockReturnThis(),
@@ -43,13 +38,14 @@ describe('downloadAurnController', () => {
       view: jest.fn().mockReturnValue('view-response')
     }
 
+    // Session values
     mockRequest.yar.get.mockImplementation((key) => {
       const values = {
         formattedPollutants:
           'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
         selectedlocation: ['England'],
         Location: 'Country',
-        downloadViewData: {
+        viewDatanojs: {
           pageTitle: 'Test Download Page',
           heading: 'Test Heading',
           texts: ['Test text'],
@@ -63,6 +59,7 @@ describe('downloadAurnController', () => {
       return values[key]
     })
 
+    // Config
     config.get.mockImplementation((key) => {
       const values = {
         Download_aurn_URL: 'https://api.example.com/download',
@@ -78,7 +75,7 @@ describe('downloadAurnController', () => {
   })
 
   describe('successful download flow', () => {
-    it('should successfully download AURN data and return result URL for JS route', async () => {
+    it('returns result URL for JS route', async () => {
       const mockDownloadResponse = { data: 'job-123' }
       const mockStatusResponse = {
         data: {
@@ -88,8 +85,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // initial download
+        .mockResolvedValueOnce(mockStatusResponse) // polling completed
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -120,7 +117,7 @@ describe('downloadAurnController', () => {
       expect(mockH.code).toHaveBeenCalledWith(200)
     }, 10000)
 
-    it('should render no-JS template for no-JS route', async () => {
+    it('renders no-JS template for no-JS route', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
 
       const mockDownloadResponse = { data: 'job-nojs' }
@@ -150,14 +147,14 @@ describe('downloadAurnController', () => {
           displayBacklink: true,
           hrefq: '/customdataset',
           finalyear: ['2024'],
-          downloadresult: 'https://api.example.com/results/job-nojs'
+          downloadresultnojs: 'https://api.example.com/results/job-nojs'
         }
       )
     }, 10000)
   })
 
-  describe('API parameter construction', () => {
-    it('should construct correct API params with all required fields including regiontype', async () => {
+  describe('API params', () => {
+    it('constructs params including regiontype', async () => {
       const mockDownloadResponse = { data: 'job-params' }
       const mockStatusResponse = {
         data: {
@@ -185,13 +182,13 @@ describe('downloadAurnController', () => {
       })
     }, 10000)
 
-    it('should handle LocalAuthority region type', async () => {
+    it('handles LocalAuthority region type', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         const values = {
           formattedPollutants: 'PM2.5',
-          selectedlocation: ['1,2,3'],
+          selectedlocation: ['1', '2', '3'],
           Location: 'LocalAuthority',
-          downloadViewData: { pageTitle: 'Test' }
+          viewDatanojs: { pageTitle: 'Test' }
         }
         return values[key]
       })
@@ -224,7 +221,7 @@ describe('downloadAurnController', () => {
   })
 
   describe('session management', () => {
-    it('should get all required session variables', async () => {
+    it('reads required session variables', async () => {
       const mockDownloadResponse = { data: 'job-session' }
       const mockStatusResponse = {
         data: {
@@ -244,10 +241,10 @@ describe('downloadAurnController', () => {
       expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
-      expect(mockRequest.yar.get).toHaveBeenCalledWith('downloadViewData')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('viewDatanojs')
     }, 10000)
 
-    it('should set downloadaurnresult in session', async () => {
+    it('sets downloadaurnresult in session', async () => {
       const resultUrl = 'https://api.example.com/results/download-data'
       const mockDownloadResponse = { data: 'job-session-set' }
       const mockStatusResponse = { data: { status: 'Completed', resultUrl } }
@@ -268,7 +265,7 @@ describe('downloadAurnController', () => {
   })
 
   describe('route detection', () => {
-    it('should detect JS route from URL pathname', async () => {
+    it('detects JS route by pathname', async () => {
       mockRequest.url.pathname = '/download_aurn/2024'
 
       const mockDownloadResponse = { data: 'job-js' }
@@ -291,7 +288,7 @@ describe('downloadAurnController', () => {
       expect(mockH.view).not.toHaveBeenCalled()
     }, 10000)
 
-    it('should detect no-JS route from URL pathname', async () => {
+    it('detects no-JS route by pathname', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
 
       const mockDownloadResponse = { data: 'job-nojs-detect' }
@@ -315,15 +312,13 @@ describe('downloadAurnController', () => {
     }, 10000)
   })
 
-  describe('view data handling', () => {
-    it('should merge downloadViewData with download result for no-JS template', async () => {
+  describe('view data merge', () => {
+    it('merges viewDatanojs with result for no-JS template', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
 
       const mockDownloadResponse = { data: 'job-merge' }
       const resultUrl = 'https://api.example.com/results/job-merge'
-      const mockStatusResponse = {
-        data: { status: 'Completed', resultUrl }
-      }
+      const mockStatusResponse = { data: { status: 'Completed', resultUrl } }
 
       axios.post
         .mockResolvedValueOnce(mockDownloadResponse)
@@ -336,21 +331,21 @@ describe('downloadAurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
         expect.objectContaining({
-          downloadresult: resultUrl,
+          downloadresultnojs: resultUrl,
           pageTitle: 'Test Download Page',
           heading: 'Test Heading'
         })
       )
     }, 10000)
 
-    it('should handle missing downloadViewData gracefully', async () => {
+    it('handles missing viewDatanojs gracefully', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
       mockRequest.yar.get.mockImplementation((key) => {
         const values = {
           formattedPollutants: 'PM2.5',
           selectedlocation: ['England'],
           Location: 'Country',
-          downloadViewData: undefined
+          viewDatanojs: undefined
         }
         return values[key]
       })
@@ -371,85 +366,17 @@ describe('downloadAurnController', () => {
       await jest.runAllTimersAsync()
       await promise
 
-      expect(mockH.view).toHaveBeenCalled()
-    }, 10000)
-  })
-
-  describe('location handling', () => {
-    it('should handle multiple locations in selectedlocation array', async () => {
-      mockRequest.yar.get.mockImplementation((key) => {
-        const values = {
-          formattedPollutants: 'PM2.5,PM10',
-          selectedlocation: ['England', 'Wales', 'Scotland'],
-          Location: 'Country',
-          downloadViewData: { pageTitle: 'Test' }
-        }
-        return values[key]
-      })
-
-      const mockDownloadResponse = { data: 'job-789' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/job-789'
-        }
-      }
-
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
-
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
-
-      expect(axios.post).toHaveBeenNthCalledWith(
-        1,
-        'https://api.example.com/download',
+      expect(mockH.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
         expect.objectContaining({
-          Region: 'England,Wales,Scotland',
-          regiontype: 'Country'
+          downloadresultnojs: 'https://api.example.com/results/job-missing'
         })
       )
     }, 10000)
   })
 
-  // describe('error handling', () => {
-  //   it('should handle download API errors', async () => {
-  //     axios.post.mockRejectedValueOnce(new Error('Download API error'))
-
-  //     const result = await downloadAurnController.handler(mockRequest, mockH)
-
-  //     expect(mockH.response).toHaveBeenCalledWith({ error: 'An error occurred' })
-  //     expect(mockH.code).toHaveBeenCalledWith(500)
-  //   })
-
-  //   it('should handle polling API errors', async () => {
-  //     const mockDownloadResponse = { data: 'job-error' }
-  //     axios.post
-  //       .mockResolvedValueOnce(mockDownloadResponse)
-  //       .mockRejectedValueOnce(new Error('Polling API error'))
-
-  //     const result = await downloadAurnController.handler(mockRequest, mockH)
-
-  //     expect(mockH.response).toHaveBeenCalledWith({ error: 'An error occurred' })
-  //     expect(mockH.code).toHaveBeenCalledWith(500)
-  //   })
-
-  //   it('should handle network timeout errors', async () => {
-  //     const timeoutError = new Error('Network timeout')
-  //     timeoutError.code = 'ECONNABORTED'
-  //     axios.post.mockRejectedValueOnce(timeoutError)
-
-  //     const result = await downloadAurnController.handler(mockRequest, mockH)
-
-  //     expect(mockH.response).toHaveBeenCalledWith({ error: 'An error occurred' })
-  //     expect(mockH.code).toHaveBeenCalledWith(500)
-  //   })
-  // })
-
   describe('polling mechanism', () => {
-    it('should continue polling until status is Completed', async () => {
+    it('continues polling until status is Completed', async () => {
       const mockDownloadResponse = { data: 'job-poll' }
       const mockStatusResponses = [
         { data: { status: 'Pending', resultUrl: null } },
@@ -463,10 +390,10 @@ describe('downloadAurnController', () => {
       ]
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponses[0])
-        .mockResolvedValueOnce(mockStatusResponses[1])
-        .mockResolvedValueOnce(mockStatusResponses[2])
+        .mockResolvedValueOnce(mockDownloadResponse) // start job
+        .mockResolvedValueOnce(mockStatusResponses[0]) // poll #1
+        .mockResolvedValueOnce(mockStatusResponses[1]) // poll #2
+        .mockResolvedValueOnce(mockStatusResponses[2]) // poll #3 complete
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()

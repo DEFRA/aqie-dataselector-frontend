@@ -57,25 +57,24 @@
    </div>
     </div>
 
- {% if yearrange == 'Single' %}
-
-    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                      
-                        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download hourly data 
-          
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
-                    </a>
-                    {% endif %} 
+   {# For Single year, this link is same-origin and best to auto-trigger #}
+   {% if yearrange == 'Single' %}
+         <a id="download-link"
+        href="/download_aurn_nojs/{{ finalyear }}"
+        role="button"
+        class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
+       <span class="aq-button-secondary__icon">
+         <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+           <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+         </svg>
+       </span>
+       <span class="aq-button-secondary__text">
+         Download hourly data
+         <span class="govuk-visually-hidden">(Visual only)</span>
+       </span>
+     </a>
+   {% endif %} 
                    
                     {% if yearrange == 'Multiple' %}
             <table class="govuk-table">
@@ -159,51 +158,43 @@
   })();
 </script>
 
-{% if downloadresult %}
+{# Remove previous auto-download scripts/logic #}
+
+{# Expose URL safely #}
+{% if downloadresultnojs %}
+  <span id="auto-download" data-url="{{ downloadresultnojs | urlencode }}" hidden></span>
+
   <script>
     (function () {
-      var countEl = document.getElementById('station-count');
-      if (countEl) {
-        var match = countEl.textContent.trim().match(/^(\d+)/);
-        var initialCount = match ? parseInt(match[1], 10) : 0;
-        if (Number.isFinite(initialCount) && initialCount > 0) {
-          sessionStorage.setItem('download_station_count', String(initialCount));
+      // Persist station count before navigating (optional)
+      var el = document.getElementById('station-count');
+      if (el) {
+        var m = el.textContent.trim().match(/^(\d+)/);
+        var n = m ? parseInt(m[1], 10) : 0;
+        if (Number.isFinite(n) && n > 0) {
+          try { sessionStorage.setItem('download_station_count', String(n)); } catch (e) {}
         }
       }
 
-      var url = "{{ downloadresult | safe }}";
-      var fileName = (url.split('/').pop() || 'download.csv');
+      var holder = document.getElementById('auto-download');
+      if (!holder) return;
+      var enc = holder.getAttribute('data-url') || '';
+      if (!enc) return;
 
-      fetch(url, { credentials: 'same-origin' })
-        .then(function (res) { if (!res.ok) throw new Error('Download failed'); return res.blob(); })
-        .then(function (blob) {
-          var objectUrl = window.URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = objectUrl;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(objectUrl);
+      var url;
+      try { url = decodeURIComponent(enc); } catch (e) { url = enc; }
+      if (!url) return;
 
-          // Ensure count stays correct after download
-          var cached = sessionStorage.getItem('download_station_count');
-          var cachedNum = cached ? parseInt(cached, 10) : 0;
-          if (countEl && Number.isFinite(cachedNum) && cachedNum > 0) {
-            countEl.textContent = cachedNum + ' stations available';
-          }
-        })
-        .catch(function () {
-          var msg = document.createElement('p');
-          msg.className = 'govuk-body';
-          msg.textContent = 'There was a problem starting your download.';
-          document.getElementById('download-content-container')?.appendChild(msg);
-        });
+      // Same behaviour as stationDetailsNojs
+      window.location.href = url;
     })();
   </script>
+
   <noscript>
-    <p><a href="{{ downloadresult }}" class="govuk-link">Download your file</a></p>
+    <meta http-equiv="refresh" content="0; url={{ downloadresultnojs }}">
+    <p class="govuk-visually-hidden"><a href="{{ downloadresultnojs }}">Download file</a></p>
   </noscript>
 {% endif %}
+
 {% endblock %}
 
