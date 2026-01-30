@@ -535,6 +535,48 @@ document.addEventListener('DOMContentLoaded', function() {
   
   updateButtonLabel();
   console.log('✅ Clean UI setup complete - server handles all validation');
+
+  // Continue button guard: require at least one added local authority
+  const continueBtn = document.getElementById('add-location-button')
+  const formEl = document.querySelector('form[action="/location-aurn"]')
+
+  function showClientError(message) {
+    const duplicateError = document.getElementById('duplicate-error')
+    if (duplicateError) {
+      const link = duplicateError.querySelector('a')
+      if (link) link.textContent = message
+      duplicateError.hidden = false
+      duplicateError.focus()
+      duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  if (continueBtn && formEl) {
+    continueBtn.addEventListener('click', function (e) {
+      // If "Local authority" is selected
+      const isLA = radio && radio.checked
+      if (isLA) {
+        const hasSelected = selectedInputsContainer.querySelectorAll('input[name="selected-locations"]').length > 0
+        if (!hasSelected) {
+          e.preventDefault()
+          // Clear any stray autocomplete value so it is not submitted
+          const input = document.getElementById('my-autocomplete')
+          if (input) input.value = ''
+          const hiddenAuto = container.querySelector('input[type="hidden"]')
+          if (hiddenAuto) hiddenAuto.value = ''
+          showClientError('Add at least one local authority')
+          return
+        }
+      }
+
+      // If Countries is selected, allow normal submit
+      // Also ensure stray autocomplete value never submits
+      const input = document.getElementById('my-autocomplete')
+      if (input) input.value = ''
+      const hiddenAuto = container.querySelector('input[type="hidden"]')
+      if (hiddenAuto) hiddenAuto.value = ''
+    })
+  }
 });
 </script>
 

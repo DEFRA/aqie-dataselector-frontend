@@ -85,14 +85,27 @@ const downloadAurnController = {
       // console.log('Comes into download_Aurn', selectedyear)
       // const stndetails = request.yar.get('stationdetails')
       // Declare apiparams only once here
-      const apiparams = {
-        pollutantName: request.yar.get('formattedPollutants'),
-        dataSource: 'AURN',
-        Region: request.yar.get('selectedlocation').join(','),
-        regiontype: request.yar.get('Location'),
-        Year: selectedyear,
-        dataselectorfiltertype: 'dataSelectorHourly',
-        dataselectordownloadtype: 'dataSelectorSingle'
+      let apiparams
+      if (request.yar.get('Location') === 'Country') {
+        apiparams = {
+          pollutantName: request.yar.get('formattedPollutants'),
+          dataSource: 'AURN',
+          Region: request.yar.get('selectedlocation').join(','),
+          regiontype: request.yar.get('Location'),
+          Year: selectedyear,
+          dataselectorfiltertype: 'dataSelectorHourly',
+          dataselectordownloadtype: 'dataSelectorSingle'
+        }
+      } else {
+        apiparams = {
+          pollutantName: request.yar.get('formattedPollutants'),
+          dataSource: 'AURN',
+          Region: request.yar.get('selectedLAIDs'),
+          regiontype: request.yar.get('Location'),
+          Year: selectedyear,
+          dataselectorfiltertype: 'dataSelectorHourly',
+          dataselectordownloadtype: 'dataSelectorSingle'
+        }
       }
       const downloadResultaurn = await Invokedownload(apiparams)
 
