@@ -219,11 +219,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize autocomplete only once
   function initializeAutocomplete() {
     if (autocompleteInitialized || !container) {
-      console.log('Autocomplete already initialized or container not found');
+    //  console.log('Autocomplete already initialized or container not found');
       return;
     }
     
-    console.log('Initializing autocomplete...');
+   // console.log('Initializing autocomplete...');
     
     // Clear container to ensure clean state
     container.innerHTML = '';
@@ -246,8 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
         autocompleteInitialized = true;
-        console.log('✅ Autocomplete initialized');
-        
+       // console.log('✅ Autocomplete initialized');
         // Add additional event listeners after initialization
         setTimeout(() => {
           const input = document.getElementById('my-autocomplete');
@@ -263,9 +262,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
               }
             });
+            // Always clear error on input
+            input.addEventListener('input', function() {
+              const duplicateError = document.getElementById('duplicate-error');
+              if (duplicateError) duplicateError.hidden = true;
+            });
           }
         }, 100);
-        
         return;
       } catch (error) {
         console.error('❌ Error with accessibleAutocomplete:', error);
@@ -285,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </datalist>
     `;
     autocompleteInitialized = true;
-    console.log('✅ Fallback input created');
+   // console.log('✅ Fallback input created');
   }
   
   function updateHiddenInputs() {
@@ -466,43 +469,46 @@ document.addEventListener('DOMContentLoaded', function() {
   if (addMoreButton) {
     addMoreButton.addEventListener('click', function(e) {
       e.preventDefault();
-      
       const input = document.getElementById('my-autocomplete');
-      if (!input || !input.value.trim()) return;
-      
-      addLocationToTable(input.value.trim());
-      
+      const value = input ? input.value.trim() : '';
+      if (!value) {
+        // Show error if no value entered
+        const duplicateError = document.getElementById('duplicate-error');
+        if (duplicateError) {
+          const errorLink = duplicateError.querySelector('a');
+          if (errorLink) errorLink.textContent = 'Add at least one local authority';
+          duplicateError.hidden = false;
+          duplicateError.focus();
+          duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
+      addLocationToTable(value);
       // Clear the input properly for both regular input and accessible autocomplete
       input.value = '';
-      
       // For accessible autocomplete, also clear any hidden input or internal state
       const hiddenInput = container.querySelector('input[type="hidden"]');
       if (hiddenInput) {
         hiddenInput.value = '';
       }
-      
       // Clear any autocomplete specific input elements
       const autocompleteInputs = container.querySelectorAll('input');
       autocompleteInputs.forEach(inp => {
         inp.value = '';
       });
-      
       // Force a change event to notify the autocomplete component
       if (input) {
         const event = new Event('input', { bubbles: true });
         input.dispatchEvent(event);
       }
-      
       // Additional clearing for accessible-autocomplete internal state
       setTimeout(() => {
         if (input) {
           input.value = '';
           input.setAttribute('value', '');
-          
           // Clear any aria-expanded or other autocomplete states
           input.removeAttribute('aria-expanded');
           input.removeAttribute('aria-activedescendant');
-          
           input.focus();
         }
       }, 10);
@@ -534,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   updateButtonLabel();
-  console.log('✅ Clean UI setup complete - server handles all validation');
+ // console.log('✅ Clean UI setup complete - server handles all validation');
 
   // Continue button guard: require at least one added local authority
   const continueBtn = document.getElementById('add-location-button')

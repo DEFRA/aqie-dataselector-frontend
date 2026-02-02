@@ -150,16 +150,13 @@
                           Low data capture
                         </strong></span>
              {% endif %}
-          <span class="defra-aq-levels-table__cell--data " style= "margin-top: 4px;">Data capture: {{ data.dataCapturePercentage }}%
+          <span class="defra-aq-levels-table__cell--data" style="margin-top: 4px;">Data capture: {{ data.dataCapturePercentage }}%
           {% if data.dataCapturePercentage < 75 %}
-          <span>
-      {{ DatacaptureToggletip | safe }}
-      </span>
+            <span class="defra-toggletip--datacapture">
+              {{ DatacaptureToggletip | safe }}
+            </span>
           {% endif %}
-         
-
-
-        </span></td>
+          </span></td>
       
          <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
   {{ data.annualcount }} 
