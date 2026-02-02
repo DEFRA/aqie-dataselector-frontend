@@ -26,72 +26,45 @@ describe('hubController', () => {
     }
   })
 
-  it('should set session values and render the view with correct data', () => {
+  it('should set all session variables and render the view with correct data', () => {
     const result = hubController.handler(mockRequest, mockH)
-
-    // Get current year for comparison
     const currentYear = new Date().getFullYear().toString()
-
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('searchLocation', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
-    expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
-    // Updated to expect current year dynamically for both year fields
-    expect(mockRequest.yar.set).toHaveBeenCalledWith(
-      'yearselected',
-      currentYear
-    )
-    expect(mockRequest.yar.set).toHaveBeenCalledWith(
-      'selectedYear',
-      currentYear
-    )
-
+    // List of all expected session variables and their values
+    const expectedSessionVars = [
+      ['searchQuery', null],
+      ['fullSearchQuery', null],
+      ['searchLocation', ''],
+      ['osnameapiresult', ''],
+      ['selectedLocation', ''],
+      ['nooflocation', ''],
+      ['nooflocation', ''],
+      ['yearselected', currentYear],
+      ['selectedYear', currentYear],
+      ['selectedpollutant', ''],
+      ['selectedyear', ''],
+      ['selectedlocation', ''],
+      ['nooflocation', ''],
+      ['selectedPollutants', null],
+      ['selectedPollutantMode', ''],
+      ['selectedPollutantGroup', ''],
+      ['formattedPollutants', ''],
+      ['selectedTimePeriod', null],
+      ['yearrange', ''],
+      ['finalyear', ''],
+      ['finalyear1', ''],
+      ['Region', ''],
+      ['selectedLAIDs', ''],
+      ['Location', '']
+    ]
+    // Check each expected session variable was set
+    expectedSessionVars.forEach(([key, value]) => {
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(key, value)
+    })
     expect(mockH.view).toHaveBeenCalledWith('hubpage/index', {
       pageTitle: englishNew.hub.pageTitle,
       texts: englishNew.hub.texts
     })
     expect(result).toBe('hub-view-response')
-  })
-
-  it('should set all session variables in correct order', () => {
-    const currentYear = new Date().getFullYear().toString()
-
-    hubController.handler(mockRequest, mockH)
-
-    // Verify all 8 session variables are set correctly
-    expect(mockRequest.yar.set).toHaveBeenCalledTimes(8)
-
-    // Verify the order of calls
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(1, 'searchQuery', null)
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
-      2,
-      'fullSearchQuery',
-      null
-    )
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(3, 'searchLocation', '')
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
-      4,
-      'osnameapiresult',
-      ''
-    )
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
-      5,
-      'selectedLocation',
-      ''
-    )
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(6, 'nooflocation', '')
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
-      7,
-      'yearselected',
-      currentYear
-    )
-    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
-      8,
-      'selectedYear',
-      currentYear
-    )
   })
 
   it('should use current year dynamically for both year variables', () => {
@@ -153,46 +126,38 @@ describe('hubController', () => {
   })
 
   describe('Session management', () => {
-    it('should clear search-related session variables', () => {
+    it('should set all expected session variables', () => {
       hubController.handler(mockRequest, mockH)
-
-      // Verify search-related variables are cleared
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('searchLocation', '')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
-    })
-
-    it('should clear location-related session variables', () => {
-      hubController.handler(mockRequest, mockH)
-
-      // Verify location-related variables are cleared
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
-    })
-
-    it('should set year-related session variables to current year', () => {
       const currentYear = new Date().getFullYear().toString()
-
-      hubController.handler(mockRequest, mockH)
-
-      // Verify year variables are set to current year
-      expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'yearselected',
-        currentYear
-      )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'selectedYear',
-        currentYear
-      )
-    })
-
-    it('should complete all session operations before view rendering', () => {
-      hubController.handler(mockRequest, mockH)
-
-      // Verify that all session operations complete before view rendering
-      expect(mockRequest.yar.set).toHaveBeenCalledTimes(8)
-      expect(mockH.view).toHaveBeenCalledTimes(1)
+      const expectedSessionVars = [
+        ['searchQuery', null],
+        ['fullSearchQuery', null],
+        ['searchLocation', ''],
+        ['osnameapiresult', ''],
+        ['selectedLocation', ''],
+        ['nooflocation', ''],
+        ['nooflocation', ''],
+        ['yearselected', currentYear],
+        ['selectedYear', currentYear],
+        ['selectedpollutant', ''],
+        ['selectedyear', ''],
+        ['selectedlocation', ''],
+        ['nooflocation', ''],
+        ['selectedPollutants', null],
+        ['selectedPollutantMode', ''],
+        ['selectedPollutantGroup', ''],
+        ['formattedPollutants', ''],
+        ['selectedTimePeriod', null],
+        ['yearrange', ''],
+        ['finalyear', ''],
+        ['finalyear1', ''],
+        ['Region', ''],
+        ['selectedLAIDs', ''],
+        ['Location', '']
+      ]
+      expectedSessionVars.forEach(([key, value]) => {
+        expect(mockRequest.yar.set).toHaveBeenCalledWith(key, value)
+      })
     })
   })
 

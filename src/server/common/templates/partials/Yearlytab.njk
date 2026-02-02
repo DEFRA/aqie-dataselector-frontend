@@ -53,7 +53,7 @@
               let selyear;
        function updateYear(year) {
     selyear = year;
-   console.log( document.getElementById('link-'+selyear))
+  // console.log( document.getElementById('link-'+selyear))
     //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
     const currentDate = new Date();
@@ -82,12 +82,12 @@
       selectedLink.setAttribute('aria-selected', 'false');
     }
 const selectedy = year;
-console.log("selectedy",selectedy)
+//console.log("selectedy",selectedy)
     fetch(`/rendertable/${selectedy}`)
         .then(response => response.text())
         .then(data => {
             document.getElementById('yearlytable-container').innerHTML = data;             
-            console.log("dataresponse", data.tabledata);
+          //  console.log("dataresponse", data.tabledata);
         })
         .catch(error => console.error('Error fetching partial content:', error));
     
@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedYearElement = document.getElementById('selectedYear');
     const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
       document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
-      console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
+     // console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-    console.log("selectedyearim78",selectedYear)
+   // console.log("selectedyearim78",selectedYear)
     if (selectedYear) {
         updateYear(selectedYear);
     }
@@ -110,8 +110,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
- function updateYear1(year) {
-    console.log("year", year);
-    
-}
+
        </script>

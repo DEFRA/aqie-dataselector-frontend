@@ -581,7 +581,7 @@
               let selyear;
        function updateYear(year) {
     selyear = year;
-   console.log( document.getElementById('link-'+selyear))
+  // console.log( document.getElementById('link-'+selyear))
     //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
     const currentDate = new Date();
@@ -611,7 +611,7 @@
       selectedLink.setAttribute('aria-selected', 'false');
     }
 const selectedy = year;
-console.log("selectedy",selectedy)
+//console.log("selectedy",selectedy)
    window.location.href = `/stationDetailsNojs/year/${year}`;
    
    }
@@ -622,17 +622,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedYearElement = document.getElementById('selectedYear');
     const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
       document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
-      console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
+     // console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-    console.log("selectedyearim78",selectedYear)
+   // console.log("selectedyearim78",selectedYear)
     
 });
 
 
- function updateYear1(year) {
-    console.log("year", year);
-    
-}
+ 
        </script>
 
         {# {% include "partials/Yearlytab.njk" %}     #}

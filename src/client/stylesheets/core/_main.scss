@@ -639,6 +639,23 @@ width: 100%;
     }
   }
 }
+
+// Ensure data capture badges/labels render on their own line consistently
+.defra-aq-levels-table__cell--data {
+  display: block;
+  font-size: 16px;
+  margin-top: 5px;
+  font-weight: normal;      // ensure "Data capture: xx%" is not bold
+}
+.defra-aq-levels-table__cell--data .govuk-tag {
+  font-weight: 700;         // keep badges bold
+}
+
+// Only the "Data capture" toggletip: adjust icon vertical position
+.defra-toggletip--datacapture .defra-toggletip__container {
+  top: -18px;
+}
+
 @media (max-width: 330px) {
   .table-scroll-container {
     overflow-x: scroll; /* always show scrollbar */

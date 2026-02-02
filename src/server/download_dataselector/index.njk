@@ -123,11 +123,11 @@
  
    
       
-    <div class="govuk-inset-text govuk-!-margin-top-0">
+    {# <div class="govuk-inset-text govuk-!-margin-top-0">
   <h3 class="govuk-heading-s">Save your search</h3>
 <p class="govuk-body">Bookmark this URL to save your selections for next time.</p>
 
-<p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p>
+<p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p> #}
 {# <p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p> #}
 
 </div>
@@ -139,7 +139,7 @@
 </div>
 <script>
 async function getAPIdownload(year) {  
-        console.log("comes into getAPIdownload with year:", year)
+       
         
         const scrollY = window.scrollY;
         window.scrollTo(0, scrollY);
@@ -147,7 +147,7 @@ async function getAPIdownload(year) {
         try {
             const response = await fetch(`/download_aurn/${year}`);
             const data = await response.text();
-            console.log("DATA FROM DOWNLOAD", data);
+           // console.log("DATA FROM DOWNLOAD", data);
             window.location.href = data;
             window.scrollTo(0, scrollY); 
         } catch (error) {
@@ -158,13 +158,13 @@ async function getAPIdownload(year) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM loaded, JavaScript download functionality ready");
+   // console.log("DOM loaded, JavaScript download functionality ready");
 });  
 
 </script>
  {% if downloadaurnresult %}
   <script>
-    console.log("DATA FROM DOWNLOAD",downloadaurnresult)
+    //console.log("DATA FROM DOWNLOAD",downloadaurnresult)
 
     var downloadaurnresult1 = "{{ downloadaurnresult | safe }}";
     var url = downloadaurnresult1;
