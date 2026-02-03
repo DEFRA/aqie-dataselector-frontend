@@ -97,7 +97,7 @@ export const emailrequestController = {
         Region: request.yar.get('selectedlocation').join(','),
         regiontype: request.yar.get('Location'),
         Year: request.yar.get('finalyear1'),
-        dataselectorfiltertype: 'dataSelectorCount',
+        dataselectorfiltertype: 'dataSelectorHourly',
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }

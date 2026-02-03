@@ -63,7 +63,7 @@
         </dd>
 
         <dd class="govuk-summary-list__actions">
-          <a id="pollutant-action-link" class="govuk-link" href="/airpollutant">
+          <a id="pollutant-action-link" class="govuk-link" href="/airpollutant/nojs">
             {% if hasSelected %}{{ texts.n }}{% else %}{{ texts.c }}{% endif %}
             <span class="govuk-visually-hidden"> {{ texts.l }}</span>
           </a>
@@ -186,6 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
     form.setAttribute('action', '/download_dataselector') // JS route
     form.setAttribute('method', 'post')                   // ensure POST
     form.dataset.enhanced = 'true'
+  }
+
+  // Upgrade pollutant link to JS route
+  const pollutantLink = document.getElementById('pollutant-action-link')
+  if (pollutantLink) {
+    pollutantLink.setAttribute('href', '/airpollutant')
   }
 
   // Source of truth = SSR list from DOM

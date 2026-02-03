@@ -267,7 +267,7 @@ describe('emailrequestController', () => {
             Region: 'London,Manchester',
             regiontype: 'LocalAuthority',
             Year: '2023',
-            dataselectorfiltertype: 'dataSelectorCount',
+            dataselectorfiltertype: 'dataSelectorHourly',
             dataselectordownloadtype: 'dataSelectorMultiple',
             email: 'test@example.com'
           }

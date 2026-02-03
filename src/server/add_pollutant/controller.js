@@ -15,16 +15,7 @@ export const airpollutantController = {
         'pollutant-group': selectedGroup,
         selectedPollutants: pollutantsData
       } = request.payload || {}
-      // let pollutantsData_;
-      // if(selectedMode=='specific'){
-      //  pollutantsData=request.yar.get('selectedpollutants_specific')
-      // }else{
-      //   pollutantsData=request.yar.get('selectedpollutants_group')
-      // }
-      // console.log('selectedMode:', selectedMode)
-      // console.log('Received pollutants data:', pollutantsData)
-      // console.log('selectedGroup:', selectedGroup)
-      // Define allowed pollutants for validation
+
       const allowedPollutants = [
         'Fine particulate matter (PM2.5)',
         'Particulate matter (PM10)',
@@ -250,11 +241,11 @@ export const airpollutantController = {
       request.query?.nojs === 'true' ||
       request.path?.includes('nojs') ||
       request.headers['user-agent']?.toLowerCase().includes('noscript')
-
+    //  console.log('isNoJS:', isNoJS)
     const templatePath = isNoJS
       ? 'add_pollutant/index_nojs'
       : 'add_pollutant/index'
-
+    //  console.log('templatePath', templatePath)
     return h.view(templatePath, {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
