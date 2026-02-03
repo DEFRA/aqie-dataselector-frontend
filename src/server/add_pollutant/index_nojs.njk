@@ -8,70 +8,167 @@
   <div class="govuk-grid-column-two-thirds">
     <form action='/addpollutants' method="post">
       
-      <!-- Hidden input to set default mode to group since this form only has group options -->
-      <input type="hidden" name="pollutant-mode" value="group">
-      
       <!-- Server-side validation errors -->
       {% if errors.list %}
-        <div class="govuk-error-summary" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">There is a problem</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list">
-                {% for error in errors.list %}
-                <li>
-                  <a href="{{ error.href }}">{{ error.text }}</a>
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-          </div>
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+          {% for error in errors.list %}
+          <li>
+            <a href="{{ error.href }}">{{ error.text }}</a>
+          </li>
+          {% endfor %}
+          </ul>
         </div>
+        </div>
+      </div>
       {% endif %}
+
+      <!-- Client-side duplicate error (for UX only) -->
+      <div id="duplicate-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+        <ul class="govuk-list govuk-error-summary__list">
+          <li><a href="#my-autocomplete">This pollutant has already been added</a></li>
+        </ul>
+        </div>
+      </div>
+      </div>
 
       <h1 class="govuk-heading-l">Add pollutant(s)</h1>
     
       <div class="govuk-form-group {% if errors.list and errors.list | length > 0 %}govuk-form-group--error{% endif %}">
-        <fieldset class="govuk-fieldset" aria-describedby="pollutant-group-hint">
-          <div id="pollutant-group-hint" class="govuk-hint">Select one option</div>
+      <fieldset class="govuk-fieldset" aria-describedby="mode-hint">
+        <div id="mode-hint" class="govuk-hint">Select one option</div>
 
-          <div class="govuk-radios govuk-!-margin-top-3" data-module="govuk-radios">
-            <!-- Core / DAQI -->
-            <div class="govuk-radios__item">
-              <input class="govuk-radios__input" 
-                     id="pg-core" 
-                     name="pollutant-group" 
-                     type="radio" 
-                     value="core" 
-                     {% if selectedGroup == "core" %}checked{% endif %}
-                     aria-describedby="pg-core-hint">
-              <label class="govuk-label govuk-radios__label" for="pg-core">Daily Air Quality Index (DAQI) pollutants</label>
-              <div id="pg-core-hint" class="govuk-hint govuk-radios__hint">
-                fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide, ozone, sulphur dioxide
+        <div class="govuk-radios" data-module="govuk-radios">
+        <!-- MODE: specific -->
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input"
+             id="mode-specific"
+             name="pollutant-mode"
+             type="radio"
+             value="specific"
+             {% if selectedMode == "specific" %}checked{% endif %}
+             data-aria-controls="conditional-specific">
+          <label class="govuk-label govuk-radios__label" for="mode-specific">
+          Add pollutant(s)
+          </label>
+        </div>
+        <div class="govuk-radios__conditional {% if selectedMode != 'specific' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-specific">
+          <div class="govuk-form-group">
+          <div class="govuk-hint">Add up to 10 pollutants</div>
+
+          <select class="govuk-select" id="ind_poll" name="ind_poll">
+          <option value="pm25">Fine particulate matter (PM2.5)</option>
+          <option value="pm10">Particulate matter (PM10)</option>
+          <option value="no2">Nitrogen dioxide (NO2)</option>
+          <option value="o3">Ozone (O3)</option>
+          <option value="so2">Sulphur dioxide (SO2)</option>
+          <option value="no">Nitric oxide (NO)</option>
+          <option value="nox">Nitrogen oxides as nitrogen dioxide (NOx as NO2)</option>
+          <option value="co">Carbon monoxide (CO)</option>
+    
+  </select>
+
+                {% set list = selectedPollutants or [] %}
+                {% set isSpecific = (selectedMode == 'specific') %}
+                {% set hasSpecific = isSpecific and (list | length) > 0 %}
+
+                <!-- Dynamic pollutants table -->
+                <table
+                  class="govuk-table govuk-!-margin-top-4"
+                  id="pollutant-table"
+                  {% if not hasSpecific %}hidden{% endif %}
+                >
+                  {% if hasSpecific %}
+                    <caption class="govuk-table__caption govuk-table__caption--m">Added pollutants</caption>
+                  {% endif %}
+                  <tbody class="govuk-table__body">
+                    {% if hasSpecific %}
+                      {% for pollutant in list %}
+                        <tr class="govuk-table__row">
+                          <th scope="row" class="govuk-table__header">Pollutant {{ loop.index }}</th>
+                          <td class="govuk-table__cell">{{ pollutant }}</td>
+                          <td class="govuk-table__cell">
+                            <a href="#" class="govuk-link remove-pollutant">Remove</a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% endif %}
+                  </tbody>
+                </table>
               </div>
             </div>
-
-            <!-- Compliance -->
+            
+            <!-- MODE: groups -->
             <div class="govuk-radios__item">
-              <input class="govuk-radios__input" 
-                     id="pg-compliance" 
-                     name="pollutant-group" 
-                     type="radio" 
-                     value="compliance" 
-                     {% if selectedGroup == "compliance" %}checked{% endif %}
-                     aria-describedby="pg-compliance-hint">
-              <label class="govuk-label govuk-radios__label" for="pg-compliance">Pollutants in the Air Quality Standards Regulations 2010</label>
-              <div id="pg-compliance-hint" class="govuk-hint govuk-radios__hint">
-                fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide, ozone, sulphur dioxide, nitric oxide, nitrogen oxides as nitrogen dioxide, carbon monoxide
+              <input class="govuk-radios__input"
+                     id="mode-group"
+                     name="pollutant-mode"
+                     type="radio"
+                     value="group"
+                     {% if selectedMode == "group" %}checked{% endif %}
+                     data-aria-controls="conditional-groups">
+              <label class="govuk-label govuk-radios__label" for="mode-group">
+                Add a group of pollutants
+              </label>
+            </div>
+
+            <div class="govuk-radios__conditional {% if selectedMode != 'group' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-groups">
+              <div class="govuk-form-group">
+                <fieldset class="govuk-fieldset" aria-describedby="pollutant-group-hint">
+                  <legend class="govuk-fieldset__legend govuk-fieldset__legend--s"></legend>
+                  <div id="pollutant-group-hint" class="govuk-hint">Select one option</div>
+
+                  <div class="govuk-radios govuk-!-margin-top-3" data-module="govuk-radios">
+                    <!-- Core / DAQI -->
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input" 
+                             id="pg-core" 
+                             name="pollutant-group" 
+                             type="radio" 
+                             value="core" 
+                             {% if selectedGroup == "core" %}checked{% endif %}
+                             aria-describedby="pg-core-hint">
+                      <label class="govuk-label govuk-radios__label" for="pg-core">Daily Air Quality Index (DAQI) pollutants</label>
+                      <div id="pg-core-hint" class="govuk-hint govuk-radios__hint">
+                        fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), ozone (O3), sulphur dioxide (SO2)
+                      </div>
+                    </div>
+
+                    <!-- Compliance -->
+                    <div class="govuk-radios__item">
+                      <input class="govuk-radios__input" 
+                             id="pg-compliance" 
+                             name="pollutant-group" 
+                             type="radio" 
+                             value="compliance" 
+                             {% if selectedGroup == "compliance" %}checked{% endif %}
+                             aria-describedby="pg-compliance-hint">
+                      <label class="govuk-label govuk-radios__label" for="pg-compliance">Pollutants in the Air Quality Standards Regulations 2010</label>
+                      <div id="pg-compliance-hint" class="govuk-hint govuk-radios__hint">
+                        fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), ozone (O3), sulphur dioxide (SO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx as NO2), carbon monoxide (CO)  
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
               </div>
             </div>
           </div>
         </fieldset>
       </div>
 
+      <!-- Hidden input to pass selected pollutants to the server -->
+      <input type="hidden" id="selectedPollutantsInput" name="selectedPollutants" value="{% if selectedPollutants %}{{ selectedPollutants | dump | safe }}{% endif %}">
+
       {{ govukButton({
         text: "Continue",
-        classes: "govuk-!-margin-top-3"
+        classes: "govuk-!-margin-top-3",
+        attributes: { id: "continue-button" }
       }) }}
     </form>
   </div>
