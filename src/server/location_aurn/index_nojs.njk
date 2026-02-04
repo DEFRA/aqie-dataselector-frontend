@@ -1,0 +1,196 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% block content %}
+ 
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-two-thirds">
+ <form action='/location-aurn/nojs' method="post">
+    <!-- Server-side validation errors -->
+    {% if errors.list %}
+      <div class="govuk-error-summary" data-module="govuk-error-summary">
+        <div role="alert">
+          <h2 class="govuk-error-summary__title">There is a problem</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for error in errors.list %}
+              <li>
+                <a href="{{ error.href }}">{{ error.text }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Client-side duplicate error (for UX only) -->
+    <div id="duplicate-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#my-autocomplete">This local authority has already been added</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client-side maximum limit error -->
+    <div id="max-limit-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">There is a problem</h2>
+        <div class="govuk-error-summary__body">
+          <ul class="govuk-list govuk-error-summary__list">
+            <li><a href="#my-autocomplete">Add up to 10 local authorities</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="govuk-heading-l">
+      Add location(s)
+    </h1>
+
+    <form action="/location-aurn" method="post">
+      <div class="govuk-form-group {% if errors.details.location %}govuk-form-group--error{% endif %}">
+        <fieldset class="govuk-fieldset" aria-describedby="contact-hint">
+          
+          {% if errors.details.location %}
+          <p id="location-error" class="govuk-error-message">
+            <span class="govuk-visually-hidden">Error:</span> {{ errors.details.location }}
+          </p>
+          {% endif %}
+
+          <div class="govuk-radios" data-module="govuk-radios">
+            <!-- Countries -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input" 
+                     id="location-2" 
+                     name="location" 
+                     type="radio" 
+                     value="countries" 
+                     data-aria-controls="conditional-location-2"
+                     {% if formData.location == "countries" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-2">
+                Countries
+              </label>
+              <div class="govuk-hint govuk-radios__hint">
+                Choose one or more: England, Scotland, Wales or Northern Ireland
+              </div>
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "countries" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-2">
+              <div class="govuk-form-group {% if errors.details.country %}govuk-form-group--error{% endif %}">
+                {% if errors.details.country %}
+                <p id="country-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details.country }}
+                </p>
+                {% endif %}
+                <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-england" 
+                           name="country" 
+                           type="checkbox" 
+                           value="England"
+                           {% if formData.country and (formData.country == "England" or (formData.country | length and "England" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-england">England</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-scotland" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Scotland"
+                           {% if formData.country and (formData.country == "Scotland" or (formData.country | length and "Scotland" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-scotland">Scotland</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-wales" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Wales"
+                           {% if formData.country and (formData.country == "Wales" or (formData.country | length and "Wales" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-wales">Wales</label>
+                  </div>
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input" 
+                           id="country-ni" 
+                           name="country" 
+                           type="checkbox" 
+                           value="Northern Ireland"
+                           {% if formData.country and (formData.country == "Northern Ireland" or (formData.country | length and "Northern Ireland" in formData.country)) %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="country-ni">Northern Ireland</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Local authority -->
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="location-4"
+                     name="location"
+                     type="radio"
+                     value="la"
+                     data-aria-controls="conditional-location-4"
+                     {% if formData.location == "la" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-4">Local authority</label>
+             
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
+              <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
+               <select class="govuk-select" id="selected-locations" name="selected-locations">
+                {% set preselectedLA = formData['selected-locations'] %}
+                {% if preselectedLA %}
+                  {% if preselectedLA is iterable and preselectedLA is not string %}
+                    {% set firstSelected = preselectedLA[0] %}
+                  {% else %}
+                    {% set firstSelected = preselectedLA %}
+                  {% endif %}
+                  <option value="{{ firstSelected }}" selected>{{ firstSelected }}</option>
+                  {% for la in localAuthorityNames %}
+                    {% if la != firstSelected %}
+                      <option value="{{ la }}">{{ la }}</option>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% for la in localAuthorityNames %}
+                    <option value="{{ la }}">{{ la }}</option>
+                  {% endfor %}
+                {% endif %}
+  </select>
+                {% if errors.details['local-authority'] %}
+                <p id="la-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
+                </p>
+                {% endif %}
+              
+
+
+              <!-- Hidden inputs for selected locations -->
+              <div id="selected-locations-inputs"></div>
+
+              
+            </div>
+          </div>
+        </fieldset>
+      </div>
+
+      <div class="govuk-button-group">
+        {{ govukButton({
+          text: "Continue",
+          attributes: { id: "add-location-button" }
+        }) }}
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+{% endblock %}

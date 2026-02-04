@@ -10,11 +10,22 @@ export const airpollutantController = {
   handler(request, h) {
     // Handle POST requests (form submission)
     if (request.method === 'post') {
+      // Check for no-JS version
+      const isNoJS =
+        request.query?.nojs === 'true' ||
+        request.path?.includes('nojs') ||
+        request.headers['user-agent']?.toLowerCase().includes('noscript')
+
       const {
         'pollutant-mode': selectedMode,
         'pollutant-group': selectedGroup,
         selectedPollutants: pollutantsData
       } = request.payload || {}
+
+      // Clear group selection from session immediately if mode is 'specific'
+      if (selectedMode === 'specific') {
+        request.yar.set('selectedPollutantGroup', '')
+      }
 
       const allowedPollutants = [
         'Fine particulate matter (PM2.5)',
@@ -93,18 +104,32 @@ export const airpollutantController = {
           }
 
           finalPollutantsGr = groups[selectedGroup] || []
+          //  console.log('Selected group pollutants:', finalPollutantsGr)
         }
       }
       // Handle specific pollutants selection
       else if (selectedMode === 'specific') {
-        // Prefer payload, fallback to legacy name, then session
-        const rawFromPayload =
-          pollutantsData ??
-          request.payload?.['selected-pollutants'] ??
-          request.yar.get('selectedpollutants_specific')
+        // For nojs: prefer the dropdown selection, then check hidden input, then session
+        let rawFromPayload
+
+        if (isNoJS && request.payload?.['selected-pollutants']) {
+          // NoJS version: Replace with new selection from dropdown
+          rawFromPayload = [request.payload['selected-pollutants']]
+        } else {
+          // JS version or no new selection
+          rawFromPayload =
+            pollutantsData && pollutantsData !== '[]' && pollutantsData !== '['
+              ? pollutantsData
+              : request.yar.get('selectedpollutants_specific')
+        }
 
         try {
-          if (typeof rawFromPayload === 'string') {
+          if (
+            typeof rawFromPayload === 'string' &&
+            rawFromPayload.trim() &&
+            rawFromPayload !== '[]' &&
+            rawFromPayload !== '['
+          ) {
             // JSON string from hidden input
             finalPollutantsSp = JSON.parse(rawFromPayload)
           } else if (Array.isArray(rawFromPayload)) {
@@ -112,11 +137,11 @@ export const airpollutantController = {
           } else {
             finalPollutantsSp = []
           }
-        } catch {
+        } catch (e) {
           finalPollutantsSp = []
           errors.push({
             text: 'Invalid pollutants data format.',
-            href: '#my-autocomplete'
+            href: '#selected-pollutants'
           })
         }
 
@@ -181,9 +206,9 @@ export const airpollutantController = {
           errorMessage: {
             message: { text: errors[0].text } // Show first error as main message
           },
-          // Preserve form state
+          // Preserve form state - only show group if group mode is selected
           selectedMode,
-          selectedGroup,
+          selectedGroup: selectedMode === 'group' ? selectedGroup : '',
           selectedPollutants: selectedForView
         })
       }

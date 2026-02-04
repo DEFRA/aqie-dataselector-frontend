@@ -148,7 +148,7 @@
 </dd>
  {% if selectedpollutant %}
 <dd class="govuk-summary-list__actions" id="location-action">
-  <a class="govuk-link" href="/location-aurn?change=true"> 
+  <a id="location-action-link" class="govuk-link" href="/location-aurn/nojs"> 
    {% if selectedlocation %}
    
       {{texts.n}}
@@ -192,6 +192,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const pollutantLink = document.getElementById('pollutant-action-link')
   if (pollutantLink) {
     pollutantLink.setAttribute('href', '/airpollutant')
+  }
+
+  // Upgrade location link to JS route
+  const locationLink = document.getElementById('location-action-link')
+  if (locationLink) {
+    locationLink.setAttribute('href', '/location-aurn?change=true')
   }
 
   // Source of truth = SSR list from DOM
