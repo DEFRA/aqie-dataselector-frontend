@@ -6,7 +6,7 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
-    <form action='/addpollutants' method="post">
+    <form action='/airpollutant/nojs' method="post">
       
       <!-- Server-side validation errors -->
       {% if errors.list %}
@@ -62,45 +62,31 @@
           <div class="govuk-form-group">
           <div class="govuk-hint">Add up to 10 pollutants</div>
 
-          <select class="govuk-select" id="ind_poll" name="ind_poll">
-          <option value="pm25">Fine particulate matter (PM2.5)</option>
-          <option value="pm10">Particulate matter (PM10)</option>
-          <option value="no2">Nitrogen dioxide (NO2)</option>
-          <option value="o3">Ozone (O3)</option>
-          <option value="so2">Sulphur dioxide (SO2)</option>
-          <option value="no">Nitric oxide (NO)</option>
-          <option value="nox">Nitrogen oxides as nitrogen dioxide (NOx as NO2)</option>
-          <option value="co">Carbon monoxide (CO)</option>
-    
+          <select class="govuk-select" id="selected-pollutants" name="selected-pollutants">
+          {% set allPollutants = [
+            'Fine particulate matter (PM2.5)',
+            'Particulate matter (PM10)',
+            'Nitrogen dioxide (NO2)',
+            'Ozone (O3)',
+            'Sulphur dioxide (SO2)',
+            'Nitric oxide (NO)',
+            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+            'Carbon monoxide (CO)'
+          ] %}
+          {% if selectedPollutants and selectedPollutants | length > 0 and selectedMode == 'specific' %}
+            {% set firstSelected = selectedPollutants[0] %}
+            <option value="{{ firstSelected }}" selected>{{ firstSelected }}</option>
+            {% for pollutant in allPollutants %}
+              {% if pollutant != firstSelected %}
+                <option value="{{ pollutant }}">{{ pollutant }}</option>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            {% for pollutant in allPollutants %}
+              <option value="{{ pollutant }}">{{ pollutant }}</option>
+            {% endfor %}
+          {% endif %}
   </select>
-
-                {% set list = selectedPollutants or [] %}
-                {% set isSpecific = (selectedMode == 'specific') %}
-                {% set hasSpecific = isSpecific and (list | length) > 0 %}
-
-                <!-- Dynamic pollutants table -->
-                <table
-                  class="govuk-table govuk-!-margin-top-4"
-                  id="pollutant-table"
-                  {% if not hasSpecific %}hidden{% endif %}
-                >
-                  {% if hasSpecific %}
-                    <caption class="govuk-table__caption govuk-table__caption--m">Added pollutants</caption>
-                  {% endif %}
-                  <tbody class="govuk-table__body">
-                    {% if hasSpecific %}
-                      {% for pollutant in list %}
-                        <tr class="govuk-table__row">
-                          <th scope="row" class="govuk-table__header">Pollutant {{ loop.index }}</th>
-                          <td class="govuk-table__cell">{{ pollutant }}</td>
-                          <td class="govuk-table__cell">
-                            <a href="#" class="govuk-link remove-pollutant">Remove</a>
-                          </td>
-                        </tr>
-                      {% endfor %}
-                    {% endif %}
-                  </tbody>
-                </table>
               </div>
             </div>
             
@@ -163,7 +149,7 @@
       </div>
 
       <!-- Hidden input to pass selected pollutants to the server -->
-      <input type="hidden" id="selectedPollutantsInput" name="selectedPollutants" value="{% if selectedPollutants %}{{ selectedPollutants | dump | safe }}{% endif %}">
+      <input type="hidden" id="selectedPollutantsInput" name="selectedPollutants" value='{% if selectedPollutants and selectedPollutants | length > 0 %}{{ selectedPollutants | dump }}{% else %}[]{% endif %}'>
 
       {{ govukButton({
         text: "Continue",

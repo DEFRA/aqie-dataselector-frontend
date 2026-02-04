@@ -166,6 +166,43 @@ describe('locationaurnController', () => {
         })
       )
     })
+
+    it('renders no-JS template when nojs query param is present', async () => {
+      mockRequest.query = { nojs: 'true' }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({
+          pageTitle: englishNew.custom.pageTitle,
+          localAuthorityNames: [
+            'City of London',
+            'Westminster',
+            'Tower Hamlets'
+          ]
+        })
+      )
+    })
+
+    it('renders no-JS template when path includes nojs', async () => {
+      mockRequest.path = '/location-aurn/nojs'
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({
+          pageTitle: englishNew.custom.pageTitle
+        })
+      )
+    })
+
+    it('renders JS template by default', async () => {
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          pageTitle: englishNew.custom.pageTitle
+        })
+      )
+    })
   })
 
   describe('POST requests - Validation', () => {
@@ -299,6 +336,23 @@ describe('locationaurnController', () => {
         expect.objectContaining({ formData: payloadData })
       )
     })
+
+    it('renders no-JS template when validation fails and path includes nojs', async () => {
+      mockRequest.path = '/location-aurn/nojs'
+      mockRequest.payload = { location: 'countries' }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({
+          errors: {
+            list: [
+              { text: 'Select at least one country', href: '#country-england' }
+            ],
+            details: { country: 'Select at least one country' }
+          }
+        })
+      )
+    })
   })
 
   describe('POST requests - Success', () => {
@@ -406,10 +460,32 @@ describe('locationaurnController', () => {
   })
 
   describe('Edge cases', () => {
-    it('default fallback for non-GET/POST returns view with API data', async () => {
+    it('default fallback for non-GET/POST returns view with API data (JS version)', async () => {
       mockRequest.method = 'put'
       const result = await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: 'Test Heading',
+        texts: ['Test text 1', 'Test text 2'],
+        displayBacklink: true,
+        hrefq: '/customdataset',
+        laResult: {
+          data: [
+            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+          ]
+        },
+        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
+      })
+      expect(result).toBe('location-aurn-view-response')
+    })
+
+    it('default fallback for non-GET/POST returns no-JS view when nojs in path', async () => {
+      mockRequest.method = 'put'
+      mockRequest.path = '/location-aurn/nojs'
+      const result = await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith('location_aurn/index_nojs', {
         pageTitle: englishNew.custom.pageTitle,
         heading: 'Test Heading',
         texts: ['Test text 1', 'Test text 2'],

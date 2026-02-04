@@ -189,7 +189,10 @@ describe('airpollutantController', () => {
     it('returns error when invalid pollutants provided', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': ['Invalid Pollutant', 'Another Invalid One']
+        selectedPollutants: JSON.stringify([
+          'Invalid Pollutant',
+          'Another Invalid One'
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -213,11 +216,11 @@ describe('airpollutantController', () => {
     it('returns error when duplicate pollutants provided', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': [
+        selectedPollutants: JSON.stringify([
           'Nitrogen dioxide (NO2)',
           'Nitrogen dioxide (NO2)',
           'Particulate matter (PM10)'
-        ]
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -277,14 +280,14 @@ describe('airpollutantController', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         'pollutant-group': 'core',
-        'selected-pollutants': ['Invalid']
+        selectedPollutants: JSON.stringify(['Invalid'])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
           selectedMode: 'specific',
-          selectedGroup: 'core',
+          selectedGroup: '',
           selectedPollutants: ['Invalid']
         })
       )
@@ -306,7 +309,7 @@ describe('airpollutantController', () => {
     it('handles empty pollutants array', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': []
+        selectedPollutants: JSON.stringify([])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
@@ -408,11 +411,11 @@ describe('airpollutantController', () => {
     it('handles specific pollutants selection successfully', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': [
+        selectedPollutants: JSON.stringify([
           'Nitrogen dioxide (NO2)',
           'Particulate matter (PM10)',
           'Ozone (O3)'
-        ]
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
@@ -431,11 +434,11 @@ describe('airpollutantController', () => {
     it('handles valid pollutant variations successfully', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': [
+        selectedPollutants: JSON.stringify([
           'Fine particulate matter (PM2.5)',
           'Nitrogen dioxide (NO2)',
           'Carbon monoxide (CO)'
-        ]
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
@@ -467,7 +470,7 @@ describe('airpollutantController', () => {
     it('handles JSON string pollutants data', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants':
+        selectedPollutants:
           '["Nitrogen dioxide (NO2)", "Particulate matter (PM10)"]'
       }
       airpollutantController.handler(mockRequest, mockH)
@@ -485,11 +488,11 @@ describe('airpollutantController', () => {
     it('handles whitespace-padded pollutants and redirects', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': [
+        selectedPollutants: JSON.stringify([
           '  Nitrogen dioxide (NO2)  ',
           ' Particulate matter (PM10) ',
           'Ozone (O3)'
-        ]
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
@@ -509,11 +512,11 @@ describe('airpollutantController', () => {
     it('handles multiple validation errors at once (invalid + duplicate)', () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
-        'selected-pollutants': [
+        selectedPollutants: JSON.stringify([
           'Invalid Pollutant',
           'Nitrogen dioxide (NO2)',
           'nitrogen dioxide (NO2)'
-        ]
+        ])
       }
       airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(

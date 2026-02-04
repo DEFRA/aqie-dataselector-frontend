@@ -22,84 +22,6 @@ export const locationaurnController = {
       // Keep selectedLocation, selectedLocations, selectedCountries, etc. for pre-population
     }
 
-    //   async function Invokelocalauthority() {
-    //     try {
-    //       logger.info('Enters the InvokeLocalauthority')
-
-    //       const apiKey = config.get('laqmAPIkey')
-    //       const partnerId = config.get('laqmAPIPartnerId')
-    //       if (!apiKey || !partnerId) {
-    //         logger.error(
-    //           `Missing configuration: APIKey=${!!apiKey}, PartnerId=${!!partnerId}`
-    //         )
-    //         return { data: [] }
-    //       }
-
-    //       const url = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
-    //       logger.info(`Request started url: ${url}`)
-
-    //       // Keep-alive agents (important in CDP)
-    //      const options = {
-    //   method: 'get',
-    //   'X-API-Key': apiKey,
-    //           'X-API-PartnerId': partnerId,
-    //   headers: { 'Content-Type': 'text/json', preserveWhitespace: true }
-    // }
-    //       const response = await proxyFetch(url, {
-    //         method: 'GET',
-    //         headers: {
-    //           'X-API-Key': '5444af89cc52380a81111d5623ea74d5',
-    //           'X-API-PartnerId': '1035',
-    //           'Content-Type': 'text/json',
-    //           preserveWhitespace: true
-    //         }
-    //       })
-
-    //       // Axios returns { data, status, statusText, headers }
-    //       const { status, data } = response
-    //       console.log('LAQM API response :', response)
-    //       console.log('LAQM API response json:', response.json)
-    //       console.log('LAQM API response data:', response.data)
-    //       logger.info(`LAQM status: ${status}`)
-
-    //       if (status !== 200 || !data) {
-    //         logger.error(
-    //           `Unexpected response: status=${status}, hasData=${!!data}`
-    //         )
-    //         return { data: [] }
-    //       }
-
-    //       // Validate shape
-    //       if (!data || typeof data !== 'object') {
-    //         logger.error(`Invalid response structure: ${typeof data}`)
-    //         return { data: [] }
-    //       }
-    //       if (!Array.isArray(data.data)) {
-    //         logger.warn('No data array in response')
-    //         return { data: [] }
-    //       }
-
-    //       logger.info(
-    //         `Successfully fetched local authorities: ${data.data.length}`
-    //       )
-    //       return data
-    //     } catch (error) {
-    //       // Normalize axios/network errors for CDP diagnostics
-    //       const status = error?.response?.status
-    //       const statusText = error?.response?.statusText
-    //       const code = error?.code
-    //       const isTimeout =
-    //         code === 'ECONNABORTED' ||
-    //         code === 'ETIMEDOUT' ||
-    //         /timeout/i.test(error?.message || '')
-    //       logger.error(
-    //         `InvokeLocalauthority failed: code=${code}, status=${status}, statusText=${statusText}, timeout=${isTimeout}`
-    //       )
-    //       // If proxy misconfig causes hang, log proxy settings presence
-
-    //       return { data: [] }
-    //     }
-    //   }
     async function Invokelocalauthority() {
       const laqmurl =
         'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
@@ -120,8 +42,7 @@ export const locationaurnController = {
         laqmurl,
         optionslaqm
       )
-      // console.log('statuslaqm', statuslaqm)
-      //  console.log('responselaqm', responselaqm)
+
       if (statuslaqm !== 200) {
         return { data: [] }
       }
@@ -129,9 +50,7 @@ export const locationaurnController = {
       return responselaqm
     }
     const laResult = await Invokelocalauthority()
-    // console.log('local authority result', laResult)
 
-    // Extract local authority names for autocomplet
     let localAuthorityNames = []
     if (laResult?.data && Array.isArray(laResult.data)) {
       localAuthorityNames = laResult.data
@@ -161,8 +80,6 @@ export const locationaurnController = {
         formData.location = 'la'
         formData['selected-locations'] = selectedLocalAuthorities
       } else if (selectedlocations && Array.isArray(selectedlocations)) {
-        // Fallback: try to determine from selectedlocation data
-        // If it looks like countries (common country names), use countries
         const countryNames = [
           'england',
           'scotland',
@@ -181,8 +98,15 @@ export const locationaurnController = {
           formData['selected-locations'] = selectedlocations
         }
       }
+      const isNoJS =
+        request.query?.nojs === 'true' ||
+        request.path?.includes('nojs') ||
+        request.headers['user-agent']?.toLowerCase().includes('noscript')
 
-      return h.view('location_aurn/index', {
+      const templatePath = isNoJS
+        ? 'location_aurn/index_nojs'
+        : 'location_aurn/index'
+      return h.view(templatePath, {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
@@ -196,10 +120,13 @@ export const locationaurnController = {
 
     // Handle POST request - Server-side validation and processing
     if (request.method === 'post') {
+      const isNoJS =
+        request.query?.nojs === 'true' ||
+        request.path?.includes('nojs') ||
+        request.headers['user-agent']?.toLowerCase().includes('noscript')
+
       const payload = request.payload
       const errors = { list: [], details: {} }
-
-      // console.log('POST payload received:', payload)
 
       // Validate location selection (radio button)
       if (!payload.location) {
@@ -330,7 +257,10 @@ export const locationaurnController = {
 
       // If validation fails, return to form with errors and preserve form state
       if (errors.list.length > 0) {
-        return h.view('location_aurn/index', {
+        const templatePath = isNoJS
+          ? 'location_aurn/index_nojs'
+          : 'location_aurn/index'
+        return h.view(templatePath, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
@@ -356,11 +286,9 @@ export const locationaurnController = {
         )
         request.yar.set('Location', 'Country')
         request.yar.set('selectedlocation', selectedCountries)
-        // console.log('selectedlocation:', request.yar.get('selectedlocation'))
-        // console.log('Stored selected countries:', selectedCountries)
+
         return h.redirect('/customdataset')
       } else if (payload.location === 'la') {
-        // console.log('la if')
         const selectedLocations = payload.selectedLocations
 
         // Map selected local authority names to their LA IDs
@@ -388,16 +316,21 @@ export const locationaurnController = {
         request.yar.set('selectedLAIDs', selectedLAIDs.join(','))
         request.yar.set('Location', 'LocalAuthority')
         request.yar.set('selectedlocation', selectedLocations)
-        // console.log('selectedlocation:', request.yar.get('selectedlocation'))
-        // console.log('Stored selected local authorities:', selectedLocations)
-        // console.log('Stored selected LA IDs:', selectedLAIDs.join(','))
+
         return h.redirect('/customdataset')
       }
     }
 
     // Default fallback
+    const isNoJS =
+      request.query?.nojs === 'true' ||
+      request.path?.includes('nojs') ||
+      request.headers['user-agent']?.toLowerCase().includes('noscript')
 
-    return h.view('location_aurn/index', {
+    const templatePath = isNoJS
+      ? 'location_aurn/index_nojs'
+      : 'location_aurn/index'
+    return h.view(templatePath, {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
