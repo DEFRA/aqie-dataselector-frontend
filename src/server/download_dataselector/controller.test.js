@@ -190,11 +190,12 @@ describe('downloadDataselectorController', () => {
 
     const result = downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'downloadViewData',
       expect.objectContaining({
         pageTitle: englishNew.custom.pageTitle,
-        downloadaurnresult: 'https://api.example.com/download/12345',
+        downloadaurnresult: null,
         stationcount: 5,
         yearrange: 'Multiple',
         finalyear: ['2021', '2022', '2023', '2024', '2025'],
@@ -206,7 +207,7 @@ describe('downloadDataselectorController', () => {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
-      downloadaurnresult: 'https://api.example.com/download/12345',
+      downloadaurnresult: null,
       stationcount: 5,
       yearrange: 'Multiple',
       displayBacklink: true,
@@ -231,11 +232,12 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
-      downloadaurnresult: 'https://api.example.com/download/22222',
+      downloadaurnresult: null,
       stationcount: 5,
       yearrange: 'Single',
       displayBacklink: true,
@@ -259,11 +261,12 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
-      downloadaurnresult: 'https://api.example.com/download/44444',
+      downloadaurnresult: null,
       stationcount: 8,
       yearrange: 'Multiple',
       displayBacklink: true,
@@ -287,11 +290,12 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
-      downloadaurnresult: 'https://api.example.com/download/55555',
+      downloadaurnresult: null,
       stationcount: 4,
       yearrange: 'Single',
       displayBacklink: true,
@@ -318,7 +322,6 @@ describe('downloadDataselectorController', () => {
     expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedyear')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
-    expect(mockRequest.yar.get).toHaveBeenCalledWith('downloadaurnresult')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('yearrange')
     expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
   })
@@ -338,13 +341,14 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'downloadViewData',
       expect.objectContaining({
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
-        downloadaurnresult: 'https://api.example.com/download/12345',
+        downloadaurnresult: null,
         stationcount: 5,
         yearrange: 'Multiple',
         displayBacklink: true,

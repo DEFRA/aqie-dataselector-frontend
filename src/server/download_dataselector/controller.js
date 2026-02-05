@@ -89,12 +89,15 @@ export const downloadDataselectorController = {
       )
     }
 
+    // Clear any previous download result to prevent auto-download
+    request.yar.set('downloadaurnresult', null)
+
     // Success case - prepare view data
     const successViewData = {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
-      downloadaurnresult: request.yar.get('downloadaurnresult'),
+      downloadaurnresult: null, // Don't auto-download, wait for user to click
       stationcount: request.yar.get('nooflocation'),
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
