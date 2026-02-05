@@ -72,11 +72,12 @@
                      type="radio" 
                      value="countries" 
                      data-aria-controls="conditional-location-2"
+                     aria-describedby="location-2-hint"
                      {% if formData.location == "countries" %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="location-2">
                 Countries
               </label>
-              <div class="govuk-hint govuk-radios__hint">
+              <div id ="location-2-hint" class="govuk-hint govuk-radios__hint">
                 Choose one or more: England, Scotland, Wales or Northern Ireland
               </div>
             </div>
@@ -95,6 +96,7 @@
                            name="country" 
                            type="checkbox" 
                            value="England"
+                              
                            {% if formData.country and (formData.country == "England" or (formData.country | length and "England" in formData.country)) %}checked{% endif %}>
                     <label class="govuk-label govuk-checkboxes__label" for="country-england">England</label>
                   </div>
@@ -136,10 +138,11 @@
                      name="location"
                      type="radio"
                      value="la"
+                     aria-describedby="location-4-hint"
                      data-aria-controls="conditional-location-4"
                      {% if formData.location == "la" %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="location-4">Local authority</label>
-              <div class="govuk-hint govuk-radios__hint">Add up to 10 local authorities</div>
+              <div id ="location-4-hint" class="govuk-hint govuk-radios__hint">Add up to 10 local authorities</div>
             </div>
 
             <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">

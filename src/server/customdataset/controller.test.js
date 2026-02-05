@@ -90,6 +90,11 @@ describe('customdatasetController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('Region', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('Location', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('TimeSelectionMode', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearany', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('startYear', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('endYear', '')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('startyear_ytd', '')
 
       expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
@@ -105,12 +110,12 @@ describe('customdatasetController', () => {
       expect(result).toBe('view-response')
     })
 
-    it('should clear all 15 session values when path includes /clear', async () => {
+    it('should clear all 20 session values when path includes /clear', async () => {
       mockRequest.path = '/customdataset/clear'
 
       await customdatasetController.handler(mockRequest, mockH)
 
-      expect(mockRequest.yar.set).toHaveBeenCalledTimes(15)
+      expect(mockRequest.yar.set).toHaveBeenCalledTimes(20)
     })
   })
 
