@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function addLocationToTable(value) {
-    if (!tableBody || !value.trim()) return
+    if (!tableBody || !value.trim()) return false
 
     const trimmedValue = value.trim()
     const lowerValue = trimmedValue.toLowerCase()
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
         duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
       if (maxLimitError) maxLimitError.hidden = true
-      return
+      return false
     }
 
     // Check for maximum limit (10 local authorities)
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       const duplicateError = document.getElementById('duplicate-error')
       if (duplicateError) duplicateError.hidden = true
-      return
+      return false
     }
 
     // Check for duplicates
@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       const maxLimitError = document.getElementById('max-limit-error')
       if (maxLimitError) maxLimitError.hidden = true
-      return
+      return false
     }
 
     // Hide all error messages for valid add
@@ -432,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tableCaption) tableCaption.style.display = 'table-caption';
     updateButtonLabel();
     updateHiddenInputs();
+    return true
   }
   
   // Radio button handlers - simplified to avoid timing issues
@@ -474,44 +475,49 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!value) {
         // Show error if no value entered
         const duplicateError = document.getElementById('duplicate-error');
+        const maxLimitError = document.getElementById('max-limit-error');
+        if (maxLimitError) maxLimitError.hidden = true;
         if (duplicateError) {
           const errorLink = duplicateError.querySelector('a');
-          if (errorLink) errorLink.textContent = 'Add at least one local authority';
+          if (errorLink) errorLink.textContent = 'Enter a local authority';
           duplicateError.hidden = false;
           duplicateError.focus();
           duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         return;
       }
-      addLocationToTable(value);
-      // Clear the input properly for both regular input and accessible autocomplete
-      input.value = '';
-      // For accessible autocomplete, also clear any hidden input or internal state
-      const hiddenInput = container.querySelector('input[type="hidden"]');
-      if (hiddenInput) {
-        hiddenInput.value = '';
-      }
-      // Clear any autocomplete specific input elements
-      const autocompleteInputs = container.querySelectorAll('input');
-      autocompleteInputs.forEach(inp => {
-        inp.value = '';
-      });
-      // Force a change event to notify the autocomplete component
-      if (input) {
-        const event = new Event('input', { bubbles: true });
-        input.dispatchEvent(event);
-      }
-      // Additional clearing for accessible-autocomplete internal state
-      setTimeout(() => {
-        if (input) {
-          input.value = '';
-          input.setAttribute('value', '');
-          // Clear any aria-expanded or other autocomplete states
-          input.removeAttribute('aria-expanded');
-          input.removeAttribute('aria-activedescendant');
-          input.focus();
+      const success = addLocationToTable(value);
+      // Only clear the input if successfully added
+      if (success) {
+        // Clear the input properly for both regular input and accessible autocomplete
+        input.value = '';
+        // For accessible autocomplete, also clear any hidden input or internal state
+        const hiddenInput = container.querySelector('input[type="hidden"]');
+        if (hiddenInput) {
+          hiddenInput.value = '';
         }
-      }, 10);
+        // Clear any autocomplete specific input elements
+        const autocompleteInputs = container.querySelectorAll('input');
+        autocompleteInputs.forEach(inp => {
+          inp.value = '';
+        });
+        // Force a change event to notify the autocomplete component
+        if (input) {
+          const event = new Event('input', { bubbles: true });
+          input.dispatchEvent(event);
+        }
+        // Additional clearing for accessible-autocomplete internal state
+        setTimeout(() => {
+          if (input) {
+            input.value = '';
+            input.setAttribute('value', '');
+            // Clear any aria-expanded or other autocomplete states
+            input.removeAttribute('aria-expanded');
+            input.removeAttribute('aria-activedescendant');
+            input.focus();
+          }
+        }, 10);
+      }
     });
   }
   

@@ -10,9 +10,9 @@ export const english = {
     subheading: ' Related content',
     buttonText: 'Start now',
     texts: {
-      a: 'Use this service to:',
-      b: 'find air quality monitoring stations',
-      c: 'download air pollution data',
+      a: 'Use this service to view and download air pollution data from  Automatic Urban and Rural network (AURN).',
+      b: 'find monitoring stations by location',
+      c: 'create a custom dataset',
       d: 'This service uses data from the Automatic Urban and Rural network (AURN).',
       e: 'This service shows you data for:',
       p3: 'nitrogen dioxide',
@@ -24,7 +24,8 @@ export const english = {
       g: 'air quality in a local area, including the air pollution forecast for the next 5 days',
       h: 'health advice to reduce your exposure to pollutants',
       i: 'check air quality',
-      j: 'to look up:'
+      j: 'to look up:',
+      k: 'To get air pollution data, you can:'
     },
     links: {
       a: 'Check air quality',
