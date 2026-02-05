@@ -58,6 +58,7 @@
                      type="radio"
                      value="any"
                      data-aria-controls="conditional-time-any"
+                     aria-describedby="time-any-hint"
                      {% if formData.time == 'any' %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="time-any">Any year</label>
               <div id="time-any-hint" class="govuk-hint govuk-radios__hint">Choose a single whole year</div>
@@ -106,6 +107,7 @@
                      type="radio"
                      value="range"
                      data-aria-controls="conditional-time-range"
+                      aria-describedby="time-range-hint"
                      {% if formData.time == 'range' %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="time-range">Range of years</label>
               <div id="time-range-hint" class="govuk-hint govuk-radios__hint">Choose up to 5 whole years at a time</div>

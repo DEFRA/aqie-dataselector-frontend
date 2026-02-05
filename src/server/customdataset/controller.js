@@ -36,6 +36,13 @@ export const customdatasetController = {
       request.yar.set('selectedLAIDs', '')
       request.yar.set('Location', '')
 
+      // Clear year selection mode and related year data
+      request.yar.set('TimeSelectionMode', '')
+      request.yar.set('yearany', '')
+      request.yar.set('startYear', '')
+      request.yar.set('endYear', '')
+      request.yar.set('startyear_ytd', '')
+
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
