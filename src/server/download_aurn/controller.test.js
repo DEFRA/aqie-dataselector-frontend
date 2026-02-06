@@ -85,8 +85,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // initial download
-        .mockResolvedValueOnce(mockStatusResponse) // polling completed
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload - returns job ID
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - polling completed
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -129,8 +129,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -164,8 +164,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -203,8 +203,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -232,8 +232,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -251,8 +251,8 @@ describe('downloadAurnController', () => {
       const mockStatusResponse = { data: { status: 'Completed', resultUrl } }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -278,8 +278,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -301,8 +301,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -322,8 +322,8 @@ describe('downloadAurnController', () => {
       const mockStatusResponse = { data: { status: 'Completed', resultUrl } }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -360,8 +360,8 @@ describe('downloadAurnController', () => {
       }
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse)
-        .mockResolvedValueOnce(mockStatusResponse)
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -391,10 +391,10 @@ describe('downloadAurnController', () => {
       ]
 
       axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // start job
-        .mockResolvedValueOnce(mockStatusResponses[0]) // poll #1
-        .mockResolvedValueOnce(mockStatusResponses[1]) // poll #2
-        .mockResolvedValueOnce(mockStatusResponses[2]) // poll #3 complete
+        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload - start job
+        .mockResolvedValueOnce(mockStatusResponses[0]) // invokedownloadS3 - poll #1
+        .mockResolvedValueOnce(mockStatusResponses[1]) // invokedownloadS3 - poll #2
+        .mockResolvedValueOnce(mockStatusResponses[2]) // invokedownloadS3 - poll #3 complete
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
