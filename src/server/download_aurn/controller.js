@@ -26,15 +26,15 @@ async function Invokedownload(apiparams) {
     //   const { payload } = await Wreck.post(url, {
     //     payload: JSON.stringify(apiparams),
     //     headers: {
-    //       'x-api-key': 't15WKmUhFiwRNH6LSkJ0Oe4FubJ7bPxW',
+    //       'x-api-key': 'KDEVmO9SbNfhY5ih6D6JA1Pg4E6GfC1m',
     //       'Content-Type': 'application/json'
     //     },
     //     json: true
     //   })
-    // console.log("payload",response)
+    // console.log("payload",payload)
     // logger.info("PayloadID",payload)
     // logger.info("PayloadID",Json.stringify(payload))
-    logger.info('idDownload entering')
+    // logger.info('idDownload entering')
     const idDownload = response.data
     logger.info('idDownload received')
     const downloadstatusapiparams = { jobID: idDownload }
@@ -44,19 +44,23 @@ async function Invokedownload(apiparams) {
     logger.info(
       `downloadstatusapiparamsstring  ${JSON.stringify(downloadstatusapiparams)}`
     )
-    //
-
-    // Poll the status endpoint every 2 seconds until status is completed
-    let statusResponse
-    // const url1 =
-    //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
-
+    return downloadstatusapiparams
+  } catch (error) {
+    return error // Rethrow the error so it can be handled appropriately
+  }
+}
+async function invokedownloadS3(downloadstatusapiparams) {
+  // Poll the status endpoint every 2 seconds until status is completed
+  let statusResponse
+  // const url1 =
+  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+  try {
     do {
-      await new Promise((resolve) => setTimeout(resolve, 10000)) // Wait 20 seconds
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
-      //     'x-api-key': 'r4Rmu3MxFjnsgLSGtVkH6FLLSfTzhIak',
+      //     'x-api-key': 'KDEVmO9SbNfhY5ih6D6JA1Pg4E6GfC1m',
       //     'Content-Type': 'application/json'
       //   }
       // })
@@ -65,6 +69,10 @@ async function Invokedownload(apiparams) {
         downloadstatusapiparams
       )
       statusResponse = statusResult.data
+      logger.info(`statusResponse.insideLoop ${JSON.stringify(statusResponse)}`)
+      logger.info(
+        `statusResponseStatus.insideLoop ${JSON.stringify(statusResponse.status)}`
+      )
     } while (statusResponse.status !== 'Completed')
     //  return response
     logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
@@ -107,8 +115,8 @@ const downloadAurnController = {
           dataselectordownloadtype: 'dataSelectorSingle'
         }
       }
-      const downloadResultaurn = await Invokedownload(apiparams)
-
+      const downloadstatusapiparams = await Invokedownload(apiparams)
+      const downloadResultaurn = await invokedownloadS3(downloadstatusapiparams)
       //  request.yar.set('downloadaurnresult', downloadResultaurn)
       const viewData = {
         ...request.yar.get('viewDatanojs'),
