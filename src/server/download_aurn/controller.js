@@ -52,7 +52,7 @@ async function Invokedownload(apiparams) {
     //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
 
     do {
-      await new Promise((resolve) => setTimeout(resolve, 10000)) // Wait 20 seconds
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
 
       // const statusResult = await axios.post(url1, downloadstatusapiparams, {
       //   headers: {
@@ -65,6 +65,10 @@ async function Invokedownload(apiparams) {
         downloadstatusapiparams
       )
       statusResponse = statusResult.data
+      logger.info(`statusResponse.insideLoop ${JSON.stringify(statusResponse)}`)
+      logger.info(
+        `statusResponseStatus.insideLoop ${JSON.stringify(statusResponse.status)}`
+      )
     } while (statusResponse.status !== 'Completed')
     //  return response
     logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
