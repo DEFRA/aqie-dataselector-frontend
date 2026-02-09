@@ -22,6 +22,8 @@ describe('downloadAurnController', () => {
     jest.useFakeTimers()
     jest.clearAllMocks()
 
+    axios.post.mockReset()
+
     mockRequest = {
       params: { year: '2024' },
       url: { pathname: '/download_aurn/2024' },
@@ -75,12 +77,12 @@ describe('downloadAurnController', () => {
   })
 
   describe('successful download flow', () => {
-    it('returns jobID for JS route (no server-side polling)', () => {
+    it('returns jobID for JS route (no server-side polling)', async () => {
       const mockDownloadResponse = { data: 'job-123' }
 
       axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload - returns job ID
 
-      //  const result = await downloadAurnController.handler(mockRequest, mockH)
+      await downloadAurnController.handler(mockRequest, mockH)
 
       // Should only call download API once (no polling on server for JS route)
       expect(axios.post).toHaveBeenCalledTimes(1)

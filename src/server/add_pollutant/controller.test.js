@@ -18,6 +18,10 @@ describe('airpollutantController', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
+    consoleLogSpy = jest
+      .spyOn(console, 'log')
+      .mockImplementation(() => undefined)
+
     mockRequest = {
       method: 'get',
       yar: {
