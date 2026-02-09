@@ -41,6 +41,10 @@ describe('downloadDataselectorController', () => {
 
     const result = downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedyear')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedpollutant')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'errorViewData',
       expect.objectContaining({
@@ -81,6 +85,8 @@ describe('downloadDataselectorController', () => {
 
     const result = downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedyear')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'errorViewData',
       expect.objectContaining({
@@ -190,6 +196,11 @@ describe('downloadDataselectorController', () => {
 
     const result = downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedyear')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('nooflocation')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('yearrange')
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'downloadViewData',
@@ -232,6 +243,7 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
@@ -261,7 +273,14 @@ describe('downloadDataselectorController', () => {
 
     downloadDataselectorController.handler(mockRequest, mockH)
 
+    expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear')
     expect(mockRequest.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'downloadViewData',
+      expect.objectContaining({
+        finalyear: ['2020', '2021', '2022', '2023']
+      })
+    )
     expect(mockH.view).toHaveBeenCalledWith('download_dataselector/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,

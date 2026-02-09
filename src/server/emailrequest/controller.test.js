@@ -51,6 +51,8 @@ describe('emailrequestController', () => {
     mockRequest = {
       path: undefined,
       payload: {},
+      query: {},
+      info: {},
       yar: {
         get: jest.fn(),
         set: jest.fn()
@@ -87,7 +89,7 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest'
     })
 
-    it('should render the email request form with correct data', async () => {
+    it('should render the email request form with correct data (no-JS default)', async () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
@@ -95,9 +97,55 @@ describe('emailrequestController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         displayBacklink: true,
-        hrefq: '/download_dataselectornojs' // match controller
+        hrefq: '/download_dataselectornojs'
       })
       expect(mockH.view).toHaveBeenCalled()
+    })
+
+    it('should render with JS backUrl when js=true query param', async () => {
+      mockRequest.query = { js: 'true' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselector'
+      })
+    })
+
+    it('should render with JS backUrl when referrer is from JS page', async () => {
+      mockRequest.info = {
+        referrer: 'http://example.com/download_dataselector'
+      }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselector'
+      })
+    })
+
+    it('should render with no-JS backUrl when referrer is from nojs page', async () => {
+      mockRequest.info = {
+        referrer: 'http://example.com/download_dataselectornojs'
+      }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselectornojs'
+      })
     })
 
     it('should handle missing path correctly', async () => {
@@ -122,7 +170,7 @@ describe('emailrequestController', () => {
     })
 
     describe('Email validation', () => {
-      it('should show error when no email is provided', async () => {
+      it('should show error when no email is provided (no-JS default)', async () => {
         mockRequest.payload = {}
 
         await emailrequestController.handler(mockRequest, mockH)
@@ -132,11 +180,28 @@ describe('emailrequestController', () => {
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,
-          hrefq: '/download_dataselectornojs', // match controller
+          hrefq: '/download_dataselectornojs',
           error: 'Please enter an email address',
           email: undefined
         })
         expect(mockH.view).toHaveBeenCalled()
+      })
+
+      it('should show error with JS backUrl when js=true param', async () => {
+        mockRequest.payload = {}
+        mockRequest.query = { js: 'true' }
+
+        await emailrequestController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          displayBacklink: true,
+          hrefq: '/download_dataselector',
+          error: 'Please enter an email address',
+          email: undefined
+        })
       })
 
       it('should show error when email is null', async () => {
@@ -258,7 +323,12 @@ describe('emailrequestController', () => {
           'email',
           'test@example.com'
         )
-        expect(mockConfig).toHaveBeenCalledWith('email_URL') // Updated to match controller
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear1')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('email')
+        expect(mockConfig).toHaveBeenCalledWith('email_URL')
         expect(mockAxios).toHaveBeenCalledWith(
           'https://api.example.com/email',
           {
@@ -462,7 +532,7 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('should handle non-confirm paths', async () => {
+    it('should handle non-confirm paths with default no-JS backUrl', async () => {
       mockRequest.path = '/emailrequest/other'
 
       await emailrequestController.handler(mockRequest, mockH)
@@ -471,7 +541,22 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          hrefq: '/download_dataselectornojs' // match controller
+          hrefq: '/download_dataselectornojs'
+        })
+      )
+    })
+
+    it('should handle non-confirm paths with JS backUrl when js=true', async () => {
+      mockRequest.path = '/emailrequest/other'
+      mockRequest.query = { js: 'true' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'emailrequest/index',
+        expect.objectContaining({
+          hrefq: '/download_dataselector'
         })
       )
     })
@@ -485,9 +570,109 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/index',
         expect.objectContaining({
-          hrefq: '/download_dataselectornojs' // match controller
+          hrefq: '/download_dataselectornojs'
         })
       )
+    })
+  })
+
+  describe('BackUrl logic (query param and referrer)', () => {
+    it('should use /download_dataselector when query param js=true', async () => {
+      mockRequest.query = { js: 'true' }
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselector'
+      })
+    })
+
+    it('should use /download_dataselectornojs when query param js is not true', async () => {
+      mockRequest.query = { js: 'false' }
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselectornojs'
+      })
+    })
+
+    it('should use /download_dataselector when referrer includes /download_dataselector (without nojs)', async () => {
+      mockRequest.info = {
+        referrer: 'http://example.com/download_dataselector'
+      }
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselector'
+      })
+    })
+
+    it('should use /download_dataselectornojs when referrer includes /download_dataselectornojs', async () => {
+      mockRequest.info = {
+        referrer: 'http://example.com/download_dataselectornojs'
+      }
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselectornojs'
+      })
+    })
+
+    it('should use /download_dataselectornojs when no referrer and no js param', async () => {
+      mockRequest.info = {}
+      mockRequest.query = {}
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselectornojs'
+      })
+    })
+
+    it('should prioritize js=true query param over referrer', async () => {
+      mockRequest.query = { js: 'true' }
+      mockRequest.info = {
+        referrer: 'http://example.com/download_dataselectornojs'
+      }
+      mockRequest.path = '/emailrequest'
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('emailrequest/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        displayBacklink: true,
+        hrefq: '/download_dataselector'
+      })
     })
   })
 

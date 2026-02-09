@@ -42,7 +42,19 @@ async function Invokestationcount(stationcountparameters) {
 }
 export const emailrequestController = {
   handler: async (request, h) => {
-    const backUrl = '/download_dataselectornojs'
+    // Determine back URL based on referrer or query parameter
+    // If coming from JS version or has 'js' query param, use /download_dataselector
+    // Otherwise use /download_dataselectornojs for no-JS users
+    const hasJsParam = request.query?.js === 'true'
+    const referrer = request.info?.referrer || ''
+    const isFromJsPage =
+      referrer.includes('/download_dataselector') && !referrer.includes('nojs')
+
+    const backUrl =
+      hasJsParam || isFromJsPage
+        ? '/download_dataselector'
+        : '/download_dataselectornojs'
+
     // console.log('comes here into email')
     // const { home } = englishNew.custom
     if (request.path?.includes('/confirm')) {

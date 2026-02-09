@@ -459,14 +459,29 @@ document.addEventListener('DOMContentLoaded', function() {
   // Handle other radio buttons to clean up state
   const allRadios = document.querySelectorAll('input[name="location"]');
   allRadios.forEach(r => {
-    if (r !== radio) {
-      r.addEventListener('change', function() {
-        if (this.checked && conditional) {
-          conditional.classList.add('govuk-radios__conditional--hidden');
-          // Don't reset autocomplete state to avoid re-initialization issues
-        }
-      });
-    }
+    // Clear server-side error when any radio is selected
+    r.addEventListener('change', function() {
+      // Hide server-side error summary
+      const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
+      if (serverErrorSummary) {
+        serverErrorSummary.style.display = 'none'
+      }
+      
+      // Hide inline error
+      const serverError = document.getElementById('location-error')
+      if (serverError) {
+        serverError.style.display = 'none'
+      }
+      const formGroup = serverError?.closest('.govuk-form-group')
+      if (formGroup) {
+        formGroup.classList.remove('govuk-form-group--error')
+      }
+      
+      if (r !== radio && this.checked && conditional) {
+        conditional.classList.add('govuk-radios__conditional--hidden');
+        // Don't reset autocomplete state to avoid re-initialization issues
+      }
+    });
   });
   
   // Add button handler (UI only - no validation)
@@ -556,6 +571,22 @@ document.addEventListener('DOMContentLoaded', function() {
   const formEl = document.querySelector('form[action="/location-aurn"]')
 
   function showClientError(message) {
+    // Clear server-side error summary
+    const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
+    if (serverErrorSummary) {
+      serverErrorSummary.style.display = 'none'
+    }
+    
+    // Clear server-side inline error
+    const serverError = document.getElementById('location-error')
+    if (serverError) {
+      serverError.style.display = 'none'
+    }
+    const formGroup = document.querySelector('.govuk-form-group--error')
+    if (formGroup) {
+      formGroup.classList.remove('govuk-form-group--error')
+    }
+    
     const duplicateError = document.getElementById('duplicate-error')
     if (duplicateError) {
       const link = duplicateError.querySelector('a')

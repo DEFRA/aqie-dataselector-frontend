@@ -248,6 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // State for specific mode
   const addedPollutants = new Set(); // Track unique values (lowercased)
 
+  // Helper to clear server-side errors
+  function clearServerErrors() {
+    // Hide server-side error summary
+    const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
+    if (serverErrorSummary) {
+      serverErrorSummary.style.display = 'none'
+    }
+    
+    // Remove error styling from form group
+    const formGroup = document.querySelector('.govuk-form-group--error')
+    if (formGroup) {
+      formGroup.classList.remove('govuk-form-group--error')
+    }
+  }
+
   // Helper to update add button text
   function updateAddButtonText() {
     if (!addButton) return;
@@ -296,6 +311,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Check if no pollutant is entered
       if (!value) {
+        // Clear server-side errors first
+        clearServerErrors();
+        
         // Show error for empty input
         const errorSummary = document.getElementById('duplicate-error');
         if (errorSummary) {
@@ -312,6 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Check if pollutant is in the allowed list
       if (!isAllowedPollutant(value)) {
+        // Clear server-side errors first
+        clearServerErrors();
+        
         // Show error for invalid pollutant
         const errorSummary = document.getElementById('duplicate-error');
         if (errorSummary) {
@@ -330,6 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Check for duplicates in UI
       if (addedPollutants.has(lowerValue)) {
+        // Clear server-side errors first
+        clearServerErrors();
+        
         const errorSummary = document.getElementById('duplicate-error');
         if (errorSummary) {
           // Reset error message to duplicate message
@@ -478,6 +502,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const modeRadios = document.querySelectorAll('input[name="pollutant-mode"]');
   modeRadios.forEach(radio => {
     radio.addEventListener('change', function() {
+      // Clear server-side errors when radio is selected
+      clearServerErrors();
+      
       syncTableVisibility();
       if (this.value === 'specific' && this.checked) {
         setTimeout(() => { initializeAutocomplete(); }, 100);

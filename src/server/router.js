@@ -27,6 +27,7 @@ import { downloadDataselector } from '~/src/server/download_dataselector/index.j
 import { downloadDataselectornojs } from '~/src/server/download_dataselector_nojs/index.js'
 import { downloadAurn } from '~/src/server/download_aurn/index.js'
 import { emailrequest } from '~/src/server/emailrequest/index.js'
+import { downloadAurnstatus } from '~/src/server/download_aurn_status/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -88,6 +89,7 @@ export const router = {
         downloadDataselector,
         downloadDataselectornojs,
         downloadAurn,
+        downloadAurnstatus,
         emailrequest
       ])
 
