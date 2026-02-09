@@ -17,6 +17,11 @@ export const downloadDataselector = {
           method: 'POST',
           path: '/download_dataselector',
           ...downloadDataselectorController
+        },
+        {
+          method: 'GET',
+          path: '/download_dataselector',
+          ...downloadDataselectorController
         }
       ])
     }

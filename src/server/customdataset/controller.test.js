@@ -77,6 +77,14 @@ describe('customdatasetController', () => {
         ''
       )
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedpollutants_specific',
+        []
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedpollutants_group',
+        []
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'formattedPollutants',
         ''
       )
@@ -115,7 +123,7 @@ describe('customdatasetController', () => {
 
       await customdatasetController.handler(mockRequest, mockH)
 
-      expect(mockRequest.yar.set).toHaveBeenCalledTimes(20)
+      expect(mockRequest.yar.set).toHaveBeenCalledTimes(22)
     })
   })
 

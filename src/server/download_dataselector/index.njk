@@ -95,7 +95,7 @@
         Download all years
       </th>
          <td class="govuk-table__cell">
-        <a href="/emailrequest"  class="govuk-link">Request Data</a>
+        <a href="/emailrequest" onclick="this.href='/emailrequest?js=true'; return true;" class="govuk-link">Request Data</a>
       </td>
     </tr>
     
@@ -105,8 +105,7 @@
         {{ year }}
       </th>
       <td class="govuk-table__cell">
-        <a href="#" onclick="getAPIdownload('{{ year }}')" class="govuk-link">Download hourly data</a>
-        {# //<a href="#" onclick = "getAPIdownload()"  class="govuk-link">Download hourly data</a> #}
+        <a href="/emailrequest" onclick="getAPIdownload('{{ year }}'); return false;" class="govuk-link">Download hourly data</a>
       </td>
     </tr>
     {% endfor %}
@@ -138,23 +137,143 @@
   </div>
 </div>
 <script>
-async function getAPIdownload(year) {  
-       
+async function getAPIdownload(year) {
+    const scrollY = window.scrollY;
+    window.scrollTo(0, scrollY);
+    
+    // Show loading indicator
+   // showLoadingIndicator('Preparing your download...');
+    
+    try {
+        // Step 1: Start download job and get jobID
+        console.log(`Starting download for year: ${year}`);
+        const response = await fetch(`/download_aurn/${year}`);
         
-        const scrollY = window.scrollY;
-        window.scrollTo(0, scrollY);
-
-        try {
-            const response = await fetch(`/download_aurn/${year}`);
-            const data = await response.text();
-           // console.log("DATA FROM DOWNLOAD", data);
-            window.location.href = data;
-            window.scrollTo(0, scrollY); 
-        } catch (error) {
-            console.error('Error fetching download:', error);
-            // Fallback to no-JS route if AJAX fails
-            window.location.href = `/download_aurn_nojs/${year}`;
+        if (!response.ok) {
+            throw new Error(`Failed to start download: ${response.status}`);
         }
+        
+        const data = await response.json();
+       // console.log('Download job started:', data);
+        
+        if (data.error) {
+         //!SECTION   hideLoadingIndicator();
+            window.location.href = `/check-air-quality/problem-with-service?statusCode=${data.statusCode || 500}`;
+            return;
+        }
+        
+        const jobID = data.jobID;
+        
+        if (!jobID) {
+            console.error('No jobID received');
+            throw new Error('No job ID received from server');
+        }
+        
+       // console.log(`Job ID: ${jobID}`);
+        
+        // Step 2: Poll for completion
+        const startTime = Date.now();
+        const maxDuration = 3 * 60 * 1000; // 3 minutes timeout
+        
+        function pollProgress() {
+            // Check timeout
+            if (Date.now() - startTime > maxDuration) {
+             //   hideLoadingIndicator();
+              //  alert('This download is taking longer than expected. Please use the email request option for large datasets.');
+                window.location.href = '/emailrequest';
+                return;
+            }
+            
+            // Poll status endpoint
+            fetch(`/download_aurn_status/${jobID}`)
+                .then(statusResponse => {
+                  //  console.log('Status response status:', statusResponse.status);
+                    
+                    if (!statusResponse.ok) {
+                        throw new Error(`Status check failed: ${statusResponse.status}`);
+                    }
+                    
+                    return statusResponse.json();
+                })
+                .then(statusData => {
+                    //console.log('Status data:', statusData);
+                    
+                    if (statusData.error) {
+                      //  hideLoadingIndicator();
+                        window.location.href = `/check-air-quality/problem-with-service?statusCode=${statusData.statusCode || 500}`;
+                        return;
+                    }
+                    
+                    // Update progress message
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const progress = Math.min(Math.floor((elapsed / 180) * 100), 95);
+              //      updateLoadingMessage(`Preparing your download... ${progress}%`);
+                    
+                    // Check if completed
+                    if (statusData.status === 'Completed' && statusData.resultUrl) {
+                       // console.log('Download ready:', statusData.resultUrl);
+                      //  hideLoadingIndicator();
+                        window.location.href = statusData.resultUrl;
+                    } else {
+                        // Continue polling after 2 seconds
+                        setTimeout(pollProgress, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Polling error:', error);
+                    // Retry after 2 seconds on error
+                    setTimeout(pollProgress, 2000);
+                });
+        }
+        
+        // Start polling
+        pollProgress();
+        
+    } catch (error) {
+        console.error('Error fetching download:', error);
+       // hideLoadingIndicator();
+        // Fallback to no-JS route if AJAX fails
+        window.location.href = `/download_aurn_nojs/${year}`;
+    }
+}
+
+// Helper functions for loading indicator
+function showLoadingIndicator(message) {
+    const indicator = document.createElement('div');
+    indicator.id = 'download-loading';
+    indicator.className = 'govuk-notification-banner';
+    indicator.setAttribute('role', 'region');
+    indicator.setAttribute('aria-labelledby', 'download-loading-title');
+    indicator.innerHTML = `
+        <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="download-loading-title">
+                Preparing download
+            </h2>
+        </div>
+        <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading" id="download-loading-message">
+                ${message}
+            </p>
+        </div>`;
+    
+    const container = document.getElementById('download-content-container');
+    if (container) {
+        container.prepend(indicator);
+    }
+}
+
+function updateLoadingMessage(message) {
+    const messageElement = document.getElementById('download-loading-message');
+    if (messageElement) {
+        messageElement.textContent = message;
+    }
+}
+
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('download-loading');
+    if (indicator) {
+        indicator.remove();
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

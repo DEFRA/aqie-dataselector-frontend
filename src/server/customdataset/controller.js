@@ -25,6 +25,8 @@ export const customdatasetController = {
       request.yar.set('selectedPollutants', null)
       request.yar.set('selectedPollutantMode', '')
       request.yar.set('selectedPollutantGroup', '')
+      request.yar.set('selectedpollutants_specific', [])
+      request.yar.set('selectedpollutants_group', [])
       request.yar.set('formattedPollutants', '')
 
       // Clear other related session variables including time period
@@ -253,7 +255,7 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'gBEm5HvOy37uc5C9I5uwvhZ0tIDqVUwH',
+        //       'x-api-key': 'jbGZH1mjZHhdEaZP3lcEGmXbuTRj1H5v',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true

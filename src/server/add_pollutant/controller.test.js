@@ -13,6 +13,7 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
 describe('airpollutantController', () => {
   let mockRequest
   let mockH
+  let consoleLogSpy
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -32,6 +33,10 @@ describe('airpollutantController', () => {
       view: jest.fn().mockReturnValue('add-pollutant-view-response'),
       redirect: jest.fn().mockReturnValue('redirect-response')
     }
+  })
+
+  afterEach(() => {
+    consoleLogSpy?.mockRestore()
   })
 
   describe('GET requests', () => {
@@ -179,6 +184,71 @@ describe('airpollutantController', () => {
           },
           errorMessage: {
             message: { text: 'Please add at least one pollutant' }
+          },
+          selectedMode: 'specific',
+          selectedPollutants: []
+        })
+      )
+
+      // Controller clears any prior group selection immediately in specific mode
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantGroup',
+        ''
+      )
+    })
+
+    it('does not resurrect old session pollutants when no pollutants are submitted (JS flow)', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedpollutants_specific') {
+          return ['Nitrogen dioxide (NO2)']
+        }
+        return null
+      })
+
+      mockRequest.payload = { 'pollutant-mode': 'specific' }
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index',
+        expect.objectContaining({
+          errors: {
+            list: [
+              {
+                text: 'Please add at least one pollutant',
+                href: '#my-autocomplete'
+              }
+            ]
+          },
+          errorMessage: {
+            message: { text: 'Please add at least one pollutant' }
+          },
+          selectedMode: 'specific',
+          selectedPollutants: []
+        })
+      )
+    })
+
+    it('returns error when specific mode has invalid JSON in selectedPollutants', () => {
+      mockRequest.payload = {
+        'pollutant-mode': 'specific',
+        selectedPollutants: '[not-valid-json'
+      }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'add_pollutant/index',
+        expect.objectContaining({
+          errors: {
+            list: expect.arrayContaining([
+              {
+                text: 'Invalid pollutants data format.',
+                href: '#selected-pollutants'
+              }
+            ])
+          },
+          errorMessage: {
+            message: { text: 'Invalid pollutants data format.' }
           },
           selectedMode: 'specific',
           selectedPollutants: []
@@ -427,7 +497,59 @@ describe('airpollutantController', () => {
         'selectedPollutantMode',
         'specific'
       )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantGroup',
+        ''
+      )
       // Removed strict call count; controller may set additional session keys
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('handles no-JS dropdown selection (selected-pollutants) in specific mode', () => {
+      mockRequest.query = { nojs: 'true' }
+      mockRequest.payload = {
+        'pollutant-mode': 'specific',
+        'selected-pollutants': 'PM10'
+      }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantGroup',
+        ''
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
+        'PM10'
+      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantMode',
+        'specific'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('clears prior selections when switching modes', () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutantMode') return 'specific'
+        return null
+      })
+
+      mockRequest.payload = {
+        'pollutant-mode': 'group',
+        'pollutant-group': 'core'
+      }
+
+      airpollutantController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantGroup',
+        ''
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedPollutantMode',
+        'group'
+      )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 

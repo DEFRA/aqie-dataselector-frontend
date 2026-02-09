@@ -75,26 +75,16 @@ describe('downloadAurnController', () => {
   })
 
   describe('successful download flow', () => {
-    it('returns result URL for JS route', async () => {
+    it('returns jobID for JS route (no server-side polling)', () => {
       const mockDownloadResponse = { data: 'job-123' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/job-123'
-        }
-      }
 
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload - returns job ID
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - polling completed
+      axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload - returns job ID
 
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
+      //  const result = await downloadAurnController.handler(mockRequest, mockH)
 
-      expect(axios.post).toHaveBeenCalledTimes(2)
-      expect(axios.post).toHaveBeenNthCalledWith(
-        1,
+      // Should only call download API once (no polling on server for JS route)
+      expect(axios.post).toHaveBeenCalledTimes(1)
+      expect(axios.post).toHaveBeenCalledWith(
         'https://api.example.com/download',
         {
           pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
@@ -106,18 +96,16 @@ describe('downloadAurnController', () => {
           dataselectordownloadtype: 'dataSelectorSingle'
         }
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'downloadaurnresult',
-        'https://api.example.com/results/job-123'
-      )
-      expect(mockH.response).toHaveBeenCalledWith(
-        'https://api.example.com/results/job-123'
-      )
+      // Should NOT set downloadaurnresult for JS route
+      expect(mockRequest.yar.set).not.toHaveBeenCalled()
+
+      // Should return jobID in response body
+      expect(mockH.response).toHaveBeenCalledWith({ jobID: 'job-123' })
       expect(mockH.type).toHaveBeenCalledWith('application/json')
       expect(mockH.code).toHaveBeenCalledWith(200)
     }, 10000)
 
-    it('renders no-JS template for no-JS route', async () => {
+    it('renders no-JS template for no-JS route (with server-side polling)', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
 
       const mockDownloadResponse = { data: 'job-nojs' }
@@ -130,12 +118,19 @@ describe('downloadAurnController', () => {
 
       axios.post
         .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - server-side polling
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
       await promise
 
+      // Should call download API and status API
+      expect(axios.post).toHaveBeenCalledTimes(2)
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('viewDatanojs')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadaurnresult',
+        'https://api.example.com/results/job-nojs'
+      )
       expect(mockH.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
         {
@@ -156,30 +151,23 @@ describe('downloadAurnController', () => {
   describe('API params', () => {
     it('constructs params including regiontype', async () => {
       const mockDownloadResponse = { data: 'job-params' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/job-params'
+
+      axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload only
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        {
+          pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
+          dataSource: 'AURN',
+          Region: 'England',
+          regiontype: 'Country',
+          Year: '2024',
+          dataselectorfiltertype: 'dataSelectorHourly',
+          dataselectordownloadtype: 'dataSelectorSingle'
         }
-      }
-
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
-
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
-
-      expect(axios.post).toHaveBeenNthCalledWith(1, expect.any(String), {
-        pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
-        dataSource: 'AURN',
-        Region: 'England',
-        regiontype: 'Country',
-        Year: '2024',
-        dataselectorfiltertype: 'dataSelectorHourly',
-        dataselectordownloadtype: 'dataSelectorSingle'
-      })
+      )
     }, 10000)
 
     it('handles LocalAuthority region type', async () => {
@@ -195,24 +183,13 @@ describe('downloadAurnController', () => {
       })
 
       const mockDownloadResponse = { data: 'job-la' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/job-la'
-        }
-      }
 
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+      axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload only
 
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
+      await downloadAurnController.handler(mockRequest, mockH)
 
-      expect(axios.post).toHaveBeenNthCalledWith(
-        1,
-        expect.any(String),
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
         expect.objectContaining({
           Region: '1,2,3',
           regiontype: 'LocalAuthority'
@@ -222,30 +199,22 @@ describe('downloadAurnController', () => {
   })
 
   describe('session management', () => {
-    it('reads required session variables', async () => {
+    it('reads required session variables for JS route', async () => {
       const mockDownloadResponse = { data: 'job-session' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/session'
-        }
-      }
 
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+      axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload only
 
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
+      await downloadAurnController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
-      expect(mockRequest.yar.get).toHaveBeenCalledWith('viewDatanojs')
+      // JS route doesn't read viewDatanojs
+      expect(mockRequest.yar.get).not.toHaveBeenCalledWith('viewDatanojs')
     }, 10000)
 
-    it('sets downloadaurnresult in session', async () => {
+    it('sets downloadaurnresult in session for no-JS route only', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
       const resultUrl = 'https://api.example.com/results/download-data'
       const mockDownloadResponse = { data: 'job-session-set' }
       const mockStatusResponse = { data: { status: 'Completed', resultUrl } }
@@ -266,30 +235,21 @@ describe('downloadAurnController', () => {
   })
 
   describe('route detection', () => {
-    it('detects JS route by pathname', async () => {
+    it('detects JS route by pathname (returns jobID)', async () => {
       mockRequest.url.pathname = '/download_aurn/2024'
 
       const mockDownloadResponse = { data: 'job-js' }
-      const mockStatusResponse = {
-        data: {
-          status: 'Completed',
-          resultUrl: 'https://api.example.com/results/job-js'
-        }
-      }
 
-      axios.post
-        .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+      axios.post.mockResolvedValueOnce(mockDownloadResponse) // Invokedownload only
 
-      const promise = downloadAurnController.handler(mockRequest, mockH)
-      await jest.runAllTimersAsync()
-      await promise
+      await downloadAurnController.handler(mockRequest, mockH)
 
-      expect(mockH.response).toHaveBeenCalled()
+      // JS route returns JSON response, not view
+      expect(mockH.response).toHaveBeenCalledWith({ jobID: 'job-js' })
       expect(mockH.view).not.toHaveBeenCalled()
     }, 10000)
 
-    it('detects no-JS route by pathname', async () => {
+    it('detects no-JS route by pathname (renders view with polling)', async () => {
       mockRequest.url.pathname = '/download_aurn_nojs/2024'
 
       const mockDownloadResponse = { data: 'job-nojs-detect' }
@@ -302,12 +262,13 @@ describe('downloadAurnController', () => {
 
       axios.post
         .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - server polls
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
       await promise
 
+      // No-JS route renders view, not JSON response
       expect(mockH.view).toHaveBeenCalled()
       expect(mockH.response).not.toHaveBeenCalled()
     }, 10000)
@@ -323,7 +284,7 @@ describe('downloadAurnController', () => {
 
       axios.post
         .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - server polls
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
@@ -331,11 +292,17 @@ describe('downloadAurnController', () => {
 
       expect(mockH.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
-        expect.objectContaining({
-          downloadresultnojs: resultUrl,
+        {
           pageTitle: 'Test Download Page',
-          heading: 'Test Heading'
-        })
+          heading: 'Test Heading',
+          texts: ['Test text'],
+          stationcount: '50',
+          yearrange: 'Single',
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          finalyear: ['2024'],
+          downloadresultnojs: resultUrl
+        }
       )
     }, 10000)
 
@@ -361,23 +328,26 @@ describe('downloadAurnController', () => {
 
       axios.post
         .mockResolvedValueOnce(mockDownloadResponse) // Invokedownload
-        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3
+        .mockResolvedValueOnce(mockStatusResponse) // invokedownloadS3 - server polls
 
       const promise = downloadAurnController.handler(mockRequest, mockH)
       await jest.runAllTimersAsync()
       await promise
 
+      // When viewDatanojs is undefined, spread creates empty object
       expect(mockH.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
-        expect.objectContaining({
+        {
           downloadresultnojs: 'https://api.example.com/results/job-missing'
-        })
+        }
       )
     }, 10000)
   })
 
   describe('polling mechanism', () => {
-    it('continues polling until status is Completed', async () => {
+    it('continues polling until status is Completed (no-JS route only)', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+
       const mockDownloadResponse = { data: 'job-poll' }
       const mockStatusResponses = [
         { data: { status: 'Pending', resultUrl: null } },
@@ -400,9 +370,20 @@ describe('downloadAurnController', () => {
       await jest.runAllTimersAsync()
       await promise
 
+      // 1 download call + 3 status polling calls
       expect(axios.post).toHaveBeenCalledTimes(4)
       expect(axios.post).toHaveBeenNthCalledWith(
         2,
+        'https://api.example.com/status',
+        { jobID: 'job-poll' }
+      )
+      expect(axios.post).toHaveBeenNthCalledWith(
+        3,
+        'https://api.example.com/status',
+        { jobID: 'job-poll' }
+      )
+      expect(axios.post).toHaveBeenNthCalledWith(
+        4,
         'https://api.example.com/status',
         { jobID: 'job-poll' }
       )

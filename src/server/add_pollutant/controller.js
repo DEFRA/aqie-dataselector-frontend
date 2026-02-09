@@ -115,12 +115,12 @@ export const airpollutantController = {
         if (isNoJS && request.payload?.['selected-pollutants']) {
           // NoJS version: Replace with new selection from dropdown
           rawFromPayload = [request.payload['selected-pollutants']]
+        } else if (isNoJS) {
+          // NoJS version with no new selection: continue with whatever is in session
+          rawFromPayload = request.yar.get('selectedpollutants_specific')
         } else {
-          // JS version or no new selection
-          rawFromPayload =
-            pollutantsData && pollutantsData !== '[]' && pollutantsData !== '['
-              ? pollutantsData
-              : request.yar.get('selectedpollutants_specific')
+          // JS version: payload is the source of truth; do not resurrect from session
+          rawFromPayload = pollutantsData
         }
 
         try {
@@ -271,6 +271,7 @@ export const airpollutantController = {
       ? 'add_pollutant/index_nojs'
       : 'add_pollutant/index'
     //  console.log('templatePath', templatePath)
+
     return h.view(templatePath, {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
