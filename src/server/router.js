@@ -28,6 +28,7 @@ import { downloadDataselectornojs } from '~/src/server/download_dataselector_noj
 import { downloadAurn } from '~/src/server/download_aurn/index.js'
 import { emailrequest } from '~/src/server/emailrequest/index.js'
 import { downloadAurnstatus } from '~/src/server/download_aurn_status/index.js'
+import { problemWithService } from '~/src/server/problem-with-service/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -90,7 +91,8 @@ export const router = {
         downloadDataselectornojs,
         downloadAurn,
         downloadAurnstatus,
-        emailrequest
+        emailrequest,
+        problemWithService
       ])
 
       // Static assets
