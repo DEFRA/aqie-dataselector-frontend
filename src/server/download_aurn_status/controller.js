@@ -3,45 +3,87 @@ import axios from 'axios'
 
 async function invokedownloadS3(downloadstatusapiparams) {
   // Single status check - no polling loop!
-  // const url1 =
-  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+
   try {
-    // logger.info(`Checking status for jobID: ${downloadstatusapiparams}`)
-
-    // const statusResult = await axios.post(url1, downloadstatusapiparams, {
-    //   headers: {
-    //     'x-api-key': 'jbGZH1mjZHhdEaZP3lcEGmXbuTRj1H5v',
-    //     'Content-Type': 'application/json'
-    //   }
-    // })
-
     const statusResult = await axios.post(
       config.get('Polling_URL'),
       downloadstatusapiparams
     )
     const statusResponse = statusResult.data
 
-    // logger.info(`Status response: ${JSON.stringify(statusResponse)}`)
-    // logger.info(`Status: ${statusResponse.status}`)
-
-    // Return status and resultUrl
     return {
       status: statusResponse.status,
       resultUrl: statusResponse.resultUrl || null
     }
   } catch (error) {
-    //  logger.error('Status check failed:', error)
-
     // Return structured error
     if (error.response) {
-      return { error: true, statusCode: error.response.status }
+      return {
+        error: true,
+        statusCode: error.response.status,
+        redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
+      }
     } else if (error.request) {
-      return { error: true, statusCode: 500 }
+      return {
+        error: true,
+        statusCode: 500,
+        redirectUrl: '/problem-with-service?statusCode=500'
+      }
     } else {
-      return { error: true, statusCode: 500 }
+      return {
+        error: true,
+        statusCode: 500,
+        redirectUrl: '/problem-with-service?statusCode=500'
+      }
     }
   }
 }
+// dev
+// async function invokedownloadS3(downloadstatusapiparams) {
+//   // Single status check - no polling loop!
+//   const url1 =
+//     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+//   try {
+//     // logger.info(`Checking status for jobID: ${downloadstatusapiparams}`)
+
+//     const statusResult = await axios.post(url1, downloadstatusapiparams, {
+//       headers: {
+//         'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
+//         'Content-Type': 'application/json'
+//       }
+//     })
+
+//     const statusResponse = statusResult.data
+
+//     // Return status and resultUrl
+//     return {
+//       status: statusResponse.status,
+//       resultUrl: statusResponse.resultUrl || null
+//     }
+//   } catch (error) {
+
+//     // Return structured error
+//     if (error.response) {
+//       return {
+//         error: true,
+//         statusCode: error.response.status,
+//         redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
+//       }
+//     } else if (error.request) {
+//       return {
+//         error: true,
+//         statusCode: 500,
+//         redirectUrl: '/problem-with-service?statusCode=500'
+//       }
+//     } else {
+//       return {
+//         error: true,
+//         statusCode: 500,
+//         redirectUrl: '/problem-with-service?statusCode=500'
+//       }
+//     }
+//   }
+// }
 
 const downloadAurnstatusController = {
   handler: async (request, h) => {
@@ -70,9 +112,13 @@ const downloadAurnstatusController = {
           .response({
             error: true,
             statusCode: statusData.statusCode,
+            redirectUrl:
+              statusData.redirectUrl ||
+              `/problem-with-service?statusCode=${statusData.statusCode || 500}`,
             message: 'Status check failed'
           })
-          .code(statusData.statusCode)
+          .type('application/json')
+          .code(200)
       }
 
       // If completed, save to session
@@ -96,9 +142,12 @@ const downloadAurnstatusController = {
       return h
         .response({
           error: true,
+          statusCode: 500,
+          redirectUrl: '/problem-with-service?statusCode=500',
           message: 'An error occurred'
         })
-        .code(500)
+        .type('application/json')
+        .code(200)
     }
   }
 }

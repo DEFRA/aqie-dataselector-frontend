@@ -125,9 +125,7 @@ export const emailrequestController = {
         })
       } else {
         // Redirect to existing problem with service page when API call fails
-        return h.redirect(
-          '/check-air-quality/problem-with-service?statusCode=500'
-        )
+        return h.redirect('/problem-with-service?statusCode=500')
       }
     } else {
       return h.view('emailrequest/index', {

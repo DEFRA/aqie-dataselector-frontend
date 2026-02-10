@@ -173,9 +173,11 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 403,
+        redirectUrl: '/problem-with-service?statusCode=403',
         message: 'Status check failed'
       })
-      expect(mockH.code).toHaveBeenCalledWith(403)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
 
     it('should handle API request error and return 500', async () => {
@@ -191,9 +193,11 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 500,
+        redirectUrl: '/problem-with-service?statusCode=500',
         message: 'Status check failed'
       })
-      expect(mockH.code).toHaveBeenCalledWith(500)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
 
     it('should handle generic error and return 500', async () => {
@@ -208,9 +212,11 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 500,
+        redirectUrl: '/problem-with-service?statusCode=500',
         message: 'Status check failed'
       })
-      expect(mockH.code).toHaveBeenCalledWith(500)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
 
     it('should handle unexpected exception in handler and return 500', async () => {
@@ -233,9 +239,12 @@ describe('downloadAurnstatusController', () => {
 
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
+        statusCode: 500,
+        redirectUrl: '/problem-with-service?statusCode=500',
         message: 'An error occurred'
       })
-      expect(mockH.code).toHaveBeenCalledWith(500)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+      expect(mockH.code).toHaveBeenCalledWith(200)
     })
 
     it('should not save to session when status is Completed but resultUrl is missing', async () => {

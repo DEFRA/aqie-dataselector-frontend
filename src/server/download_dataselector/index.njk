@@ -3,6 +3,8 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% block content %}
+
+<div id="download-loading-container"></div>
  
 
 
@@ -138,11 +140,9 @@
 </div>
 <script>
 async function getAPIdownload(year) {
-    const scrollY = window.scrollY;
-    window.scrollTo(0, scrollY);
-    
     // Show loading indicator
-   // showLoadingIndicator('Preparing your download...');
+  showLoadingIndicator('Preparing your download...');
+  scrollToLoadingIndicator();
     
     try {
         // Step 1: Start download job and get jobID
@@ -157,8 +157,8 @@ async function getAPIdownload(year) {
        // console.log('Download job started:', data);
         
         if (data.error) {
-         //!SECTION   hideLoadingIndicator();
-            window.location.href = `/check-air-quality/problem-with-service?statusCode=${data.statusCode || 500}`;
+          hideLoadingIndicator();
+            window.location.href = data.redirectUrl || `/problem-with-service?statusCode=${data.statusCode || 500}`;
             return;
         }
         
@@ -178,7 +178,7 @@ async function getAPIdownload(year) {
         function pollProgress() {
             // Check timeout
             if (Date.now() - startTime > maxDuration) {
-             //   hideLoadingIndicator();
+                hideLoadingIndicator();
               //  alert('This download is taking longer than expected. Please use the email request option for large datasets.');
                 window.location.href = '/emailrequest';
                 return;
@@ -199,20 +199,20 @@ async function getAPIdownload(year) {
                     //console.log('Status data:', statusData);
                     
                     if (statusData.error) {
-                      //  hideLoadingIndicator();
-                        window.location.href = `/check-air-quality/problem-with-service?statusCode=${statusData.statusCode || 500}`;
+                        hideLoadingIndicator();
+                      window.location.href = statusData.redirectUrl || `/problem-with-service?statusCode=${statusData.statusCode || 500}`;
                         return;
                     }
                     
                     // Update progress message
                     const elapsed = Math.floor((Date.now() - startTime) / 1000);
                     const progress = Math.min(Math.floor((elapsed / 180) * 100), 95);
-              //      updateLoadingMessage(`Preparing your download... ${progress}%`);
+                   updateLoadingMessage(`Preparing your download... ${progress}%`);
                     
                     // Check if completed
                     if (statusData.status === 'Completed' && statusData.resultUrl) {
                        // console.log('Download ready:', statusData.resultUrl);
-                      //  hideLoadingIndicator();
+                       hideLoadingIndicator();
                         window.location.href = statusData.resultUrl;
                     } else {
                         // Continue polling after 2 seconds
@@ -231,10 +231,21 @@ async function getAPIdownload(year) {
         
     } catch (error) {
         console.error('Error fetching download:', error);
-       // hideLoadingIndicator();
+        hideLoadingIndicator();
         // Fallback to no-JS route if AJAX fails
         window.location.href = `/download_aurn_nojs/${year}`;
     }
+}
+
+function scrollToLoadingIndicator() {
+  const container = document.getElementById('download-loading-container');
+  const indicator = document.getElementById('download-loading');
+  const target = indicator || container;
+  if (target && typeof target.scrollIntoView === 'function') {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 // Helper functions for loading indicator
@@ -247,7 +258,7 @@ function showLoadingIndicator(message) {
     indicator.innerHTML = `
         <div class="govuk-notification-banner__header">
             <h2 class="govuk-notification-banner__title" id="download-loading-title">
-                Preparing download
+                Important
             </h2>
         </div>
         <div class="govuk-notification-banner__content">
@@ -255,11 +266,18 @@ function showLoadingIndicator(message) {
                 ${message}
             </p>
         </div>`;
-    
-    const container = document.getElementById('download-content-container');
-    if (container) {
-        container.prepend(indicator);
-    }
+
+      const container = document.getElementById('download-loading-container');
+      if (container) {
+        container.replaceChildren(indicator);
+        return;
+      }
+
+      // Fallback: place at the top of main content
+      const main = document.querySelector('main');
+      if (main) {
+        main.prepend(indicator);
+      }
 }
 
 function updateLoadingMessage(message) {

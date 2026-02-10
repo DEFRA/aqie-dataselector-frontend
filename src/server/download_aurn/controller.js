@@ -1,7 +1,6 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-
 // import Wreck from '@hapi/wreck'
 const logger = createLogger()
 async function Invokedownload(apiparams) {
@@ -12,39 +11,8 @@ async function Invokedownload(apiparams) {
       config.get('Download_aurn_URL'),
       apiparams
     )
-    //   logger.info(`response data new one ${JSON.stringify(response.data)}`)
-    //  logger.info(`response  ${JSON.stringify(response)}`)
-    //   return response.data
-    // } catch (error) {
-    //   return error // Rethrow the error so it can be handled appropriately
-    // }
-
-    // dev
-    // try {
-    //   const url =
-    //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-    //   const { payload } = await Wreck.post(url, {
-    //     payload: JSON.stringify(apiparams),
-    //     headers: {
-    //       'x-api-key': 'jbGZH1mjZHhdEaZP3lcEGmXbuTRj1H5v',
-    //       'Content-Type': 'application/json'
-    //     },
-    //     json: true
-    //   })
-    //   console.log('payload', payload)
-    // logger.info("PayloadID",payload)
-    // logger.info("PayloadID",Json.stringify(payload))
-    // logger.info('idDownload entering')
     const idDownload = response.data
-    // const idDownload = payload
-    logger.info('idDownload received')
     const downloadstatusapiparams = { jobID: idDownload }
-    logger.info('idDownload', idDownload)
-    logger.info('downloadstatusapiparams', downloadstatusapiparams)
-    logger.info(`idDownloadstring ${JSON.stringify(idDownload)}`)
-    logger.info(
-      `downloadstatusapiparamsstring  ${JSON.stringify(downloadstatusapiparams)}`
-    )
     return downloadstatusapiparams
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
@@ -53,39 +21,70 @@ async function Invokedownload(apiparams) {
 async function invokedownloadS3(downloadstatusapiparams) {
   // Poll the status endpoint every 2 seconds until status is completed
   let statusResponse
-  // const url1 =
-  //   'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+
   try {
     do {
       await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
-
-      // const statusResult = await axios.post(url1, downloadstatusapiparams, {
-      //   headers: {
-      //     'x-api-key': 'kaRRQhmeq6rkRc3F1uqs6irKtmX9kb0m',
-      //     'Content-Type': 'application/json'
-      //   }
-      // })
       const statusResult = await axios.post(
         config.get('Polling_URL'),
         downloadstatusapiparams
       )
       statusResponse = statusResult.data
-      logger.info(`statusResponse.insideLoop ${JSON.stringify(statusResponse)}`)
-      logger.info(
-        `statusResponseStatus.insideLoop ${JSON.stringify(statusResponse.status)}`
-      )
     } while (statusResponse.status !== 'Completed')
-    //  return response
-    logger.info('statusResponse.resultUrl', statusResponse.resultUrl)
-    // console.log('statusResponse.resultUrl', statusResponse.resultUrl)
-    logger.info(
-      `statusResponse.resultUrlstring ${JSON.stringify(statusResponse.resultUrl)}`
-    )
     return statusResponse.resultUrl
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
 }
+// dev
+// async function Invokedownload(apiparams) { // prod
+
+//     try {
+//       const url =
+//         'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+//       const { payload } = await Wreck.post(url, {
+//         payload: JSON.stringify(apiparams),
+//         headers: {
+//           'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
+//           'Content-Type': 'application/json'
+//         },
+//         json: true
+//       })
+//       console.log('payload', payload)
+
+//  const idDownload = payload
+//     const downloadstatusapiparams = { jobID: idDownload }
+
+//     return downloadstatusapiparams
+//   } catch (error) {
+//     return error // Rethrow the error so it can be handled appropriately
+//   }
+// }
+// dev
+// async function invokedownloadS3(downloadstatusapiparams) {
+//   // Poll the status endpoint every 2 seconds until status is completed
+//   let statusResponse
+//   const url1 =
+//     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
+//   try {
+//     do {
+//       await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+
+//       const statusResult = await axios.post(url1, downloadstatusapiparams, {
+//         headers: {
+//           'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
+//           'Content-Type': 'application/json'
+//         }
+//       })
+//       statusResponse = statusResult.data
+
+//     } while (statusResponse.status !== 'Completed')
+
+//     return statusResponse.resultUrl
+//   } catch (error) {
+//     return error // Rethrow the error so it can be handled appropriately
+//   }
+// }
 
 const downloadAurnController = {
   handler: async (request, h) => {
@@ -121,7 +120,7 @@ const downloadAurnController = {
       // Check for error
       if (downloadstatusapiparams?.error) {
         return h.redirect(
-          `/check-air-quality/problem-with-service?statusCode=${downloadstatusapiparams.statusCode || 500}`
+          `/problem-with-service?statusCode=${downloadstatusapiparams.statusCode || 500}`
         )
       }
 
@@ -134,7 +133,7 @@ const downloadAurnController = {
         // Check for error from polling
         if (downloadResultaurn?.error) {
           return h.redirect(
-            `/check-air-quality/problem-with-service?statusCode=${downloadResultaurn.statusCode || 500}`
+            `/problem-with-service?statusCode=${downloadResultaurn.statusCode || 500}`
           )
         }
 

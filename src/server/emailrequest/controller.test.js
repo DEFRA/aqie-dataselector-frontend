@@ -366,7 +366,7 @@ describe('emailrequestController', () => {
         )
         expect(mockAxios).toHaveBeenCalled()
         expect(mockH.redirect).toHaveBeenCalledWith(
-          '/check-air-quality/problem-with-service?statusCode=500'
+          '/problem-with-service?statusCode=500'
         )
       })
     })
@@ -408,7 +408,7 @@ describe('emailrequestController', () => {
 
         expect(mockAxios).toHaveBeenCalled()
         expect(mockH.redirect).toHaveBeenCalledWith(
-          '/check-air-quality/problem-with-service?statusCode=500'
+          '/problem-with-service?statusCode=500'
         )
       })
 
@@ -700,7 +700,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockH.redirect).toHaveBeenCalledWith(
-        '/check-air-quality/problem-with-service?statusCode=500'
+        '/problem-with-service?statusCode=500'
       )
     })
 
@@ -712,7 +712,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockH.redirect).toHaveBeenCalledWith(
-        '/check-air-quality/problem-with-service?statusCode=500'
+        '/problem-with-service?statusCode=500'
       )
     })
 
@@ -722,7 +722,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockH.redirect).toHaveBeenCalledWith(
-        '/check-air-quality/problem-with-service?statusCode=500'
+        '/problem-with-service?statusCode=500'
       )
     })
 
@@ -732,7 +732,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockH.redirect).toHaveBeenCalledWith(
-        '/check-air-quality/problem-with-service?statusCode=500'
+        '/problem-with-service?statusCode=500'
       )
     })
   })

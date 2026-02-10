@@ -53,6 +53,16 @@
       Add location(s)
     </h1>
 
+    {% if laqmUnavailable %}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">Warning</span>
+          Local authorities are not currently available. Choose countries or try again later.
+        </strong>
+      </div>
+    {% endif %}
+
     <form action="/location-aurn" method="post">
       <div class="govuk-form-group {% if errors.details.location %}govuk-form-group--error{% endif %}">
         <fieldset class="govuk-fieldset" aria-describedby="contact-hint">

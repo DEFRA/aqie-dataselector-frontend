@@ -8,6 +8,16 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 
 import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+
+const logger = createLogger()
+
+const LAQM_TIMEOUT_MS = 2500
+const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
+let laqmCache = {
+  value: /** @type {any} */ (null),
+  expiresAt: 0
+}
 
 export const locationaurnController = {
   handler: async (request, h) => {
@@ -27,7 +37,18 @@ export const locationaurnController = {
         'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
       const apiKey = config.get('laqmAPIkey')
       const partnerId = config.get('laqmAPIPartnerId')
-      // const laqmurl = config.get('laqmurl')
+
+      if (laqmCache.value && Date.now() < laqmCache.expiresAt) {
+        return laqmCache.value
+      }
+
+      if (!apiKey || !partnerId) {
+        logger.error(
+          'Missing LAQM API credentials (laqmAPIkey / laqmAPIPartnerId)'
+        )
+        return { data: [] }
+      }
+
       const optionslaqm = {
         method: 'get',
         headers: {
@@ -37,14 +58,82 @@ export const locationaurnController = {
           'X-API-PartnerId': partnerId
         }
       }
-      // console.log('laqmurl', laqmurl)
-      const [statuslaqm, responselaqm] = await catchProxyFetchError(
-        laqmurl,
-        optionslaqm
-      )
 
+      const abortController = new AbortController()
+      const timeoutId = setTimeout(() => {
+        try {
+          abortController.abort()
+        } catch {
+          // ignore
+        }
+      }, LAQM_TIMEOUT_MS)
+
+      const result = await catchProxyFetchError(laqmurl, {
+        ...optionslaqm,
+        signal: abortController.signal
+      })
+      clearTimeout(timeoutId)
+      const [statusOrError, responselaqm] = Array.isArray(result)
+        ? result
+        : [new Error('Invalid response from catchProxyFetchError')]
+
+      if (
+        statusOrError instanceof Error ||
+        (typeof statusOrError === 'object' && statusOrError?.message)
+      ) {
+        const message =
+          statusOrError instanceof Error
+            ? statusOrError.message
+            : statusOrError?.message
+
+        const isTimeout =
+          typeof message === 'string' &&
+          (message.toLowerCase().includes('aborted') ||
+            message.toLowerCase().includes('abort') ||
+            message.toLowerCase().includes('timeout'))
+
+        logger.warn(
+          `LAQM local authorities request failed${isTimeout ? ' (timeout)' : ''}: ${message}`
+        )
+
+        if (laqmCache.value) {
+          logger.warn('Using cached LAQM local authorities after failure')
+          return laqmCache.value
+        }
+
+        return {
+          data: [],
+          _meta: { unavailable: true, reason: isTimeout ? 'timeout' : 'error' }
+        }
+      }
+
+      const statuslaqm = statusOrError
       if (statuslaqm !== 200) {
-        return { data: [] }
+        logger.warn(`LAQM returned non-200 status: ${statuslaqm}`)
+        if (laqmCache.value) {
+          logger.warn('Using cached LAQM local authorities after non-200')
+          return laqmCache.value
+        }
+        return { data: [], _meta: { unavailable: true, reason: 'non-200' } }
+      }
+
+      if (!responselaqm || typeof responselaqm !== 'object') {
+        logger.error('LAQM returned an unexpected payload shape')
+        if (laqmCache.value) {
+          logger.warn('Using cached LAQM local authorities after bad payload')
+          return laqmCache.value
+        }
+        return { data: [], _meta: { unavailable: true, reason: 'bad-payload' } }
+      }
+
+      const count = Array.isArray(responselaqm.data)
+        ? responselaqm.data.length
+        : 0
+      logger.info(`LAQM local authorities received: ${count}`)
+
+      laqmCache = {
+        value: responselaqm,
+        expiresAt: Date.now() + LAQM_CACHE_TTL_MS
       }
 
       return responselaqm
@@ -57,6 +146,9 @@ export const locationaurnController = {
         .map((item) => item['Local Authority Name'])
         .filter((name) => name)
     }
+
+    const laqmUnavailable = Boolean(laResult?._meta?.unavailable)
+    const laqmUnavailableReason = laResult?._meta?.reason
 
     // Handle GET request
     if (request.method === 'get') {
@@ -114,6 +206,8 @@ export const locationaurnController = {
         hrefq: backUrl,
         laResult,
         localAuthorityNames,
+        laqmUnavailable,
+        laqmUnavailableReason,
         formData
       })
     }
@@ -148,6 +242,15 @@ export const locationaurnController = {
           errors.details.country = 'Select at least one country'
         }
       } else if (payload.location === 'la') {
+        if (localAuthorityNames.length === 0) {
+          errors.list.push({
+            text: 'Local authorities are currently unavailable. Try again later.',
+            href: '#location-4'
+          })
+          errors.details['local-authority'] =
+            'Local authorities are currently unavailable. Try again later.'
+        }
+
         // Handle local authorities - could be multiple from table or single from input
         let selectedLocations = []
 
@@ -268,6 +371,8 @@ export const locationaurnController = {
           hrefq: backUrl,
           laResult,
           localAuthorityNames,
+          laqmUnavailable,
+          laqmUnavailableReason,
           errors,
           formData: payload
         })

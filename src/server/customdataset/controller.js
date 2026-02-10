@@ -5,11 +5,70 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
 // import { error } from 'node:console'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 // import Wreck from '@hapi/wreck'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+
+const logger = createLogger()
+
+const STATIONCOUNT_TIMEOUT_MS = 5000
+
+const errorContent = english.errorpages
+
+function statusCodeMessage(statusCode) {
+  switch (true) {
+    case statusCode === 404:
+      return 'Page not found'
+    case statusCode === 403:
+      return 'Forbidden'
+    case statusCode === 401:
+      return 'Unauthorized'
+    case statusCode === 400:
+      return 'Bad Request'
+    case statusCode === 500:
+      return 'Sorry, there is a problem with the service'
+    default:
+      return 'Sorry, there is a problem with the service'
+  }
+}
+
+function extractStatusCode(maybeError) {
+  const candidate =
+    maybeError?.response?.status ??
+    maybeError?.output?.statusCode ??
+    maybeError?.statusCode ??
+    maybeError?.status
+
+  if (typeof candidate === 'number' && candidate >= 100 && candidate <= 599) {
+    return candidate
+  }
+
+  const message = maybeError?.message
+  if (typeof message === 'string') {
+    const match = message.match(/\b([1-5]\d\d)\b/)
+    if (match) {
+      return Number(match[1])
+    }
+  }
+
+  return 500
+}
+
+function renderErrorPage(h, statusCode) {
+  const message = statusCodeMessage(statusCode)
+  return h
+    .view('error/index', {
+      pageTitle: message,
+      statusCode,
+      message,
+      content: errorContent
+    })
+    .code(statusCode)
+}
 export const customdatasetController = {
   handler: async (request, h) => {
     const backUrl = '/hubpage'
@@ -233,6 +292,20 @@ export const customdatasetController = {
         // console.log('stationcountparameters', stationcountparameters)
         request.yar.set('finalyear1', finalyear)
         const stationcount = await Invokestationcount(stationcountparameters)
+        if (
+          stationcount == null ||
+          stationcount instanceof Error ||
+          stationcount?.isAxiosError ||
+          (typeof stationcount === 'object' && stationcount?.message)
+        ) {
+          const statusCode = extractStatusCode(stationcount)
+          logger.error(
+            `Station count API failed: statusCode=${statusCode} message=${
+              stationcount?.message || 'no response'
+            }`
+          )
+          return renderErrorPage(h, statusCode)
+        }
         // console.log('stationcount', stationcount)
         request.yar.set('Region', request.yar.get('selectedlocation').join(','))
         request.yar.set('nooflocation', stationcount)
@@ -240,10 +313,39 @@ export const customdatasetController = {
       async function Invokestationcount(stationcountparameters) {
         // prod
         try {
-          const response = await axios.post(
-            config.get('Download_aurn_URL'),
-            stationcountparameters
-          )
+          const url = config.get('Download_aurn_URL')
+          if (!url) {
+            return Object.assign(new Error('Missing Download_aurn_URL'), {
+              statusCode: 500
+            })
+          }
+          const response = await axios.post(url, stationcountparameters, {
+            timeout: STATIONCOUNT_TIMEOUT_MS,
+            validateStatus: () => true
+          })
+
+          if (!response || response.status < 200 || response.status >= 300) {
+            return Object.assign(
+              new Error(
+                `Station count API returned status ${response?.status}`
+              ),
+              {
+                statusCode: response?.status || 500,
+                response
+              }
+            )
+          }
+
+          if (response.data == null) {
+            return Object.assign(
+              new Error('Station count API returned no data'),
+              {
+                statusCode: 500,
+                response
+              }
+            )
+          }
+
           return response.data
         } catch (error) {
           return error // Rethrow the error so it can be handled appropriately
@@ -255,7 +357,7 @@ export const customdatasetController = {
         //   const {payload } = await Wreck.post(url, {
         //     payload: JSON.stringify(stationcountparameters),
         //     headers: {
-        //       'x-api-key': 'jbGZH1mjZHhdEaZP3lcEGmXbuTRj1H5v',
+        //       'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
         //       'Content-Type': 'application/json'
         //     },
         //     json: true

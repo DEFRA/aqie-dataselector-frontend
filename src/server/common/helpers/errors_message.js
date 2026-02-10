@@ -28,8 +28,7 @@ function catchAll(request, h) {
   request.logger.error(response?.stack)
   // return  response.output
   return h.redirect(
-    '/check-air-quality/problem-with-service?statusCode=' +
-      response.output.statusCode
+    '/problem-with-service?statusCode=' + response.output.statusCode
   )
 }
 

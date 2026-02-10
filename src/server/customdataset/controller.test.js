@@ -489,6 +489,10 @@ describe('customdatasetController', () => {
           Year: '2024',
           dataselectorfiltertype: 'dataSelectorCount',
           dataselectordownloadtype: ''
+        }),
+        expect.objectContaining({
+          timeout: 5000,
+          validateStatus: expect.any(Function)
         })
       )
     })
@@ -522,6 +526,10 @@ describe('customdatasetController', () => {
           Year: '2024',
           dataselectorfiltertype: 'dataSelectorCount',
           dataselectordownloadtype: ''
+        }),
+        expect.objectContaining({
+          timeout: 5000,
+          validateStatus: expect.any(Function)
         })
       )
     })
