@@ -15,7 +15,7 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
-const STATIONCOUNT_TIMEOUT_MS = 5000
+const STATIONCOUNT_TIMEOUT_MS = 50000
 
 const errorContent = english.errorpages
 

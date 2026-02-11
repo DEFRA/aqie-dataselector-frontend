@@ -491,7 +491,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 5000,
+          timeout: 50000,
           validateStatus: expect.any(Function)
         })
       )
@@ -528,7 +528,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 5000,
+          timeout: 50000,
           validateStatus: expect.any(Function)
         })
       )
