@@ -431,7 +431,7 @@ describe('airpollutantController', () => {
       mockRequest.method = 'post'
     })
 
-    it('handles core group selection successfully', () => {
+    it('hnandles core group selection successfully', () => {
       mockRequest.payload = {
         'pollutant-mode': 'group',
         'pollutant-group': 'core'
