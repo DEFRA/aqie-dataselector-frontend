@@ -10,10 +10,10 @@ export const english = {
     subheading: ' Related content',
     buttonText: 'Start now',
     texts: {
-      a: 'Use this service to view and download air pollution data from  Automatic Urban and Rural network (AURN).',
+      a: 'Use this service to view and download air pollution data from the Automatic Urban and Rural Network (AURN).',
       b: 'find monitoring stations by location',
       c: 'create a custom dataset',
-      d: 'This service uses data from the Automatic Urban and Rural network (AURN).',
+      d: 'This service uses data from the Automatic Urban and Rural Network (AURN).',
       e: 'This service shows you data for:',
       p3: 'nitrogen dioxide',
       p2: 'PM10',

@@ -1,6 +1,8 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 
+const PROBLEM_SERVICE_500_URL = '/problem-with-service?statusCode=500'
+
 async function invokedownloadS3(downloadstatusapiparams) {
   // Single status check - no polling loop!
 
@@ -27,13 +29,13 @@ async function invokedownloadS3(downloadstatusapiparams) {
       return {
         error: true,
         statusCode: 500,
-        redirectUrl: '/problem-with-service?statusCode=500'
+        redirectUrl: PROBLEM_SERVICE_500_URL
       }
     } else {
       return {
         error: true,
         statusCode: 500,
-        redirectUrl: '/problem-with-service?statusCode=500'
+        redirectUrl: PROBLEM_SERVICE_500_URL
       }
     }
   }
@@ -143,7 +145,7 @@ const downloadAurnstatusController = {
         .response({
           error: true,
           statusCode: 500,
-          redirectUrl: '/problem-with-service?statusCode=500',
+          redirectUrl: PROBLEM_SERVICE_500_URL,
           message: 'An error occurred'
         })
         .type('application/json')

@@ -6,6 +6,11 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
+const VIEW_PATH = 'year_aurn/index'
+const HREF_RANGE_START_YEAR = '#range-start-year'
+const HREF_RANGE_END_YEAR = '#range-end-year'
+const JANUARY_FIRST = '1 January'
+
 export const yearController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -41,7 +46,7 @@ export const yearController = {
       request.yar.clear('yearFormErrors')
       request.yar.clear('yearFormData')
 
-      return h.view('year_aurn/index', {
+      return h.view(VIEW_PATH, {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
@@ -75,6 +80,8 @@ export const yearController = {
           href: '#time-ytd'
         })
         errors.details.time = 'Select an option before continuing'
+      } else if (payload.time === 'ytd') {
+        // YTD requires no validation - just a valid selection
       } else if (payload.time === 'any') {
         const year = (payload['any-year-input'] || '').trim()
         request.yar.set('yearany', year) // persist for change
@@ -102,38 +109,38 @@ export const yearController = {
         if (!startYear) {
           errors.list.push({
             text: 'Enter a start year.',
-            href: '#range-start-year'
+            href: HREF_RANGE_START_YEAR
           })
           errors.details['range-start'] = 'Enter a start year.'
         } else if (!isFourDigitYear(startYear)) {
           errors.list.push({
             text: 'Start year must be 4 digits, for example 2009.',
-            href: '#range-start-year'
+            href: HREF_RANGE_START_YEAR
           })
           errors.details['range-start'] =
             'Start year must be 4 digits, for example 2009.'
         } else if (!withinRange(startYear)) {
           const msg = `Start year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: '#range-start-year' })
+          errors.list.push({ text: msg, href: HREF_RANGE_START_YEAR })
           errors.details['range-start'] = msg
         }
 
         if (!endYear) {
           errors.list.push({
             text: 'Enter an end year.',
-            href: '#range-end-year'
+            href: HREF_RANGE_END_YEAR
           })
           errors.details['range-end'] = 'Enter an end year.'
         } else if (!isFourDigitYear(endYear)) {
           errors.list.push({
             text: 'End year must be 4 digits, for example 2010.',
-            href: '#range-end-year'
+            href: HREF_RANGE_END_YEAR
           })
           errors.details['range-end'] =
             'End year must be 4 digits, for example 2010.'
         } else if (!withinRange(endYear)) {
           const msg = `End year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: '#range-end-year' })
+          errors.list.push({ text: msg, href: HREF_RANGE_END_YEAR })
           errors.details['range-end'] = msg
         }
 
@@ -148,30 +155,37 @@ export const yearController = {
           if (start > end) {
             errors.list.push({
               text: 'Start year must be the same as or before the end year.',
-              href: '#range-start-year'
+              href: HREF_RANGE_START_YEAR
             })
             errors.details['range-start'] =
               'Start year must be the same as or before the end year.'
             errors.list.push({
               text: 'End year must be the same as or after the start year.',
-              href: '#range-end-year'
+              href: HREF_RANGE_END_YEAR
             })
             errors.details['range-end'] =
               'End year must be the same as or after the start year.'
           } else if (!isValidYearRange(start, end)) {
             const msg = 'Choose up to 5 whole years at a time'
-            errors.list.push({ text: msg, href: '#range-start-year' })
-            errors.list.push({ text: msg, href: '#range-end-year' })
+            errors.list.push({ text: msg, href: HREF_RANGE_START_YEAR })
+            errors.list.push({ text: msg, href: HREF_RANGE_END_YEAR })
             errors.details['range-start'] = msg
             errors.details['range-end'] = msg
           }
         }
+      } else {
+        // Invalid time selection
+        errors.list.push({
+          text: 'Select a valid option',
+          href: '#time-ytd'
+        })
+        errors.details.time = 'Select a valid option'
       }
 
       if (errors.list.length > 0) {
         request.yar.set('yearFormErrors', errors)
         request.yar.set('yearFormData', payload)
-        return h.view('year_aurn/index', {
+        return h.view(VIEW_PATH, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
@@ -197,28 +211,28 @@ export const yearController = {
 
       let timePeriod = 'None selected'
       if (payload.time === 'ytd') {
-        timePeriod = `1 January to ${formattedToday}`
+        timePeriod = `${JANUARY_FIRST} to ${formattedToday}`
       } else if (payload.time === 'any') {
         const year = Number(payload['any-year-input'])
         timePeriod =
           year === currentYear
-            ? `1 January to ${formattedToday}`
-            : `1 January to 31 December ${year}`
+            ? `${JANUARY_FIRST} to ${formattedToday}`
+            : `${JANUARY_FIRST} to 31 December ${year}`
       } else if (payload.time === 'range') {
         const startYear = Number(payload['range-start-year'])
         const endYear = Number(payload['range-end-year'])
         timePeriod =
           endYear === currentYear
-            ? `1 January ${startYear} to ${formattedToday}`
-            : `1 January ${startYear} to 31 December ${endYear}`
+            ? `${JANUARY_FIRST} ${startYear} to ${formattedToday}`
+            : `${JANUARY_FIRST} ${startYear} to 31 December ${endYear}`
       }
 
       request.yar.set('selectedTimePeriod', timePeriod)
       return h.redirect('/customdataset')
+    } else {
+      // Fallback: GET by default
+      return h.redirect('/year-aurn')
     }
-
-    // Fallback: GET by default
-    return h.redirect('/year-aurn')
   }
 }
 

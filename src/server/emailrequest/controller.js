@@ -8,6 +8,9 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 // import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+
+const EMAIL_REQUEST_VIEW = 'emailrequest/index'
+
 async function Invokestationcount(stationcountparameters) {
   // prod
   try {
@@ -67,7 +70,9 @@ export const emailrequestController = {
 
       // Email validation function
       const isValidEmail = (email) => {
-        if (!email || typeof email !== 'string') return false
+        if (!email || typeof email !== 'string') {
+          return false
+        }
 
         // Basic email regex pattern
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -77,7 +82,7 @@ export const emailrequestController = {
       // Check if email is provided and valid
       if (!email) {
         //  console.log('No email provided')
-        return h.view('emailrequest/index', {
+        return h.view(EMAIL_REQUEST_VIEW, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
@@ -90,7 +95,7 @@ export const emailrequestController = {
 
       if (!isValidEmail(email)) {
         // console.log('Invalid email format:', email)
-        return h.view('emailrequest/index', {
+        return h.view(EMAIL_REQUEST_VIEW, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
@@ -128,7 +133,7 @@ export const emailrequestController = {
         return h.redirect('/problem-with-service?statusCode=500')
       }
     } else {
-      return h.view('emailrequest/index', {
+      return h.view(EMAIL_REQUEST_VIEW, {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,

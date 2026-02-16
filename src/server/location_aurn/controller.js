@@ -14,6 +14,9 @@ const logger = createLogger()
 
 const LAQM_TIMEOUT_MS = 2500
 const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
+const LOCATION_AURN_VIEW = 'location_aurn/index'
+const LOCATION_AURN_VIEW_NOJS = 'location_aurn/index_nojs'
+
 let laqmCache = {
   value: /** @type {any} */ (null),
   expiresAt: 0
@@ -195,9 +198,7 @@ export const locationaurnController = {
         request.path?.includes('nojs') ||
         request.headers['user-agent']?.toLowerCase().includes('noscript')
 
-      const templatePath = isNoJS
-        ? 'location_aurn/index_nojs'
-        : 'location_aurn/index'
+      const templatePath = isNoJS ? LOCATION_AURN_VIEW_NOJS : LOCATION_AURN_VIEW
       return h.view(templatePath, {
         pageTitle: englishNew.custom.pageTitle,
         heading: englishNew.custom.heading,
@@ -361,8 +362,8 @@ export const locationaurnController = {
       // If validation fails, return to form with errors and preserve form state
       if (errors.list.length > 0) {
         const templatePath = isNoJS
-          ? 'location_aurn/index_nojs'
-          : 'location_aurn/index'
+          ? LOCATION_AURN_VIEW_NOJS
+          : LOCATION_AURN_VIEW
         return h.view(templatePath, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
@@ -432,9 +433,7 @@ export const locationaurnController = {
       request.path?.includes('nojs') ||
       request.headers['user-agent']?.toLowerCase().includes('noscript')
 
-    const templatePath = isNoJS
-      ? 'location_aurn/index_nojs'
-      : 'location_aurn/index'
+    const templatePath = isNoJS ? LOCATION_AURN_VIEW_NOJS : LOCATION_AURN_VIEW
     return h.view(templatePath, {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
