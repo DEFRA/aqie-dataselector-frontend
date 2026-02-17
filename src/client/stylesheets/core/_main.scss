@@ -558,8 +558,6 @@ width: 100%;
   }
   &__cell--pollutant-title {
       padding-bottom: 10px;
-      @include mq ($until: tablet) {
-      }
     }
     &__cell--average-title {
       padding-bottom: 10px;
