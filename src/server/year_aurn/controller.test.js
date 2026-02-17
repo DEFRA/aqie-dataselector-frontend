@@ -11,6 +11,11 @@ jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   }
 }))
 
+// Constants matching the controller for consistency
+const FIELD_ANY_YEAR_INPUT = 'any-year-input'
+const FIELD_RANGE_START_YEAR = 'range-start-year'
+const FIELD_RANGE_END_YEAR = 'range-end-year'
+
 describe('yearController', () => {
   let mockRequest
   let mockH
@@ -76,9 +81,9 @@ describe('yearController', () => {
           errors: { list: [], details: {} },
           formData: {
             time: '',
-            'any-year-input': '',
-            'range-start-year': '',
-            'range-end-year': ''
+            [FIELD_ANY_YEAR_INPUT]: '',
+            [FIELD_RANGE_START_YEAR]: '',
+            [FIELD_RANGE_END_YEAR]: ''
           }
         })
       )
@@ -106,9 +111,9 @@ describe('yearController', () => {
         expect.objectContaining({
           formData: {
             time: 'range',
-            'any-year-input': '',
-            'range-start-year': '2019',
-            'range-end-year': '2021'
+            [FIELD_ANY_YEAR_INPUT]: '',
+            [FIELD_RANGE_START_YEAR]: '2019',
+            [FIELD_RANGE_END_YEAR]: '2021'
           }
         })
       )
@@ -130,9 +135,9 @@ describe('yearController', () => {
         expect.objectContaining({
           formData: {
             time: 'ytd',
-            'any-year-input': '',
-            'range-start-year': '2024',
-            'range-end-year': ''
+            [FIELD_ANY_YEAR_INPUT]: '',
+            [FIELD_RANGE_START_YEAR]: '2024',
+            [FIELD_RANGE_END_YEAR]: ''
           }
         })
       )
@@ -157,7 +162,7 @@ describe('yearController', () => {
     })
 
     it('Any year (current year) sets period with today and redirects', () => {
-      mockRequest.payload = { time: 'any', 'any-year-input': '2026' }
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '2026' }
 
       yearController.handler(mockRequest, mockH)
 
@@ -169,7 +174,7 @@ describe('yearController', () => {
     })
 
     it('Any year (past year) sets full-year period and redirects', () => {
-      mockRequest.payload = { time: 'any', 'any-year-input': '2020' }
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '2020' }
 
       yearController.handler(mockRequest, mockH)
 
@@ -183,8 +188,8 @@ describe('yearController', () => {
     it('Range ending in current year uses today for end and redirects', () => {
       mockRequest.payload = {
         time: 'range',
-        'range-start-year': '2023',
-        'range-end-year': '2026'
+        [FIELD_RANGE_START_YEAR]: '2023',
+        [FIELD_RANGE_END_YEAR]: '2026'
       }
 
       yearController.handler(mockRequest, mockH)
@@ -199,8 +204,8 @@ describe('yearController', () => {
     it('Range for past years sets full-year period and redirects', () => {
       mockRequest.payload = {
         time: 'range',
-        'range-start-year': '2018',
-        'range-end-year': '2020'
+        [FIELD_RANGE_START_YEAR]: '2018',
+        [FIELD_RANGE_END_YEAR]: '2020'
       }
 
       yearController.handler(mockRequest, mockH)

@@ -27,6 +27,16 @@ jest.mock('~/src/server/common/helpers/catch-proxy-fetch-error.js', () => ({
   )
 }))
 
+// Constants matching controller.js
+const SESSION_LOCATION = 'Location'
+const SESSION_SELECTED_LOCATION = 'selectedLocation'
+const SESSION_SELECTED_LOCATIONS = 'selectedLocations'
+const SESSION_SELECTED_COUNTRIES = 'selectedCountries'
+const SESSION_SELECTED_LOCATION_LOWER = 'selectedlocation'
+const SESSION_SELECTED_LA_IDS = 'selectedLAIDs'
+const FIELD_LOCAL_AUTHORITY = 'local-authority'
+const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
+
 describe('locationaurnController', () => {
   let locationaurnController
   let mockRequest
@@ -148,11 +158,11 @@ describe('locationaurnController', () => {
       await loadController()
       mockRequest.yar.get.mockImplementation((key) => {
         switch (key) {
-          case 'Location':
+          case SESSION_LOCATION:
             return 'Country'
-          case 'selectedCountries':
+          case SESSION_SELECTED_COUNTRIES:
             return ['England', 'Wales']
-          case 'selectedlocation':
+          case SESSION_SELECTED_LOCATION_LOWER:
             return ['England', 'Wales']
           default:
             return null
@@ -171,9 +181,9 @@ describe('locationaurnController', () => {
       await loadController()
       mockRequest.yar.get.mockImplementation((key) => {
         switch (key) {
-          case 'Location':
+          case SESSION_LOCATION:
             return 'LocalAuthority'
-          case 'selectedLocations':
+          case SESSION_SELECTED_LOCATIONS:
             return ['City of London', 'Westminster']
           default:
             return null
@@ -266,10 +276,12 @@ describe('locationaurnController', () => {
             list: [
               {
                 text: 'Add at least one local authority',
-                href: '#my-autocomplete'
+                href: ANCHOR_MY_AUTOCOMPLETE
               }
             ],
-            details: { 'local-authority': 'Add at least one local authority' }
+            details: {
+              [FIELD_LOCAL_AUTHORITY]: 'Add at least one local authority'
+            }
           },
           formData: { location: 'la' }
         })
@@ -290,11 +302,11 @@ describe('locationaurnController', () => {
             list: [
               {
                 text: 'Select local authorities from the list',
-                href: '#my-autocomplete'
+                href: ANCHOR_MY_AUTOCOMPLETE
               }
             ],
             details: {
-              'local-authority': 'Select local authorities from the list'
+              [FIELD_LOCAL_AUTHORITY]: 'Select local authorities from the list'
             }
           },
           formData: {
@@ -319,10 +331,12 @@ describe('locationaurnController', () => {
             list: expect.arrayContaining([
               {
                 text: 'Remove duplicate local authorities',
-                href: '#my-autocomplete'
+                href: ANCHOR_MY_AUTOCOMPLETE
               }
             ]),
-            details: { 'local-authority': 'Remove duplicate local authorities' }
+            details: {
+              [FIELD_LOCAL_AUTHORITY]: 'Remove duplicate local authorities'
+            }
           },
           formData: {
             location: 'la',
@@ -346,7 +360,7 @@ describe('locationaurnController', () => {
             list: expect.arrayContaining([
               {
                 text: 'You can only select up to 10 local authorities',
-                href: '#my-autocomplete'
+                href: ANCHOR_MY_AUTOCOMPLETE
               }
             ])
           }),
@@ -401,19 +415,22 @@ describe('locationaurnController', () => {
         country: ['England', 'Wales']
       }
       await locationaurnController.handler(mockRequest, mockH)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
-        'England',
-        'Wales'
-      ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'selectedLocation',
+        SESSION_SELECTED_COUNTRIES,
+        ['England', 'Wales']
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
         'Countries: England, Wales'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('Location', 'Country')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'England',
-        'Wales'
-      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_LOCATION,
+        'Country'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION_LOWER,
+        ['England', 'Wales']
+      )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
@@ -421,17 +438,22 @@ describe('locationaurnController', () => {
       await loadController()
       mockRequest.payload = { location: 'countries', country: 'Scotland' }
       await locationaurnController.handler(mockRequest, mockH)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedCountries', [
-        'Scotland'
-      ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'selectedLocation',
+        SESSION_SELECTED_COUNTRIES,
+        ['Scotland']
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
         'Countries: Scotland'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('Location', 'Country')
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'Scotland'
-      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_LOCATION,
+        'Country'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION_LOWER,
+        ['Scotland']
+      )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
@@ -442,23 +464,26 @@ describe('locationaurnController', () => {
         'selected-locations': ['City of London', 'Westminster']
       }
       await locationaurnController.handler(mockRequest, mockH)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocations', [
-        'City of London',
-        'Westminster'
-      ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'selectedLocation',
+        SESSION_SELECTED_LOCATIONS,
+        ['City of London', 'Westminster']
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
         'Local Authorities: City of London, Westminster'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '1,2')
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'Location',
+        SESSION_SELECTED_LA_IDS,
+        '1,2'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_LOCATION,
         'LocalAuthority'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'City of London',
-        'Westminster'
-      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION_LOWER,
+        ['City of London', 'Westminster']
+      )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
@@ -478,21 +503,26 @@ describe('locationaurnController', () => {
         'selected-locations': ['City of London']
       }
       await locationaurnController.handler(mockRequest, mockH)
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocations', [
-        'City of London'
-      ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'selectedLocation',
+        SESSION_SELECTED_LOCATIONS,
+        ['City of London']
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
         'Local Authorities: City of London'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLAIDs', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
-        'Location',
+        SESSION_SELECTED_LA_IDS,
+        ''
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_LOCATION,
         'LocalAuthority'
       )
-      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedlocation', [
-        'City of London'
-      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION_LOWER,
+        ['City of London']
+      )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
   })

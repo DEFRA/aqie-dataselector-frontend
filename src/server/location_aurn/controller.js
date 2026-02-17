@@ -17,6 +17,183 @@ const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 const LOCATION_AURN_VIEW = 'location_aurn/index'
 const LOCATION_AURN_VIEW_NOJS = 'location_aurn/index_nojs'
 
+// Session keys
+const SESSION_LOCATION = 'Location'
+const SESSION_SELECTED_LOCATION = 'selectedLocation'
+const SESSION_SELECTED_LOCATIONS = 'selectedLocations'
+const SESSION_SELECTED_COUNTRIES = 'selectedCountries'
+const SESSION_SELECTED_LOCATION_LOWER = 'selectedlocation'
+const SESSION_SELECTED_LA_IDS = 'selectedLAIDs'
+
+// Form field names and error anchor IDs
+const FIELD_LOCAL_AUTHORITY = 'local-authority'
+const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
+
+function handleLaqmError(statusOrError, laqmCache, logger) {
+  const message =
+    statusOrError instanceof Error
+      ? statusOrError.message
+      : statusOrError?.message
+
+  const isTimeout =
+    typeof message === 'string' &&
+    (message.toLowerCase().includes('aborted') ||
+      message.toLowerCase().includes('abort') ||
+      message.toLowerCase().includes('timeout'))
+
+  logger.warn(
+    `LAQM local authorities request failed${isTimeout ? ' (timeout)' : ''}: ${message}`
+  )
+
+  if (laqmCache.value) {
+    logger.warn('Using cached LAQM local authorities after failure')
+    return laqmCache.value
+  }
+
+  return {
+    data: [],
+    _meta: { unavailable: true, reason: isTimeout ? 'timeout' : 'error' }
+  }
+}
+
+function handleNon200Status(statuslaqm, laqmCache, logger) {
+  logger.warn(`LAQM returned non-200 status: ${statuslaqm}`)
+  if (laqmCache.value) {
+    logger.warn('Using cached LAQM local authorities after non-200')
+    return laqmCache.value
+  }
+  return { data: [], _meta: { unavailable: true, reason: 'non-200' } }
+}
+
+function handleBadPayload(laqmCache, logger) {
+  logger.error('LAQM returned an unexpected payload shape')
+  if (laqmCache.value) {
+    logger.warn('Using cached LAQM local authorities after bad payload')
+    return laqmCache.value
+  }
+  return { data: [], _meta: { unavailable: true, reason: 'bad-payload' } }
+}
+
+function determineFormDataFromSession(
+  selectedLocation,
+  selectedCountries,
+  selectedLocalAuthorities,
+  selectedlocations
+) {
+  const formData = {}
+
+  if (selectedLocation === 'Country' && selectedCountries) {
+    formData.location = 'countries'
+    formData.country = selectedCountries
+    return formData
+  }
+
+  if (selectedLocation === 'LocalAuthority' && selectedLocalAuthorities) {
+    formData.location = 'la'
+    formData['selected-locations'] = selectedLocalAuthorities
+    return formData
+  }
+
+  if (selectedlocations && Array.isArray(selectedlocations)) {
+    const countryNames = ['england', 'scotland', 'wales', 'northern ireland']
+    const isCountries = selectedlocations.some((loc) =>
+      countryNames.includes(loc.toLowerCase())
+    )
+
+    formData.location = isCountries ? 'countries' : 'la'
+    const key = isCountries ? 'country' : 'selected-locations'
+    formData[key] = selectedlocations
+  }
+
+  return formData
+}
+
+function validateSelectedLocations(
+  selectedLocations,
+  localAuthorityNames,
+  errors
+) {
+  const allowedLAs = new Set(
+    localAuthorityNames.map((name) => name.toLowerCase().trim())
+  )
+  const invalidLAs = []
+  const duplicates = new Set()
+  const seen = new Set()
+
+  for (const location of selectedLocations) {
+    const trimmed = location.trim()
+    const lower = trimmed.toLowerCase()
+
+    if (seen.has(lower)) {
+      duplicates.add(trimmed)
+    } else {
+      seen.add(lower)
+    }
+
+    if (!allowedLAs.has(lower)) {
+      invalidLAs.push(trimmed)
+    }
+  }
+
+  if (selectedLocations.length > 10) {
+    errors.list.push({
+      text: 'You can only select up to 10 local authorities',
+      href: ANCHOR_MY_AUTOCOMPLETE
+    })
+    errors.details[FIELD_LOCAL_AUTHORITY] =
+      'You can only select up to 10 local authorities'
+  }
+
+  if (invalidLAs.length > 0) {
+    errors.list.push({
+      text: 'Select local authorities from the list',
+      href: ANCHOR_MY_AUTOCOMPLETE
+    })
+    errors.details[FIELD_LOCAL_AUTHORITY] =
+      'Select local authorities from the list'
+  }
+
+  if (duplicates.size > 0) {
+    errors.list.push({
+      text: 'Remove duplicate local authorities',
+      href: ANCHOR_MY_AUTOCOMPLETE
+    })
+    errors.details[FIELD_LOCAL_AUTHORITY] = 'Remove duplicate local authorities'
+  }
+
+  return { seen, hasErrors: errors.list.length > 0 }
+}
+
+function getCleanedLocations(seen, localAuthorityNames, selectedLocations) {
+  return Array.from(seen).map((lower) => {
+    return (
+      localAuthorityNames.find((name) => name.toLowerCase().trim() === lower) ||
+      selectedLocations.find((loc) => loc.toLowerCase().trim() === lower)
+    )
+  })
+}
+
+function mapLocalAuthorityIDs(selectedLocations, laResult) {
+  const selectedLAIDs = []
+  if (!laResult?.data || !Array.isArray(laResult.data)) {
+    return selectedLAIDs
+  }
+
+  selectedLocations.forEach((selectedName) => {
+    const matchedLA = laResult.data.find(
+      (item) =>
+        item['Local Authority Name'] &&
+        item['Local Authority Name'].toLowerCase().trim() ===
+          selectedName.toLowerCase().trim()
+    )
+    if (matchedLA?.['LA ID']) {
+      selectedLAIDs.push(matchedLA['LA ID'])
+    }
+  })
+
+  return selectedLAIDs
+}
+
 let laqmCache = {
   value: /** @type {any} */ (null),
   expiresAt: 0
@@ -84,49 +261,16 @@ export const locationaurnController = {
         statusOrError instanceof Error ||
         (typeof statusOrError === 'object' && statusOrError?.message)
       ) {
-        const message =
-          statusOrError instanceof Error
-            ? statusOrError.message
-            : statusOrError?.message
-
-        const isTimeout =
-          typeof message === 'string' &&
-          (message.toLowerCase().includes('aborted') ||
-            message.toLowerCase().includes('abort') ||
-            message.toLowerCase().includes('timeout'))
-
-        logger.warn(
-          `LAQM local authorities request failed${isTimeout ? ' (timeout)' : ''}: ${message}`
-        )
-
-        if (laqmCache.value) {
-          logger.warn('Using cached LAQM local authorities after failure')
-          return laqmCache.value
-        }
-
-        return {
-          data: [],
-          _meta: { unavailable: true, reason: isTimeout ? 'timeout' : 'error' }
-        }
+        return handleLaqmError(statusOrError, laqmCache, logger)
       }
 
       const statuslaqm = statusOrError
       if (statuslaqm !== 200) {
-        logger.warn(`LAQM returned non-200 status: ${statuslaqm}`)
-        if (laqmCache.value) {
-          logger.warn('Using cached LAQM local authorities after non-200')
-          return laqmCache.value
-        }
-        return { data: [], _meta: { unavailable: true, reason: 'non-200' } }
+        return handleNon200Status(statuslaqm, laqmCache, logger)
       }
 
       if (!responselaqm || typeof responselaqm !== 'object') {
-        logger.error('LAQM returned an unexpected payload shape')
-        if (laqmCache.value) {
-          logger.warn('Using cached LAQM local authorities after bad payload')
-          return laqmCache.value
-        }
-        return { data: [], _meta: { unavailable: true, reason: 'bad-payload' } }
+        return handleBadPayload(laqmCache, logger)
       }
 
       const count = Array.isArray(responselaqm.data)
@@ -155,44 +299,20 @@ export const locationaurnController = {
 
     // Handle GET request
     if (request.method === 'get') {
-      // Prepare form data from session for pre-population
-      const formData = {}
-
       // Check session data to pre-populate the form
-      const selectedLocation = request.yar.get('Location')
-      const selectedCountries = request.yar.get('selectedCountries')
-      const selectedlocations = request.yar.get('selectedlocation') // This could be countries or local authorities
-      const selectedLocalAuthorities = request.yar.get('selectedLocations')
+      const selectedLocation = request.yar.get(SESSION_LOCATION)
+      const selectedCountries = request.yar.get(SESSION_SELECTED_COUNTRIES)
+      const selectedlocations = request.yar.get(SESSION_SELECTED_LOCATION_LOWER)
+      const selectedLocalAuthorities = request.yar.get(
+        SESSION_SELECTED_LOCATIONS
+      )
 
-      // Determine which radio option should be selected and what data to pre-populate
-      if (selectedLocation === 'Country' && selectedCountries) {
-        formData.location = 'countries'
-        formData.country = selectedCountries
-      } else if (
-        selectedLocation === 'LocalAuthority' &&
-        selectedLocalAuthorities
-      ) {
-        formData.location = 'la'
-        formData['selected-locations'] = selectedLocalAuthorities
-      } else if (selectedlocations && Array.isArray(selectedlocations)) {
-        const countryNames = [
-          'england',
-          'scotland',
-          'wales',
-          'northern ireland'
-        ]
-        const isCountries = selectedlocations.some((loc) =>
-          countryNames.includes(loc.toLowerCase())
-        )
-
-        if (isCountries) {
-          formData.location = 'countries'
-          formData.country = selectedlocations
-        } else {
-          formData.location = 'la'
-          formData['selected-locations'] = selectedlocations
-        }
-      }
+      const formData = determineFormDataFromSession(
+        selectedLocation,
+        selectedCountries,
+        selectedLocalAuthorities,
+        selectedlocations
+      )
       const isNoJS =
         request.query?.nojs === 'true' ||
         request.path?.includes('nojs') ||
@@ -248,7 +368,7 @@ export const locationaurnController = {
             text: 'Local authorities are currently unavailable. Try again later.',
             href: '#location-4'
           })
-          errors.details['local-authority'] =
+          errors.details[FIELD_LOCAL_AUTHORITY] =
             'Local authorities are currently unavailable. Try again later.'
         }
 
@@ -283,80 +403,27 @@ export const locationaurnController = {
         if (selectedLocations.length === 0) {
           errors.list.push({
             text: 'Add at least one local authority',
-            href: '#my-autocomplete'
+            href: ANCHOR_MY_AUTOCOMPLETE
           })
-          errors.details['local-authority'] = 'Add at least one local authority'
+          errors.details[FIELD_LOCAL_AUTHORITY] =
+            'Add at least one local authority'
         } else {
-          // Validate each local authority against the allowed list
-          const allowedLAs = new Set(
-            localAuthorityNames.map((name) => name.toLowerCase().trim())
+          const { seen, hasErrors } = validateSelectedLocations(
+            selectedLocations,
+            localAuthorityNames,
+            errors
           )
-          const invalidLAs = []
-          const duplicates = new Set()
-          const seen = new Set()
 
-          for (const location of selectedLocations) {
-            const trimmed = location.trim()
-            const lower = trimmed.toLowerCase()
-
-            // Check for duplicates
-            if (seen.has(lower)) {
-              duplicates.add(trimmed)
-            } else {
-              seen.add(lower)
-            }
-
-            // Check if valid local authority
-            if (!allowedLAs.has(lower)) {
-              invalidLAs.push(trimmed)
-            }
-          }
-
-          // Check for too many locations
-          if (selectedLocations.length > 10) {
-            errors.list.push({
-              text: 'You can only select up to 10 local authorities',
-              href: '#my-autocomplete'
-            })
-            errors.details['local-authority'] =
-              'You can only select up to 10 local authorities'
-          }
-
-          // Check for invalid local authorities
-          if (invalidLAs.length > 0) {
-            errors.list.push({
-              text: 'Select local authorities from the list',
-              href: '#my-autocomplete'
-            })
-            errors.details['local-authority'] =
-              'Select local authorities from the list'
-          }
-
-          // Check for duplicates
-          if (duplicates.size > 0) {
-            errors.list.push({
-              text: 'Remove duplicate local authorities',
-              href: '#my-autocomplete'
-            })
-            errors.details['local-authority'] =
-              'Remove duplicate local authorities'
-          }
-
-          // Store cleaned locations if valid
-          if (errors.list.length === 0) {
-            payload.selectedLocations = Array.from(seen).map((lower) => {
-              // Find original casing from the allowed list
-              return (
-                localAuthorityNames.find(
-                  (name) => name.toLowerCase().trim() === lower
-                ) ||
-                selectedLocations.find(
-                  (loc) => loc.toLowerCase().trim() === lower
-                )
-              )
-            })
+          if (!hasErrors) {
+            payload.selectedLocations = getCleanedLocations(
+              seen,
+              localAuthorityNames,
+              selectedLocations
+            )
           }
         }
+      } else {
+        // Unknown location type
       }
 
       // If validation fails, return to form with errors and preserve form state
@@ -385,43 +452,28 @@ export const locationaurnController = {
         const selectedCountries = Array.isArray(payload.country)
           ? payload.country
           : [payload.country]
-        request.yar.set('selectedCountries', selectedCountries)
+        request.yar.set(SESSION_SELECTED_COUNTRIES, selectedCountries)
         request.yar.set(
-          'selectedLocation',
+          SESSION_SELECTED_LOCATION,
           'Countries: ' + selectedCountries.join(', ')
         )
-        request.yar.set('Location', 'Country')
-        request.yar.set('selectedlocation', selectedCountries)
+        request.yar.set(SESSION_LOCATION, 'Country')
+        request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedCountries)
 
         return h.redirect('/customdataset')
-      } else if (payload.location === 'la') {
+      } else {
         const selectedLocations = payload.selectedLocations
-
-        // Map selected local authority names to their LA IDs
-        const selectedLAIDs = []
-        if (laResult?.data && Array.isArray(laResult.data)) {
-          selectedLocations.forEach((selectedName) => {
-            const matchedLA = laResult.data.find(
-              (item) =>
-                item['Local Authority Name'] &&
-                item['Local Authority Name'].toLowerCase().trim() ===
-                  selectedName.toLowerCase().trim()
-            )
-            if (matchedLA?.['LA ID']) {
-              selectedLAIDs.push(matchedLA['LA ID'])
-            }
-          })
-        }
+        const selectedLAIDs = mapLocalAuthorityIDs(selectedLocations, laResult)
 
         // Store in session
-        request.yar.set('selectedLocations', selectedLocations)
+        request.yar.set(SESSION_SELECTED_LOCATIONS, selectedLocations)
         request.yar.set(
-          'selectedLocation',
+          SESSION_SELECTED_LOCATION,
           'Local Authorities: ' + selectedLocations.join(', ')
         )
-        request.yar.set('selectedLAIDs', selectedLAIDs.join(','))
-        request.yar.set('Location', 'LocalAuthority')
-        request.yar.set('selectedlocation', selectedLocations)
+        request.yar.set(SESSION_SELECTED_LA_IDS, selectedLAIDs.join(','))
+        request.yar.set(SESSION_LOCATION, 'LocalAuthority')
+        request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedLocations)
 
         return h.redirect('/customdataset')
       }
