@@ -10,6 +10,34 @@ const VIEW_PATH = 'year_aurn/index'
 const HREF_RANGE_START_YEAR = '#range-start-year'
 const HREF_RANGE_END_YEAR = '#range-end-year'
 const JANUARY_FIRST = '1 January'
+const DECEMBER_THIRTY_FIRST = '31 December'
+
+// Form field keys
+const FIELD_ANY_YEAR_INPUT = 'any-year-input'
+const FIELD_RANGE_START_YEAR = 'range-start-year'
+const FIELD_RANGE_END_YEAR = 'range-end-year'
+
+// Error field names
+const ERROR_FIELD_ANY_YEAR = 'any-year'
+const ERROR_FIELD_RANGE_START = 'range-start'
+const ERROR_FIELD_RANGE_END = 'range-end'
+
+// Error anchor hrefs
+const HREF_ANY_YEAR_INPUT = '#any-year-input'
+
+// Error messages
+const MSG_ENTER_YEAR = 'Enter a year.'
+const MSG_ENTER_START_YEAR = 'Enter a start year.'
+const MSG_ENTER_END_YEAR = 'Enter an end year.'
+const MSG_FOUR_DIGIT_YEAR_EXAMPLE = 'Enter a 4-digit year, for example 2009.'
+const MSG_START_YEAR_FOUR_DIGITS =
+  'Start year must be 4 digits, for example 2009.'
+const MSG_END_YEAR_FOUR_DIGITS = 'End year must be 4 digits, for example 2010.'
+const MSG_START_BEFORE_END =
+  'Start year must be the same as or before the end year.'
+const MSG_END_AFTER_START =
+  'End year must be the same as or after the start year.'
+const MSG_MAX_FIVE_YEARS = 'Choose up to 5 whole years at a time'
 
 export const yearController = {
   handler(request, h) {
@@ -33,13 +61,15 @@ export const yearController = {
       // Prefer transient (last POST) over saved, then build formData for template
       const formData = {
         time: transientFormData.time || savedTime || '',
-        'any-year-input': transientFormData['any-year-input'] || savedAny || '',
-        'range-start-year':
-          transientFormData['range-start-year'] ||
+        [FIELD_ANY_YEAR_INPUT]:
+          transientFormData[FIELD_ANY_YEAR_INPUT] || savedAny || '',
+        [FIELD_RANGE_START_YEAR]:
+          transientFormData[FIELD_RANGE_START_YEAR] ||
           savedStart ||
           savedYtdStart ||
           '',
-        'range-end-year': transientFormData['range-end-year'] || savedEnd || ''
+        [FIELD_RANGE_END_YEAR]:
+          transientFormData[FIELD_RANGE_END_YEAR] || savedEnd || ''
       }
 
       // Clear transient after reading (do not clear persistent)
@@ -83,65 +113,69 @@ export const yearController = {
       } else if (payload.time === 'ytd') {
         // YTD requires no validation - just a valid selection
       } else if (payload.time === 'any') {
-        const year = (payload['any-year-input'] || '').trim()
+        const year = (payload[FIELD_ANY_YEAR_INPUT] || '').trim()
         request.yar.set('yearany', year) // persist for change
         if (!year) {
-          errors.list.push({ text: 'Enter a year.', href: '#any-year-input' })
-          errors.details['any-year'] = 'Enter a year.'
+          errors.list.push({ text: MSG_ENTER_YEAR, href: HREF_ANY_YEAR_INPUT })
+          errors.details[ERROR_FIELD_ANY_YEAR] = MSG_ENTER_YEAR
         } else if (!isFourDigitYear(year)) {
           errors.list.push({
-            text: 'Enter a 4-digit year, for example 2009.',
-            href: '#any-year-input'
+            text: MSG_FOUR_DIGIT_YEAR_EXAMPLE,
+            href: HREF_ANY_YEAR_INPUT
           })
-          errors.details['any-year'] = 'Enter a 4-digit year, for example 2009.'
+          errors.details[ERROR_FIELD_ANY_YEAR] = MSG_FOUR_DIGIT_YEAR_EXAMPLE
         } else if (!withinRange(year)) {
           const msg = `Year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: '#any-year-input' })
-          errors.details['any-year'] = msg
+          errors.list.push({ text: msg, href: HREF_ANY_YEAR_INPUT })
+          errors.details[ERROR_FIELD_ANY_YEAR] = msg
+        } else {
+          // Year is valid
         }
       } else if (payload.time === 'range') {
-        const startYear = (payload['range-start-year'] || '').trim()
-        const endYear = (payload['range-end-year'] || '').trim()
+        const startYear = (payload[FIELD_RANGE_START_YEAR] || '').trim()
+        const endYear = (payload[FIELD_RANGE_END_YEAR] || '').trim()
         // persist for change
         request.yar.set('startYear', startYear)
         request.yar.set('endYear', endYear)
 
         if (!startYear) {
           errors.list.push({
-            text: 'Enter a start year.',
+            text: MSG_ENTER_START_YEAR,
             href: HREF_RANGE_START_YEAR
           })
-          errors.details['range-start'] = 'Enter a start year.'
+          errors.details[ERROR_FIELD_RANGE_START] = MSG_ENTER_START_YEAR
         } else if (!isFourDigitYear(startYear)) {
           errors.list.push({
-            text: 'Start year must be 4 digits, for example 2009.',
+            text: MSG_START_YEAR_FOUR_DIGITS,
             href: HREF_RANGE_START_YEAR
           })
-          errors.details['range-start'] =
-            'Start year must be 4 digits, for example 2009.'
+          errors.details[ERROR_FIELD_RANGE_START] = MSG_START_YEAR_FOUR_DIGITS
         } else if (!withinRange(startYear)) {
           const msg = `Start year must be between 1973 and ${new Date().getFullYear()}.`
           errors.list.push({ text: msg, href: HREF_RANGE_START_YEAR })
-          errors.details['range-start'] = msg
+          errors.details[ERROR_FIELD_RANGE_START] = msg
+        } else {
+          // Start year is valid
         }
 
         if (!endYear) {
           errors.list.push({
-            text: 'Enter an end year.',
+            text: MSG_ENTER_END_YEAR,
             href: HREF_RANGE_END_YEAR
           })
-          errors.details['range-end'] = 'Enter an end year.'
+          errors.details[ERROR_FIELD_RANGE_END] = MSG_ENTER_END_YEAR
         } else if (!isFourDigitYear(endYear)) {
           errors.list.push({
-            text: 'End year must be 4 digits, for example 2010.',
+            text: MSG_END_YEAR_FOUR_DIGITS,
             href: HREF_RANGE_END_YEAR
           })
-          errors.details['range-end'] =
-            'End year must be 4 digits, for example 2010.'
+          errors.details[ERROR_FIELD_RANGE_END] = MSG_END_YEAR_FOUR_DIGITS
         } else if (!withinRange(endYear)) {
           const msg = `End year must be between 1973 and ${new Date().getFullYear()}.`
           errors.list.push({ text: msg, href: HREF_RANGE_END_YEAR })
           errors.details['range-end'] = msg
+        } else {
+          // End year is valid
         }
 
         if (
@@ -154,23 +188,28 @@ export const yearController = {
           const end = Number(endYear)
           if (start > end) {
             errors.list.push({
-              text: 'Start year must be the same as or before the end year.',
+              text: MSG_START_BEFORE_END,
               href: HREF_RANGE_START_YEAR
             })
-            errors.details['range-start'] =
-              'Start year must be the same as or before the end year.'
+            errors.details[ERROR_FIELD_RANGE_START] = MSG_START_BEFORE_END
             errors.list.push({
-              text: 'End year must be the same as or after the start year.',
+              text: MSG_END_AFTER_START,
               href: HREF_RANGE_END_YEAR
             })
-            errors.details['range-end'] =
-              'End year must be the same as or after the start year.'
+            errors.details[ERROR_FIELD_RANGE_END] = MSG_END_AFTER_START
           } else if (!isValidYearRange(start, end)) {
-            const msg = 'Choose up to 5 whole years at a time'
-            errors.list.push({ text: msg, href: HREF_RANGE_START_YEAR })
-            errors.list.push({ text: msg, href: HREF_RANGE_END_YEAR })
-            errors.details['range-start'] = msg
-            errors.details['range-end'] = msg
+            errors.list.push({
+              text: MSG_MAX_FIVE_YEARS,
+              href: HREF_RANGE_START_YEAR
+            })
+            errors.list.push({
+              text: MSG_MAX_FIVE_YEARS,
+              href: HREF_RANGE_END_YEAR
+            })
+            errors.details[ERROR_FIELD_RANGE_START] = MSG_MAX_FIVE_YEARS
+            errors.details[ERROR_FIELD_RANGE_END] = MSG_MAX_FIVE_YEARS
+          } else {
+            // Year range is valid
           }
         }
       } else {
@@ -213,19 +252,20 @@ export const yearController = {
       if (payload.time === 'ytd') {
         timePeriod = `${JANUARY_FIRST} to ${formattedToday}`
       } else if (payload.time === 'any') {
-        const year = Number(payload['any-year-input'])
+        const year = Number(payload[FIELD_ANY_YEAR_INPUT])
         timePeriod =
           year === currentYear
             ? `${JANUARY_FIRST} to ${formattedToday}`
-            : `${JANUARY_FIRST} to 31 December ${year}`
+            : `${JANUARY_FIRST} to ${DECEMBER_THIRTY_FIRST} ${year}`
       } else if (payload.time === 'range') {
-        const startYear = Number(payload['range-start-year'])
-        const endYear = Number(payload['range-end-year'])
+        const startYear = Number(payload[FIELD_RANGE_START_YEAR])
+        const endYear = Number(payload[FIELD_RANGE_END_YEAR])
         timePeriod =
           endYear === currentYear
             ? `${JANUARY_FIRST} ${startYear} to ${formattedToday}`
-            : `${JANUARY_FIRST} ${startYear} to 31 December ${endYear}`
+            : `${JANUARY_FIRST} ${startYear} to ${DECEMBER_THIRTY_FIRST} ${endYear}`
       }
+      // else: timePeriod remains 'None selected' for any other case
 
       request.yar.set('selectedTimePeriod', timePeriod)
       return h.redirect('/customdataset')
