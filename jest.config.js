@@ -38,9 +38,6 @@ export default {
     '<rootDir>/src/config/config.js',
     '<rootDir>/src/server/common/helpers/logging/logger.js',
     '<rootDir>/src/server/common/helpers/redis-client.js',
-    '<rootDir>/src/server/year_aurn/controller.js',
-    '<rootDir>/src/server/customdataset/controller.js',
-    '<rootDir>/src/server/download_aurn/controller.js',
     'index.js'
   ],
   coverageDirectory: '<rootDir>/coverage',

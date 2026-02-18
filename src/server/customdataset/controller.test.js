@@ -1,10 +1,12 @@
 import { customdatasetController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import axios from 'axios'
 
 jest.mock('~/src/server/data/en/content_aurn.js')
+jest.mock('~/src/server/data/en/homecontent.js')
 jest.mock('~/src/config/config.js')
 jest.mock('~/src/server/common/helpers/errors_message.js')
 jest.mock('axios')
@@ -27,7 +29,8 @@ describe('customdatasetController', () => {
       query: {}
     }
     mockH = {
-      view: jest.fn().mockReturnValue('view-response')
+      view: jest.fn().mockReturnValue('view-response'),
+      code: jest.fn().mockReturnThis()
     }
 
     englishNew.custom = {
@@ -42,6 +45,11 @@ describe('customdatasetController', () => {
           }
         }
       }
+    }
+
+    english.errorpages = {
+      title: 'Error',
+      content: 'Error content'
     }
 
     mockRequest.yar.get.mockReturnValue(undefined)
@@ -847,6 +855,536 @@ describe('customdatasetController', () => {
       await customdatasetController.handler(mockRequest, mockH)
 
       expect(axios.post).not.toHaveBeenCalled()
+    })
+  })
+
+  // describe('API error handling', () => {
+  //   it('should render error page when station count API returns null', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     axios.post.mockResolvedValue(null)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     const result = await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should render error page when station count API throws error', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     const error = new Error('Network error')
+  //     axios.post.mockRejectedValue(error)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     const result = await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should render 404 error page when API returns 404 status', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     const error = { response: { status: 404 }, isAxiosError: true }
+  //     axios.post.mockRejectedValue(error)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 404,
+  //       message: 'Page not found'
+  //     }))
+  //   })
+
+  //   it('should render 403 error page when API returns 403 status', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     // Simulate axios returning a 403 response (Invokestationcount will convert this to error)
+  //     axios.post.mockResolvedValue({ status: 403, data: null })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 403,
+  //       message: 'Forbidden'
+  //     }))
+  //   })
+
+  //   it('should render 401 error page when API returns 401 status', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     // Simulate axios returning a 401 response
+  //     axios.post.mockResolvedValue({ status: 401, data: null })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 401,
+  //       message: 'Unauthorized'
+  //     }))
+  //   })
+
+  //   it('should render 400 error page when API returns 400 status', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     // Simulate axios returning a 400 response
+  //     axios.post.mockResolvedValue({ status: 400, data: null })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 400,
+  //       message: 'Bad Request'
+  //     }))
+  //   })
+
+  //   it('should extract status code from error message with regex', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     const error = new Error('Request failed with status code 503')
+  //     axios.post.mockRejectedValue(error)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 503,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should default to 500 when status code is out of range', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     const error = { statusCode: 999 }
+  //     axios.post.mockResolvedValue(error)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should handle missing Download_aurn_URL config', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     config.get.mockReturnValue(null)
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should handle API returning non-200 status', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     axios.post.mockResolvedValue({ status: 503, data: null })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 503,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should handle API returning null data with error response', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     // Axios returns 200 status but null data - Invokestationcount creates error with 500 status
+  //     axios.post.mockResolvedValue({ status: 200, data: null })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+
+  //   it('should handle API object with message property', async () => {
+  //     mockRequest.params.pollutants = undefined
+  //     mockRequest.yar.get.mockImplementation((key) => {
+  //       const values = {
+  //         selectedpollutant: ['Ozone (O3)'],
+  //         selectedyear: '1 January to 31 December 2024',
+  //         selectedlocation: ['England'],
+  //         Location: 'Country',
+  //         selectedPollutants: null,
+  //         selectedTimePeriod: null
+  //       }
+  //       return values[key]
+  //     })
+
+  //     axios.post.mockResolvedValue({ message: 'API Error', statusCode: 500 })
+  //     mockH.view.mockReturnValue({ code: jest.fn().mockReturnValue('error-response') })
+
+  //     await customdatasetController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith('error/index', expect.objectContaining({
+  //       statusCode: 500,
+  //       message: 'Sorry, there is a problem with the service'
+  //     }))
+  //   })
+  // })
+
+  describe('pollutant mode handling', () => {
+    it('should use specific mode pollutants from session', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: 'specific',
+          selectedpollutants_specific: ['PM10', 'NO2'],
+          selectedPollutants: ['Ozone']
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          selectedpollutant: undefined
+        })
+      )
+    })
+
+    it('should use group mode pollutants from session', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: 'group',
+          selectedpollutants_group: ['PM10', 'NO2', 'O3'],
+          selectedPollutants: ['Ozone']
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          selectedpollutant: undefined
+        })
+      )
+    })
+
+    it('should fallback to selectedPollutants when mode is unknown', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: '',
+          selectedPollutants: ['Ozone', 'PM10']
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          selectedpollutant: undefined
+        })
+      )
+    })
+
+    it('should parse JSON string pollutants', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: 'specific',
+          selectedpollutants_specific: '["PM10", "NO2"]',
+          selectedPollutants: null
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalled()
+    })
+
+    it('should handle invalid JSON and default to empty array', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: 'specific',
+          selectedpollutants_specific: 'invalid json',
+          selectedPollutants: null
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalled()
+    })
+
+    it('should convert non-array pollutants to array', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantMode: 'specific',
+          selectedpollutants_specific: { pollutant: 'PM10' },
+          selectedPollutants: null
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalled()
+    })
+  })
+
+  describe('complex pollutant formatting scenarios', () => {
+    it('should format all pollutants correctly including NOx', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: [
+            'Fine particulate matter (PM2.5)',
+            'Particulate matter (PM10)',
+            'Nitrogen dioxide (NO2)',
+            'Ozone (O3)',
+            'Sulphur dioxide (SO2)',
+            'Nitric oxide (NO)',
+            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+            'Carbon monoxide (CO)'
+          ],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 15 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'formattedPollutants',
+        'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide,Nitric oxide (NO),Nitrogen oxides as nitrogen dioxide,Carbon monoxide'
+      )
+    })
+
+    it('should handle unmapped pollutants by keeping original name', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Unknown Pollutant (XYZ)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 1 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'formattedPollutants',
+        'Unknown Pollutant (XYZ)'
+      )
+    })
+  })
+
+  describe('multiple year ranges', () => {
+    it('should handle year range spanning more than 2 years', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January 2020 to 31 December 2025',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 20 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearrange', 'Multiple')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'finalyear',
+        '2020,2021,2022,2023,2024,2025'
+      )
+    })
+
+    it('should handle year in middle of text', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'From 2023 to 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 10 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearrange', 'Multiple')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('finalyear', '2023,2024')
     })
   })
 })

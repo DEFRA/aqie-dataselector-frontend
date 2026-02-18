@@ -6,50 +6,75 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
+// Pollutant name constants
+const POLLUTANT_PM25_FULL = 'Fine particulate matter (PM2.5)'
+const POLLUTANT_PM25_SHORT = 'Particulate matter (PM2.5)'
+const POLLUTANT_PM25_ABBR = 'PM2.5'
+const POLLUTANT_PM10_FULL = 'Particulate matter (PM10)'
+const POLLUTANT_PM10_ABBR = 'PM10'
+const POLLUTANT_NO2_FULL = 'Nitrogen dioxide (NO2)'
+const POLLUTANT_NO2_NAME = 'Nitrogen dioxide'
+const POLLUTANT_NO2_ABBR = 'NO2'
+const POLLUTANT_O3_FULL = 'Ozone (O3)'
+const POLLUTANT_O3_NAME = 'Ozone'
+const POLLUTANT_O3_ABBR = 'O3'
+const POLLUTANT_SO2_FULL = 'Sulphur dioxide (SO2)'
+const POLLUTANT_SO2_NAME = 'Sulphur dioxide'
+const POLLUTANT_SO2_ABBR = 'SO2'
+const POLLUTANT_NO_FULL = 'Nitric oxide (NO)'
+const POLLUTANT_NO_NAME = 'Nitric oxide'
+const POLLUTANT_NO_ABBR = 'NO'
+const POLLUTANT_NOX_FULL = 'Nitrogen oxides as nitrogen dioxide (NOx as NO2)'
+const POLLUTANT_NOX_NAME = 'Nitrogen oxides as nitrogen dioxide'
+const POLLUTANT_NOX_ABBR = 'NOx as NO2'
+const POLLUTANT_CO_FULL = 'Carbon monoxide (CO)'
+const POLLUTANT_CO_NAME = 'Carbon monoxide'
+const POLLUTANT_CO_ABBR = 'CO'
+
 const allowedPollutants = [
-  'Fine particulate matter (PM2.5)',
-  'Particulate matter (PM10)',
-  'Nitrogen dioxide (NO2)',
-  'Ozone (O3)',
-  'Sulphur dioxide (SO2)',
-  'Nitric oxide (NO)',
-  'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-  'Carbon monoxide (CO)',
+  POLLUTANT_PM25_FULL,
+  POLLUTANT_PM10_FULL,
+  POLLUTANT_NO2_FULL,
+  POLLUTANT_O3_FULL,
+  POLLUTANT_SO2_FULL,
+  POLLUTANT_NO_FULL,
+  POLLUTANT_NOX_FULL,
+  POLLUTANT_CO_FULL,
   // Additional variations for better matching
-  'Particulate matter (PM2.5)',
-  'PM2.5',
-  'PM10',
-  'Nitrogen dioxide',
-  'NO2',
-  'Ozone',
-  'O3',
-  'Sulphur dioxide',
-  'SO2',
-  'Nitric oxide',
-  'NO',
-  'Nitrogen oxides as nitrogen dioxide',
-  'NOx as NO2',
-  'Carbon monoxide',
-  'CO'
+  POLLUTANT_PM25_SHORT,
+  POLLUTANT_PM25_ABBR,
+  POLLUTANT_PM10_ABBR,
+  POLLUTANT_NO2_NAME,
+  POLLUTANT_NO2_ABBR,
+  POLLUTANT_O3_NAME,
+  POLLUTANT_O3_ABBR,
+  POLLUTANT_SO2_NAME,
+  POLLUTANT_SO2_ABBR,
+  POLLUTANT_NO_NAME,
+  POLLUTANT_NO_ABBR,
+  POLLUTANT_NOX_NAME,
+  POLLUTANT_NOX_ABBR,
+  POLLUTANT_CO_NAME,
+  POLLUTANT_CO_ABBR
 ]
 
 const pollutantGroups = {
   core: [
-    'Particulate matter (PM2.5)',
-    'Particulate matter (PM10)',
-    'Nitrogen dioxide',
-    'Ozone',
-    'Sulphur dioxide'
+    POLLUTANT_PM25_SHORT,
+    POLLUTANT_PM10_FULL,
+    POLLUTANT_NO2_FULL,
+    POLLUTANT_O3_FULL,
+    POLLUTANT_SO2_FULL
   ],
   compliance: [
-    'Particulate matter (PM2.5)',
-    'Particulate matter (PM10)',
-    'Nitrogen dioxide',
-    'Ozone',
-    'Sulphur dioxide',
-    'Nitric oxide',
-    'Nitrogen oxides as nitrogen dioxide',
-    'Carbon monoxide'
+    POLLUTANT_PM25_SHORT,
+    POLLUTANT_PM10_FULL,
+    POLLUTANT_NO2_FULL,
+    POLLUTANT_O3_FULL,
+    POLLUTANT_SO2_FULL,
+    POLLUTANT_NO_FULL,
+    POLLUTANT_NOX_FULL,
+    POLLUTANT_CO_FULL
   ]
 }
 
