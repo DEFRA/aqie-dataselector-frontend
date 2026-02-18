@@ -326,31 +326,31 @@ export const config = convict({
   //   `default:` `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomDataSelection/`,
   //   env: 'Download_aurn_URL'
   // },
-  laqmAPIkey: {
-    doc: 'laqmAPIkey',
-    format: String,
-    default: '5444af89cc52380a81111d5623ea74d5',
-    env: 'AQIE_PASSWORD'
-  },
-  laqmAPIPartnerId: {
-    doc: 'laqmAPIPartnerId',
-    format: String,
-    default: '1035',
-    env: 'AQIE_PASSWORD'
-  },
-
   // laqmAPIkey: {
   //   doc: 'laqmAPIkey',
   //   format: String,
-  //   default: '',
-  //   env: 'LAQMAPIKEY'
+  //   default: '5444af89cc52380a81111d5623ea74d5',
+  //   env: 'AQIE_PASSWORD'
   // },
   // laqmAPIPartnerId: {
   //   doc: 'laqmAPIPartnerId',
   //   format: String,
-  //   default: '',
-  //   env: 'LAQMAPIPARTNERID'
+  //   default: '1035',
+  //   env: 'AQIE_PASSWORD'
   // },
+
+  laqmAPIkey: {
+    doc: 'laqmAPIkey',
+    format: String,
+    default: '',
+    env: 'LAQMAPIKEY'
+  },
+  laqmAPIPartnerId: {
+    doc: 'laqmAPIPartnerId',
+    format: String,
+    default: '',
+    env: 'LAQMAPIPARTNERID'
+  },
 
   aqiePassword: {
     doc: 'password for daqie',

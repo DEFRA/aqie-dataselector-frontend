@@ -416,5 +416,137 @@ describe('stationDetailsNojsController', () => {
         year: '2023'
       })
     })
+
+    it('should handle download parameters when provided', async () => {
+      mockRequest.params.download = '2022'
+      mockRequest.params.pollutant = 'PM25'
+      mockRequest.params.frequency = 'Hourly'
+
+      mockedAxios.post.mockResolvedValueOnce({ data: [] })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2022')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadPollutant',
+        'PM25'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadFrequency',
+        'Hourly'
+      )
+    })
+
+    it('should set current year when params.year is not provided in stationDetailsNojs path', async () => {
+      mockRequest.params.year = null
+      mockRequest.url.pathname = '/stationDetailsNojs/123'
+      const currentYear = String(new Date().getFullYear())
+
+      mockedAxios.post.mockResolvedValueOnce({ data: [] })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedYear',
+        currentYear
+      )
+    })
+
+    it('should set params.year when URL does not include /stationDetailsNojs/', async () => {
+      mockRequest.url.pathname = '/otherpath/123'
+      mockRequest.params.year = '2021'
+
+      mockedAxios.post.mockResolvedValueOnce({ data: [] })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2021')
+    })
+
+    it('should return correct toggletip for Suburban Industrial', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        switch (key) {
+          case 'SiteId':
+            return 'site123'
+          case 'MonitoringstResult':
+            return {
+              getmonitoringstation: [
+                {
+                  id: 'site123',
+                  name: 'Test Station',
+                  localSiteID: 'TS001',
+                  location: { coordinates: [51.5074, -0.1278] }
+                }
+              ]
+            }
+          case 'stationdetails':
+            return {
+              id: 'site123',
+              name: 'Test Station',
+              localSiteID: 'TS001',
+              siteType: 'Suburban Industrial',
+              location: { coordinates: [51.5074, -0.1278] }
+            }
+          case 'selectedYear':
+            return '2023'
+          default:
+            return null
+        }
+      })
+
+      mockedAxios.post.mockResolvedValueOnce({ data: [] })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'stationDetailsNojs/index',
+        expect.objectContaining({
+          maptoggletips: 'Suburban industrial tooltip'
+        })
+      )
+    })
+
+    it('should return correct toggletip for Rural Background', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        switch (key) {
+          case 'SiteId':
+            return 'site123'
+          case 'MonitoringstResult':
+            return {
+              getmonitoringstation: [
+                {
+                  id: 'site123',
+                  name: 'Test Station',
+                  localSiteID: 'TS001',
+                  location: { coordinates: [51.5074, -0.1278] }
+                }
+              ]
+            }
+          case 'stationdetails':
+            return {
+              id: 'site123',
+              name: 'Test Station',
+              localSiteID: 'TS001',
+              siteType: 'Rural Background',
+              location: { coordinates: [51.5074, -0.1278] }
+            }
+          case 'selectedYear':
+            return '2023'
+          default:
+            return null
+        }
+      })
+
+      mockedAxios.post.mockResolvedValueOnce({ data: [] })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'stationDetailsNojs/index',
+        expect.objectContaining({
+          maptoggletips: 'Rural background tooltip'
+        })
+      )
+    })
   })
 })

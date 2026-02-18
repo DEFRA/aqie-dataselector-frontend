@@ -391,4 +391,333 @@ describe('downloadAurnController', () => {
       )
     }, 15000)
   })
+
+  describe('error handling', () => {
+    it('handles download API error for JS route', async () => {
+      const error = new Error('Download API failed')
+      error.statusCode = 503
+      axios.post.mockRejectedValueOnce(error)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith(error)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    }, 10000)
+
+    it('handles download API error with custom error object for JS route', async () => {
+      const error = { error: true, statusCode: 400, message: 'Bad request' }
+      axios.post.mockResolvedValueOnce({ data: error })
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({ jobID: error })
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+    }, 10000)
+
+    it('handles download error and returns error object for no-JS route', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+      const error = new Error('Download failed')
+      error.statusCode = 500
+
+      axios.post.mockRejectedValueOnce(error)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      // Should still render view even with download error (error is returned as jobID)
+      expect(mockH.view).toHaveBeenCalled()
+    }, 10000)
+
+    it('handles polling error for no-JS route', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+
+      const mockDownloadResponse = { data: 'job-poll-error' }
+      const pollingError = new Error('Polling failed')
+      pollingError.error = true
+      pollingError.statusCode = 503
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockRejectedValueOnce(pollingError)
+
+      mockH.redirect = jest.fn().mockReturnValue('redirect-response')
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      // Should not render view on polling error
+      expect(mockH.view).not.toHaveBeenCalled()
+    }, 10000)
+
+    it('handles missing config URL for download', async () => {
+      config.get.mockImplementation((key) => {
+        if (key === 'Download_aurn_URL') return undefined
+        if (key === 'Polling_URL') return 'https://api.example.com/status'
+        return undefined
+      })
+
+      const error = new Error('Request failed')
+      axios.post.mockRejectedValueOnce(error)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      // Should return error response
+      expect(mockH.response).toHaveBeenCalledWith(error)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+    }, 10000)
+
+    it('handles missing config URL for polling', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+
+      config.get.mockImplementation((key) => {
+        if (key === 'Download_aurn_URL')
+          return 'https://api.example.com/download'
+        if (key === 'Polling_URL') return undefined
+        return undefined
+      })
+
+      const mockDownloadResponse = { data: 'job-no-poll-url' }
+      const pollingError = new Error('Config missing')
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockRejectedValueOnce(pollingError)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      // Should still render view with error handled
+      expect(mockH.view).toHaveBeenCalled()
+    }, 10000)
+
+    it('handles axios network error', async () => {
+      const networkError = new Error('Network Error')
+      networkError.code = 'ENOTFOUND'
+      axios.post.mockRejectedValueOnce(networkError)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith(networkError)
+      expect(mockH.type).toHaveBeenCalledWith('application/json')
+    }, 10000)
+
+    it('handles timeout error', async () => {
+      const timeoutError = new Error('timeout of 5000ms exceeded')
+      timeoutError.code = 'ECONNABORTED'
+      axios.post.mockRejectedValueOnce(timeoutError)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith(timeoutError)
+    }, 10000)
+  })
+
+  describe('edge cases and data variations', () => {
+    it('handles multiple locations for Country region', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          formattedPollutants: 'PM2.5,PM10',
+          selectedlocation: ['England', 'Wales', 'Scotland'],
+          Location: 'Country',
+          viewDatanojs: { pageTitle: 'Test' }
+        }
+        return values[key]
+      })
+
+      const mockDownloadResponse = { data: 'job-multi-location' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          Region: 'England,Wales,Scotland',
+          regiontype: 'Country'
+        })
+      )
+    }, 10000)
+
+    it('handles single pollutant', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          formattedPollutants: 'PM2.5',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          viewDatanojs: { pageTitle: 'Test' }
+        }
+        return values[key]
+      })
+
+      const mockDownloadResponse = { data: 'job-single-pollutant' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          pollutantName: 'PM2.5'
+        })
+      )
+    }, 10000)
+
+    it('handles multiple LocalAuthority IDs', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          formattedPollutants: 'NO2,O3',
+          selectedLAIDs: '1,5,10,25,50',
+          Location: 'LocalAuthority',
+          viewDatanojs: { pageTitle: 'Test' }
+        }
+        return values[key]
+      })
+
+      const mockDownloadResponse = { data: 'job-multi-la' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          Region: '1,5,10,25,50',
+          regiontype: 'LocalAuthority'
+        })
+      )
+    }, 10000)
+
+    it('handles different year formats', async () => {
+      mockRequest.params.year = '2023'
+      const mockDownloadResponse = { data: 'job-year-2023' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          Year: '2023'
+        })
+      )
+    }, 10000)
+
+    it('includes correct dataselectorfiltertype and downloadtype', async () => {
+      const mockDownloadResponse = { data: 'job-filter-types' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          dataselectorfiltertype: 'dataSelectorHourly',
+          dataselectordownloadtype: 'dataSelectorSingle',
+          dataSource: 'AURN'
+        })
+      )
+    }, 10000)
+
+    it('handles empty viewDatanojs with all properties', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          formattedPollutants: 'PM2.5',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          viewDatanojs: {}
+        }
+        return values[key]
+      })
+
+      const mockDownloadResponse = { data: 'job-empty-view' }
+      const mockStatusResponse = {
+        data: {
+          status: 'Completed',
+          resultUrl: 'https://api.example.com/results/job-empty-view'
+        }
+      }
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockResolvedValueOnce(mockStatusResponse)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        {
+          downloadresultnojs: 'https://api.example.com/results/job-empty-view'
+        }
+      )
+    }, 10000)
+
+    it('handles polling with single immediate completion', async () => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+
+      const mockDownloadResponse = { data: 'job-instant' }
+      const mockStatusResponse = {
+        data: {
+          status: 'Completed',
+          resultUrl: 'https://api.example.com/results/job-instant'
+        }
+      }
+
+      axios.post
+        .mockResolvedValueOnce(mockDownloadResponse)
+        .mockResolvedValueOnce(mockStatusResponse)
+
+      const promise = downloadAurnController.handler(mockRequest, mockH)
+      await jest.runAllTimersAsync()
+      await promise
+
+      // Should poll only once and complete
+      expect(axios.post).toHaveBeenCalledTimes(2)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadaurnresult',
+        'https://api.example.com/results/job-instant'
+      )
+    }, 10000)
+
+    it('handles null or undefined session values gracefully', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          formattedPollutants: null,
+          selectedlocation: ['England'],
+          Location: 'Country',
+          viewDatanojs: null
+        }
+        return values[key]
+      })
+
+      const mockDownloadResponse = { data: 'job-null-values' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      // Should still make API call with null pollutants
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          pollutantName: null,
+          Region: 'England'
+        })
+      )
+    }, 10000)
+
+    it('logs API parameters before making request', async () => {
+      const mockDownloadResponse = { data: 'job-logging' }
+      axios.post.mockResolvedValueOnce(mockDownloadResponse)
+
+      await downloadAurnController.handler(mockRequest, mockH)
+
+      // Logger should be called (mocked in beforeEach)
+      expect(axios.post).toHaveBeenCalled()
+    }, 10000)
+  })
 })

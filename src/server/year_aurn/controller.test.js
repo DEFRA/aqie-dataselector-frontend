@@ -228,4 +228,352 @@ describe('yearController', () => {
       expect(result).toBe('redirect-response')
     })
   })
+
+  describe('POST validation errors', () => {
+    beforeEach(() => {
+      mockRequest.method = 'post'
+    })
+
+    it('returns error when no time selection is made', () => {
+      mockRequest.payload = {}
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Select an option before continuing'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when any year is not provided', () => {
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({ text: 'Enter a year.' })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when any year is not 4 digits', () => {
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '20' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Enter a 4-digit year, for example 2009.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when any year is out of range (before 1973)', () => {
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '1972' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when any year is out of range (after current year)', () => {
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '2027' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range start year is missing', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '',
+        [FIELD_RANGE_END_YEAR]: '2020'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({ text: 'Enter a start year.' })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range end year is missing', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2018',
+        [FIELD_RANGE_END_YEAR]: ''
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({ text: 'Enter an end year.' })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range start year is not 4 digits', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '20',
+        [FIELD_RANGE_END_YEAR]: '2020'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Start year must be 4 digits, for example 2009.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range end year is not 4 digits', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2018',
+        [FIELD_RANGE_END_YEAR]: '20'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'End year must be 4 digits, for example 2010.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range start year is before 1973', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '1972',
+        [FIELD_RANGE_END_YEAR]: '2020'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Start year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when range end year is after current year', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2018',
+        [FIELD_RANGE_END_YEAR]: '2027'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'End year must be between 1973 and 2026.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when start year is after end year', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2020',
+        [FIELD_RANGE_END_YEAR]: '2018'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Start year must be the same as or before the end year.'
+              }),
+              expect.objectContaining({
+                text: 'End year must be the same as or after the start year.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when year range exceeds 5 years', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2015',
+        [FIELD_RANGE_END_YEAR]: '2021'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Choose up to 5 whole years at a time'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error for invalid time selection value', () => {
+      mockRequest.payload = { time: 'invalid-option' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({ text: 'Select a valid option' })
+            ])
+          })
+        })
+      )
+    })
+
+    it('persists yearany when any year is provided', () => {
+      mockRequest.payload = { time: 'any', [FIELD_ANY_YEAR_INPUT]: '2020' }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearany', '2020')
+    })
+
+    it('persists startYear and endYear when range is provided', () => {
+      mockRequest.payload = {
+        time: 'range',
+        [FIELD_RANGE_START_YEAR]: '2018',
+        [FIELD_RANGE_END_YEAR]: '2020'
+      }
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('startYear', '2018')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('endYear', '2020')
+    })
+
+    it('preserves transient form data over saved session on GET after validation error', () => {
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((k) => {
+        const map = {
+          yearFormErrors: { list: [], details: {} },
+          yearFormData: {
+            time: 'any',
+            [FIELD_ANY_YEAR_INPUT]: '2021'
+          },
+          TimeSelectionMode: 'range',
+          yearany: '2019'
+        }
+        return map[k]
+      })
+
+      yearController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'year_aurn/index',
+        expect.objectContaining({
+          formData: expect.objectContaining({
+            time: 'any',
+            [FIELD_ANY_YEAR_INPUT]: '2021'
+          })
+        })
+      )
+    })
+  })
 })

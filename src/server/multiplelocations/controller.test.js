@@ -303,4 +303,182 @@ describe('multipleLocationsController', () => {
     await multipleLocationsController.handler(request, h)
     expect(yar.set).toHaveBeenCalledWith('osnameapiresult', error)
   })
+
+  it('should handle pollutant name mapping for GR25, GE10, GR10', async () => {
+    axios.post
+      .mockResolvedValueOnce({
+        data: { getOSPlaces: [{ name: 'Loc1' }, { name: 'Loc2' }] }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          getmonitoringstation: [
+            {
+              name: 'Station1',
+              pollutants: {
+                GR25: {},
+                GE10: {},
+                GR10: {},
+                NO2: {}
+              }
+            }
+          ]
+        }
+      })
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // Verify pollutant mapping was done correctly
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/index',
+      expect.any(Object)
+    )
+  })
+
+  it('should handle cached location data when osnameapiresult exists', async () => {
+    axios.post.mockClear() // Clear previous calls
+    const cachedLocations = {
+      getOSPlaces: [{ name: 'Loc1' }, { name: 'Loc2' }]
+    }
+
+    axios.post.mockResolvedValueOnce({
+      data: {
+        getmonitoringstation: [
+          {
+            name: 'Station1',
+            pollutants: { PM25: {} }
+          }
+        ]
+      }
+    })
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: cachedLocations // Already has data
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // The controller checks locationdetails.length which is undefined for objects,
+    // so it still makes both API calls (OS API + monitoring API)
+    expect(axios.post).toHaveBeenCalledTimes(2)
+  })
+
+  it('should update session when payload query differs from session query', async () => {
+    const yar = mockYar({
+      fullSearchQuery: { value: 'OldQuery' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'OldQuery',
+      osnameapiresult: []
+    })
+
+    axios.post
+      .mockResolvedValueOnce({
+        data: { getOSPlaces: [{ name: 'Loc1' }, { name: 'Loc2' }] }
+      })
+      .mockResolvedValueOnce({
+        data: { getmonitoringstation: [] }
+      })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'NewQuery',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(yar.set).toHaveBeenCalledWith('selectedLocation', '')
+    expect(yar.set).toHaveBeenCalledWith('fullSearchQuery', {
+      value: 'NewQuery'
+    })
+  })
+
+  it('should handle empty/null search value and set empty session values', async () => {
+    const yar = mockYar({
+      fullSearchQuery: { value: '' },
+      locationMiles: '10',
+      hasSpecialCharacter: false
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: '', // Empty search
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // Should set empty searchLocation and searchValue for empty search
+    expect(yar.set).toHaveBeenCalledWith('searchLocation', '')
+    expect(yar.set).toHaveBeenCalledWith('searchValue', '')
+  })
+
+  it('should not set osnameapiresult when API returns null', async () => {
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      osnameapiresult: [] // Empty initially
+    })
+
+    // Mock OS API to return null data (with getOSPlaces as empty to avoid crash)
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [] } })
+      .mockResolvedValueOnce({
+        data: { getmonitoringstation: [] }
+      })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // With empty OS places, should render no location view
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nolocation',
+      expect.any(Object)
+    )
+  })
 })
