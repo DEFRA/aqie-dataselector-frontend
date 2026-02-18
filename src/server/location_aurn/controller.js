@@ -424,7 +424,12 @@ export const locationaurnController = {
           }
         }
       } else {
-        // Unknown location type
+        // Unknown location type - add validation error
+        errors.list.push({
+          text: 'Select a valid location type',
+          href: '#location-2'
+        })
+        errors.details.location = 'Select a valid location type'
       }
 
       // If validation fails, return to form with errors and preserve form state

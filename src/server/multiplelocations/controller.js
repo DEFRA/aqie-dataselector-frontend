@@ -5,6 +5,37 @@ import { config } from '~/src/config/config.js'
 // import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 
+// Helper function to build pollutant map for monitoring stations
+function buildPollutantMap(monitoringStations) {
+  const pollutantMap = new Map()
+
+  for (const station of monitoringStations) {
+    const pollutants = station.pollutants
+    const pollutantKeys = Object.keys(pollutants)
+    const normalizedPollutants = []
+
+    for (const p of pollutantKeys) {
+      let pollutantName
+      if (p === 'PM25' || p === 'GR25') {
+        pollutantName = 'PM2.5'
+      } else if (p === 'MP10' || p === 'GE10' || p === 'GR10') {
+        pollutantName = 'PM10'
+      } else {
+        pollutantName = p
+      }
+      normalizedPollutants.push(pollutantName)
+    }
+
+    // Remove duplicates
+    const uniquePollutants = normalizedPollutants.filter(
+      (item, index) => normalizedPollutants.indexOf(item) === index
+    )
+    pollutantMap.set(station.name, uniquePollutants)
+  }
+
+  return pollutantMap
+}
+
 const multipleLocationsController = {
   handler: async (request, h) => {
     // Set js_enabled to false by default
@@ -138,7 +169,8 @@ const multipleLocationsController = {
 
       let locations = ''
       let MonitoringstResult = ''
-      const map1 = new Map()
+      let map1 = new Map()
+
       if (
         locationdetails.length === 0 ||
         locationdetails.length === undefined
@@ -161,31 +193,13 @@ const multipleLocationsController = {
           request.yar.set('MonitoringstResult', MonitoringstResult)
         }
 
-        if (locations !== undefined && locations.length > 0) {
-          if (MonitoringstResult.getmonitoringstation.length !== 0) {
-            for (const ar of MonitoringstResult.getmonitoringstation) {
-              const poll = ar.pollutants
-              const poll1 = Object.keys(poll)
-              const pollarray = []
-              let pollutant
+        // Build pollutant map if we have locations and monitoring stations
+        const hasLocations = locations !== undefined && locations.length > 0
+        const hasStations = MonitoringstResult?.getmonitoringstation?.length > 0
 
-              for (const p of poll1) {
-                if (p === 'PM25' || p === 'GR25') {
-                  pollutant = 'PM2.5'
-                } else if (p === 'MP10' || p === 'GE10' || p === 'GR10') {
-                  pollutant = 'PM10'
-                } else {
-                  pollutant = p
-                }
-                pollarray.push(pollutant)
-              }
-              const pollkeys = pollarray.filter(
-                (item, index) => pollarray.indexOf(item) === index
-              )
-              map1.set(ar.name, pollkeys)
-            }
-          }
-        } else {
+        if (hasLocations && hasStations) {
+          map1 = buildPollutantMap(MonitoringstResult.getmonitoringstation)
+        } else if (!hasLocations) {
           request.yar.set('errors', '')
           request.yar.set('errorMessage', '')
           request.yar.set('nooflocation', 'none')
@@ -197,6 +211,8 @@ const multipleLocationsController = {
             displayBacklink: true,
             hrefq: searchlocationurl
           })
+        } else {
+          // Has locations but no stations - map1 remains empty
         }
       }
 
