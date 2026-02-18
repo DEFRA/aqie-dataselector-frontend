@@ -1387,4 +1387,328 @@ describe('customdatasetController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('finalyear', '2023,2024')
     })
   })
+
+  describe('helper functions and edge cases', () => {
+    it('should handle session pollutants with single item array with comma', async () => {
+      mockRequest.params.pollutants = ['PM10,NO2,O3']
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', [
+        'PM10',
+        'NO2',
+        'O3'
+      ])
+    })
+
+    it('should handle location path with non-array country', async () => {
+      mockRequest.path = '/customdataset/location'
+      mockRequest.payload.country = 'England'
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle location path with null country', async () => {
+      mockRequest.path = '/customdataset/location'
+      mockRequest.payload.country = null
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.any(Object)
+      )
+    })
+
+    it('should not process pollutants when params is undefined and no session pollutants', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockReturnValue(null)
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle year path without year param', async () => {
+      mockRequest.path = '/customdataset/year'
+      mockRequest.params.year = undefined
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.any(Object)
+      )
+    })
+
+    it('should handle multiple pollutants in array format', async () => {
+      mockRequest.params.pollutants = ['PM10', 'NO2']
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', [
+        'PM10',
+        'NO2'
+      ])
+    })
+
+    it('should handle empty session pollutants and use params', async () => {
+      mockRequest.params.pollutants = 'core'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutants') return []
+        return undefined
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', [
+        'Fine particulate matter (PM2.5)',
+        'Particulate matter (PM10)',
+        'Nitrogen dioxide (NO2)',
+        'Ozone (O3)',
+        'Sulphur dioxide (SO2)'
+      ])
+    })
+
+    it('should build LocalAuthority station count parameters correctly', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['PM10'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['City of London', 'Westminster'],
+          Location: 'LocalAuthority',
+          selectedLAIDs: '1,2,3',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 15 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/download',
+        expect.objectContaining({
+          regiontype: 'LocalAuthority',
+          Region: '1,2,3',
+          pollutantName: 'PM10',
+          dataSource: 'AURN',
+          Year: '2024'
+        }),
+        expect.any(Object)
+      )
+    })
+
+    it('should set Region in session after successful station count', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England', 'Wales'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 12 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'Region',
+        'England,Wales'
+      )
+    })
+
+    it('should handle year range with no matching years', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'some text without years',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 5 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('finalyear1', '')
+    })
+
+    it('should handle pollutants with both session time period and path year', async () => {
+      mockRequest.path = '/customdataset/year'
+      mockRequest.params.year = '2025'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedTimePeriod') return '2024'
+        return undefined
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedyear', '2024')
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'selectedyear',
+        '2025'
+      )
+    })
+
+    it('should handle formatted pollutants with mixed mapped and unmapped values', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: [
+            'Ozone (O3)',
+            'Unknown Pollutant',
+            'Sulphur dioxide (SO2)'
+          ],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 8 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'formattedPollutants',
+        'Ozone,Unknown Pollutant,Sulphur dioxide'
+      )
+    })
+
+    it('should handle axios timeout error', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      const timeoutError = new Error('timeout of 50000ms exceeded')
+      timeoutError.code = 'ECONNABORTED'
+      axios.post.mockRejectedValue(timeoutError)
+      mockH.view.mockReturnValue({
+        code: jest.fn().mockReturnValue('error-response')
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'error/index',
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Sorry, there is a problem with the service'
+        })
+      )
+    })
+
+    it('should handle response without status property', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({})
+      mockH.view.mockReturnValue({
+        code: jest.fn().mockReturnValue('error-response')
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'error/index',
+        expect.objectContaining({
+          statusCode: 500
+        })
+      )
+    })
+
+    it('should handle year range spanning exactly 1 year', async () => {
+      mockRequest.params.pollutants = undefined
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January 2024 to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+
+      axios.post.mockResolvedValue({ status: 200, data: 5 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('yearrange', 'Multiple')
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('finalyear', '2024')
+    })
+
+    it('should handle array pollutant without commas', async () => {
+      mockRequest.params.pollutants = ['PM10']
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', [
+        'PM10'
+      ])
+    })
+
+    it('should prioritize session pollutants over params', async () => {
+      mockRequest.params.pollutants = 'compliance'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutants') return ['Custom Pollutant']
+        return undefined
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', [
+        'Custom Pollutant'
+      ])
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'selectedpollutant',
+        expect.arrayContaining(['Fine particulate matter (PM2.5)'])
+      )
+    })
+  })
 })

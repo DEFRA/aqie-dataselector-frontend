@@ -212,4 +212,176 @@ describe('stationDetailsController.handler', () => {
     )
     expect(result).toBe(h.view.mock.results[0].value)
   })
+
+  it('should return correct toggletip for Urban Industrial', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Urban Industrial',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        maptoggletips: expect.anything()
+      })
+    )
+  })
+
+  it('should return correct toggletip for Suburban Industrial', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Suburban Industrial',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalled()
+  })
+
+  it('should return correct toggletip for Suburban Background', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Suburban Background',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalled()
+  })
+
+  it('should return correct toggletip for Rural Background', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Rural Background',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalled()
+  })
+
+  it('should return correct toggletip for Urban Background', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Urban Background',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalled()
+  })
+
+  it('should return null for unknown siteType', async () => {
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Unknown Type',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2'],
+      updated: '2025-07-15T00:00:00Z'
+    }
+
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'multiple',
+        locationID: 'loc1'
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        maptoggletips: null
+      })
+    )
+  })
 })

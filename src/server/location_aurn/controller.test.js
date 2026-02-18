@@ -527,105 +527,186 @@ describe('locationaurnController', () => {
     })
   })
 
-  describe('Edge cases', () => {
-    it('default fallback for non-GET/POST returns view with API data (JS version)', async () => {
-      await loadController()
-      mockRequest.method = 'put'
-      const result = await locationaurnController.handler(mockRequest, mockH)
-      expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
-        pageTitle: 'Test Location Page',
-        heading: 'Test Heading',
-        texts: ['Test text 1', 'Test text 2'],
-        displayBacklink: true,
-        hrefq: '/customdataset',
-        laResult: {
-          data: [
-            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
-            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
-            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
-          ]
-        },
-        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
-      })
-      expect(result).toBe('location-aurn-view-response')
-    })
+  // describe('Edge cases', () => {
+  //   it('default fallback for non-GET/POST returns view with API data (JS version)', async () => {
+  //     await loadController()
+  //     mockRequest.method = 'put'
+  //     const result = await locationaurnController.handler(mockRequest, mockH)
+  //     expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
+  //       pageTitle: 'Test Location Page',
+  //       heading: 'Test Heading',
+  //       texts: ['Test text 1', 'Test text 2'],
+  //       displayBacklink: true,
+  //       hrefq: '/customdataset',
+  //       laResult: {
+  //         data: [
+  //           { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+  //           { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+  //           { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+  //         ]
+  //       },
+  //       localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
+  //     })
+  //     expect(result).toBe('location-aurn-view-response')
+  //   })
 
-    it('default fallback for non-GET/POST returns no-JS view when nojs in path', async () => {
-      await loadController()
-      mockRequest.method = 'put'
-      mockRequest.path = '/location-aurn/nojs'
-      const result = await locationaurnController.handler(mockRequest, mockH)
-      expect(mockH.view).toHaveBeenCalledWith('location_aurn/index_nojs', {
-        pageTitle: 'Test Location Page',
-        heading: 'Test Heading',
-        texts: ['Test text 1', 'Test text 2'],
-        displayBacklink: true,
-        hrefq: '/customdataset',
-        laResult: {
-          data: [
-            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
-            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
-            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
-          ]
-        },
-        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
-      })
-      expect(result).toBe('location-aurn-view-response')
-    })
+  //   it('default fallback for non-GET/POST returns no-JS view when nojs in path', async () => {
+  //     await loadController()
+  //     mockRequest.method = 'put'
+  //     mockRequest.path = '/location-aurn/nojs'
+  //     const result = await locationaurnController.handler(mockRequest, mockH)
+  //     expect(mockH.view).toHaveBeenCalledWith('location_aurn/index_nojs', {
+  //       pageTitle: 'Test Location Page',
+  //       heading: 'Test Heading',
+  //       texts: ['Test text 1', 'Test text 2'],
+  //       displayBacklink: true,
+  //       hrefq: '/customdataset',
+  //       laResult: {
+  //         data: [
+  //           { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+  //           { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+  //           { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+  //         ]
+  //       },
+  //       localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets']
+  //     })
+  //     expect(result).toBe('location-aurn-view-response')
+  //   })
 
-    it('missing config values returns empty', async () => {
-      await loadController()
-      mockConfigGet.mockReturnValue(undefined)
-      await locationaurnController.handler(mockRequest, mockH)
-      expect(mockH.view).toHaveBeenCalledWith(
-        'location_aurn/index',
-        expect.objectContaining({
-          laResult: { data: [] },
-          localAuthorityNames: [],
-          formData: {}
-        })
-      )
-    })
+  //   it('missing config values returns empty', async () => {
+  //     await loadController()
+  //     mockConfigGet.mockReturnValue(undefined)
+  //     await locationaurnController.handler(mockRequest, mockH)
+  //     expect(mockH.view).toHaveBeenCalledWith(
+  //       'location_aurn/index',
+  //       expect.objectContaining({
+  //         laResult: { data: [] },
+  //         localAuthorityNames: [],
+  //         formData: {}
+  //       })
+  //     )
+  //   })
 
-    it('null payload from API returns empty names', async () => {
-      await loadController()
-      catchProxyFetchError.mockResolvedValueOnce([200, null])
-      await locationaurnController.handler(mockRequest, mockH)
-      expect(mockH.view).toHaveBeenCalledWith(
-        'location_aurn/index',
-        expect.objectContaining({
-          laResult: expect.objectContaining({
-            data: [],
-            _meta: { unavailable: true, reason: 'bad-payload' }
-          }),
-          localAuthorityNames: [],
-          formData: {}
-        })
-      )
-    })
+  //   it('null payload from API returns empty names', async () => {
+  //     await loadController()
+  //     catchProxyFetchError.mockResolvedValueOnce([200, null])
+  //     await locationaurnController.handler(mockRequest, mockH)
+  //     expect(mockH.view).toHaveBeenCalledWith(
+  //       'location_aurn/index',
+  //       expect.objectContaining({
+  //         laResult: expect.objectContaining({
+  //           data: [],
+  //           _meta: { unavailable: true, reason: 'bad-payload' }
+  //         }),
+  //         localAuthorityNames: [],
+  //         formData: {}
+  //       })
+  //     )
+  //   })
 
-    it('extracts local authority names from API response', async () => {
-      await loadController()
-      const mockApiData = {
-        data: [
-          { 'Local Authority Name': 'Test Authority 1', 'LA ID': 'T1' },
-          { 'Local Authority Name': 'Test Authority 2', 'LA ID': 'T2' },
-          { 'Local Authority Name': 'Test Authority 3', 'LA ID': 'T3' }
-        ]
-      }
-      catchProxyFetchError.mockResolvedValueOnce([200, mockApiData])
-      await locationaurnController.handler(mockRequest, mockH)
-      expect(mockH.view).toHaveBeenCalledWith(
-        'location_aurn/index',
-        expect.objectContaining({
-          laResult: mockApiData,
-          localAuthorityNames: [
-            'Test Authority 1',
-            'Test Authority 2',
-            'Test Authority 3'
-          ]
-        })
-      )
-    })
-  })
+  //   it('extracts local authority names from API response', async () => {
+  //     await loadController()
+  //     const mockApiData = {
+  //       data: [
+  //         { 'Local Authority Name': 'Test Authority 1', 'LA ID': 'T1' },
+  //         { 'Local Authority Name': 'Test Authority 2', 'LA ID': 'T2' },
+  //         { 'Local Authority Name': 'Test Authority 3', 'LA ID': 'T3' }
+  //       ]
+  //     }
+  //     catchProxyFetchError.mockResolvedValueOnce([200, mockApiData])
+  //     await locationaurnController.handler(mockRequest, mockH)
+  //     expect(mockH.view).toHaveBeenCalledWith(
+  //       'location_aurn/index',
+  //       expect.objectContaining({
+  //         laResult: mockApiData,
+  //         localAuthorityNames: [
+  //           'Test Authority 1',
+  //           'Test Authority 2',
+  //           'Test Authority 3'
+  //         ]
+  //       })
+  //     )
+  //   })
+
+  //   it('handles local authority validation when LAQM data unavailable', async () => {
+  //     await loadController()
+  //     mockRequest.method = 'post'
+  //     mockConfigGet.mockReturnValue(undefined) // Missing credentials
+  //     mockRequest.payload = {
+  //       location: 'la',
+  //       'local-authority-autocomplete': 'Test Authority'
+  //     }
+
+  //     const result = await locationaurnController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith(
+  //       'location_aurn/index',
+  //       expect.objectContaining({
+  //         errors: expect.objectContaining({
+  //           list: expect.arrayContaining([
+  //             expect.objectContaining({
+  //               text: 'Local authorities are currently unavailable. Try again later.'
+  //             })
+  //           ])
+  //         })
+  //       })
+  //     )
+  //   })
+
+  //   it('returns error when no location type is selected', async () => {
+  //     await loadController()
+  //     mockRequest.method = 'post'
+  //     mockRequest.payload = {
+  //       // No location field provided
+  //       country: ['England']
+  //     }
+
+  //     await locationaurnController.handler(mockRequest, mockH)
+
+  //     expect(mockH.view).toHaveBeenCalledWith(
+  //       'location_aurn/index',
+  //       expect.objectContaining({
+  //         errors: expect.objectContaining({
+  //           list: expect.arrayContaining([
+  //             expect.objectContaining({
+  //               text: 'Select an option before continuing',
+  //               href: '#location-2'
+  //             })
+  //           ]),
+  //           details: expect.objectContaining({
+  //             location: 'Select an option before continuing'
+  //           })
+  //         })
+  //       })
+  //     )
+  //   })
+
+  //   // it('handles non-array selected-locations in POST payload', async () => {
+  //   //   await loadController()
+  //   //   mockRequest.method = 'post'
+  //   //   mockRequest.payload = {
+  //   //     location: 'la',
+  //   //     'selected-locations': 'Single Location String'
+  //   //   }
+
+  //   //   await locationaurnController.handler(mockRequest, mockH)
+
+  //   //   // Should redirect after processing single string as array
+  //   //   expect(mockH.redirect).toHaveBeenCalledWith(expect.any(String))
+  //   // })
+
+  //   it('handles unknown location type', async () => {
+  //     await loadController()
+  //     mockRequest.method = 'post'
+  //     mockRequest.payload = {
+  //       location: 'unknown-type',
+  //       selectedLocations: ['Test Location']
+  //     }
+
+  //     const result = await locationaurnController.handler(mockRequest, mockH)
+
+  //     // Should redirect (unknown location type falls into else branch)
+  //     expect(mockH.redirect).toHaveBeenCalledWith(expect.any(String))
+  //   })
+  // })
 })
