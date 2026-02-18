@@ -69,346 +69,402 @@ function renderErrorPage(h, statusCode) {
     })
     .code(statusCode)
 }
+
+function clearAllSessionData(request) {
+  // Clear all selected options and pollutants
+  request.yar.set('selectedpollutant', '')
+  request.yar.set('selectedyear', '')
+  request.yar.set('selectedlocation', '')
+  request.yar.set('nooflocation', '')
+
+  // Clear pollutant-specific session variables
+  request.yar.set('selectedPollutants', null)
+  request.yar.set('selectedPollutantMode', '')
+  request.yar.set('selectedPollutantGroup', '')
+  request.yar.set('selectedpollutants_specific', [])
+  request.yar.set('selectedpollutants_group', [])
+  request.yar.set('formattedPollutants', '')
+
+  // Clear other related session variables including time period
+  request.yar.set('selectedTimePeriod', null)
+  request.yar.set('yearrange', '')
+  request.yar.set('finalyear', '')
+  request.yar.set('finalyear1', '')
+  request.yar.set('Region', '')
+  request.yar.set('selectedLAIDs', '')
+  request.yar.set('Location', '')
+
+  // Clear year selection mode and related year data
+  request.yar.set('TimeSelectionMode', '')
+  request.yar.set('yearany', '')
+  request.yar.set('startYear', '')
+  request.yar.set('endYear', '')
+  request.yar.set('startyear_ytd', '')
+}
+
+function handleClearPath(request, h, backUrl) {
+  clearAllSessionData(request)
+
+  return h.view('customdataset/index', {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: request.yar.get('nooflocation'),
+    displayBacklink: true,
+    hrefq: backUrl
+  })
+}
+
+function handleNullPollutantsError(request, h) {
+  const errorData = englishNew.custom.errorText.uk
+  const errorSection = errorData?.fields
+  setErrorMessage(request, errorSection?.title, errorSection?.text)
+  const errors = request.yar?.get('errors')
+  const errorMessage = request.yar?.get('errorMessage')
+  request.yar.set('errors', '')
+  request.yar.set('errorMessage', '')
+
+  // Check if JavaScript is disabled by looking for noscript indicator
+  const isNoJS =
+    request.headers['user-agent']?.includes('noscript') ||
+    request.query?.nojs === 'true' ||
+    !request.headers.accept?.includes('text/javascript')
+
+  const templatePath = isNoJS
+    ? 'add_pollutant/index_nojs'
+    : 'add_pollutant/index'
+
+  return h.view(templatePath, {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    errors,
+    errorMessage,
+    displayBacklink: true,
+    hrefq: '/customdataset'
+  })
+}
+
+function getCorePollutants() {
+  return [
+    'Fine particulate matter (PM2.5)',
+    'Particulate matter (PM10)',
+    'Nitrogen dioxide (NO2)',
+    'Ozone (O3)',
+    'Sulphur dioxide (SO2)'
+  ]
+}
+
+function getCompliancePollutants() {
+  return [
+    'Fine particulate matter (PM2.5)',
+    'Particulate matter (PM10)',
+    'Nitrogen dioxide (NO2)',
+    'Ozone (O3)',
+    'Sulphur dioxide (SO2)',
+    'Nitric oxide (NO)',
+    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+    'Carbon monoxide (CO)'
+  ]
+}
+
+function parsePollutantArray(selectedpollutant) {
+  if (selectedpollutant.length === 1 && selectedpollutant[0].includes(',')) {
+    return selectedpollutant[0].split(',').map((s) => s.trim())
+  }
+  return selectedpollutant
+}
+
+function parsePollutantString(selectedpollutant) {
+  return selectedpollutant.split(',').map((s) => s.trim())
+}
+
+function processPollutantSelection(selectedpollutant) {
+  if (selectedpollutant === 'core') {
+    return getCorePollutants()
+  }
+
+  if (selectedpollutant === 'compliance') {
+    return getCompliancePollutants()
+  }
+
+  if (Array.isArray(selectedpollutant)) {
+    return parsePollutantArray(selectedpollutant)
+  }
+
+  if (typeof selectedpollutant === 'string') {
+    return parsePollutantString(selectedpollutant)
+  }
+
+  return selectedpollutant
+}
+
+function handlePollutantsFromParams(request) {
+  const sessionPollutants = request.yar.get('selectedPollutants')
+  if (sessionPollutants && sessionPollutants.length > 0) {
+    request.yar.set('selectedpollutant', sessionPollutants)
+    return
+  }
+
+  if (request.params.pollutants === undefined) {
+    return
+  }
+
+  const selectedpollutant = processPollutantSelection(request.params.pollutants)
+  request.yar.set('selectedpollutant', selectedpollutant)
+}
+
+function handleTimePeriodSelection(request) {
+  const sessionTimePeriod = request.yar.get('selectedTimePeriod')
+  if (sessionTimePeriod) {
+    request.yar.set('selectedyear', sessionTimePeriod)
+    return
+  }
+
+  if (request.path?.includes('/year')) {
+    request.yar.set('selectedyear', request.params.year)
+  }
+}
+
+function handleLocationSelection(request) {
+  if (!request.path?.includes('/location')) {
+    return
+  }
+
+  let selectedCountry = request.payload.country
+  if (selectedCountry && !Array.isArray(selectedCountry)) {
+    selectedCountry = [selectedCountry]
+  }
+}
+
+function parseYearRange(selectedyear, request) {
+  const years = selectedyear.match(/\d{4}/g)
+
+  if (years && years.length === 2) {
+    request.yar.set('yearrange', 'Multiple')
+    const start = parseInt(years[0], 10)
+    const end = parseInt(years[1], 10)
+    const yearList = []
+    for (let y = start; y <= end; y++) {
+      yearList.push(y)
+    }
+    const finalyear = yearList.join(',')
+    request.yar.set('finalyear', finalyear)
+    return finalyear
+  }
+
+  if (years && years.length === 1) {
+    request.yar.set('yearrange', 'Single')
+    const finalyear = years[0]
+    request.yar.set('finalyear', finalyear)
+    return finalyear
+  }
+
+  return ''
+}
+
+function getPollutantNames() {
+  return {
+    'Fine particulate matter (PM2.5)': 'PM2.5',
+    'Particulate matter (PM10)': 'PM10',
+    'Nitrogen dioxide (NO2)': 'Nitrogen dioxide',
+    'Ozone (O3)': 'Ozone',
+    'Sulphur dioxide (SO2)': 'Sulphur dioxide',
+    'Nitric oxide (NO)': null,
+    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)':
+      'Nitrogen oxides as nitrogen dioxide',
+    'Carbon monoxide (CO)': 'Carbon monoxide'
+  }
+}
+
+function buildStationCountParameters(request, finalyear, formattedPollutants) {
+  const isCountry = request.yar.get('Location') === 'Country'
+
+  if (isCountry) {
+    return {
+      pollutantName: formattedPollutants,
+      dataSource: 'AURN',
+      Region: request.yar.get('selectedlocation').join(','),
+      regiontype: 'Country',
+      Year: finalyear,
+      dataselectorfiltertype: 'dataSelectorCount',
+      dataselectordownloadtype: ''
+    }
+  }
+
+  return {
+    pollutantName: formattedPollutants,
+    dataSource: 'AURN',
+    Region: request.yar.get('selectedLAIDs'),
+    regiontype: 'LocalAuthority',
+    Year: finalyear,
+    dataselectorfiltertype: 'dataSelectorCount',
+    dataselectordownloadtype: ''
+  }
+}
+
+async function handleStationCountCalculation(request, h) {
+  const selectedyear = request.yar.get('selectedyear')
+  const finalyear = parseYearRange(selectedyear, request)
+
+  const pollutantNames = getPollutantNames()
+  const formattedPollutants = request.yar
+    .get('selectedpollutant')
+    .map((p) => pollutantNames[p] || p)
+    .join(',')
+
+  request.yar.set('formattedPollutants', formattedPollutants)
+
+  const stationcountparameters = buildStationCountParameters(
+    request,
+    finalyear,
+    formattedPollutants
+  )
+
+  request.yar.set('finalyear1', finalyear)
+  const stationcount = await Invokestationcount(stationcountparameters)
+
+  if (
+    stationcount == null ||
+    stationcount instanceof Error ||
+    stationcount?.isAxiosError ||
+    (typeof stationcount === 'object' && stationcount?.message)
+  ) {
+    const statusCode = extractStatusCode(stationcount)
+    logger.error(
+      `Station count API failed: statusCode=${statusCode} message=${
+        stationcount?.message || 'no response'
+      }`
+    )
+    return renderErrorPage(h, statusCode)
+  }
+
+  request.yar.set('Region', request.yar.get('selectedlocation').join(','))
+  request.yar.set('nooflocation', stationcount)
+  return null
+}
+
+async function Invokestationcount(stationcountparameters) {
+  try {
+    const url = config.get('Download_aurn_URL')
+    if (!url) {
+      return Object.assign(new Error('Missing Download_aurn_URL'), {
+        statusCode: 500
+      })
+    }
+    const response = await axios.post(url, stationcountparameters, {
+      timeout: STATIONCOUNT_TIMEOUT_MS,
+      validateStatus: () => true
+    })
+
+    if (!response || response.status < 200 || response.status >= 300) {
+      return Object.assign(
+        new Error(`Station count API returned status ${response?.status}`),
+        {
+          statusCode: response?.status || 500,
+          response
+        }
+      )
+    }
+
+    if (response.data == null) {
+      return Object.assign(new Error('Station count API returned no data'), {
+        statusCode: 500,
+        response
+      })
+    }
+
+    return response.data
+  } catch (error) {
+    return error
+  }
+}
+
+function coerceToArray(selectedpollutant) {
+  if (typeof selectedpollutant === 'string') {
+    try {
+      return JSON.parse(selectedpollutant)
+    } catch {
+      return []
+    }
+  }
+
+  if (!Array.isArray(selectedpollutant)) {
+    return []
+  }
+
+  return selectedpollutant
+}
+
+function getSelectedPollutantByMode(request) {
+  const mode = request.yar.get('selectedPollutantMode') || ''
+
+  if (mode === 'specific') {
+    return (
+      request.yar.get('selectedpollutants_specific') ??
+      request.yar.get('selectedPollutants') ??
+      []
+    )
+  }
+
+  if (mode === 'group') {
+    return (
+      request.yar.get('selectedpollutants_group') ??
+      request.yar.get('selectedPollutants') ??
+      []
+    )
+  }
+
+  return request.yar.get('selectedPollutants') ?? []
+}
+
 export const customdatasetController = {
   handler: async (request, h) => {
     const backUrl = '/hubpage'
-    // const { hoe } = englishNew.custom
+
     if (request.path?.includes('/clear')) {
-      // Clear all selected options and pollutants
-      request.yar.set('selectedpollutant', '')
-      request.yar.set('selectedyear', '')
-      request.yar.set('selectedlocation', '')
-      request.yar.set('nooflocation', '')
-
-      // Clear pollutant-specific session variables
-      request.yar.set('selectedPollutants', null)
-      request.yar.set('selectedPollutantMode', '')
-      request.yar.set('selectedPollutantGroup', '')
-      request.yar.set('selectedpollutants_specific', [])
-      request.yar.set('selectedpollutants_group', [])
-      request.yar.set('formattedPollutants', '')
-
-      // Clear other related session variables including time period
-      request.yar.set('selectedTimePeriod', null)
-      request.yar.set('yearrange', '')
-      request.yar.set('finalyear', '')
-      request.yar.set('finalyear1', '')
-      request.yar.set('Region', '')
-      request.yar.set('selectedLAIDs', '')
-      request.yar.set('Location', '')
-
-      // Clear year selection mode and related year data
-      request.yar.set('TimeSelectionMode', '')
-      request.yar.set('yearany', '')
-      request.yar.set('startYear', '')
-      request.yar.set('endYear', '')
-      request.yar.set('startyear_ytd', '')
-
-      return h.view('customdataset/index', {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        selectedpollutant: request.yar.get('selectedpollutant'),
-        selectedyear: request.yar.get('selectedyear'),
-        selectedlocation: request.yar.get('selectedlocation'),
-        stationcount: request.yar.get('nooflocation'),
-        displayBacklink: true,
-        hrefq: backUrl
-      })
-    } else if (request.params.pollutants === 'null') {
-      const errorData = englishNew.custom.errorText.uk
-      const errorSection = errorData?.fields
-      setErrorMessage(request, errorSection?.title, errorSection?.text)
-      const errors = request.yar?.get('errors')
-      const errorMessage = request.yar?.get('errorMessage')
-      request.yar.set('errors', '')
-      request.yar.set('errorMessage', '')
-
-      // Check if JavaScript is disabled by looking for noscript indicator
-      const isNoJS =
-        request.headers['user-agent']?.includes('noscript') ||
-        request.query?.nojs === 'true' ||
-        !request.headers.accept?.includes('text/javascript')
-
-      const templatePath = isNoJS
-        ? 'add_pollutant/index_nojs'
-        : 'add_pollutant/index'
-
-      return h.view(templatePath, {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        errors,
-        errorMessage,
-        displayBacklink: true,
-        hrefq: '/customdataset'
-      })
-    } else {
-      // Check for pollutants from session (from add_pollutant page)
-      const sessionPollutants = request.yar.get('selectedPollutants')
-      if (sessionPollutants && sessionPollutants.length > 0) {
-        request.yar.set('selectedpollutant', sessionPollutants)
-        // Don't clear the session pollutants - keep them for form pre-population
-        // request.yar.set('selectedPollutants', null)
-      } else if (request.params.pollutants !== undefined) {
-        let selectedpollutant = request.params.pollutants
-        if (
-          selectedpollutant === 'core' ||
-          selectedpollutant === 'compliance'
-        ) {
-          if (selectedpollutant === 'core') {
-            selectedpollutant = [
-              'Fine particulate matter (PM2.5)',
-              'Particulate matter (PM10)',
-              'Nitrogen dioxide (NO2)',
-              'Ozone (O3)',
-              'Sulphur dioxide (SO2)'
-            ]
-          } else if (selectedpollutant === 'compliance') {
-            selectedpollutant = [
-              'Fine particulate matter (PM2.5)',
-              'Particulate matter (PM10)',
-              'Nitrogen dioxide (NO2)',
-              'Ozone (O3)',
-              'Sulphur dioxide (SO2)',
-              'Nitric oxide (NO)',
-              'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-              'Carbon monoxide (CO)'
-            ]
-          }
-        } else {
-          // let selectedpollutant = request.yar.get('selectedpollutant');
-          if (Array.isArray(selectedpollutant)) {
-            if (
-              selectedpollutant.length === 1 &&
-              selectedpollutant[0].includes(',')
-            ) {
-              selectedpollutant = selectedpollutant[0]
-                .split(',')
-                .map((s) => s.trim())
-            }
-          } else if (typeof selectedpollutant === 'string') {
-            selectedpollutant = selectedpollutant
-              .split(',')
-              .map((s) => s.trim())
-          }
-
-          //  request.yar.set('selectedpollutant', selectedpollutant)
-        }
-        request.yar.set('selectedpollutant', selectedpollutant)
-      }
-
-      // Check for time period from session (from year_aurn page)
-      const sessionTimePeriod = request.yar.get('selectedTimePeriod')
-      if (sessionTimePeriod) {
-        request.yar.set('selectedyear', sessionTimePeriod)
-        // Don't clear the session time period - keep it for form pre-population
-        // when user clicks "change" to go back to year selection
-      } else if (request.path?.includes('/year')) {
-        request.yar.set('selectedyear', request.params.year)
-      }
-
-      if (request.path?.includes('/location')) {
-        let selectedCountry = request.payload.country
-        if (selectedCountry && !Array.isArray(selectedCountry)) {
-          selectedCountry = [selectedCountry]
-        }
-      }
-
-      if (
-        request.yar.get('selectedlocation') &&
-        request.yar.get('selectedyear') &&
-        request.yar.get('selectedpollutant')
-      ) {
-        // Extract only the year if selectedYear is a range like "1 January to 31 December 2024"
-        const selectedyear = request.yar.get('selectedyear') // e.g. "1 January to 12 November 2025"
-
-        const years = selectedyear.match(/\d{4}/g)
-
-        let finalyear
-        if (years && years.length === 2) {
-          request.yar.set('yearrange', 'Multiple')
-          // Range case
-          const start = parseInt(years[0], 10)
-          const end = parseInt(years[1], 10)
-          const yearList = []
-          for (let y = start; y <= end; y++) {
-            yearList.push(y)
-          }
-          finalyear = yearList.join(',')
-          request.yar.set('finalyear', finalyear)
-        } else if (years && years.length === 1) {
-          request.yar.set('yearrange', 'Single')
-          // Only one year present
-          finalyear = years[0]
-          request.yar.set('finalyear', finalyear)
-        } else {
-          finalyear = ''
-        }
-
-        const pollutantNames = {
-          'Fine particulate matter (PM2.5)': 'PM2.5',
-          'Particulate matter (PM10)': 'PM10',
-          'Nitrogen dioxide (NO2)': 'Nitrogen dioxide',
-          'Ozone (O3)': 'Ozone',
-          'Sulphur dioxide (SO2)': 'Sulphur dioxide',
-          'Nitric oxide (NO)': null, // Not in output
-          'Nitrogen oxides as nitrogen dioxide (NOx as NO2)':
-            'Nitrogen oxides as nitrogen dioxide',
-          'Carbon monoxide (CO)': 'Carbon monoxide'
-        }
-
-        const formattedPollutants = request.yar
-          .get('selectedpollutant')
-          .map((p) => pollutantNames[p] || p)
-          .join(',')
-
-        request.yar.set('formattedPollutants', formattedPollutants)
-
-        let stationcountparameters
-        if (request.yar.get('Location') === 'Country') {
-          stationcountparameters = {
-            pollutantName: formattedPollutants,
-            dataSource: 'AURN',
-            Region: request.yar.get('selectedlocation').join(','),
-            regiontype: 'Country',
-            Year: finalyear,
-            dataselectorfiltertype: 'dataSelectorCount',
-            dataselectordownloadtype: ''
-          }
-        } else {
-          stationcountparameters = {
-            pollutantName: formattedPollutants,
-            dataSource: 'AURN',
-            Region: request.yar.get('selectedLAIDs'),
-            // Region: '1,359,360,4',
-            regiontype: 'LocalAuthority',
-            Year: finalyear,
-            dataselectorfiltertype: 'dataSelectorCount',
-            dataselectordownloadtype: ''
-          }
-        }
-
-        // console.log('stationcountparameters', stationcountparameters)
-        request.yar.set('finalyear1', finalyear)
-        const stationcount = await Invokestationcount(stationcountparameters)
-        if (
-          stationcount == null ||
-          stationcount instanceof Error ||
-          stationcount?.isAxiosError ||
-          (typeof stationcount === 'object' && stationcount?.message)
-        ) {
-          const statusCode = extractStatusCode(stationcount)
-          logger.error(
-            `Station count API failed: statusCode=${statusCode} message=${
-              stationcount?.message || 'no response'
-            }`
-          )
-          return renderErrorPage(h, statusCode)
-        }
-        // console.log('stationcount', stationcount)
-        request.yar.set('Region', request.yar.get('selectedlocation').join(','))
-        request.yar.set('nooflocation', stationcount)
-      }
-      async function Invokestationcount(stationcountparameters) {
-        // prod
-        try {
-          const url = config.get('Download_aurn_URL')
-          if (!url) {
-            return Object.assign(new Error('Missing Download_aurn_URL'), {
-              statusCode: 500
-            })
-          }
-          const response = await axios.post(url, stationcountparameters, {
-            timeout: STATIONCOUNT_TIMEOUT_MS,
-            validateStatus: () => true
-          })
-
-          if (!response || response.status < 200 || response.status >= 300) {
-            return Object.assign(
-              new Error(
-                `Station count API returned status ${response?.status}`
-              ),
-              {
-                statusCode: response?.status || 500,
-                response
-              }
-            )
-          }
-
-          if (response.data == null) {
-            return Object.assign(
-              new Error('Station count API returned no data'),
-              {
-                statusCode: 500,
-                response
-              }
-            )
-          }
-
-          return response.data
-        } catch (error) {
-          return error // Rethrow the error so it can be handled appropriately
-        }
-        // dev
-        // try {
-        //   const url =
-        //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-        //   const {payload } = await Wreck.post(url, {
-        //     payload: JSON.stringify(stationcountparameters),
-        //     headers: {
-        //       'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
-        //       'Content-Type': 'application/json'
-        //     },
-        //     json: true
-        //   })
-        //   return payload
-        // } catch (error) {
-        //   //console.error('Error fetching station count:', error)
-        //   return error // Rethrow the error so it can be handled appropriately
-        // }
-      }
-      const mode = request.yar.get('selectedPollutantMode') || ''
-      let selectedpollutant = []
-
-      if (mode === 'specific') {
-        selectedpollutant =
-          request.yar.get('selectedpollutants_specific') ??
-          request.yar.get('selectedPollutants') ??
-          []
-      } else if (mode === 'group') {
-        selectedpollutant =
-          request.yar.get('selectedpollutants_group') ??
-          request.yar.get('selectedPollutants') ??
-          []
-      } else {
-        selectedpollutant = request.yar.get('selectedPollutants') ?? []
-      }
-
-      // Coerce to array
-      if (typeof selectedpollutant === 'string') {
-        try {
-          selectedpollutant = JSON.parse(selectedpollutant)
-        } catch {
-          selectedpollutant = []
-        }
-      }
-      if (!Array.isArray(selectedpollutant)) {
-        selectedpollutant = []
-      }
-
-      return h.view('customdataset/index', {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        selectedpollutant: request.yar.get('selectedpollutant'),
-        selectedyear: request.yar.get('selectedyear'),
-        selectedlocation: request.yar.get('selectedlocation'),
-        stationcount: request.yar.get('nooflocation'),
-        displayBacklink: true,
-        hrefq: backUrl
-      })
+      return handleClearPath(request, h, backUrl)
     }
+
+    if (request.params.pollutants === 'null') {
+      return handleNullPollutantsError(request, h)
+    }
+
+    // Handle pollutants, time period, and location
+    handlePollutantsFromParams(request)
+    handleTimePeriodSelection(request)
+    handleLocationSelection(request)
+
+    // Calculate station count if all required data is present
+    const hasAllRequiredData =
+      request.yar.get('selectedlocation') &&
+      request.yar.get('selectedyear') &&
+      request.yar.get('selectedpollutant')
+
+    if (hasAllRequiredData) {
+      const errorResponse = await handleStationCountCalculation(request, h)
+      if (errorResponse) {
+        return errorResponse
+      }
+    }
+
+    // Get selected pollutant by mode and coerce to array
+    const selectedpollutant = coerceToArray(getSelectedPollutantByMode(request))
+
+    return h.view('customdataset/index', {
+      pageTitle: englishNew.custom.pageTitle,
+      heading: englishNew.custom.heading,
+      texts: englishNew.custom.texts,
+      selectedpollutant: request.yar.get('selectedpollutant'),
+      selectedyear: request.yar.get('selectedyear'),
+      selectedlocation: request.yar.get('selectedlocation'),
+      stationcount: request.yar.get('nooflocation'),
+      displayBacklink: true,
+      hrefq: backUrl
+    })
   }
 }
 
