@@ -440,9 +440,9 @@ describe('airpollutantController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Particulate matter (PM2.5)',
         'Particulate matter (PM10)',
-        'Nitrogen dioxide',
-        'Ozone',
-        'Sulphur dioxide'
+        'Nitrogen dioxide (NO2)',
+        'Ozone (O3)',
+        'Sulphur dioxide (SO2)'
       ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedPollutantMode',
@@ -464,12 +464,12 @@ describe('airpollutantController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Particulate matter (PM2.5)',
         'Particulate matter (PM10)',
-        'Nitrogen dioxide',
-        'Ozone',
-        'Sulphur dioxide',
-        'Nitric oxide',
-        'Nitrogen oxides as nitrogen dioxide',
-        'Carbon monoxide'
+        'Nitrogen dioxide (NO2)',
+        'Ozone (O3)',
+        'Sulphur dioxide (SO2)',
+        'Nitric oxide (NO)',
+        'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+        'Carbon monoxide (CO)'
       ])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedPollutantMode',

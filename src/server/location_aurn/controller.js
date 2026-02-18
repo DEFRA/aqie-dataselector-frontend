@@ -16,6 +16,7 @@ const LAQM_TIMEOUT_MS = 2500
 const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
 const LOCATION_AURN_VIEW = 'location_aurn/index'
 const LOCATION_AURN_VIEW_NOJS = 'location_aurn/index_nojs'
+const CUSTOMDATASET_URL = '/customdataset'
 
 // Session keys
 const SESSION_LOCATION = 'Location'
@@ -201,7 +202,7 @@ let laqmCache = {
 
 export const locationaurnController = {
   handler: async (request, h) => {
-    const backUrl = '/customdataset'
+    const backUrl = CUSTOMDATASET_URL
     // const logger = createLogger()
     // DON'T clear session data - preserve previous selections for "change" functionality
     // Only clear specific search-related temporary data
@@ -460,7 +461,7 @@ export const locationaurnController = {
         request.yar.set(SESSION_LOCATION, 'Country')
         request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedCountries)
 
-        return h.redirect('/customdataset')
+        return h.redirect(backUrl)
       } else {
         const selectedLocations = payload.selectedLocations
         const selectedLAIDs = mapLocalAuthorityIDs(selectedLocations, laResult)
@@ -475,7 +476,7 @@ export const locationaurnController = {
         request.yar.set(SESSION_LOCATION, 'LocalAuthority')
         request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedLocations)
 
-        return h.redirect('/customdataset')
+        return h.redirect(backUrl)
       }
     }
 

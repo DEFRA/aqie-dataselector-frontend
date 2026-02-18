@@ -82,6 +82,7 @@
               {% endif %}
             {% endfor %}
           {% else %}
+            <option value="" selected disabled>Select a pollutant</option>
             {% for pollutant in allPollutants %}
               <option value="{{ pollutant }}">{{ pollutant }}</option>
             {% endfor %}

@@ -393,7 +393,9 @@ export const customdatasetController = {
           selectedpollutant = []
         }
       }
-      if (!Array.isArray(selectedpollutant)) selectedpollutant = []
+      if (!Array.isArray(selectedpollutant)) {
+        selectedpollutant = []
+      }
 
       return h.view('customdataset/index', {
         pageTitle: englishNew.custom.pageTitle,
