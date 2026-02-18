@@ -307,6 +307,8 @@ const handlePostRequest = (request, h) => {
       pollutantsData,
       errors
     )
+  } else {
+    // Unknown mode - error will be caught by validation above
   }
 
   // If there are validation errors, return to form with errors

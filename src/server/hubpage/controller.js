@@ -28,6 +28,15 @@ export const hubController = {
     request.yar.set('selectedPollutantGroup', '')
     request.yar.set('formattedPollutants', '')
 
+    // Clear year_aurn form-specific session variables
+    request.yar.set('yearFormErrors', null)
+    request.yar.set('yearFormData', null)
+    request.yar.set('TimeSelectionMode', '')
+    request.yar.set('yearany', '')
+    request.yar.set('startYear', '')
+    request.yar.set('endYear', '')
+    request.yar.set('startyear_ytd', '')
+
     // Clear other related session variables including time period
     request.yar.set('selectedTimePeriod', null)
     request.yar.set('yearrange', '')
