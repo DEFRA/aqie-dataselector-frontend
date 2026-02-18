@@ -31,6 +31,12 @@ const POLLUTANT_CO_FULL = 'Carbon monoxide (CO)'
 const POLLUTANT_CO_NAME = 'Carbon monoxide'
 const POLLUTANT_CO_ABBR = 'CO'
 
+// Error anchor constants
+const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
+
+// Route constants
+const CUSTOMDATASET_URL = '/customdataset'
+
 const allowedPollutants = [
   POLLUTANT_PM25_FULL,
   POLLUTANT_PM10_FULL,
@@ -156,21 +162,21 @@ const validateSpecificPollutants = (finalPollutantsSp, errors) => {
   if (invalidPollutants.length > 0) {
     errors.push({
       text: `Invalid pollutant(s): ${invalidPollutants.join(', ')}. Select from the allowed list.`,
-      href: '#my-autocomplete'
+      href: ANCHOR_MY_AUTOCOMPLETE
     })
   }
 
   if (duplicates.length > 0) {
     errors.push({
       text: `Duplicate pollutant(s): ${duplicates.join(', ')} have already been added.`,
-      href: '#my-autocomplete'
+      href: ANCHOR_MY_AUTOCOMPLETE
     })
   }
 
   if (finalPollutantsSp.length === 0) {
     errors.push({
       text: 'Please add at least one pollutant',
-      href: '#my-autocomplete'
+      href: ANCHOR_MY_AUTOCOMPLETE
     })
   }
 }
@@ -222,7 +228,7 @@ const handleValidationErrors = (
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,
-    hrefq: '/customdataset',
+    hrefq: CUSTOMDATASET_URL,
     errors: {
       list: errors
     },
@@ -331,12 +337,12 @@ const handlePostRequest = (request, h) => {
     selectedGroup
   )
 
-  return h.redirect('/customdataset')
+  return h.redirect(CUSTOMDATASET_URL)
 }
 
 // Helper function to handle GET request
 const handleGetRequest = (request, h) => {
-  const backUrl = '/customdataset'
+  const backUrl = CUSTOMDATASET_URL
 
   // Clear existing session values
   request.yar.set('searchQuery', null)
