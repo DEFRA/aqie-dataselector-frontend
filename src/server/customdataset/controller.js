@@ -383,44 +383,6 @@ async function Invokestationcount(stationcountparameters) {
   }
 }
 
-function coerceToArray(selectedpollutant) {
-  if (typeof selectedpollutant === 'string') {
-    try {
-      return JSON.parse(selectedpollutant)
-    } catch {
-      return []
-    }
-  }
-
-  if (!Array.isArray(selectedpollutant)) {
-    return []
-  }
-
-  return selectedpollutant
-}
-
-function getSelectedPollutantByMode(request) {
-  const mode = request.yar.get('selectedPollutantMode') || ''
-
-  if (mode === 'specific') {
-    return (
-      request.yar.get('selectedpollutants_specific') ??
-      request.yar.get('selectedPollutants') ??
-      []
-    )
-  }
-
-  if (mode === 'group') {
-    return (
-      request.yar.get('selectedpollutants_group') ??
-      request.yar.get('selectedPollutants') ??
-      []
-    )
-  }
-
-  return request.yar.get('selectedPollutants') ?? []
-}
-
 export const customdatasetController = {
   handler: async (request, h) => {
     const backUrl = '/hubpage'
@@ -450,9 +412,6 @@ export const customdatasetController = {
         return errorResponse
       }
     }
-
-    // Get selected pollutant by mode and coerce to array
-    const selectedpollutant = coerceToArray(getSelectedPollutantByMode(request))
 
     return h.view('customdataset/index', {
       pageTitle: englishNew.custom.pageTitle,
