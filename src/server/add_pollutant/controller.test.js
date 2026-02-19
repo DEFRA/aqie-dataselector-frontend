@@ -182,7 +182,7 @@ describe('airpollutantController', () => {
             list: [
               {
                 text: 'Please add at least one pollutant',
-                href: '#my-autocomplete'
+                href: '#selected-pollutants'
               }
             ]
           },
@@ -219,7 +219,7 @@ describe('airpollutantController', () => {
             list: [
               {
                 text: 'Please add at least one pollutant',
-                href: '#my-autocomplete'
+                href: '#selected-pollutants'
               }
             ]
           },
@@ -393,7 +393,7 @@ describe('airpollutantController', () => {
             list: [
               {
                 text: 'Please add at least one pollutant',
-                href: '#my-autocomplete'
+                href: '#selected-pollutants'
               }
             ]
           },
