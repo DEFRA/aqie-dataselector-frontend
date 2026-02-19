@@ -176,7 +176,7 @@ const validateSpecificPollutants = (finalPollutantsSp, errors) => {
   if (finalPollutantsSp.length === 0) {
     errors.push({
       text: 'Please add at least one pollutant',
-      href: ANCHOR_MY_AUTOCOMPLETE
+      href: '#selected-pollutants'
     })
   }
 }
