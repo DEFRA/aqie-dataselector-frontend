@@ -92,6 +92,7 @@ describe('downloadDataselectornojsController', () => {
 
     it('returns error view when selectedyear is missing', () => {
       // selectedlocation present, selectedyear missing
+      request.yar.set('selectedpollutant', ['NO2'])
       request.yar.set('selectedlocation', ['Somewhere'])
 
       const res = downloadDataselectornojsController.handler(request, h)
@@ -106,7 +107,7 @@ describe('downloadDataselectornojsController', () => {
         errorhref1: '/year-aurn',
         errorref2: '',
         errorhref2: '',
-        selectedpollutant: undefined,
+        selectedpollutant: ['NO2'],
         selectedyear: undefined,
         selectedlocation: ['Somewhere'],
         stationcount: undefined,
@@ -117,6 +118,7 @@ describe('downloadDataselectornojsController', () => {
 
     it('returns error view when selectedlocation is missing', () => {
       // selectedyear present, selectedlocation missing
+      request.yar.set('selectedpollutant', ['PM10'])
       request.yar.set('selectedyear', '2024')
 
       const res = downloadDataselectornojsController.handler(request, h)
@@ -128,10 +130,10 @@ describe('downloadDataselectornojsController', () => {
         error: true,
         errormsg: 'Select a location to continue',
         errorref1: 'Add location',
-        errorhref1: '/location-aurn',
+        errorhref1: '/location-aurn/nojs',
         errorref2: '',
         errorhref2: '',
-        selectedpollutant: undefined,
+        selectedpollutant: ['PM10'],
         selectedyear: '2024',
         selectedlocation: undefined,
         stationcount: undefined,
@@ -141,6 +143,7 @@ describe('downloadDataselectornojsController', () => {
     })
 
     it('returns error when no stations found (0, "0", or falsy)', () => {
+      request.yar.set('selectedpollutant', ['SO2'])
       request.yar.set('selectedyear', '2024')
       request.yar.set('selectedlocation', ['A'])
 
@@ -156,7 +159,7 @@ describe('downloadDataselectornojsController', () => {
           errorref1: 'Change the year',
           errorhref1: '/year-aurn',
           errorref2: 'Change the location',
-          errorhref2: '/location-aurn'
+          errorhref2: '/location-aurn/nojs'
         })
       )
 
@@ -193,6 +196,7 @@ describe('downloadDataselectornojsController', () => {
     })
 
     it('renders download page with numeric stationcount and other fields', () => {
+      request.yar.set('selectedpollutant', ['CO'])
       request.yar.set('selectedyear', '2024')
       request.yar.set('selectedlocation', ['A'])
       request.yar.set('nooflocation', '4') // string -> number

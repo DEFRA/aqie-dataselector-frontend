@@ -43,8 +43,19 @@ export const downloadDataselectorController = {
     }
 
     // Validation checks
+    const selectedPollutant = request.yar.get('selectedpollutant')
     const selectedYear = request.yar.get('selectedyear')
     const selectedLocation = request.yar.get('selectedlocation')
+
+    if (!selectedPollutant || selectedPollutant.length === 0) {
+      return renderErrorState(
+        'Select a pollutant to continue',
+        'Add pollutant',
+        '/airpollutant',
+        '',
+        ''
+      )
+    }
 
     if (!selectedYear) {
       return renderErrorState(
@@ -60,7 +71,7 @@ export const downloadDataselectorController = {
       return renderErrorState(
         'Select a location to continue',
         'Add location',
-        '/location-aurn',
+        '/location-aurn?change=true',
         '',
         ''
       )
