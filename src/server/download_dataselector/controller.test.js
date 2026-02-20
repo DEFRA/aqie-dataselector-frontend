@@ -101,7 +101,7 @@ describe('downloadDataselectorController', () => {
       error: true,
       errormsg: 'Select a location to continue',
       errorref1: 'Add location',
-      errorhref1: '/location-aurn',
+      errorhref1: '/location-aurn?change=true',
       errorref2: '',
       errorhref2: '',
       selectedpollutant: ['NO2'],
@@ -232,6 +232,7 @@ describe('downloadDataselectorController', () => {
     mockRequest.yar.get.mockImplementation(
       (k) =>
         ({
+          selectedpollutant: ['NO2'],
           selectedyear: '2023',
           selectedlocation: ['London'],
           nooflocation: 5,
@@ -262,6 +263,7 @@ describe('downloadDataselectorController', () => {
     mockRequest.yar.get.mockImplementation(
       (k) =>
         ({
+          selectedpollutant: ['PM10'],
           selectedyear: '2020',
           selectedlocation: ['Bristol'],
           nooflocation: 8,
@@ -298,6 +300,7 @@ describe('downloadDataselectorController', () => {
     mockRequest.yar.get.mockImplementation(
       (k) =>
         ({
+          selectedpollutant: ['O3'],
           selectedyear: '2023',
           selectedlocation: ['Sheffield'],
           nooflocation: 4,
@@ -327,6 +330,7 @@ describe('downloadDataselectorController', () => {
     mockRequest.yar.get.mockImplementation(
       (k) =>
         ({
+          selectedpollutant: ['SO2'],
           selectedyear: '2024',
           selectedlocation: ['London'],
           nooflocation: 10,
@@ -349,6 +353,7 @@ describe('downloadDataselectorController', () => {
     mockRequest.yar.get.mockImplementation(
       (k) =>
         ({
+          selectedpollutant: ['PM2.5', 'NO2'],
           selectedyear: '2023',
           selectedlocation: ['London'],
           nooflocation: 5,
