@@ -141,10 +141,15 @@ const getRawPayloadForSpecificMode = (isNoJS, request, pollutantsData) => {
 }
 
 // Helper function to validate specific pollutants
-const validateSpecificPollutants = (finalPollutantsSp, errors) => {
+const validateSpecificPollutants = (finalPollutantsSp, errors, isNoJS) => {
   const invalidPollutants = []
   const duplicates = []
   const seen = new Set()
+
+  // Use different anchor based on JS/noJS version
+  const pollutantAnchor = isNoJS
+    ? '#selected-pollutants'
+    : ANCHOR_MY_AUTOCOMPLETE
 
   finalPollutantsSp.forEach((pollutant) => {
     const trimmed = (pollutant || '').trim()
@@ -162,21 +167,21 @@ const validateSpecificPollutants = (finalPollutantsSp, errors) => {
   if (invalidPollutants.length > 0) {
     errors.push({
       text: `Invalid pollutant(s): ${invalidPollutants.join(', ')}. Select from the allowed list.`,
-      href: ANCHOR_MY_AUTOCOMPLETE
+      href: pollutantAnchor
     })
   }
 
   if (duplicates.length > 0) {
     errors.push({
       text: `Duplicate pollutant(s): ${duplicates.join(', ')} have already been added.`,
-      href: ANCHOR_MY_AUTOCOMPLETE
+      href: pollutantAnchor
     })
   }
 
   if (finalPollutantsSp.length === 0) {
     errors.push({
       text: 'Please add at least one pollutant',
-      href: '#selected-pollutants'
+      href: pollutantAnchor
     })
   }
 }
@@ -202,7 +207,7 @@ const processSpecificMode = (isNoJS, request, pollutantsData, errors) => {
     pollutantsData
   )
   const finalPollutantsSp = parsePollutantsData(rawFromPayload, errors)
-  validateSpecificPollutants(finalPollutantsSp, errors)
+  validateSpecificPollutants(finalPollutantsSp, errors, isNoJS)
   return finalPollutantsSp
 }
 
