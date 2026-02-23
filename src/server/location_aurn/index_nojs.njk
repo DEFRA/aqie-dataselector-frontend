@@ -162,6 +162,7 @@
                   {% else %}
                     {% set firstSelected = preselectedLA %}
                   {% endif %}
+                  <option value="">Select a local authority</option>
                   <option value="{{ firstSelected }}" selected>{{ firstSelected }}</option>
                   {% for la in localAuthorityNames %}
                     {% if la != firstSelected %}
@@ -169,6 +170,7 @@
                     {% endif %}
                   {% endfor %}
                 {% else %}
+                  <option value="" selected>Select a local authority</option>
                   {% for la in localAuthorityNames %}
                     <option value="{{ la }}">{{ la }}</option>
                   {% endfor %}
