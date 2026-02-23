@@ -154,6 +154,11 @@
 
             <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
               <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
+                {% if errors.details['local-authority'] %}
+                <p id="la-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
+                </p>
+                {% endif %}
                <select class="govuk-select" id="selected-locations" name="selected-locations" aria-label="Select a local authority">
                 {% set preselectedLA = formData['selected-locations'] %}
                 {% if preselectedLA %}
@@ -176,11 +181,6 @@
                   {% endfor %}
                 {% endif %}
   </select>
-                {% if errors.details['local-authority'] %}
-                <p id="la-error" class="govuk-error-message">
-                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
-                </p>
-                {% endif %}
               
 
 
