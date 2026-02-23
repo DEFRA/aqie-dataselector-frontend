@@ -73,6 +73,7 @@ describe('emailrequestController', () => {
       const mockData = {
         formattedPollutants: ['NO2', 'PM10'],
         selectedlocation: ['London', 'Manchester'],
+        selectedLAIDs: 'London,Manchester', // For LocalAuthority
         Location: 'LocalAuthority',
         finalyear1: '2023',
         email: 'test@example.com' // Set default email
@@ -324,8 +325,8 @@ describe('emailrequestController', () => {
           'test@example.com'
         )
         expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
-        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedLAIDs')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear1')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('email')
         expect(mockConfig).toHaveBeenCalledWith('email_URL')
@@ -432,6 +433,7 @@ describe('emailrequestController', () => {
             const mockData = {
               formattedPollutants: ['NO2', 'PM10'],
               selectedlocation: ['London', 'Manchester'],
+              selectedLAIDs: 'London,Manchester',
               Location: 'LocalAuthority',
               finalyear1: '2023',
               email
@@ -489,8 +491,8 @@ describe('emailrequestController', () => {
           'test@example.com'
         )
         expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
-        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedLAIDs')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear1')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('email')
 
@@ -770,6 +772,7 @@ describe('emailrequestController', () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'formattedPollutants') return ['NO2']
         if (key === 'selectedlocation') return ['London']
+        if (key === 'selectedLAIDs') return 'London'
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2023'
         if (key === 'email') return 'test@example.com'
@@ -792,6 +795,7 @@ describe('emailrequestController', () => {
         if (key === 'formattedPollutants') return ['NO2', 'PM10', 'O3']
         if (key === 'selectedlocation')
           return ['London', 'Manchester', 'Birmingham']
+        if (key === 'selectedLAIDs') return 'London,Manchester,Birmingham'
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2024'
         if (key === 'email') return 'test@example.com'

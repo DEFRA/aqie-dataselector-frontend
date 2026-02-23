@@ -295,7 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
              name="local-authority-autocomplete" 
              class="govuk-input"            
              list="la-datalist"
-             autocomplete="off">
+             autocomplete="off"
+             aria-label="Search for a local authority">
       <datalist id="la-datalist">
         ${autocompleteSource.map(item => `<option value="${item}"></option>`).join('')}
       </datalist>

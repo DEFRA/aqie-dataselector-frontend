@@ -154,7 +154,7 @@
 
             <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
               <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
-               <select class="govuk-select" id="selected-locations" name="selected-locations">
+               <select class="govuk-select" id="selected-locations" name="selected-locations" aria-label="Select a local authority">
                 {% set preselectedLA = formData['selected-locations'] %}
                 {% if preselectedLA %}
                   {% if preselectedLA is iterable and preselectedLA is not string %}

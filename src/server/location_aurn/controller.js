@@ -29,6 +29,7 @@ const SESSION_SELECTED_LA_IDS = 'selectedLAIDs'
 // Form field names and error anchor IDs
 const FIELD_LOCAL_AUTHORITY = 'local-authority'
 const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
+const ANCHOR_SELECTED_LOCATIONS = '#selected-locations'
 
 function handleLaqmError(statusOrError, laqmCache, logger) {
   const message =
@@ -404,7 +405,7 @@ export const locationaurnController = {
         if (selectedLocations.length === 0) {
           errors.list.push({
             text: 'Add at least one local authority',
-            href: ANCHOR_MY_AUTOCOMPLETE
+            href: isNoJS ? ANCHOR_SELECTED_LOCATIONS : ANCHOR_MY_AUTOCOMPLETE
           })
           errors.details[FIELD_LOCAL_AUTHORITY] =
             'Add at least one local authority'
