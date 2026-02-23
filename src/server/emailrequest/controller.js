@@ -108,18 +108,23 @@ export const emailrequestController = {
 
       //  console.log('Valid email provided:', email)
 
+      // Build parameters based on region type
+      const regionType = request.yar.get('Location')
       const stationcountparameters = {
         pollutantName: request.yar.get('formattedPollutants'),
         dataSource: 'AURN',
-        Region: request.yar.get('selectedlocation').join(','),
-        regiontype: request.yar.get('Location'),
+        Region:
+          regionType === 'Country'
+            ? request.yar.get('selectedlocation').join(',')
+            : request.yar.get('selectedLAIDs'),
+        regiontype: regionType,
         Year: request.yar.get('finalyear1'),
         dataselectorfiltertype: 'dataSelectorHourly',
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
       const result = await Invokestationcount(stationcountparameters)
-      //  console.log('comes into confirm', result)
+      // console.log('stationcountparameters in email', stationcountparameters)
       if (result === 'Success') {
         return h.view('emailrequest/requestconfirm.njk', {
           pageTitle: englishNew.custom.pageTitle,

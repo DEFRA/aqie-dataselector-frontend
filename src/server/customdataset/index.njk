@@ -13,11 +13,6 @@
       
 <!-- DEFAULT to no-JS version, JavaScript will change it -->
 <form action='/download_dataselectornojs' method="post" id="customdataset-form">
-        <h1 class="govuk-heading-l">{{heading}}</h1>
-
-        <p class="govuk-body govuk-!-margin-bottom-6"><a href="/customdataset/clear" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
-
-<!-- <p class="govuk-body">Choose pollutant(s)</p> -->
  {% if error %}
      <div class="govuk-error-summary" data-module="govuk-error-summary">
   <div role="alert">
@@ -40,6 +35,11 @@
   </div>
 </div>
     {% endif %}
+        <h1 class="govuk-heading-l">{{heading}}</h1>
+
+        <p class="govuk-body govuk-!-margin-bottom-6"><a href="/customdataset/clear" id="clear-selections" class="govuk-link">{{texts.a}}</a></p>
+
+<!-- <p class="govuk-body">Choose pollutant(s)</p> -->
     <dl class="govuk-summary-list">
       <div class="govuk-summary-list__row">
         <dt class="govuk-summary-list__key">
