@@ -101,12 +101,12 @@ export const verifyController = {
       /// / console.log('Download email URL:', downloadEmailUrl)
 
       // Check if API call failed
-      if (downloadEmailUrl instanceof Error) {
-        logger.error(
-          `API call failed, redirecting to problem page: ${JSON.stringify(downloadEmailUrl)}`
-        )
-        return h.redirect('/problem-with-service')
-      }
+      //   if (downloadEmailUrl instanceof Error) {
+      //     logger.error(
+      //       `API call failed, redirecting to problem page: ${JSON.stringify(downloadEmailUrl)}`
+      //     )
+      //     return h.redirect('/problem-with-service')
+      //   }
 
       return h.view('verify/index', {
         pageTitle: 'Verification',
