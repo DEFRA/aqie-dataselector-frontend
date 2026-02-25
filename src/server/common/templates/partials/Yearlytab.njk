@@ -13,7 +13,8 @@
     
      
      
-{% if selectedYear == 2025 %}
+{% set currentYear = ('' + (new Date()).getFullYear()) %}
+{% if selectedYear == currentYear %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
