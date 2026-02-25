@@ -20,20 +20,33 @@ export const verifyController = {
         `downloadEmailUrl ${JSON.stringify(config.get('downloadEmailUrl'))}`
       )
       try {
+        logger.info('About to call axios.post...')
         const response = await axios.post(
           config.get('downloadEmailUrl'),
-          emailParams
+          emailParams,
+          {
+            timeout: 30000, // 30 second timeout
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
         )
+        logger.info('Axios call completed successfully')
         const emaildownloadUrl = response.data
-        logger.info(`response ${JSON.stringify(response)}`)
-        logger.info(`response.data ${JSON.stringify(response.data)}`)
+        logger.info(`responseofdownload ${JSON.stringify(response)}`)
+        logger.info(`responseofdownloaddata ${JSON.stringify(response.data)}`)
         logger.info(`emaildownloadUrl ${JSON.stringify(emaildownloadUrl)}`)
         return emaildownloadUrl
       } catch (error) {
-        logger.error(
-          `Error invoking download email API: ${JSON.stringify(error)}`
-        )
-        return error // Rethrow the error so it can be handled appropriately
+        logger.error(`Error invoking download email API: ${error.message}`)
+        logger.error(`Error stack: ${error.stack}`)
+        logger.error(`Error name: ${error.name}`)
+        if (error.code) logger.error(`Error code: ${error.code}`)
+        if (error.response) {
+          logger.error(`Response status: ${error.response.status}`)
+          logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
+        }
+        return error
       }
     }
     // dev
@@ -98,15 +111,19 @@ export const verifyController = {
     } else {
       //  console.log('Link is valid, invoking download email API with id:', id)
       const downloadEmailUrl = await invokeDownloadEmail({ id })
+      logger.info(`downloadEmailUrl result type: ${typeof downloadEmailUrl}`)
+      logger.info(
+        `downloadEmailUrl is Error: ${downloadEmailUrl instanceof Error}`
+      )
       /// / console.log('Download email URL:', downloadEmailUrl)
 
       // Check if API call failed
-      //   if (downloadEmailUrl instanceof Error) {
-      //     logger.error(
-      //       `API call failed, redirecting to problem page: ${JSON.stringify(downloadEmailUrl)}`
-      //     )
-      //     return h.redirect('/problem-with-service')
-      //   }
+      if (downloadEmailUrl instanceof Error) {
+        logger.error(
+          `API call failed, redirecting to problem page: ${downloadEmailUrl.message}`
+        )
+        return h.redirect('/problem-with-service')
+      }
 
       return h.view('verify/index', {
         pageTitle: 'Verification',
