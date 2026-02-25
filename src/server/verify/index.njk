@@ -1,0 +1,38 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if downloadEmailUrl %}
+        <div class="govuk-panel govuk-panel--confirmation">
+          <h1 class="govuk-panel__title">
+           Your file is downloading
+          </h1>
+          
+        </div>
+
+        <p class="govuk-body govuk-!-margin-top-6">
+          If your download doesn't start, <a href="{{ downloadEmailUrl }}" class="govuk-link">try again.</a>.
+        </p>
+        <p class="govuk-body">To request another download go to,<a href="/" class="govuk-link">Get air pollution data</a>
+        
+      </p>
+        <script>
+          var downloadurl = "{{ downloadEmailUrl | safe }}";
+          var url = downloadurl;
+          setTimeout(function() {
+            window.location.href = url;
+          }, 1000);
+        </script>
+      
+        
+
+       
+      {% endif %}
+
+      
+
+    </div>
+  </div>
+{% endblock %}

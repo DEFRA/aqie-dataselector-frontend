@@ -29,6 +29,7 @@ import { downloadAurn } from '~/src/server/download_aurn/index.js'
 import { emailrequest } from '~/src/server/emailrequest/index.js'
 import { downloadAurnstatus } from '~/src/server/download_aurn_status/index.js'
 import { problemWithService } from '~/src/server/problem-with-service/index.js'
+import { downloadEmailreq } from '~/src/server/verify/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -92,7 +93,8 @@ export const router = {
         downloadAurn,
         downloadAurnstatus,
         emailrequest,
-        problemWithService
+        problemWithService,
+        downloadEmailreq
       ])
 
       // Static assets

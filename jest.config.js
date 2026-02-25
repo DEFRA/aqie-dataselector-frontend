@@ -8,7 +8,10 @@ export default {
   clearMocks: true,
   silent: false,
   testMatch: ['**/src/**/*.test.js'],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/src/server/verify/'
+  ],
   reporters: ['default', ['github-actions', { silent: false }], 'summary'],
   setupFiles: ['<rootDir>/.jest/setup-file.js'],
   setupFilesAfterEnv: ['<rootDir>/.jest/setup-file-after-env.js'],
@@ -22,6 +25,7 @@ export default {
     '<rootDir>/src/index.js',
     '<rootDir>/src/server/about/',
     '<rootDir>/src/server/accessibility/',
+    '<rootDir>/src/server/verify/',
     '<rootDir>/src/server/common/',
     '<rootDir>/src/server/data/en/content_aurn.js',
     '<rootDir>/src/client/javascripts/cookies-page.js',
