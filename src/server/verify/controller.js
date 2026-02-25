@@ -15,10 +15,8 @@ export const verifyController = {
     async function invokeDownloadEmail(apiparams) {
       const emailParams = { jobID: apiparams.id }
       // prod
-      logger.info(`apiparams ${JSON.stringify(emailParams)}`)
-      logger.info(
-        `downloadEmailUrl ${JSON.stringify(config.get('downloadEmailUrl'))}`
-      )
+      //   logger.info(`apiparams ${emailParams}`)
+      //   logger.info(`downloadEmailUrl ${config.get('downloadEmailUrl')}`)
       try {
         logger.info('About to call axios.post...')
         const response = await axios.post(
@@ -33,9 +31,16 @@ export const verifyController = {
         )
         logger.info('Axios call completed successfully')
         const emaildownloadUrl = response.data
-        logger.info(`responseofdownload ${JSON.stringify(response)}`)
-        logger.info(`responseofdownloaddata ${JSON.stringify(response.data)}`)
-        logger.info(`emaildownloadUrl ${JSON.stringify(emaildownloadUrl)}`)
+        // logger.info(`responseofdownload ${JSON.stringify(response)}`)
+        // logger.info(`responseofdownloaddata ${JSON.stringify(response.data)}`)
+        // logger.info(`emaildownloadUrl ${JSON.stringify(emaildownloadUrl)}`)
+        //   logger.info(`response.status: ${response.status}`)
+        //   if (response.data && typeof response.data === 'object') {
+        //     logger.info(`response.data keys: ${Object.keys(response.data)}`)
+        //   } else {
+        //     logger.info(`response.data: ${response.data}`)
+        //   }
+        //   logger.info(`emaildownloadUrl type: ${typeof emaildownloadUrl}`)
         return emaildownloadUrl
       } catch (error) {
         logger.error(`Error invoking download email API: ${error.message}`)
