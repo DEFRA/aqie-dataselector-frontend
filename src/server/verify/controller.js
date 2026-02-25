@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios'
-import { config } from '~/src/config/index.js'
+import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 // import Wreck from '@hapi/wreck'
 const logger = createLogger()
