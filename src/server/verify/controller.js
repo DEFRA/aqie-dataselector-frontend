@@ -15,17 +15,24 @@ export const verifyController = {
     async function invokeDownloadEmail(apiparams) {
       const emailParams = { jobID: apiparams.id }
       // prod
-      logger.info(`apiparams ${JSON.stringify(apiparams)}`)
+      logger.info(`apiparams ${JSON.stringify(emailParams)}`)
+      logger.info(
+        `downloadEmailUrl ${JSON.stringify(config.get('downloadEmailUrl'))}`
+      )
       try {
         const response = await axios.post(
           config.get('downloadEmailUrl'),
           emailParams
         )
-        const emaildownloadUrl = response
+        const emaildownloadUrl = response.data
+        logger.info(`response ${JSON.stringify(response)}`)
+        logger.info(`response.data ${JSON.stringify(response.data)}`)
         logger.info(`emaildownloadUrl ${JSON.stringify(emaildownloadUrl)}`)
         return emaildownloadUrl
       } catch (error) {
-        logger.error('Error invoking download email API:', error)
+        logger.error(
+          `Error invoking download email API: ${JSON.stringify(error)}`
+        )
         return error // Rethrow the error so it can be handled appropriately
       }
     }
@@ -95,7 +102,9 @@ export const verifyController = {
 
       // Check if API call failed
       if (downloadEmailUrl instanceof Error) {
-        logger.error('API call failed, redirecting to problem page')
+        logger.error(
+          `API call failed, redirecting to problem page: ${JSON.stringify(downloadEmailUrl)}`
+        )
         return h.redirect('/problem-with-service')
       }
 
