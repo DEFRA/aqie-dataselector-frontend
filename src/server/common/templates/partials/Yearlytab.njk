@@ -13,7 +13,7 @@
     
      
      
-{% if selectedYear == '2026' %}
+{% if (selectedYear == '2026' or selectedYear == 2026) %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
@@ -59,7 +59,7 @@
     const currentDate = new Date();
     const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
   
-    if( year === '2025' || year === 2025)
+    if( year === '2026' || year === 2026)
     {
  document.getElementById('duration_current').textContent = '1 January to ' + formattedDate;
  }else
