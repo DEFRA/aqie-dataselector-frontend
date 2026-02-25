@@ -35,12 +35,12 @@ export const verifyController = {
 
     //     try {
     //        const emailParams = { jobID: apiparams.id }
-    //      //  console.log("Goes inside invokedownload_email with apiparams:", apiparams);
-    //       // const emailParams = { jobID: '55658bec48e1419faadd7e40995f52e0' }
+    //       console.log("Goes inside invokedownload_email with apiparams:", apiparams);
+    //   //  const emailParams = { jobID: '55658bec48e1419faadd7e40995f52e0' }
     //       const url =
     //         'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionPresignedUrlMail/'
     //       const { payload } = await Wreck.post(url, {
-    //         payload: JSON.stringify(email_params),
+    //         payload: JSON.stringify(emailParams),
     //         headers: {
     //           'x-api-key': 'hfhzQ7Lssys4PJ4oiVDQ1y54dgqTzRtV',
     //           'Content-Type': 'application/json'
@@ -76,17 +76,28 @@ export const verifyController = {
     const twoDaysInMs = 2 * 24 * 60 * 60 * 1000 // 2 days in milliseconds
 
     if (isNaN(providedTime) || currentTime - providedTime > twoDaysInMs) {
-      return h.view('verify/index', {
+      // console.log('Link has expired. Current time:', currentTime, 'Provided time:', providedTime)
+      return h.view('verify/index_exp', {
         pageTitle: 'Link Expired',
         heading: 'Your link has expired',
-        error:
-          'This download link is no longer valid. Links expire after 2 days.',
+        message:
+          'This download link has expired. Download link expires after 48hours.',
+
+        downloadEmailUrl: null,
         id: null,
         timestamp: null,
         isExpired: true
       })
     } else {
+      //  console.log('Link is valid, invoking download email API with id:', id)
       const downloadEmailUrl = await invokeDownloadEmail({ id })
+      /// / console.log('Download email URL:', downloadEmailUrl)
+
+      // Check if API call failed
+      if (downloadEmailUrl instanceof Error) {
+        logger.error('API call failed, redirecting to problem page')
+        return h.redirect('/problem-with-service')
+      }
 
       return h.view('verify/index', {
         pageTitle: 'Verification',

@@ -7,46 +7,31 @@
       {% if downloadEmailUrl %}
         <div class="govuk-panel govuk-panel--confirmation">
           <h1 class="govuk-panel__title">
-            Request complete
+           Your file is downloading
           </h1>
-          <div class="govuk-panel__body">
-            Downloading
-          </div>
+          
         </div>
 
         <p class="govuk-body govuk-!-margin-top-6">
-          If your download doesn't start, <a href="{{ downloadEmailUrl }}" class="govuk-link">click here</a>.
+          If your download doesn't start, <a href="{{ downloadEmailUrl }}" class="govuk-link">try again.</a>.
         </p>
+        <p class="govuk-body">To request another download go to,<a href="/" class="govuk-link">Get air pollution data</a>
         
+      </p>
         <script>
           var downloadurl = "{{ downloadEmailUrl | safe }}";
           var url = downloadurl;
-          window.location.href = url;
+          setTimeout(function() {
+            window.location.href = url;
+          }, 1000);
         </script>
-      {% elif error %}
-        <h1 class="govuk-heading-xl">{{ heading }}</h1>
+      
+        
 
-        <div class="govuk-error-summary" data-module="govuk-error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">
-              There is a problem
-            </h2>
-            <div class="govuk-error-summary__body">
-              <p class="govuk-body">{{ error }}</p>
-            </div>
-          </div>
-        </div>
-
-        {% if isExpired %}
-          <p class="govuk-body">
-            Please request a new verification link to continue.
-          </p>
-        {% endif %}
+       
       {% endif %}
 
-      <p class="govuk-body">
-        <a href="/" class="govuk-link">Return to home</a>
-      </p>
+      
 
     </div>
   </div>
