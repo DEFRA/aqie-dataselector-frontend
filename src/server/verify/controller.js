@@ -106,7 +106,7 @@ export const verifyController = {
         pageTitle: 'Link Expired',
         heading: 'Your link has expired',
         message:
-          'This download link has expired. Download link expires after 48hours.',
+          'This download link has expired. Download links expire after 48hours.',
 
         downloadEmailUrl: null,
         id: null,
