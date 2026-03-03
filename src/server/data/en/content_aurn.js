@@ -22,7 +22,7 @@ export const englishNew = {
       a: 'Find monitoring stations by location',
       b: 'View and download data by town or postcode',
       c: 'Create a custom dataset',
-      d: 'View and download data by pollutant,year and location.'
+      d: 'View and download data by pollutant, year and location'
     }
   },
   custom: {

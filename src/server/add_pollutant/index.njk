@@ -68,7 +68,8 @@
                 <div class="govuk-hint">Add up to 10 pollutants</div>
 
                 <!-- Progressive enhancement: Autocomplete for JS, select fallback for no-JS -->
-                <div id="autocomplete-container-p" class="govuk-body"></div>
+                  <label id="pollutant-autocomplete-label" for="my-autocomplete" class="govuk-label govuk-visually-hidden">Add pollutant(s)</label>
+                  <div id="autocomplete-container-p" class="govuk-body" aria-labelledby="pollutant-autocomplete-label"></div>
                 
               
                 
@@ -195,29 +196,74 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const writeJSON = (k, v) => sessionStorage.setItem(k, JSON.stringify(v || []));
 
+  // Capture the autocomplete input value on button mousedown — this fires
+  // BEFORE mousedown causes blur on the input, which triggers accessible-autocomplete
+  // to asynchronously clear input.value via setTimeout. By the time the 'click'
+  // event fires the value is gone, causing the 2–3 click issue.
+  let pendingButtonValue = '';
+
   // Initialize autocomplete for pollutant selection
   function initializeAutocomplete() {
-    const container = document.querySelector('#autocomplete-container-p');
-    if (container && !container.querySelector('#my-autocomplete')) {
-      // Use globally available accessibleAutocomplete
-      if (window.accessibleAutocomplete) {
-        window.accessibleAutocomplete({
-          element: container,
-          id: 'my-autocomplete',
-          source: [
-            'Fine particulate matter (PM2.5)',
-            'Particulate matter (PM10)',
-            'Nitrogen dioxide (NO2)',
-            'Ozone (O3)',
-            'Sulphur dioxide (SO2)',
-            'Nitric oxide (NO)',
-            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-            'Carbon monoxide (CO)'
-          ],
-          'aria-label': 'Search for a pollutant'
-        });
+      const container = document.querySelector('#autocomplete-container-p');
+      if (container && !container.querySelector('#my-autocomplete')) {
+        if (window.accessibleAutocomplete) {
+          // Tracks the last value added via mousedown so onConfirm doesn't double-add it.
+          let lastAddedByMousedown = '';
+
+          window.accessibleAutocomplete({
+            element: container,
+            id: 'my-autocomplete',
+            source: [
+              'Fine particulate matter (PM2.5)',
+              'Particulate matter (PM10)',
+              'Nitrogen dioxide (NO2)',
+              'Ozone (O3)',
+              'Sulphur dioxide (SO2)',
+              'Nitric oxide (NO)',
+              'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+              'Carbon monoxide (CO)'
+            ],
+            minLength: 1,
+            autoselect: false,
+            confirmOnBlur: false,
+            ariaLabelledBy: 'pollutant-autocomplete-label',
+            onConfirm: function(confirmed) {
+              if (confirmed) {
+                if (confirmed !== lastAddedByMousedown) {
+                  // Keyboard (Enter) selection — not already handled by mousedown.
+                  addPollutantToList(confirmed);
+                } else {
+                  // Already added by the mousedown handler below.
+                  // accessible-autocomplete will have set input.value back to the
+                  // confirmed text, so we clear it again here.
+                  const inp = document.getElementById('my-autocomplete');
+                  if (inp) inp.value = '';
+                }
+                setTimeout(function() { lastAddedByMousedown = ''; }, 0);
+              }
+            }
+          });
+
+          // Fix for first-click-on-suggestion not working:
+          // accessible-autocomplete requires a suggestion to already be highlighted
+          // before a click confirms it. Un-highlighted items need 2 clicks:
+          // one to highlight, one to confirm.
+          // By listening in the capture phase (true) we intercept the mousedown
+          // before accessible-autocomplete's own handler, read the suggestion text
+          // directly from the DOM, and add the pollutant immediately on the
+          // very first click — for every pollutant, every time.
+          container.addEventListener('mousedown', function(e) {
+            const option = e.target.closest('[role="option"]');
+            if (option && !option.classList.contains('autocomplete__option--no-results')) {
+              const text = option.textContent.trim();
+              if (text) {
+                lastAddedByMousedown = text;
+                addPollutantToList(text);
+              }
+            }
+          }, true); // useCapture=true — fires before accessible-autocomplete's handlers
+        }
       }
-    }
   }
 
   // Define allowed pollutants for client-side validation
@@ -300,130 +346,114 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHiddenPollutantsInput(list);
   }
 
-  // Add new pollutant (client-side for UX, server validates)
+  // Core logic: validate and add a pollutant to the table.
+  // Called from both the button click and the autocomplete onConfirm.
+  function addPollutantToList(value) {
+    value = (value || '').trim();
+    const input = document.querySelector('#my-autocomplete');
+    pendingButtonValue = '';
+
+    if (!value) {
+      clearServerErrors();
+      const errorSummary = document.getElementById('duplicate-error');
+      if (errorSummary) {
+        const errorLink = errorSummary.querySelector('a');
+        if (errorLink) errorLink.textContent = 'Please add a pollutant';
+        errorSummary.hidden = false;
+        errorSummary.focus();
+      }
+      return;
+    }
+
+    if (!isAllowedPollutant(value)) {
+      clearServerErrors();
+      const errorSummary = document.getElementById('duplicate-error');
+      if (errorSummary) {
+        const errorLink = errorSummary.querySelector('a');
+        if (errorLink) errorLink.textContent = 'Please select a pollutant from the allowed list';
+        errorSummary.hidden = false;
+        errorSummary.focus();
+      }
+      return;
+    }
+
+    const lowerValue = value.toLowerCase();
+
+    if (addedPollutants.has(lowerValue)) {
+      clearServerErrors();
+      const errorSummary = document.getElementById('duplicate-error');
+      if (errorSummary) {
+        const errorLink = errorSummary.querySelector('a');
+        if (errorLink) errorLink.textContent = 'This pollutant has already been added';
+        errorSummary.hidden = false;
+        errorSummary.focus();
+      }
+      return;
+    }
+
+    const errorSummary = document.getElementById('duplicate-error');
+    if (errorSummary) errorSummary.hidden = true;
+
+    addedPollutants.add(lowerValue);
+
+    if (table) {
+      table.hidden = false;
+
+      const row = document.createElement('tr');
+      row.className = 'govuk-table__row';
+
+      const headerCell = document.createElement('th');
+      headerCell.scope = 'row';
+      headerCell.className = 'govuk-table__header';
+      headerCell.textContent = `Pollutant ${(tableBody?.children.length || 0) + 1}`;
+
+      const valueCell = document.createElement('td');
+      valueCell.className = 'govuk-table__cell';
+      valueCell.textContent = value;
+
+      const actionCell = document.createElement('td');
+      actionCell.className = 'govuk-table__cell';
+
+      const removeLink = document.createElement('a');
+      removeLink.href = '#';
+      removeLink.className = 'govuk-link remove-pollutant';
+      removeLink.textContent = 'Remove';
+
+      removeLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        row.remove();
+        addedPollutants.delete(lowerValue);
+        updateRowNumbers();
+        persistSpecificFromTable();
+        if (tableBody?.children.length === 0) table.hidden = true;
+        updateAddButtonText();
+      });
+
+      actionCell.appendChild(removeLink);
+      row.appendChild(headerCell);
+      row.appendChild(valueCell);
+      row.appendChild(actionCell);
+      if (tableBody) tableBody.appendChild(row);
+
+      if (input) input.value = '';
+      persistSpecificFromTable();
+      updateAddButtonText();
+    }
+  }
+
+  // Add new pollutant via button (handles typed text not selected from dropdown)
   if (addButton) {
+    addButton.addEventListener('mousedown', function () {
+      const inp = document.querySelector('#my-autocomplete');
+      if (inp) pendingButtonValue = inp.value.trim();
+    });
+
     addButton.addEventListener('click', function (e) {
       e.preventDefault();
-
       const input = document.querySelector('#my-autocomplete');
-      if (!input) return;
-
-      const value = (input.value || '').trim();
-      
-      // Check if no pollutant is entered
-      if (!value) {
-        // Clear server-side errors first
-        clearServerErrors();
-        
-        // Show error for empty input
-        const errorSummary = document.getElementById('duplicate-error');
-        if (errorSummary) {
-          // Update error message for empty input
-          const errorLink = errorSummary.querySelector('a');
-          if (errorLink) {
-            errorLink.textContent = 'Please add a pollutant';
-          }
-          errorSummary.hidden = false;
-          errorSummary.focus();
-        }
-        return;
-      }
-
-      // Check if pollutant is in the allowed list
-      if (!isAllowedPollutant(value)) {
-        // Clear server-side errors first
-        clearServerErrors();
-        
-        // Show error for invalid pollutant
-        const errorSummary = document.getElementById('duplicate-error');
-        if (errorSummary) {
-          // Update error message for invalid pollutant
-          const errorLink = errorSummary.querySelector('a');
-          if (errorLink) {
-            errorLink.textContent = 'Please select a pollutant from the allowed list';
-          }
-          errorSummary.hidden = false;
-          errorSummary.focus();
-        }
-        return;
-      }
-
-      const lowerValue = value.toLowerCase();
-      
-      // Check for duplicates in UI
-      if (addedPollutants.has(lowerValue)) {
-        // Clear server-side errors first
-        clearServerErrors();
-        
-        const errorSummary = document.getElementById('duplicate-error');
-        if (errorSummary) {
-          // Reset error message to duplicate message
-          const errorLink = errorSummary.querySelector('a');
-          if (errorLink) {
-            errorLink.textContent = 'This pollutant has already been added';
-          }
-          errorSummary.hidden = false;
-          errorSummary.focus();
-        }
-        return;
-      }
-
-      // Hide duplicate error if showing
-      const errorSummary = document.getElementById('duplicate-error');
-      if (errorSummary) errorSummary.hidden = true;
-
-      // Add to UI table
-      addedPollutants.add(lowerValue);
-
-      if (table) {
-        table.hidden = false;
-        
-        const row = document.createElement('tr');
-        row.className = 'govuk-table__row';
-
-        const headerCell = document.createElement('th');
-        headerCell.scope = 'row';
-        headerCell.className = 'govuk-table__header';
-        headerCell.textContent = `Pollutant ${(tableBody?.children.length || 0) + 1}`;
-
-        const valueCell = document.createElement('td');
-        valueCell.className = 'govuk-table__cell';
-        valueCell.textContent = value;
-
-        const actionCell = document.createElement('td');
-        actionCell.className = 'govuk-table__cell';
-
-        const removeLink = document.createElement('a');
-        removeLink.href = '#';
-        removeLink.className = 'govuk-link remove-pollutant';
-        removeLink.textContent = 'Remove';
-
-        removeLink.addEventListener('click', function (e) {
-          e.preventDefault();
-          row.remove();
-          addedPollutants.delete(lowerValue);
-          updateRowNumbers();
-          persistSpecificFromTable();
-
-          if (tableBody?.children.length === 0) {
-            table.hidden = true;
-          }
-          updateAddButtonText();
-        });
-
-        actionCell.appendChild(removeLink);
-        row.appendChild(headerCell);
-        row.appendChild(valueCell);
-        row.appendChild(actionCell);
-        
-        if (tableBody) {
-          tableBody.appendChild(row);
-        }
-
-        input.value = '';
-        persistSpecificFromTable();
-        updateAddButtonText();
-      }
+      const value = (pendingButtonValue || (input && input.value) || '').trim();
+      pendingButtonValue = '';
+      addPollutantToList(value);
     });
   }
 
