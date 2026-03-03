@@ -210,19 +210,35 @@ document.addEventListener('DOMContentLoaded', () => {
           // Tracks the last value added via mousedown so onConfirm doesn't double-add it.
           let lastAddedByMousedown = '';
 
+          const pollutantList = [
+            'Fine particulate matter (PM2.5)',
+            'Particulate matter (PM10)',
+            'Nitrogen dioxide (NO2)',
+            'Ozone (O3)',
+            'Sulphur dioxide (SO2)',
+            'Nitric oxide (NO)',
+            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+            'Carbon monoxide (CO)'
+          ];
+
+          // Debounce timer — delays showing suggestions by 3 seconds after the
+          // user stops typing.
+          let debounceTimer = null;
+
           window.accessibleAutocomplete({
             element: container,
             id: 'my-autocomplete',
-            source: [
-              'Fine particulate matter (PM2.5)',
-              'Particulate matter (PM10)',
-              'Nitrogen dioxide (NO2)',
-              'Ozone (O3)',
-              'Sulphur dioxide (SO2)',
-              'Nitric oxide (NO)',
-              'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-              'Carbon monoxide (CO)'
-            ],
+            source: function(query, populateResults) {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(function() {
+                const q = (query || '').toLowerCase();
+                populateResults(
+                  pollutantList.filter(function(p) {
+                    return p.toLowerCase().indexOf(q) !== -1;
+                  })
+                );
+              }, 3000);
+            },
             minLength: 1,
             autoselect: false,
             confirmOnBlur: false,
@@ -234,8 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   addPollutantToList(confirmed);
                 } else {
                   // Already added by the mousedown handler below.
-                  // accessible-autocomplete will have set input.value back to the
-                  // confirmed text, so we clear it again here.
                   const inp = document.getElementById('my-autocomplete');
                   if (inp) inp.value = '';
                 }
@@ -244,14 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
 
-          // Fix for first-click-on-suggestion not working:
-          // accessible-autocomplete requires a suggestion to already be highlighted
-          // before a click confirms it. Un-highlighted items need 2 clicks:
-          // one to highlight, one to confirm.
-          // By listening in the capture phase (true) we intercept the mousedown
-          // before accessible-autocomplete's own handler, read the suggestion text
-          // directly from the DOM, and add the pollutant immediately on the
-          // very first click — for every pollutant, every time.
+          // Intercept mousedown in capture phase before accessible-autocomplete's
+          // own handlers — reads the suggestion text directly from the DOM so
+          // the pollutant is added on the very first click for every item.
           container.addEventListener('mousedown', function(e) {
             const option = e.target.closest('[role="option"]');
             if (option && !option.classList.contains('autocomplete__option--no-results')) {
