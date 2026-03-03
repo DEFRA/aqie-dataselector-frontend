@@ -163,7 +163,8 @@
                   <span class="govuk-visually-hidden">Error:</span> {{ errors.details['local-authority'] }}
                 </p>
                 {% endif %}
-                <div id="autocomplete-container" class="govuk-body"></div>
+                <label id="location-autocomplete-label" for="my-autocomplete" class="govuk-label govuk-visually-hidden">Add location(s)</label>
+                <div id="autocomplete-container" class="govuk-body" aria-labelledby="location-autocomplete-label"></div>
 
                 <div class="govuk-button-group govuk-!-margin-top-3">
                   <button type="button" class="govuk-button govuk-button--secondary" id="add-more-locations-button">
@@ -244,20 +245,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof window.accessibleAutocomplete === 'function') {
       try {
         window.accessibleAutocomplete({
-          element: container,
-          id: 'my-autocomplete',
-          name: 'local-authority-autocomplete',
-          source: autocompleteSource,
-          minLength: 3,
-          // Do not add to table on confirm; just populate the input
-          onConfirm: function(confirmed) {
-            const value = (confirmed || '').trim()
-            const input = document.getElementById('my-autocomplete')
-            if (input) {
-              input.value = value // user must click "Add local authority" to add
+            element: container,
+            id: 'my-autocomplete',
+            name: 'local-authority-autocomplete',
+            source: autocompleteSource,
+            minLength: 3,
+            ariaLabelledBy: 'location-autocomplete-label',
+            // Do not add to table on confirm; just populate the input
+            onConfirm: function(confirmed) {
+              const value = (confirmed || '').trim()
+              const input = document.getElementById('my-autocomplete')
+              if (input) {
+                input.value = value // user must click "Add local authority" to add
+              }
             }
-          }
-        });
+          });
         autocompleteInitialized = true;
        // console.log('✅ Autocomplete initialized');
         // Add additional event listeners after initialization
