@@ -156,7 +156,7 @@
             </div>
 
             <div class="govuk-radios__conditional {% if formData.location != "la" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-4">
-              <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}">
+              <div class="govuk-form-group {% if errors.details['local-authority'] %}govuk-form-group--error{% endif %}" id="location-form-group">
                
                 {% if errors.details['local-authority'] %}
                 <p id="la-error" class="govuk-error-message">
@@ -164,6 +164,9 @@
                 </p>
                 {% endif %}
                 <label id="location-autocomplete-label" for="my-autocomplete" class="govuk-label govuk-visually-hidden">Add location(s)</label>
+                <p id="location-inline-error" class="govuk-error-message" hidden>
+                  <span class="govuk-visually-hidden">Error:</span> <span id="location-error-text"></span>
+                </p>
                 <div id="autocomplete-container" class="govuk-body" aria-labelledby="location-autocomplete-label"></div>
 
                 <div class="govuk-button-group govuk-!-margin-top-3">
@@ -279,8 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             // Always clear error on input
             input.addEventListener('input', function() {
-              const duplicateError = document.getElementById('duplicate-error');
-              if (duplicateError) duplicateError.hidden = true;
+              clearClientErrors();
             });
           }
         }, 100);
@@ -399,10 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Hide all error messages for valid add
-    const duplicateError = document.getElementById('duplicate-error')
-    if (duplicateError) duplicateError.hidden = true
-    const maxLimitError = document.getElementById('max-limit-error')
-    if (maxLimitError) maxLimitError.hidden = true
+    clearClientErrors();
     
     // Add to tracking set
     addedLocalAuthorities.add(lowerValue);
@@ -579,61 +578,153 @@ document.addEventListener('DOMContentLoaded', function() {
   updateButtonLabel();
  // console.log('✅ Clean UI setup complete - server handles all validation');
 
-  // Continue button guard: require at least one added local authority
+  // Continue button - client-side validation before submission
   const continueBtn = document.getElementById('add-location-button')
   const formEl = document.querySelector('form[action="/location-aurn"]')
 
-  function showClientError(message) {
-    // Clear server-side error summary
+  function clearServerErrors() {
+    // Hide server-side error summary
     const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
     if (serverErrorSummary) {
       serverErrorSummary.style.display = 'none'
     }
     
-    // Clear server-side inline error
-    const serverError = document.getElementById('location-error')
-    if (serverError) {
-      serverError.style.display = 'none'
+    // Remove error styling from all form groups
+    const formGroups = document.querySelectorAll('.govuk-form-group--error')
+    formGroups.forEach(fg => fg.classList.remove('govuk-form-group--error'))
+    
+    // Hide inline error messages
+    const locationError = document.getElementById('location-error')
+    if (locationError) {
+      locationError.style.display = 'none'
     }
-    const formGroup = document.querySelector('.govuk-form-group--error')
-    if (formGroup) {
-      formGroup.classList.remove('govuk-form-group--error')
+    const laError = document.getElementById('la-error')
+    if (laError) {
+      laError.style.display = 'none'
+    }
+    const countryError = document.getElementById('country-error')
+    if (countryError) {
+      countryError.style.display = 'none'
+    }
+  }
+
+  function clearClientErrors() {
+    const duplicateError = document.getElementById('duplicate-error');
+    if (duplicateError) {
+      duplicateError.hidden = true;
+      duplicateError.style.display = 'none';
     }
     
+    const maxLimitError = document.getElementById('max-limit-error');
+    if (maxLimitError) {
+      maxLimitError.hidden = true;
+      maxLimitError.style.display = 'none';
+    }
+    
+    const inlineError = document.getElementById('location-inline-error');
+    if (inlineError) {
+      inlineError.hidden = true;
+      inlineError.style.display = 'none';
+    }
+    
+    const formGroup = document.getElementById('location-form-group');
+    if (formGroup) {
+      formGroup.classList.remove('govuk-form-group--error');
+    }
+  }
+
+  function showClientError(message, href = '#my-autocomplete') {
+    clearServerErrors()
+    
     const duplicateError = document.getElementById('duplicate-error')
+    const maxLimitError = document.getElementById('max-limit-error')
+    
+    // Hide max limit error
+    if (maxLimitError) {
+      maxLimitError.hidden = true
+      maxLimitError.style.display = 'none'
+    }
+    
+    // Show error summary
     if (duplicateError) {
       const link = duplicateError.querySelector('a')
-      if (link) link.textContent = message
+      if (link) {
+        link.textContent = message
+        link.href = href
+      }
       duplicateError.hidden = false
+      duplicateError.style.display = 'block'
       duplicateError.focus()
       duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    
+    // Show inline error
+    const inlineError = document.getElementById('location-inline-error');
+    const errorText = document.getElementById('location-error-text');
+    if (inlineError && errorText) {
+      errorText.textContent = message;
+      inlineError.hidden = false;
+      inlineError.style.display = 'block';
+    }
+    
+    // Add error styling to form group
+    const formGroup = document.getElementById('location-form-group');
+    if (formGroup) {
+      formGroup.classList.add('govuk-form-group--error');
     }
   }
 
   if (continueBtn && formEl) {
     continueBtn.addEventListener('click', function (e) {
-      // If "Local authority" is selected
-      const isLA = radio && radio.checked
-      if (isLA) {
+      e.preventDefault()
+      
+      // Check if any location option is selected
+      const selectedLocation = document.querySelector('input[name="location"]:checked')
+      
+      if (!selectedLocation) {
+        showClientError('Select how you want to add locations', '#location-2')
+        return
+      }
+      
+      // Validate Countries option
+      if (selectedLocation.value === 'countries') {
+        const checkedCountries = document.querySelectorAll('input[name="country"]:checked')
+        
+        if (checkedCountries.length === 0) {
+          showClientError('Select at least one country', '#country-england')
+          return
+        }
+      }
+      
+      // Validate Local authority option
+      if (selectedLocation.value === 'la') {
         const hasSelected = selectedInputsContainer.querySelectorAll('input[name="selected-locations"]').length > 0
+        
         if (!hasSelected) {
-          e.preventDefault()
           // Clear any stray autocomplete value so it is not submitted
           const input = document.getElementById('my-autocomplete')
           if (input) input.value = ''
           const hiddenAuto = container.querySelector('input[type="hidden"]')
           if (hiddenAuto) hiddenAuto.value = ''
-          showClientError('Add at least one local authority')
+          
+          showClientError('Add at least one local authority', '#my-autocomplete')
           return
         }
       }
-
-      // If Countries is selected, allow normal submit
-      // Also ensure stray autocomplete value never submits
+      
+      // All validation passed - clear any client-side errors and submit
+      const duplicateError = document.getElementById('duplicate-error')
+      if (duplicateError) duplicateError.hidden = true
+      const maxLimitError = document.getElementById('max-limit-error')
+      if (maxLimitError) maxLimitError.hidden = true
+      
+      // Clear stray autocomplete value before submitting
       const input = document.getElementById('my-autocomplete')
       if (input) input.value = ''
       const hiddenAuto = container.querySelector('input[type="hidden"]')
       if (hiddenAuto) hiddenAuto.value = ''
+      
+      formEl.submit()
     })
   }
 });

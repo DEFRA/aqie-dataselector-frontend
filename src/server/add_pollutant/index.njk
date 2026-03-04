@@ -64,11 +64,14 @@
               </label>
             </div>
             <div class="govuk-radios__conditional {% if selectedMode != 'specific' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-specific">
-              <div class="govuk-form-group">
+              <div class="govuk-form-group" id="pollutant-form-group">
                 <div class="govuk-hint">Add up to 10 pollutants</div>
 
                 <!-- Progressive enhancement: Autocomplete for JS, select fallback for no-JS -->
                   <label id="pollutant-autocomplete-label" for="my-autocomplete" class="govuk-label govuk-visually-hidden">Add pollutant(s)</label>
+                  <p id="pollutant-inline-error" class="govuk-error-message" hidden>
+                    <span class="govuk-visually-hidden">Error:</span> <span id="pollutant-error-text"></span>
+                  </p>
                   <div id="autocomplete-container-p" class="govuk-body" aria-labelledby="pollutant-autocomplete-label"></div>
                 
               
@@ -190,11 +193,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const KEY_SELECTED = 'selectedPollutants';
   const KEY_GROUP = 'selectedPollutantGroup';  
   const KEY_SPECIFIC = 'selectedPollutants';
+  const KEY_AUTOCOMPLETE_VALUE = 'pollutantAutocompleteValue';
 
   const readJSON = (k, fb = null) => {
     try { return JSON.parse(sessionStorage.getItem(k) || JSON.stringify(fb)); } catch { return fb; }
   };
   const writeJSON = (k, v) => sessionStorage.setItem(k, JSON.stringify(v || []));
+
+  const getAutocompleteInput = () => document.getElementById('my-autocomplete');
+
+  const setPersistedAutocompleteValue = (value) => {
+    const v = (value ?? '').toString();
+    if (v && v.trim()) {
+      sessionStorage.setItem(KEY_AUTOCOMPLETE_VALUE, v);
+    } else {
+      sessionStorage.removeItem(KEY_AUTOCOMPLETE_VALUE);
+    }
+  };
+
+  const restorePersistedAutocompleteValue = () => {
+    const input = getAutocompleteInput();
+    if (!input) return;
+    const stored = sessionStorage.getItem(KEY_AUTOCOMPLETE_VALUE) || '';
+    if (!stored) return;
+    // Only restore if the box is empty (don’t overwrite user input)
+    if (!input.value) input.value = stored;
+  };
 
   // Capture the autocomplete input value on button mousedown — this fires
   // BEFORE mousedown causes blur on the input, which triggers accessible-autocomplete
@@ -221,6 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'Carbon monoxide (CO)'
           ];
 
+          // Restore any persisted value from sessionStorage (e.g., after validation error)
+          const persistedValue = sessionStorage.getItem(KEY_AUTOCOMPLETE_VALUE) || '';
+
           // Debounce timer — delays showing suggestions by 3 seconds after the
           // user stops typing.
           let debounceTimer = null;
@@ -228,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
           window.accessibleAutocomplete({
             element: container,
             id: 'my-autocomplete',
+            defaultValue: persistedValue,
             source: function(query, populateResults) {
               clearTimeout(debounceTimer);
               debounceTimer = setTimeout(function() {
@@ -245,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ariaLabelledBy: 'pollutant-autocomplete-label',
             onConfirm: function(confirmed) {
               if (confirmed) {
+                setPersistedAutocompleteValue(confirmed);
                 if (confirmed !== lastAddedByMousedown) {
                   // Keyboard (Enter) selection — not already handled by mousedown.
                   addPollutantToList(confirmed);
@@ -258,6 +287,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           });
 
+          // Keep the current typed/selected value across a server-side validation reload
+          setTimeout(function() {
+            const inp = getAutocompleteInput();
+            if (!inp) return;
+            
+            // Explicitly restore the persisted value (in case defaultValue was overridden)
+            if (persistedValue && !inp.value) {
+              inp.value = persistedValue;
+            }
+            
+            // Add listeners to persist value as user types
+            inp.addEventListener('input', function() {
+              setPersistedAutocompleteValue(inp.value);
+              clearClientErrors(); // Clear errors when user starts typing
+            });
+            inp.addEventListener('change', function() {
+              setPersistedAutocompleteValue(inp.value);
+            });
+          }, 100);
+
           // Intercept mousedown in capture phase before accessible-autocomplete's
           // own handlers — reads the suggestion text directly from the DOM so
           // the pollutant is added on the very first click for every item.
@@ -266,6 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (option && !option.classList.contains('autocomplete__option--no-results')) {
               const text = option.textContent.trim();
               if (text) {
+                setPersistedAutocompleteValue(text);
                 lastAddedByMousedown = text;
                 addPollutantToList(text);
               }
@@ -312,10 +362,60 @@ document.addEventListener('DOMContentLoaded', () => {
       serverErrorSummary.style.display = 'none'
     }
     
-    // Remove error styling from form group
-    const formGroup = document.querySelector('.govuk-form-group--error')
+    // Remove error styling from all form groups
+    const formGroups = document.querySelectorAll('.govuk-form-group--error')
+    formGroups.forEach(fg => fg.classList.remove('govuk-form-group--error'))
+  }
+
+  // Helper to show client-side errors (both summary and inline)
+  function showClientError(message, href = '#my-autocomplete') {
+    clearServerErrors();
+    
+    // Show error summary
+    const errorSummary = document.getElementById('duplicate-error');
+    if (errorSummary) {
+      const errorLink = errorSummary.querySelector('a');
+      if (errorLink) {
+        errorLink.textContent = message;
+        errorLink.href = href;
+      }
+      errorSummary.hidden = false;
+      errorSummary.focus();
+    }
+    
+    // Show inline error
+    const inlineError = document.getElementById('pollutant-inline-error');
+    const errorText = document.getElementById('pollutant-error-text');
+    if (inlineError && errorText) {
+      errorText.textContent = message;
+      inlineError.hidden = false;
+      inlineError.style.display = 'block';
+    }
+    
+    // Add error styling to form group
+    const formGroup = document.getElementById('pollutant-form-group');
     if (formGroup) {
-      formGroup.classList.remove('govuk-form-group--error')
+      formGroup.classList.add('govuk-form-group--error');
+    }
+  }
+
+  // Helper to clear client-side errors
+  function clearClientErrors() {
+    const errorSummary = document.getElementById('duplicate-error');
+    if (errorSummary) {
+      errorSummary.hidden = true;
+      errorSummary.style.display = 'none';
+    }
+    
+    const inlineError = document.getElementById('pollutant-inline-error');
+    if (inlineError) {
+      inlineError.hidden = true;
+      inlineError.style.display = 'none';
+    }
+    
+    const formGroup = document.getElementById('pollutant-form-group');
+    if (formGroup) {
+      formGroup.classList.remove('govuk-form-group--error');
     }
   }
 
@@ -362,46 +462,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = document.querySelector('#my-autocomplete');
     pendingButtonValue = '';
 
+    // Persist whatever the user has typed/selected, so it stays after server validation
+    setPersistedAutocompleteValue(value);
+
     if (!value) {
-      clearServerErrors();
-      const errorSummary = document.getElementById('duplicate-error');
-      if (errorSummary) {
-        const errorLink = errorSummary.querySelector('a');
-        if (errorLink) errorLink.textContent = 'Please add a pollutant';
-        errorSummary.hidden = false;
-        errorSummary.focus();
-      }
+      showClientError('Please add a pollutant');
       return;
     }
 
     if (!isAllowedPollutant(value)) {
-      clearServerErrors();
-      const errorSummary = document.getElementById('duplicate-error');
-      if (errorSummary) {
-        const errorLink = errorSummary.querySelector('a');
-        if (errorLink) errorLink.textContent = 'Please select a pollutant from the allowed list';
-        errorSummary.hidden = false;
-        errorSummary.focus();
-      }
+      showClientError('Select a pollutant from the list');
       return;
     }
 
     const lowerValue = value.toLowerCase();
 
     if (addedPollutants.has(lowerValue)) {
-      clearServerErrors();
-      const errorSummary = document.getElementById('duplicate-error');
-      if (errorSummary) {
-        const errorLink = errorSummary.querySelector('a');
-        if (errorLink) errorLink.textContent = 'This pollutant has already been added';
-        errorSummary.hidden = false;
-        errorSummary.focus();
-      }
+      showClientError('This pollutant has already been added');
       return;
     }
 
-    const errorSummary = document.getElementById('duplicate-error');
-    if (errorSummary) errorSummary.hidden = true;
+    clearClientErrors();
 
     addedPollutants.add(lowerValue);
 
@@ -445,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tableBody) tableBody.appendChild(row);
 
       if (input) input.value = '';
+      setPersistedAutocompleteValue('');
       persistSpecificFromTable();
       updateAddButtonText();
     }
@@ -466,27 +548,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Handle continue button - just submit the form, server handles validation
+  // Handle continue button - validate on client side before submission
   if (continueButton) {
     continueButton.addEventListener('click', function (e) {
       e.preventDefault();
       
       const selectedMode = document.querySelector('input[name="pollutant-mode"]:checked')?.value;
-      
-      // Update hidden input with current pollutants before submission
-      if (selectedMode === 'specific') {
-        let currentPollutants = [];
-        if (table && !table.hidden && tableBody && tableBody.children.length > 0) {
-          const rows = tableBody.querySelectorAll('tr');
-          rows.forEach(row => {
-            const name = row.querySelector('td')?.textContent?.trim();
-            if (name) currentPollutants.push(name);
-          });
-        }
-        updateHiddenPollutantsInput(currentPollutants);
+
+      // CLIENT-SIDE VALIDATION
+      // Check if mode is selected
+      if (!selectedMode) {
+        showClientError('Please select how you want to add pollutants', '#mode-specific');
+        return;
       }
+
+      // Validate specific mode - must have at least one pollutant in table
+      if (selectedMode === 'specific') {
+        const hasPollutants = tableBody && tableBody.children.length > 0;
+        
+        if (!hasPollutants) {
+          showClientError('Enter a pollutant', '#my-autocomplete');
+          return;
+        }
+
+        // Update hidden input with current pollutants
+        let currentPollutants = [];
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const name = row.querySelector('td')?.textContent?.trim();
+          if (name) currentPollutants.push(name);
+        });
+        updateHiddenPollutantsInput(currentPollutants);
+        
+        // Clear persisted autocomplete value since we have valid pollutants
+        setPersistedAutocompleteValue('');
+      }
+
+      // Validate group mode - must have a group selected
+      if (selectedMode === 'group') {
+        const selectedGroup = document.querySelector('input[name="pollutant-group"]:checked')?.value;
+        
+        if (!selectedGroup) {
+          showClientError('Please select a pollutant group', '#pg-core');
+          return;
+        }
+      }
+
+      // All validation passed - clear any client-side errors and submit
+      clearClientErrors();
       
-      // Submit form to server for validation
       const form = document.querySelector('form[action="/addpollutants"]');
       if (form) {
         form.submit();
@@ -544,6 +654,10 @@ document.addEventListener('DOMContentLoaded', () => {
     radio.addEventListener('change', function() {
       // Clear server-side errors when radio is selected
       clearServerErrors();
+
+      if (this.value !== 'specific') {
+        setPersistedAutocompleteValue('');
+      }
       
       syncTableVisibility();
       if (this.value === 'specific' && this.checked) {
