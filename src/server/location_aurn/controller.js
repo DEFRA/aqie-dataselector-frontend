@@ -216,7 +216,7 @@ export const locationaurnController = {
 
     async function Invokelocalauthority() {
       const laqmurl =
-        'https://www.laqmportal.co.uk/xapi/getLocalAuthorities_rty/json'
+        'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
       const apiKey = config.get('laqmAPIkey')
       const partnerId = config.get('laqmAPIPartnerId')
 
