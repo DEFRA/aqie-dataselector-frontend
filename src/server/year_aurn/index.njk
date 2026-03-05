@@ -66,32 +66,27 @@
 
             <div class="govuk-radios__conditional{% if formData.time != 'any' %} govuk-radios__conditional--hidden{% endif %}"
                  id="conditional-time-any">
-              <div class="govuk-form-group{% if errors.details['any-year'] %} govuk-form-group--error{% endif %}" id="any-year-group">
-                <label class="govuk-label" for="any-year-input">Year</label>
-                <div id="any-year-hint" class="govuk-hint">For example: 2009</div>
-
-                {% if errors.details['any-year'] %}
-                  <p class="govuk-error-message" id="any-year-input-error">
-                    <span class="govuk-visually-hidden">Error:</span> {{ errors.details['any-year'] }}
-                  </p>
-                {% endif %}
+              <div class="govuk-form-group" id="any-year-group">
 
                 {% set anyYearValue = '' %}
                 {% if formData.time == 'any' and formData['any-year-input'] %}
                   {% set anyYearValue = formData['any-year-input'] %}
                 {% endif %}
 
-                {# Build classes without using JS ternary #}
-                {% set anyYearClasses = "govuk-input govuk-input--width-4" %}
+                {% set anyYearError = null %}
                 {% if errors.details['any-year'] %}
-                  {% set anyYearClasses = anyYearClasses + " govuk-input--error" %}
+                  {% set anyYearError = { text: errors.details['any-year'] } %}
                 {% endif %}
+
+                {% set anyYearClasses = "govuk-input--width-4" %}
 
                 {{ govukInput({
                   id: "any-year-input",
                   name: "any-year-input",
                   classes: anyYearClasses,
                   label: { text: "Year" },
+                  hint: { text: "For example: 2009" },
+                  errorMessage: anyYearError,
                   inputmode: "numeric",
                   pattern: "[0-9]*",
                   value: anyYearValue
@@ -117,7 +112,7 @@
                  id="conditional-time-range">
               <div class="govuk-form-group{% if errors.details['range-start'] %} govuk-form-group--error{% endif %}" id="range-start-group">
                 <label class="govuk-label" for="range-start-year">Enter start year</label>
-                <div id="range-start-hint" class="govuk-hint">For example: 2009</div>
+                <div id="range-start-hint" class="govuk-hint">For example: 2010</div>
                 {% if errors.details['range-start'] %}
                   <p class="govuk-error-message" id="range-start-year-error">
                     <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-start'] }}
@@ -140,7 +135,7 @@
 
               <div class="govuk-form-group{% if errors.details['range-end'] %} govuk-form-group--error{% endif %}" id="range-end-group">
                 <label class="govuk-label" for="range-end-year">Enter end year</label>
-                <div id="range-end-hint" class="govuk-hint">For example: 2010</div>
+                <div id="range-end-hint" class="govuk-hint">For example: 2015</div>
                 {% if errors.details['range-end'] %}
                   <p class="govuk-error-message" id="range-end-year-error">
                     <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-end'] }}
