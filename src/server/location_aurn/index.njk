@@ -701,12 +701,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasSelected = selectedInputsContainer.querySelectorAll('input[name="selected-locations"]').length > 0
         
         if (!hasSelected) {
-          // Clear any stray autocomplete value so it is not submitted
-          const input = document.getElementById('my-autocomplete')
-          if (input) input.value = ''
-          const hiddenAuto = container.querySelector('input[type="hidden"]')
-          if (hiddenAuto) hiddenAuto.value = ''
-          
           showClientError('Add at least one local authority', '#my-autocomplete')
           return
         }
