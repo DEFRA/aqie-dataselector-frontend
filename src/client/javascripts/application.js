@@ -9,6 +9,7 @@ import {
 } from 'govuk-frontend'
 import CookieBanner from './cookie-banner.js'
 import accessibleAutocomplete from 'accessible-autocomplete'
+import AccessibleAutoComplete from './accessible-autocomplete.js'
 import {
   getConsentCookie,
   isValidConsentCookie,
@@ -22,6 +23,14 @@ createAll(ErrorSummary)
 createAll(Header)
 createAll(Radios)
 createAll(SkipLink)
+
+// Initialize all accessible autocomplete components
+const $accessibleAutocompletes = document.querySelectorAll(
+  '[data-module="accessible-autocomplete"]'
+)
+$accessibleAutocompletes.forEach(($autocomplete) => {
+  new AccessibleAutoComplete($autocomplete, window, document).init()
+})
 
 // Initialise cookie banner
 const $cookieBanner = document.querySelector(
@@ -48,26 +57,9 @@ if ($cookiesPage) {
   // Instantiating for side effects (e.g., auto-initialization)
   new CookiesPage($cookiesPage)
 }
-document.addEventListener('DOMContentLoaded', () => {
-  accessibleAutocomplete({
-    element: document.querySelector('#autocomplete-container-p'),
-    id: 'my-autocomplete',
-    minLength: 2,
-    source: [
-      // Pollutants
-      'Fine particulate matter (PM2.5)',
-      'Particulate matter (PM10)',
-      'Nitrogen dioxide (NO2)',
-      'Ozone (O3)',
-      'Sulphur dioxide (SO2)',
-      'Nitric oxide (NO)',
-      'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-      'Carbon monoxide (CO)'
-    ]
-  })
-})
 
 // Make accessibleAutocomplete available globally for use in page-specific scripts
 window.accessibleAutocomplete = accessibleAutocomplete
+window.AccessibleAutoComplete = AccessibleAutoComplete
 
 // initAll()

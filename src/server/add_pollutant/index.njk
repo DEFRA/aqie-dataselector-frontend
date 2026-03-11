@@ -231,9 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = document.querySelector('#autocomplete-container-p');
       if (container && !container.querySelector('#my-autocomplete')) {
         if (window.accessibleAutocomplete) {
-          // Tracks the last value added via mousedown so onConfirm doesn't double-add it.
-          let lastAddedByMousedown = '';
-
           const pollutantList = [
             'Fine particulate matter (PM2.5)',
             'Particulate matter (PM10)',
@@ -260,12 +257,16 @@ document.addEventListener('DOMContentLoaded', () => {
               clearTimeout(debounceTimer);
               debounceTimer = setTimeout(function() {
                 const q = (query || '').toLowerCase();
-                populateResults(
-                  pollutantList.filter(function(p) {
-                    return p.toLowerCase().indexOf(q) !== -1;
-                  })
-                );
-              }, 3000);
+                const results = pollutantList.filter(function(p) {
+                  return p.toLowerCase().indexOf(q) !== -1;
+                });
+                populateResults(results);
+                // Show the menu after populating results
+                setTimeout(() => {
+                  const menu = getMenu();
+                  if (menu) menu.style.removeProperty('display');
+                }, 0);
+              }, 1000);
             },
             minLength: 1,
             autoselect: false,
@@ -274,18 +275,24 @@ document.addEventListener('DOMContentLoaded', () => {
             onConfirm: function(confirmed) {
               if (confirmed) {
                 setPersistedAutocompleteValue(confirmed);
-                if (confirmed !== lastAddedByMousedown) {
-                  // Keyboard (Enter) selection — not already handled by mousedown.
-                  addPollutantToList(confirmed);
-                } else {
-                  // Already added by the mousedown handler below.
-                  const inp = document.getElementById('my-autocomplete');
-                  if (inp) inp.value = '';
-                }
-                setTimeout(function() { lastAddedByMousedown = ''; }, 0);
+                // Close the suggestion box after selection
+                setTimeout(() => {
+                  const menu = getMenu();
+                  if (menu) menu.style.display = 'none';
+                }, 50);
               }
             }
           });
+
+          // Hide the dropdown menu during the delay to prevent "no results" message
+          const getMenu = () => container.querySelector('.autocomplete__menu');
+          const input = document.getElementById('my-autocomplete');
+          if (input) {
+            input.addEventListener('input', function() {
+              const menu = getMenu();
+              if (menu) menu.style.display = 'none';
+            });
+          }
 
           // Keep the current typed/selected value across a server-side validation reload
           setTimeout(function() {
@@ -306,21 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
               setPersistedAutocompleteValue(inp.value);
             });
           }, 100);
-
-          // Intercept mousedown in capture phase before accessible-autocomplete's
-          // own handlers — reads the suggestion text directly from the DOM so
-          // the pollutant is added on the very first click for every item.
-          container.addEventListener('mousedown', function(e) {
-            const option = e.target.closest('[role="option"]');
-            if (option && !option.classList.contains('autocomplete__option--no-results')) {
-              const text = option.textContent.trim();
-              if (text) {
-                setPersistedAutocompleteValue(text);
-                lastAddedByMousedown = text;
-                addPollutantToList(text);
-              }
-            }
-          }, true); // useCapture=true — fires before accessible-autocomplete's handlers
         }
       }
   }
@@ -460,7 +452,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function addPollutantToList(value) {
     value = (value || '').trim();
     const input = document.querySelector('#my-autocomplete');
-    pendingButtonValue = '';
 
     // Persist whatever the user has typed/selected, so it stays after server validation
     setPersistedAutocompleteValue(value);
@@ -534,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add new pollutant via button (handles typed text not selected from dropdown)
   if (addButton) {
-    addButton.addEventListener('mousedown', function () {
+    addButton.addEventListener('mousedown', function (e) {
       const inp = document.querySelector('#my-autocomplete');
       if (inp) pendingButtonValue = inp.value.trim();
     });
@@ -543,8 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const input = document.querySelector('#my-autocomplete');
       const value = (pendingButtonValue || (input && input.value) || '').trim();
-      pendingButtonValue = '';
       addPollutantToList(value);
+      pendingButtonValue = '';
     });
   }
 
