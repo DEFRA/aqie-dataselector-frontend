@@ -146,7 +146,6 @@ async function getAPIdownload(year) {
     
     try {
         // Step 1: Start download job and get jobID
-        console.log(`Starting download for year: ${year}`);
         const response = await fetch(`/download_aurn/${year}`);
         
         if (!response.ok) {
@@ -154,7 +153,6 @@ async function getAPIdownload(year) {
         }
         
         const data = await response.json();
-       // console.log('Download job started:', data);
         
         if (data.error) {
           hideLoadingIndicator();
@@ -169,7 +167,7 @@ async function getAPIdownload(year) {
             throw new Error('No job ID received from server');
         }
         
-       // console.log(`Job ID: ${jobID}`);
+
         
         // Step 2: Poll for completion
         const startTime = Date.now();
@@ -187,7 +185,7 @@ async function getAPIdownload(year) {
             // Poll status endpoint
             fetch(`/download_aurn_status/${jobID}`)
                 .then(statusResponse => {
-                  //  console.log('Status response status:', statusResponse.status);
+
                     
                     if (!statusResponse.ok) {
                         throw new Error(`Status check failed: ${statusResponse.status}`);
@@ -196,7 +194,7 @@ async function getAPIdownload(year) {
                     return statusResponse.json();
                 })
                 .then(statusData => {
-                    //console.log('Status data:', statusData);
+
                     
                     if (statusData.error) {
                         hideLoadingIndicator();
@@ -211,7 +209,7 @@ async function getAPIdownload(year) {
                     
                     // Check if completed
                     if (statusData.status === 'Completed' && statusData.resultUrl) {
-                       // console.log('Download ready:', statusData.resultUrl);
+
                        hideLoadingIndicator();
                         window.location.href = statusData.resultUrl;
                     } else {
@@ -295,13 +293,13 @@ function hideLoadingIndicator() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-   // console.log("DOM loaded, JavaScript download functionality ready");
+
 });  
 
 </script>
  {% if downloadaurnresult %}
   <script>
-    //console.log("DATA FROM DOWNLOAD",downloadaurnresult)
+
 
     var downloadaurnresult1 = "{{ downloadaurnresult | safe }}";
     var url = downloadaurnresult1;

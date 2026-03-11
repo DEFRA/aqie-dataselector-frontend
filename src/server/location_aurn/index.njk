@@ -312,7 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </datalist>
     `;
     autocompleteInitialized = true;
-   // console.log('✅ Fallback input created');
   }
   
   function updateHiddenInputs() {
@@ -361,11 +360,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const trimmedValue = value.trim()
     const lowerValue = trimmedValue.toLowerCase()
-    
-    console.log('🔍 Adding:', trimmedValue);
-    console.log('🔍 Lower value:', lowerValue);
-    console.log('🔍 Set contents:', Array.from(addedLocalAuthorities));
-    console.log('🔍 Set has this value?', addedLocalAuthorities.has(lowerValue));
 
     // Add: block values not from list and show top summary (reuse duplicate-error)
     if (!isValidAuthority(trimmedValue)) {
@@ -660,7 +654,6 @@ document.addEventListener('DOMContentLoaded', function() {
   {% endif %}
   
   updateButtonLabel();
- // console.log('✅ Clean UI setup complete - server handles all validation');
 
   // Continue button - client-side validation before submission
   const continueBtn = document.getElementById('add-location-button')
