@@ -82,12 +82,12 @@
       selectedLink.setAttribute('aria-selected', 'false');
     }
 const selectedy = year;
-//console.log("selectedy",selectedy)
+
     fetch(`/rendertable/${selectedy}`)
         .then(response => response.text())
         .then(data => {
             document.getElementById('yearlytable-container').innerHTML = data;             
-          //  console.log("dataresponse", data.tabledata);
+
         })
         .catch(error => console.error('Error fetching partial content:', error));
     
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
      // console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-   // console.log("selectedyearim78",selectedYear)
+
     if (selectedYear) {
         updateYear(selectedYear);
     }
