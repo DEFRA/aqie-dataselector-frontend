@@ -236,56 +236,62 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize autocomplete only once
   function initializeAutocomplete() {
     if (autocompleteInitialized || !container) {
-    //  console.log('Autocomplete already initialized or container not found');
       return;
     }
-    
-   // console.log('Initializing autocomplete...');
     
     // Clear container to ensure clean state
     container.innerHTML = '';
     
     if (typeof window.accessibleAutocomplete === 'function') {
       try {
+        let debounceTimer = null;
+        const getMenu = () => container.querySelector('.autocomplete__menu');
+        
         window.accessibleAutocomplete({
             element: container,
             id: 'my-autocomplete',
             name: 'local-authority-autocomplete',
-            source: autocompleteSource,
+            source: function(query, populateResults) {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(function() {
+                const q = (query || '').toLowerCase();
+                const results = autocompleteSource.filter(function(item) {
+                  return String(item).toLowerCase().indexOf(q) !== -1;
+                });
+                populateResults(results);
+                // Show the menu after populating results
+                setTimeout(() => {
+                  const menu = getMenu();
+                  if (menu) menu.style.removeProperty('display');
+                }, 0);
+              }, 1000);
+            },
             minLength: 3,
             ariaLabelledBy: 'location-autocomplete-label',
+            autoselect: false,
+            confirmOnBlur: false,
             // Do not add to table on confirm; just populate the input
             onConfirm: function(confirmed) {
-              const value = (confirmed || '').trim()
-              const input = document.getElementById('my-autocomplete')
-              if (input) {
-                input.value = value // user must click "Add local authority" to add
+              if (confirmed) {
+                // Close the suggestion box after selection
+                setTimeout(() => {
+                  const menu = getMenu();
+                  if (menu) menu.style.display = 'none';
+                }, 50);
               }
             }
           });
         autocompleteInitialized = true;
-       // console.log('✅ Autocomplete initialized');
-        // Add additional event listeners after initialization
-        setTimeout(() => {
-          const input = document.getElementById('my-autocomplete');
-          if (input) {
-            // Handle Enter key selection
-            input.addEventListener('keydown', function(e) {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const value = this.value.trim();
-                if (value) {
-                  addLocationToTable(value);
-                  this.value = '';
-                }
-              }
-            });
-            // Always clear error on input
-            input.addEventListener('input', function() {
-              clearClientErrors();
-            });
-          }
-        }, 100);
+        
+        // Hide the dropdown menu during the delay
+        const input = document.getElementById('my-autocomplete');
+        if (input) {
+          input.addEventListener('input', function() {
+            const menu = getMenu();
+            if (menu) menu.style.display = 'none';
+            clearClientErrors();
+          });
+        }
         return;
       } catch (error) {
         console.error('❌ Error with accessibleAutocomplete:', error);
@@ -355,17 +361,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const trimmedValue = value.trim()
     const lowerValue = trimmedValue.toLowerCase()
+    
+    console.log('🔍 Adding:', trimmedValue);
+    console.log('🔍 Lower value:', lowerValue);
+    console.log('🔍 Set contents:', Array.from(addedLocalAuthorities));
+    console.log('🔍 Set has this value?', addedLocalAuthorities.has(lowerValue));
 
     // Add: block values not from list and show top summary (reuse duplicate-error)
     if (!isValidAuthority(trimmedValue)) {
       const duplicateError = document.getElementById('duplicate-error')
       const maxLimitError = document.getElementById('max-limit-error')
+      const inlineError = document.getElementById('location-inline-error')
+      const errorText = document.getElementById('location-error-text')
+      const formGroup = document.getElementById('location-form-group')
+      
       if (duplicateError) {
         const errorLink = duplicateError.querySelector('a')
-        if (errorLink) errorLink.textContent = 'Select local authorities from the list'
+        if (errorLink) errorLink.textContent = 'Please select a local authority from the list'
         duplicateError.hidden = false
         duplicateError.focus()
         duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      if (inlineError && errorText) {
+        errorText.textContent = 'Please select a local authority from the list'
+        inlineError.hidden = false
+        inlineError.style.display = 'block'
+      }
+      if (formGroup) {
+        formGroup.classList.add('govuk-form-group--error')
       }
       if (maxLimitError) maxLimitError.hidden = true
       return false
@@ -374,29 +397,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check for maximum limit (10 local authorities)
     if (tableBody.children.length >= 10) {
       const maxLimitError = document.getElementById('max-limit-error')
+      const duplicateError = document.getElementById('duplicate-error')
+      const inlineError = document.getElementById('location-inline-error')
+      const errorText = document.getElementById('location-error-text')
+      const formGroup = document.getElementById('location-form-group')
+      
       if (maxLimitError) {
         maxLimitError.hidden = false
         maxLimitError.focus()
         maxLimitError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-      const duplicateError = document.getElementById('duplicate-error')
+      if (inlineError && errorText) {
+        errorText.textContent = 'Add up to 10 local authorities'
+        inlineError.hidden = false
+        inlineError.style.display = 'block'
+      }
+      if (formGroup) {
+        formGroup.classList.add('govuk-form-group--error')
+      }
       if (duplicateError) duplicateError.hidden = true
       return false
     }
 
     // Check for duplicates
     if (addedLocalAuthorities.has(lowerValue)) {
-      const duplicateError = document.getElementById('duplicate-error')
-      if (duplicateError) {
-        // Reset message for duplicate case
-        const errorLink = duplicateError.querySelector('a')
-        if (errorLink) errorLink.textContent = 'This local authority has already been added'
-        duplicateError.hidden = false
-        duplicateError.focus()
-        duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const inlineError = document.getElementById('location-inline-error')
+      const errorText = document.getElementById('location-error-text')
+      const formGroup = document.getElementById('location-form-group')
+      
+      if (inlineError && errorText) {
+        errorText.textContent = 'This local authority has already been added'
+        inlineError.hidden = false
+        inlineError.style.display = 'block'
       }
-      const maxLimitError = document.getElementById('max-limit-error')
-      if (maxLimitError) maxLimitError.hidden = true
+      if (formGroup) {
+        formGroup.classList.add('govuk-form-group--error')
+      }
       return false
     }
 
@@ -496,16 +532,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
+  // Capture value on mousedown before blur clears it
+  let pendingButtonValue = '';
+  
   // Add button handler (UI only - no validation)
   if (addMoreButton) {
-    addMoreButton.addEventListener('click', function(e) {
+    addMoreButton.addEventListener('mousedown', function (e) {
+      // Prevent default to avoid blur on the input
+      e.preventDefault();
+      const inp = document.getElementById('my-autocomplete');
+      if (inp) pendingButtonValue = inp.value.trim();
+    });
+    
+    addMoreButton.addEventListener('click', function (e) {
       e.preventDefault();
       const input = document.getElementById('my-autocomplete');
-      const value = input ? input.value.trim() : '';
+      const value = (pendingButtonValue || (input && input.value) || '').trim();
+      
       if (!value) {
         // Show error if no value entered
         const duplicateError = document.getElementById('duplicate-error');
         const maxLimitError = document.getElementById('max-limit-error');
+        const inlineError = document.getElementById('location-inline-error');
+        const errorText = document.getElementById('location-error-text');
+        const formGroup = document.getElementById('location-form-group');
+        
         if (maxLimitError) maxLimitError.hidden = true;
         if (duplicateError) {
           const errorLink = duplicateError.querySelector('a');
@@ -514,9 +565,19 @@ document.addEventListener('DOMContentLoaded', function() {
           duplicateError.focus();
           duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+        if (inlineError && errorText) {
+          errorText.textContent = 'Enter a local authority';
+          inlineError.hidden = false;
+          inlineError.style.display = 'block';
+        }
+        if (formGroup) {
+          formGroup.classList.add('govuk-form-group--error');
+        }
+        pendingButtonValue = '';
         return;
       }
       const success = addLocationToTable(value);
+      pendingButtonValue = '';
       // Only clear the input if successfully added
       if (success) {
         // Clear the input properly for both regular input and accessible autocomplete
@@ -558,22 +619,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationsArray = Array.isArray(formLocations) ? formLocations : [formLocations];
     locationsArray.forEach(location => {
       if (location && location.trim()) {
-        addLocationToTable(location.trim());
+        const trimmed = location.trim();
+        const lower = trimmed.toLowerCase();
+        
+        // Manually add row without validation (server already validated)
+        count++;
+        const row = document.createElement('tr');
+        row.className = 'govuk-table__row';
+        row.innerHTML = `
+          <th scope="row" class="govuk-table__header">Local authority ${count}</th>
+          <td class="govuk-table__cell">${trimmed}</td>
+          <td class="govuk-table__cell">
+            <a href="#" class="govuk-link remove-location">Remove</a>
+          </td>
+        `;
+        
+        row.querySelector('.remove-location').addEventListener('click', function(e) {
+          e.preventDefault();
+          row.remove();
+          addedLocalAuthorities.delete(lower);
+          renumberTableRows();
+          if (tableBody.children.length === 0) {
+            table.style.display = 'none';
+            if (tableCaption) tableCaption.style.display = 'none';
+            count = 0;
+          }
+          updateButtonLabel();
+          updateHiddenInputs();
+        });
+        
+        tableBody.appendChild(row);
+        addedLocalAuthorities.add(lower);
+        table.style.display = 'table';
+        if (tableCaption) tableCaption.style.display = 'table-caption';
       }
     });
+    updateButtonLabel();
+    updateHiddenInputs();
   }
   {% endif %}
-  
-  // Initialize tracking set with any existing table entries (for server-restored data)
-  if (tableBody) {
-    const existingRows = tableBody.querySelectorAll('tr');
-    existingRows.forEach(row => {
-      const locationName = row.querySelector('td')?.textContent?.trim();
-      if (locationName) {
-        addedLocalAuthorities.add(locationName.toLowerCase());
-      }
-    });
-  }
   
   updateButtonLabel();
  // console.log('✅ Clean UI setup complete - server handles all validation');
