@@ -373,6 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const errorLink = duplicateError.querySelector('a')
         if (errorLink) errorLink.textContent = 'Please select a local authority from the list'
         duplicateError.hidden = false
+        duplicateError.style.display = 'block'
         duplicateError.focus()
         duplicateError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
@@ -398,6 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (maxLimitError) {
         maxLimitError.hidden = false
+        maxLimitError.style.display = 'block'
         maxLimitError.focus()
         maxLimitError.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
