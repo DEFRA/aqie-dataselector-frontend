@@ -534,8 +534,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add button handler (UI only - no validation)
   if (addMoreButton) {
     addMoreButton.addEventListener('mousedown', function (e) {
-      // Prevent default to avoid blur on the input
-      e.preventDefault();
       const inp = document.getElementById('my-autocomplete');
       if (inp) pendingButtonValue = inp.value.trim();
     });
@@ -569,7 +567,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (formGroup) {
           formGroup.classList.add('govuk-form-group--error');
         }
-        pendingButtonValue = '';
         return;
       }
       const success = addLocationToTable(value);
