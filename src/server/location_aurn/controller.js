@@ -225,8 +225,12 @@ function buildViewContext(
     laqmUnavailable,
     laqmUnavailableReason
   }
-  if (formData) context.formData = formData
-  if (errors) context.errors = errors
+  if (formData) {
+    context.formData = formData
+  }
+  if (errors) {
+    context.errors = errors
+  }
   return context
 }
 
@@ -320,7 +324,9 @@ function validateLocalAuthorityAvailability(localAuthorityNames, errors) {
 }
 
 function extractFromTableLocations(payload) {
-  if (!payload['selected-locations']) return []
+  if (!payload['selected-locations']) {
+    return []
+  }
   if (Array.isArray(payload['selected-locations'])) {
     return payload['selected-locations'].filter((loc) => loc?.trim())
   }

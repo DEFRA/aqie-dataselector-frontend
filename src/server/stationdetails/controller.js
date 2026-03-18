@@ -1,14 +1,19 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import axios from 'axios'
-import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import {
+  parseDateFormat,
+  getToggletip,
+  invokeDownload,
+  buildMapLocation,
+  buildYearsArray,
+  formatCurrentDate
+} from '~/src/server/common/helpers/station-helpers.js'
 
 const stationDetailsController = {
   handler: async (request, h) => {
     const HTTP_BAD_REQUEST = 400
     const HTTP_NOT_FOUND = 404
     const HTTP_INTERNAL_SERVER_ERROR = 500
-    const formathrs = 12
     const logger = createLogger()
     if (!request) {
       return h.response('Invalid request').code(HTTP_BAD_REQUEST)
@@ -19,57 +24,6 @@ const stationDetailsController = {
     request.yar.set('downloadresult', '')
 
     const stationDetailsView = 'stationdetails/index'
-
-    // Helper: Download API call
-    async function invokeDownload(apiParameters) {
-      try {
-        const response = await axios.post(
-          config.get('Download_URL'),
-          apiParameters
-        )
-        return response.data
-      } catch (error) {
-        logger.error('Download API failed:', error)
-        // Log the error for debugging
-
-        return h
-          .response('Failed to download data')
-          .code(HTTP_INTERNAL_SERVER_ERROR)
-      }
-    }
-
-    // Helper: Format date
-    function parseDateFormat(apiDate) {
-      const date = new Date(apiDate)
-      const hours = date.getUTCHours()
-      const minutes = date.getUTCMinutes()
-      const ampm = hours >= formathrs ? 'pm' : 'am'
-      const formattedHours = hours % formathrs || formathrs
-      const formattedMinutes = minutes < 10 ? '0' + minutes : minutes
-      const day = date.getUTCDate()
-      const month = date.toLocaleString('en-GB', { month: 'long' })
-      const year = date.getUTCFullYear()
-      return `${formattedHours}:${formattedMinutes} ${ampm} on ${day} ${month} ${year}`
-    }
-    // Get map toggletips
-    function getToggletip(siteType) {
-      switch (siteType) {
-        case 'Urban Traffic':
-          return english.stationdetails.maptoggletips.Urban_traffic
-        case 'Urban Industrial':
-          return english.stationdetails.maptoggletips.Urban_industrial
-        case 'Suburban Industrial':
-          return english.stationdetails.maptoggletips.Suburban_industrial
-        case 'Suburban Background':
-          return english.stationdetails.maptoggletips.Suburban_background
-        case 'Rural Background':
-          return english.stationdetails.maptoggletips.Rural_background
-        case 'Urban Background':
-          return english.stationdetails.maptoggletips.Urban_background
-        default:
-          return null // or undefined, or a default message
-      }
-    }
 
     // Handle download parameters
     if (request.params.download) {
@@ -108,14 +62,12 @@ const stationDetailsController = {
     const updatedTime = parseDateFormat(formattedDate)
 
     // Generate years array dynamically from 2018 to current year
-    const currentYear = new Date().getFullYear()
-    const years = Array.from({ length: currentYear - 2017 }, (_, i) => 2018 + i)
+    const years = buildYearsArray()
 
-    const today = new Date()
-    const currentDate = `${today.getDate()} ${today.toLocaleString('en-GB', { month: 'long' })}`
+    const currentDate = formatCurrentDate()
     const lat = stationDetails.location.coordinates[0]
     const lon = stationDetails.location.coordinates[1]
-    const mapLocation = `https://www.google.co.uk/maps?q=${lat},${lon}`
+    const mapLocation = buildMapLocation(lat, lon)
 
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')?.value
     const multipleLocID = request?.yar?.get('locationID')
@@ -136,7 +88,12 @@ const stationDetailsController = {
 
     // Handle download request
     if (request.params.download) {
-      const downloadResult = await invokeDownload(apiParams)
+      const downloadResult = await invokeDownload(apiParams, logger)
+      if (downloadResult instanceof Error) {
+        return h
+          .response('Failed to download data')
+          .code(HTTP_INTERNAL_SERVER_ERROR)
+      }
       request.yar.set('downloadresult', downloadResult)
     }
 
