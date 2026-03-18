@@ -89,6 +89,11 @@ const stationDetailsController = {
     // Handle download request
     if (request.params.download) {
       const downloadResult = await invokeDownload(apiParams, logger)
+      if (downloadResult instanceof Error) {
+        return h
+          .response('Failed to download data')
+          .code(HTTP_INTERNAL_SERVER_ERROR)
+      }
       request.yar.set('downloadresult', downloadResult)
     }
 
