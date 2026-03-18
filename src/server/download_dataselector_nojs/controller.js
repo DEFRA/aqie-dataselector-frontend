@@ -30,16 +30,10 @@ const buildViewData = (request, backUrl) => {
   }
 }
 
-const renderErrorState = (
-  h,
-  errormsg,
-  errorref1,
-  errorhref1,
-  errorref2,
-  errorhref2,
-  request,
-  backUrl
-) => {
+const renderErrorState = (h, request, backUrl, errorDetails) => {
+  const { errormsg, errorref1, errorhref1, errorref2, errorhref2 } =
+    errorDetails
+
   return h.view('customdataset/index', {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -61,16 +55,13 @@ const renderErrorState = (
 const validateSelectedPollutant = (request, h, backUrl) => {
   const selectedPollutant = request.yar.get('selectedpollutant')
   if (!selectedPollutant || selectedPollutant.length === 0) {
-    return renderErrorState(
-      h,
-      'Select a pollutant to continue',
-      'Add pollutant',
-      '/airpollutant/nojs',
-      '',
-      '',
-      request,
-      backUrl
-    )
+    return renderErrorState(h, request, backUrl, {
+      errormsg: 'Select a pollutant to continue',
+      errorref1: 'Add pollutant',
+      errorhref1: '/airpollutant/nojs',
+      errorref2: '',
+      errorhref2: ''
+    })
   }
   return null
 }
@@ -78,16 +69,13 @@ const validateSelectedPollutant = (request, h, backUrl) => {
 const validateSelectedYear = (request, h, backUrl) => {
   const selectedYear = request.yar.get('selectedyear')
   if (!selectedYear) {
-    return renderErrorState(
-      h,
-      'Select a year to continue',
-      'Add year',
-      '/year-aurn',
-      '',
-      '',
-      request,
-      backUrl
-    )
+    return renderErrorState(h, request, backUrl, {
+      errormsg: 'Select a year to continue',
+      errorref1: 'Add year',
+      errorhref1: '/year-aurn',
+      errorref2: '',
+      errorhref2: ''
+    })
   }
   return null
 }
@@ -95,16 +83,13 @@ const validateSelectedYear = (request, h, backUrl) => {
 const validateSelectedLocation = (request, h, backUrl) => {
   const selectedLocation = request.yar.get('selectedlocation')
   if (!selectedLocation) {
-    return renderErrorState(
-      h,
-      'Select a location to continue',
-      'Add location',
-      '/location-aurn/nojs',
-      '',
-      '',
-      request,
-      backUrl
-    )
+    return renderErrorState(h, request, backUrl, {
+      errormsg: 'Select a location to continue',
+      errorref1: 'Add location',
+      errorhref1: '/location-aurn/nojs',
+      errorref2: '',
+      errorhref2: ''
+    })
   }
   return null
 }
@@ -116,16 +101,14 @@ const validateNumberOfLocations = (request, h, backUrl) => {
     numberOfLocations === '0' ||
     !numberOfLocations
   ) {
-    return renderErrorState(
-      h,
-      'There are no stations available based on your selection. Change the year or location',
-      'Change the year',
-      '/year-aurn',
-      'Change the location',
-      '/location-aurn/nojs',
-      request,
-      backUrl
-    )
+    return renderErrorState(h, request, backUrl, {
+      errormsg:
+        'There are no stations available based on your selection. Change the year or location',
+      errorref1: 'Change the year',
+      errorhref1: '/year-aurn',
+      errorref2: 'Change the location',
+      errorhref2: '/location-aurn/nojs'
+    })
   }
   return null
 }
@@ -143,16 +126,24 @@ export const downloadDataselectornojsController = {
 
     // Validate all required fields
     const pollutantError = validateSelectedPollutant(request, h, backUrl)
-    if (pollutantError) return pollutantError
+    if (pollutantError) {
+      return pollutantError
+    }
 
     const yearError = validateSelectedYear(request, h, backUrl)
-    if (yearError) return yearError
+    if (yearError) {
+      return yearError
+    }
 
     const locationError = validateSelectedLocation(request, h, backUrl)
-    if (locationError) return locationError
+    if (locationError) {
+      return locationError
+    }
 
     const locationsError = validateNumberOfLocations(request, h, backUrl)
-    if (locationsError) return locationsError
+    if (locationsError) {
+      return locationsError
+    }
 
     // Success case - render download page
     const viewData = buildViewData(request, backUrl)

@@ -39,240 +39,327 @@ const MSG_END_AFTER_START =
   'End year must be the same as or after the start year.'
 const MSG_MAX_FIVE_YEARS = 'Choose up to 5 whole years at a time'
 
+const HREF_TIME_YTD = '#time-ytd'
+const MSG_SELECT_OPTION = 'Select an option before continuing'
+const MSG_SELECT_VALID_OPTION = 'Select a valid option'
+
+function getCurrentYear() {
+  return new Date().getFullYear()
+}
+
+function isFourDigitYear(value) {
+  return /^\d{4}$/.test(value)
+}
+
+function withinRange(year) {
+  const n = Number(year)
+  return n >= 1973 && n <= getCurrentYear()
+}
+
+function isValidYearRange(startYear, endYear) {
+  const yearCount = endYear - startYear + 1
+  return yearCount <= 5
+}
+
+function addError(errors, text, href, detailField, detailText = text) {
+  errors.list.push({ text, href })
+  errors.details[detailField] = detailText
+}
+
+function firstNonEmpty(values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== '') {
+      return value
+    }
+  }
+  return ''
+}
+
+function getGetFormData(request) {
+  const transientFormData = request.yar.get('yearFormData') || {}
+  const savedTime = request.yar.get('TimeSelectionMode') || ''
+  const savedAny = request.yar.get('yearany') || ''
+  const savedStart = request.yar.get('startYear') || ''
+  const savedEnd = request.yar.get('endYear') || ''
+  const savedYtdStart = request.yar.get('startyear_ytd') || ''
+
+  return {
+    time: firstNonEmpty([transientFormData.time, savedTime]),
+    [FIELD_ANY_YEAR_INPUT]: firstNonEmpty([
+      transientFormData[FIELD_ANY_YEAR_INPUT],
+      savedAny
+    ]),
+    [FIELD_RANGE_START_YEAR]: firstNonEmpty([
+      transientFormData[FIELD_RANGE_START_YEAR],
+      savedStart,
+      savedYtdStart
+    ]),
+    [FIELD_RANGE_END_YEAR]: firstNonEmpty([
+      transientFormData[FIELD_RANGE_END_YEAR],
+      savedEnd
+    ])
+  }
+}
+
+function renderYearView(h, backUrl, errors, formData) {
+  return h.view(VIEW_PATH, {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    displayBacklink: true,
+    hrefq: backUrl,
+    errors,
+    formData
+  })
+}
+
+function handleGetRequest(request, h, backUrl) {
+  const errors = request.yar.get('yearFormErrors') || {
+    list: [],
+    details: {}
+  }
+  const formData = getGetFormData(request)
+
+  request.yar.clear('yearFormErrors')
+  request.yar.clear('yearFormData')
+
+  return renderYearView(h, backUrl, errors, formData)
+}
+
+function validateAnyYear(payload, request, errors) {
+  const year = (payload[FIELD_ANY_YEAR_INPUT] || '').trim()
+  request.yar.set('yearany', year)
+
+  if (!year) {
+    addError(
+      errors,
+      MSG_ENTER_YEAR,
+      HREF_ANY_YEAR_INPUT,
+      ERROR_FIELD_ANY_YEAR,
+      MSG_ENTER_YEAR
+    )
+    return
+  }
+
+  if (!isFourDigitYear(year)) {
+    addError(
+      errors,
+      MSG_FOUR_DIGIT_YEAR_EXAMPLE,
+      HREF_ANY_YEAR_INPUT,
+      ERROR_FIELD_ANY_YEAR,
+      MSG_FOUR_DIGIT_YEAR_EXAMPLE
+    )
+    return
+  }
+
+  if (!withinRange(year)) {
+    const msg = `Year must be between 1973 and ${getCurrentYear()}.`
+    addError(errors, msg, HREF_ANY_YEAR_INPUT, ERROR_FIELD_ANY_YEAR, msg)
+  }
+}
+
+function validateRangeBoundary(
+  value,
+  requiredMsg,
+  fourDigitMsg,
+  outOfRangeMsg,
+  href,
+  detailField,
+  errors
+) {
+  if (!value) {
+    addError(errors, requiredMsg, href, detailField, requiredMsg)
+    return
+  }
+
+  if (!isFourDigitYear(value)) {
+    addError(errors, fourDigitMsg, href, detailField, fourDigitMsg)
+    return
+  }
+
+  if (!withinRange(value)) {
+    addError(errors, outOfRangeMsg, href, detailField, outOfRangeMsg)
+  }
+}
+
+function validateRangeRelationship(startYear, endYear, errors) {
+  if (
+    !(
+      startYear &&
+      endYear &&
+      isFourDigitYear(startYear) &&
+      isFourDigitYear(endYear)
+    )
+  ) {
+    return
+  }
+
+  const start = Number(startYear)
+  const end = Number(endYear)
+
+  if (start > end) {
+    addError(
+      errors,
+      MSG_START_BEFORE_END,
+      HREF_RANGE_START_YEAR,
+      ERROR_FIELD_RANGE_START,
+      MSG_START_BEFORE_END
+    )
+    addError(
+      errors,
+      MSG_END_AFTER_START,
+      HREF_RANGE_END_YEAR,
+      ERROR_FIELD_RANGE_END,
+      MSG_END_AFTER_START
+    )
+  } else if (!isValidYearRange(start, end)) {
+    addError(
+      errors,
+      MSG_MAX_FIVE_YEARS,
+      HREF_RANGE_START_YEAR,
+      ERROR_FIELD_RANGE_START,
+      MSG_MAX_FIVE_YEARS
+    )
+    addError(
+      errors,
+      MSG_MAX_FIVE_YEARS,
+      HREF_RANGE_END_YEAR,
+      ERROR_FIELD_RANGE_END,
+      MSG_MAX_FIVE_YEARS
+    )
+  } else {
+    // start <= end and range is valid — no error needed
+  }
+}
+
+function validateRangeYears(payload, request, errors) {
+  const startYear = (payload[FIELD_RANGE_START_YEAR] || '').trim()
+  const endYear = (payload[FIELD_RANGE_END_YEAR] || '').trim()
+
+  request.yar.set('startYear', startYear)
+  request.yar.set('endYear', endYear)
+
+  validateRangeBoundary(
+    startYear,
+    MSG_ENTER_START_YEAR,
+    MSG_START_YEAR_FOUR_DIGITS,
+    `Start year must be between 1973 and ${getCurrentYear()}.`,
+    HREF_RANGE_START_YEAR,
+    ERROR_FIELD_RANGE_START,
+    errors
+  )
+
+  validateRangeBoundary(
+    endYear,
+    MSG_ENTER_END_YEAR,
+    MSG_END_YEAR_FOUR_DIGITS,
+    `End year must be between 1973 and ${getCurrentYear()}.`,
+    HREF_RANGE_END_YEAR,
+    ERROR_FIELD_RANGE_END,
+    errors
+  )
+
+  validateRangeRelationship(startYear, endYear, errors)
+}
+
+function validatePostPayload(payload, request, errors) {
+  if (!payload.time) {
+    addError(
+      errors,
+      MSG_SELECT_OPTION,
+      HREF_TIME_YTD,
+      'time',
+      MSG_SELECT_OPTION
+    )
+    return
+  }
+
+  if (payload.time === 'ytd') {
+    return
+  }
+
+  if (payload.time === 'any') {
+    validateAnyYear(payload, request, errors)
+    return
+  }
+
+  if (payload.time === 'range') {
+    validateRangeYears(payload, request, errors)
+    return
+  }
+
+  addError(
+    errors,
+    MSG_SELECT_VALID_OPTION,
+    HREF_TIME_YTD,
+    'time',
+    MSG_SELECT_VALID_OPTION
+  )
+}
+
+function buildTimePeriod(payload) {
+  const today = new Date()
+  const currentYear = today.getFullYear()
+  const formattedToday = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(today)
+
+  if (payload.time === 'ytd') {
+    return `${JANUARY_FIRST} to ${formattedToday}`
+  }
+
+  if (payload.time === 'any') {
+    const year = Number(payload[FIELD_ANY_YEAR_INPUT])
+    return year === currentYear
+      ? `${JANUARY_FIRST} to ${formattedToday}`
+      : `${JANUARY_FIRST} to ${DECEMBER_THIRTY_FIRST} ${year}`
+  }
+
+  if (payload.time === 'range') {
+    const startYear = Number(payload[FIELD_RANGE_START_YEAR])
+    const endYear = Number(payload[FIELD_RANGE_END_YEAR])
+    return endYear === currentYear
+      ? `${JANUARY_FIRST} ${startYear} to ${formattedToday}`
+      : `${JANUARY_FIRST} ${startYear} to ${DECEMBER_THIRTY_FIRST} ${endYear}`
+  }
+
+  return 'None selected'
+}
+
+function handlePostRequest(request, h, backUrl) {
+  const payload = request.payload || {}
+  const errors = { list: [], details: {} }
+
+  request.yar.set('TimeSelectionMode', payload.time)
+  validatePostPayload(payload, request, errors)
+
+  if (errors.list.length > 0) {
+    request.yar.set('yearFormErrors', errors)
+    request.yar.set('yearFormData', payload)
+    return renderYearView(h, backUrl, errors, payload)
+  }
+
+  request.yar.clear('yearFormErrors')
+  request.yar.clear('yearFormData')
+  request.yar.set('selectedTimePeriod', buildTimePeriod(payload))
+  return h.redirect('/customdataset')
+}
+
 export const yearController = {
   handler(request, h) {
     const backUrl = '/customdataset'
 
-    // GET: render form, read and clear transient errors/data, and prefill from persistent session
     if (request.method === 'get') {
-      const errors = request.yar.get('yearFormErrors') || {
-        list: [],
-        details: {}
-      }
-      const transientFormData = request.yar.get('yearFormData') || {}
-
-      // Persistent, used when coming from /customdataset "Change" link
-      const savedTime = request.yar.get('TimeSelectionMode') || ''
-      const savedAny = request.yar.get('yearany') || ''
-      const savedStart = request.yar.get('startYear') || ''
-      const savedEnd = request.yar.get('endYear') || ''
-      const savedYtdStart = request.yar.get('startyear_ytd') || ''
-
-      // Prefer transient (last POST) over saved, then build formData for template
-      const formData = {
-        time: transientFormData.time || savedTime || '',
-        [FIELD_ANY_YEAR_INPUT]:
-          transientFormData[FIELD_ANY_YEAR_INPUT] || savedAny || '',
-        [FIELD_RANGE_START_YEAR]:
-          transientFormData[FIELD_RANGE_START_YEAR] ||
-          savedStart ||
-          savedYtdStart ||
-          '',
-        [FIELD_RANGE_END_YEAR]:
-          transientFormData[FIELD_RANGE_END_YEAR] || savedEnd || ''
-      }
-
-      // Clear transient after reading (do not clear persistent)
-      request.yar.clear('yearFormErrors')
-      request.yar.clear('yearFormData')
-
-      return h.view(VIEW_PATH, {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        displayBacklink: true,
-        hrefq: backUrl,
-        errors,
-        formData
-      })
-    } else if (request.method === 'post') {
-      const payload = request.payload || {}
-      const errors = { list: [], details: {} }
-
-      // Persist selected time for “Change” flows
-      request.yar.set('TimeSelectionMode', payload.time)
-
-      function isFourDigitYear(value) {
-        return /^\d{4}$/.test(value)
-      }
-      function withinRange(year) {
-        const n = Number(year)
-        return n >= 1973 && n <= new Date().getFullYear()
-      }
-      function isValidYearRange(startYear, endYear) {
-        const yearCount = endYear - startYear + 1
-        return yearCount <= 5
-      }
-
-      if (!payload.time) {
-        errors.list.push({
-          text: 'Select an option before continuing',
-          href: '#time-ytd'
-        })
-        errors.details.time = 'Select an option before continuing'
-      } else if (payload.time === 'ytd') {
-        // YTD requires no validation - just a valid selection
-      } else if (payload.time === 'any') {
-        const year = (payload[FIELD_ANY_YEAR_INPUT] || '').trim()
-        request.yar.set('yearany', year) // persist for change
-        if (!year) {
-          errors.list.push({ text: MSG_ENTER_YEAR, href: HREF_ANY_YEAR_INPUT })
-          errors.details[ERROR_FIELD_ANY_YEAR] = MSG_ENTER_YEAR
-        } else if (!isFourDigitYear(year)) {
-          errors.list.push({
-            text: MSG_FOUR_DIGIT_YEAR_EXAMPLE,
-            href: HREF_ANY_YEAR_INPUT
-          })
-          errors.details[ERROR_FIELD_ANY_YEAR] = MSG_FOUR_DIGIT_YEAR_EXAMPLE
-        } else if (!withinRange(year)) {
-          const msg = `Year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: HREF_ANY_YEAR_INPUT })
-          errors.details[ERROR_FIELD_ANY_YEAR] = msg
-        } else {
-          // Year is valid
-        }
-      } else if (payload.time === 'range') {
-        const startYear = (payload[FIELD_RANGE_START_YEAR] || '').trim()
-        const endYear = (payload[FIELD_RANGE_END_YEAR] || '').trim()
-        // persist for change
-        request.yar.set('startYear', startYear)
-        request.yar.set('endYear', endYear)
-
-        if (!startYear) {
-          errors.list.push({
-            text: MSG_ENTER_START_YEAR,
-            href: HREF_RANGE_START_YEAR
-          })
-          errors.details[ERROR_FIELD_RANGE_START] = MSG_ENTER_START_YEAR
-        } else if (!isFourDigitYear(startYear)) {
-          errors.list.push({
-            text: MSG_START_YEAR_FOUR_DIGITS,
-            href: HREF_RANGE_START_YEAR
-          })
-          errors.details[ERROR_FIELD_RANGE_START] = MSG_START_YEAR_FOUR_DIGITS
-        } else if (!withinRange(startYear)) {
-          const msg = `Start year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: HREF_RANGE_START_YEAR })
-          errors.details[ERROR_FIELD_RANGE_START] = msg
-        } else {
-          // Start year is valid
-        }
-
-        if (!endYear) {
-          errors.list.push({
-            text: MSG_ENTER_END_YEAR,
-            href: HREF_RANGE_END_YEAR
-          })
-          errors.details[ERROR_FIELD_RANGE_END] = MSG_ENTER_END_YEAR
-        } else if (!isFourDigitYear(endYear)) {
-          errors.list.push({
-            text: MSG_END_YEAR_FOUR_DIGITS,
-            href: HREF_RANGE_END_YEAR
-          })
-          errors.details[ERROR_FIELD_RANGE_END] = MSG_END_YEAR_FOUR_DIGITS
-        } else if (!withinRange(endYear)) {
-          const msg = `End year must be between 1973 and ${new Date().getFullYear()}.`
-          errors.list.push({ text: msg, href: HREF_RANGE_END_YEAR })
-          errors.details['range-end'] = msg
-        } else {
-          // End year is valid
-        }
-
-        if (
-          startYear &&
-          endYear &&
-          isFourDigitYear(startYear) &&
-          isFourDigitYear(endYear)
-        ) {
-          const start = Number(startYear)
-          const end = Number(endYear)
-          if (start > end) {
-            errors.list.push({
-              text: MSG_START_BEFORE_END,
-              href: HREF_RANGE_START_YEAR
-            })
-            errors.details[ERROR_FIELD_RANGE_START] = MSG_START_BEFORE_END
-            errors.list.push({
-              text: MSG_END_AFTER_START,
-              href: HREF_RANGE_END_YEAR
-            })
-            errors.details[ERROR_FIELD_RANGE_END] = MSG_END_AFTER_START
-          } else if (!isValidYearRange(start, end)) {
-            errors.list.push({
-              text: MSG_MAX_FIVE_YEARS,
-              href: HREF_RANGE_START_YEAR
-            })
-            errors.list.push({
-              text: MSG_MAX_FIVE_YEARS,
-              href: HREF_RANGE_END_YEAR
-            })
-            errors.details[ERROR_FIELD_RANGE_START] = MSG_MAX_FIVE_YEARS
-            errors.details[ERROR_FIELD_RANGE_END] = MSG_MAX_FIVE_YEARS
-          } else {
-            // Year range is valid
-          }
-        }
-      } else {
-        // Invalid time selection
-        errors.list.push({
-          text: 'Select a valid option',
-          href: '#time-ytd'
-        })
-        errors.details.time = 'Select a valid option'
-      }
-
-      if (errors.list.length > 0) {
-        request.yar.set('yearFormErrors', errors)
-        request.yar.set('yearFormData', payload)
-        return h.view(VIEW_PATH, {
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          displayBacklink: true,
-          hrefq: backUrl,
-          errors,
-          formData: payload
-        })
-      }
-
-      // Success: clear transient errors/data
-      request.yar.clear('yearFormErrors')
-      request.yar.clear('yearFormData')
-
-      // Build time period (unchanged)
-      const today = new Date()
-      const currentYear = today.getFullYear()
-      const formattedToday = new Intl.DateTimeFormat('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }).format(today)
-
-      let timePeriod = 'None selected'
-      if (payload.time === 'ytd') {
-        timePeriod = `${JANUARY_FIRST} to ${formattedToday}`
-      } else if (payload.time === 'any') {
-        const year = Number(payload[FIELD_ANY_YEAR_INPUT])
-        timePeriod =
-          year === currentYear
-            ? `${JANUARY_FIRST} to ${formattedToday}`
-            : `${JANUARY_FIRST} to ${DECEMBER_THIRTY_FIRST} ${year}`
-      } else if (payload.time === 'range') {
-        const startYear = Number(payload[FIELD_RANGE_START_YEAR])
-        const endYear = Number(payload[FIELD_RANGE_END_YEAR])
-        timePeriod =
-          endYear === currentYear
-            ? `${JANUARY_FIRST} ${startYear} to ${formattedToday}`
-            : `${JANUARY_FIRST} ${startYear} to ${DECEMBER_THIRTY_FIRST} ${endYear}`
-      }
-      // else: timePeriod remains 'None selected' for any other case
-
-      request.yar.set('selectedTimePeriod', timePeriod)
-      return h.redirect('/customdataset')
-    } else {
-      // Fallback: GET by default
-      return h.redirect('/year-aurn')
+      return handleGetRequest(request, h, backUrl)
     }
+
+    if (request.method === 'post') {
+      return handlePostRequest(request, h, backUrl)
+    }
+
+    return h.redirect('/year-aurn')
   }
 }
 

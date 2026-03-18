@@ -276,13 +276,13 @@ export const config = convict({
     env: 'Polling_URL'
   },
   email_URL: {
-    doc: 'connect to get job status',
+    doc: 'connect to send email details',
     format: String,
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomEmailJobDataSelection/`,
     env: 'Email_URL'
   },
   downloadEmailUrl: {
-    doc: 'connect to get job status',
+    doc: 'connect to get download email details',
     format: String,
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPresignedUrlMail/`,
     env: 'DOWNLOAD_EMAIL_URL'
