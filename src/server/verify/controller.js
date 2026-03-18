@@ -14,9 +14,7 @@ export const verifyController = {
     // prod
     async function invokeDownloadEmail(apiparams) {
       const emailParams = { jobID: apiparams.id }
-      // prod
-      //   logger.info(`apiparams ${emailParams}`)
-      //   logger.info(`downloadEmailUrl ${config.get('downloadEmailUrl')}`)
+
       try {
         logger.info('About to call axios.post...')
         const response = await axios.post(
@@ -31,22 +29,15 @@ export const verifyController = {
         )
         logger.info('Axios call completed successfully')
         const emaildownloadUrl = response.data
-        // logger.info(`responseofdownload ${JSON.stringify(response)}`)
-        // logger.info(`responseofdownloaddata ${JSON.stringify(response.data)}`)
-        // logger.info(`emaildownloadUrl ${JSON.stringify(emaildownloadUrl)}`)
-        //   logger.info(`response.status: ${response.status}`)
-        //   if (response.data && typeof response.data === 'object') {
-        //     logger.info(`response.data keys: ${Object.keys(response.data)}`)
-        //   } else {
-        //     logger.info(`response.data: ${response.data}`)
-        //   }
-        //   logger.info(`emaildownloadUrl type: ${typeof emaildownloadUrl}`)
+
         return emaildownloadUrl
       } catch (error) {
         logger.error(`Error invoking download email API: ${error.message}`)
         logger.error(`Error stack: ${error.stack}`)
         logger.error(`Error name: ${error.name}`)
-        if (error.code) logger.error(`Error code: ${error.code}`)
+        if (error.code) {
+          logger.error(`Error code: ${error.code}`)
+        }
         if (error.response) {
           logger.error(`Response status: ${error.response.status}`)
           logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
@@ -106,7 +97,7 @@ export const verifyController = {
         pageTitle: 'Link Expired',
         heading: 'Your link has expired',
         message:
-          'This download link has expired. Download links expire after 48 hours.',
+          'The download link had expired. Download links expire after 48 hours.',
         downloadEmailUrl: null,
         id: null,
         timestamp: null,

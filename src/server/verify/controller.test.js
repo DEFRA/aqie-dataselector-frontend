@@ -36,7 +36,7 @@ const expiredViewPayload = {
   pageTitle: 'Link Expired',
   heading: 'Your link has expired',
   message:
-    'This download link has expired. Download links expire after 48 hours.',
+    'The download link had expired. Download links expire after 48 hours.',
   downloadEmailUrl: null,
   id: null,
   timestamp: null,
