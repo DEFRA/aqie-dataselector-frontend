@@ -88,10 +88,13 @@ export const verifyController = {
 
     // Check if timestamp is expired (more than 2 days old)
     const currentTime = Date.now()
-    const providedTime = parseInt(timestamp, 10)
+    const providedTime = Number.parseInt(timestamp, 10)
     const twoDaysInMs = 2 * 24 * 60 * 60 * 1000 // 2 days in milliseconds
 
-    if (isNaN(providedTime) || currentTime - providedTime > twoDaysInMs) {
+    if (
+      Number.isNaN(providedTime) ||
+      currentTime - providedTime > twoDaysInMs
+    ) {
       // console.log('Link has expired. Current time:', currentTime, 'Provided time:', providedTime)
       return h.view('verify/index_exp', {
         pageTitle: 'Link Expired',

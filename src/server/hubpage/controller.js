@@ -14,13 +14,11 @@ export const hubController = {
     request.yar.set('osnameapiresult', '')
     request.yar.set('selectedLocation', '')
     request.yar.set('nooflocation', '')
-    request.yar.set('nooflocation', '')
     request.yar.set('yearselected', new Date().getFullYear().toString())
     request.yar.set('selectedYear', new Date().getFullYear().toString())
     request.yar.set('selectedpollutant', '')
     request.yar.set('selectedyear', '')
     request.yar.set('selectedlocation', '')
-    request.yar.set('nooflocation', '')
 
     // Clear pollutant-specific session variables
     request.yar.set('selectedPollutants', null)

@@ -245,8 +245,8 @@ function parseYearRange(selectedyear, request) {
 
   if (years && years.length === 2) {
     request.yar.set('yearrange', 'Multiple')
-    const start = parseInt(years[0], 10)
-    const end = parseInt(years[1], 10)
+    const start = Number.parseInt(years[0], 10)
+    const end = Number.parseInt(years[1], 10)
     const yearList = []
     for (let y = start; y <= end; y++) {
       yearList.push(y)

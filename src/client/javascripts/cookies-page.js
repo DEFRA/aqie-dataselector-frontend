@@ -161,7 +161,7 @@ class CookiesPage {
    * @returns {string | null} Cookie type
    */
   getCookieType($cookieFormFieldset) {
-    return $cookieFormFieldset.getAttribute('data-cookie-type')
+    return $cookieFormFieldset.dataset.cookieType || null
   }
 }
 

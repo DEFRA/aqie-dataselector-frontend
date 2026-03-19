@@ -154,7 +154,7 @@ const multipleLocationsController = {
     const searchValue = request?.yar?.get('fullSearchQuery').value
     const locationMiles = request?.yar?.get('locationMiles')
 
-    if (searchValue !== '' || searchValue !== null) {
+    if (searchValue !== '' && searchValue !== null) {
       request.yar.set('searchLocation', searchValue)
       request.yar.set('searchValue', searchValue)
     } else {
@@ -186,7 +186,7 @@ const multipleLocationsController = {
         locations = locationdetails.getOSPlaces
       }
 
-      if (searchValue !== '' || searchValue !== null) {
+      if (searchValue !== '' && searchValue !== null) {
         MonitoringstResult = await InvokeMonitstnAPI(searchValue, locationMiles)
 
         if (MonitoringstResult !== null) {
