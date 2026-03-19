@@ -112,7 +112,7 @@
                  id="conditional-time-range">
               <div class="govuk-form-group{% if errors.details['range-start'] %} govuk-form-group--error{% endif %}" id="range-start-group">
                 <label class="govuk-label" for="range-start-year">Enter start year</label>
-                <div id="range-start-hint" class="govuk-hint">For example: 2010</div>
+                <div id="range-start-hint" class="govuk-hint">For example: 2020</div>
                 {% if errors.details['range-start'] %}
                   <p class="govuk-error-message" id="range-start-year-error">
                     <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-start'] }}
@@ -135,7 +135,7 @@
 
               <div class="govuk-form-group{% if errors.details['range-end'] %} govuk-form-group--error{% endif %}" id="range-end-group">
                 <label class="govuk-label" for="range-end-year">Enter end year</label>
-                <div id="range-end-hint" class="govuk-hint">For example: 2015</div>
+                <div id="range-end-hint" class="govuk-hint">For example: 2024</div>
                 {% if errors.details['range-end'] %}
                   <p class="govuk-error-message" id="range-end-year-error">
                     <span class="govuk-visually-hidden">Error:</span> {{ errors.details['range-end'] }}

@@ -171,10 +171,7 @@ const multipleLocationsController = {
       let MonitoringstResult = ''
       let map1 = new Map()
 
-      if (
-        locationdetails.length === 0 ||
-        locationdetails.length === undefined
-      ) {
+      if (!Array.isArray(locationdetails) || locationdetails.length === 0) {
         const result = await invokeosnameAPI(searchValue)
         // console.log('Result of OSNAMEAPI', result.getOSPlaces)
         if (result !== null) {
@@ -216,67 +213,65 @@ const multipleLocationsController = {
         }
       }
 
-      if (locations) {
-        if (locations === undefined || locations.length === 0) {
-          request.yar.set('errors', '')
-          request.yar.set('errorMessage', '')
-          request.yar.set('nooflocation', 'none')
-          return h.view('multiplelocations/nolocation', {
-            results: locations,
-            serviceName: english.notFoundLocation.heading,
-            paragraph: english.notFoundLocation.paragraphs,
+      if (locations && locations.length === 0) {
+        request.yar.set('errors', '')
+        request.yar.set('errorMessage', '')
+        request.yar.set('nooflocation', 'none')
+        return h.view('multiplelocations/nolocation', {
+          results: locations,
+          serviceName: english.notFoundLocation.heading,
+          paragraph: english.notFoundLocation.paragraphs,
+          searchLocation: request.yar.get('searchLocation'),
+          displayBacklink: true,
+          hrefq: searchlocationurl
+        })
+      } else if (locations && locations.length === 1) {
+        request.yar.set('errors', '')
+        request.yar.set('errorMessage', '')
+        request.yar.set('nooflocation', 'single')
+        if (MonitoringstResult.getmonitoringstation.length === 0) {
+          return h.view('multiplelocations/nostation', {
+            locationMiles,
+            serviceName: english.noStation.heading,
+            paragraph: english.noStation.paragraphs,
             searchLocation: request.yar.get('searchLocation'),
             displayBacklink: true,
             hrefq: searchlocationurl
           })
-        } else if (locations.length === 1) {
-          request.yar.set('errors', '')
-          request.yar.set('errorMessage', '')
-          request.yar.set('nooflocation', 'single')
-          if (MonitoringstResult.getmonitoringstation.length === 0) {
-            return h.view('multiplelocations/nostation', {
-              locationMiles,
-              serviceName: english.noStation.heading,
-              paragraph: english.noStation.paragraphs,
-              searchLocation: request.yar.get('searchLocation'),
-              displayBacklink: true,
-              hrefq: searchlocationurl
-            })
-          } else {
-            return h.view('monitoring-station/index', {
-              pageTitle: english.monitoringStation.pageTitle,
-              title: english.monitoringStation.title,
-              serviceName: english.monitoringStation.serviceName,
-              paragraphs: english.monitoringStation.paragraphs,
-              searchLocation: request.yar.get('searchLocation'),
-              locationMiles,
-              monitoring_station: MonitoringstResult.getmonitoringstation,
-              pollmap: map1,
-
-              displayBacklink: true,
-              hrefq: searchlocationurl
-            })
-          }
         } else {
-          request.yar.set('errors', '')
-          request.yar.set('errorMessage', '')
-          request.yar.set('nooflocation', 'multiple')
-          return h.view('multiplelocations/index', {
-            results: locations,
-            pageTitle: english.multipleLocations.pageTitle,
-            heading: english.multipleLocations.heading,
-            page: english.multipleLocations.page,
-            serviceName: english.searchLocation.serviceName,
-            title: english.multipleLocations.title,
-            params: english.multipleLocations.paragraphs,
-            button: english.multipleLocations.button,
-            locationMiles,
+          return h.view('monitoring-station/index', {
+            pageTitle: english.monitoringStation.pageTitle,
+            title: english.monitoringStation.title,
+            serviceName: english.monitoringStation.serviceName,
+            paragraphs: english.monitoringStation.paragraphs,
             searchLocation: request.yar.get('searchLocation'),
+            locationMiles,
             monitoring_station: MonitoringstResult.getmonitoringstation,
+            pollmap: map1,
+
             displayBacklink: true,
             hrefq: searchlocationurl
           })
         }
+      } else if (locations.length > 1) {
+        request.yar.set('errors', '')
+        request.yar.set('errorMessage', '')
+        request.yar.set('nooflocation', 'multiple')
+        return h.view('multiplelocations/index', {
+          results: locations,
+          pageTitle: english.multipleLocations.pageTitle,
+          heading: english.multipleLocations.heading,
+          page: english.multipleLocations.page,
+          serviceName: english.searchLocation.serviceName,
+          title: english.multipleLocations.title,
+          params: english.multipleLocations.paragraphs,
+          button: english.multipleLocations.button,
+          locationMiles,
+          searchLocation: request.yar.get('searchLocation'),
+          monitoring_station: MonitoringstResult.getmonitoringstation,
+          displayBacklink: true,
+          hrefq: searchlocationurl
+        })
       }
     } else {
       const fullSearchQuery = request?.yar?.get('fullSearchQuery')
