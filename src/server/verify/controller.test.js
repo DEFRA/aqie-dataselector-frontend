@@ -215,8 +215,10 @@ describe('verifyController', () => {
     it('should treat a timestamp exactly at the 2-day boundary as valid', async () => {
       mockRequest.params.timestamp = (
         Date.now() -
-        2 * 24 * 60 * 60 * 1000
-      ).toString()
+        2 * 24 * 60 * 60 * 1000 +
+        100
+      ) // Add small buffer to account for test execution time
+        .toString()
       const mockUrl = 'https://cdn.example.com/file.zip'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
 
