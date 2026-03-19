@@ -23,13 +23,14 @@ class AccessibleAutoComplete {
   }
 
   filterMatchingValues(values, query) {
-    return values.filter(
+    return Array.prototype.filter.call(
+      values,
       (r) => r.toLowerCase().indexOf(query.toLowerCase().trim()) !== -1
     )
   }
 
   getSelectedOption(selectOptions, optionText) {
-    const selectedOption = [].filter.call(
+    const selectedOption = Array.prototype.filter.call(
       selectOptions,
       (option) => (option.textContent || option.innerText) === optionText
     )[0]
@@ -64,16 +65,14 @@ class AccessibleAutoComplete {
 
   init() {
     if (this.$module) {
-      const delay = parseInt(this.$module.getAttribute('data-delay')) || 3000
+      const delay = Number.parseInt(this.$module.dataset.delay, 10) || 3000
       const selectElement = this.$module
       const selectOptions = Array.from(selectElement.options)
       const autocompleteId = selectElement.id
-      const showAllValues =
-        selectElement.getAttribute('data-show-all-values') === 'true'
-      const autoselect =
-        selectElement.getAttribute('data-auto-select') === 'true'
-      const defaultValue = selectElement.getAttribute('data-default-value')
-      const minLength = selectElement.getAttribute('data-min-length')
+      const showAllValues = selectElement.dataset.showAllValues === 'true'
+      const autoselect = selectElement.dataset.autoSelect === 'true'
+      const defaultValue = selectElement.dataset.defaultValue
+      const minLength = selectElement.dataset.minLength
 
       const configurationOptions = {
         selectElement,
@@ -85,8 +84,8 @@ class AccessibleAutoComplete {
         // but if we start then it needs to override this filtering
         // https://github.com/alphagov/accessible-autocomplete/blob/main/src/wrapper.js#L24
         source: this.createTrimQuery(
-          Array.from(this.$module.options)
-            .filter((a) => a.value)
+          Array.prototype.filter
+            .call(Array.from(this.$module.options), (a) => a.value)
             .map((a) => a.textContent),
           delay
         ),
@@ -100,7 +99,7 @@ class AccessibleAutoComplete {
         }
       }
 
-      //  const language = selectElement.getAttribute('data-language') || 'en'
+      //  const language = selectElement.dataset.language || 'en'
 
       this.window.HMRCAccessibleAutocomplete.enhanceSelectElement(
         configurationOptions

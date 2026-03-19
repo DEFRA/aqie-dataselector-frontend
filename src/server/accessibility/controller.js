@@ -17,7 +17,7 @@ const accessibilityController = {
     // }
 
     const cleanPageTitle = pageTitle
-      ? pageTitle.replace(/['"]/g, '')
+      ? pageTitle.replaceAll(/['"]/, '')
       : pageTitle
     return h.view('accessibility/index', {
       pageTitle: cleanPageTitle,
