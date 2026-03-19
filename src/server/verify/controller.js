@@ -47,29 +47,6 @@ export const verifyController = {
     }
     // dev
 
-    //     async function invokeDownloadEmail(apiparams) { // dev
-
-    //     try {
-    //        const emailParams = { jobID: apiparams.id }
-    //       console.log("Goes inside invokedownload_email with apiparams:", apiparams);
-    //   //  const emailParams = { jobID: '55658bec48e1419faadd7e40995f52e0' }
-    //       const url =
-    //         'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionPresignedUrlMail/'
-    //       const { payload } = await Wreck.post(url, {
-    //         payload: JSON.stringify(emailParams),
-    //         headers: {
-    //           'x-api-key': 'hfhzQ7Lssys4PJ4oiVDQ1y54dgqTzRtV',
-    //           'Content-Type': 'application/json'
-    //         },
-    //         json: true
-    //       })
-    //       console.log('payload at email', payload)
-
-    //     return payload
-    //   } catch (error) {
-    //     return error // Rethrow the error so it can be handled appropriately
-    //   }
-    // }
     // Extract path parameters (unique ID and timestamp)
     const { id, timestamp } = request.params
 

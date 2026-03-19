@@ -216,7 +216,6 @@ export function resetCookies() {
  * entirely deleted, GTM is still setting UA cookies.
  */
 export function removeUACookies() {
-  // const removeID = '_ga_' + previewID
   for (const UACookie of ['_gid', '_ga']) {
     Cookie(UACookie, null)
   }

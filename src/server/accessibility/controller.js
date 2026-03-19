@@ -9,12 +9,6 @@ const accessibilityController = {
       }
     } = english
     /* eslint-disable camelcase */
-    // const {
-    //   query: { lang }
-    // } = request
-    // if (lang && lang === 'cy') {
-    //   return h.redirect(`/preifatrwydd/cy?lang=cy`)
-    // }
 
     const cleanPageTitle = pageTitle
       ? pageTitle.replaceAll(/['"]/, '')
