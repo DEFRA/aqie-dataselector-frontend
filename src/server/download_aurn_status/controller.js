@@ -40,52 +40,6 @@ async function invokedownloadS3(downloadstatusapiparams) {
     }
   }
 }
-// dev
-// async function invokedownloadS3(downloadstatusapiparams) {
-//   // Single status check - no polling loop!
-//   const url1 =
-//     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus/'
-//   try {
-//     // logger.info(`Checking status for jobID: ${downloadstatusapiparams}`)
-
-//     const statusResult = await axios.post(url1, downloadstatusapiparams, {
-//       headers: {
-//         'x-api-key': 'T08yvqWwVS6df56ELMuQ2GPrwp3e7uaT',
-//         'Content-Type': 'application/json'
-//       }
-//     })
-
-//     const statusResponse = statusResult.data
-
-//     // Return status and resultUrl
-//     return {
-//       status: statusResponse.status,
-//       resultUrl: statusResponse.resultUrl || null
-//     }
-//   } catch (error) {
-
-//     // Return structured error
-//     if (error.response) {
-//       return {
-//         error: true,
-//         statusCode: error.response.status,
-//         redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
-//       }
-//     } else if (error.request) {
-//       return {
-//         error: true,
-//         statusCode: 500,
-//         redirectUrl: '/problem-with-service?statusCode=500'
-//       }
-//     } else {
-//       return {
-//         error: true,
-//         statusCode: 500,
-//         redirectUrl: '/problem-with-service?statusCode=500'
-//       }
-//     }
-//   }
-// }
 
 const downloadAurnstatusController = {
   handler: async (request, h) => {

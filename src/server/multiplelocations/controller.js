@@ -59,9 +59,7 @@ const multipleLocationsController = {
 
       // dev
       // try {
-      //   const url =
-      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
-      //   const { res, payload } = await Wreck.post(url, {
+
       //     payload: JSON.stringify(nameApiparams),
       //     headers: {
       //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
@@ -93,9 +91,7 @@ const multipleLocationsController = {
 
       // dev
       // try {
-      //   const url =
-      //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
-      //   const { res, payload } = await Wreck.post(url, {
+
       //     payload: JSON.stringify(locationvalues),
       //     headers: {
       //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
@@ -272,6 +268,8 @@ const multipleLocationsController = {
           displayBacklink: true,
           hrefq: searchlocationurl
         })
+      } else {
+        // Handle edge case where locations exists but has unexpected length
       }
     } else {
       const fullSearchQuery = request?.yar?.get('fullSearchQuery')

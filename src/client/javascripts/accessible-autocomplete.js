@@ -99,8 +99,6 @@ class AccessibleAutoComplete {
         }
       }
 
-      //  const language = selectElement.dataset.language || 'en'
-
       this.window.HMRCAccessibleAutocomplete.enhanceSelectElement(
         configurationOptions
       )

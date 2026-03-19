@@ -9,8 +9,6 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 export const datasourceController = {
   handler(request, h) {
     const backUrl = '/customdataset'
-    // console.log("comes here",request.params.pollutants)
-    // const { home } = englishNew.custom
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -19,14 +17,6 @@ export const datasourceController = {
     request.yar.set('nooflocation', '')
     request.yar.set('yearselected', new Date().getFullYear().toString())
     request.yar.set('selectedYear', new Date().getFullYear().toString())
-    // if(request.params.pollutants!=undefined)
-    // {
-    // request.yar.set('selectedpollutant', request.params.pollutants)
-
-    // }
-    // else{
-    //   request.yar.set('selectedpollutant', '')
-    // }
     return h.view('datasource/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
