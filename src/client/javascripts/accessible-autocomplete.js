@@ -41,9 +41,7 @@ class AccessibleAutoComplete {
   handleConfirm(chosenOption, selectOptions, selectElement, autocompleteId) {
     selectElement.value = ''
     const chosenOptionOrCurrentValue =
-      chosenOption !== undefined
-        ? chosenOption
-        : this.document.getElementById(autocompleteId)?.value
+      chosenOption ?? this.document.getElementById(autocompleteId)?.value
     const selectedOption = this.getSelectedOption(
       selectOptions,
       chosenOptionOrCurrentValue

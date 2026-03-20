@@ -49,7 +49,7 @@ class CookiesPage {
       '.js-cookies-page-success'
     )
 
-    if ($successNotification instanceof HTMLElement) {
+    if ($successNotification) {
       this.$successNotification = $successNotification
     }
 

@@ -9,6 +9,14 @@ import {
 
 const PROBLEM_SERVICE_500_URL = `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
 
+function createServerErrorResponse() {
+  return {
+    error: true,
+    statusCode: statusCodes.internalServerError,
+    redirectUrl: PROBLEM_SERVICE_500_URL
+  }
+}
+
 async function invokeDownloadS3(downloadstatusapiparams) {
   // Single status check - no polling loop!
 
@@ -31,18 +39,8 @@ async function invokeDownloadS3(downloadstatusapiparams) {
         statusCode: error.response.status,
         redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
       }
-    } else if (error.request) {
-      return {
-        error: true,
-        statusCode: statusCodes.internalServerError,
-        redirectUrl: PROBLEM_SERVICE_500_URL
-      }
     } else {
-      return {
-        error: true,
-        statusCode: statusCodes.internalServerError,
-        redirectUrl: PROBLEM_SERVICE_500_URL
-      }
+      return createServerErrorResponse()
     }
   }
 }

@@ -129,7 +129,7 @@ const multipleLocationsController = {
       const locationdetails = request.yar.get('osnameapiresult')
 
       let locations = ''
-      let MonitoringstResult = ''
+      let MonitoringstResult = null
       let map1 = new Map()
 
       if (!Array.isArray(locationdetails) || locationdetails.length === 0) {
@@ -155,7 +155,7 @@ const multipleLocationsController = {
         }
 
         // Build pollutant map if we have locations and monitoring stations
-        const hasLocations = locations !== undefined && locations.length > 0
+        const hasLocations = locations && locations.length > 0
         const hasStations = MonitoringstResult?.getmonitoringstation?.length > 0
 
         if (hasLocations && hasStations) {

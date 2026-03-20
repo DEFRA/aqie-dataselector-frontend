@@ -7,14 +7,17 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import {
+  LAQM_TIMEOUT_MS,
+  MONTHS_PER_YEAR
+} from '~/src/server/common/constants/magic-numbers.js'
 
 import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger() // NOSONAR
 
-const LAQM_TIMEOUT_MS = 2500
-const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
+const LAQM_CACHE_TTL_MS = MONTHS_PER_YEAR * 60 * 60 * 1000
 const LOCATION_AURN_VIEW = 'location_aurn/index'
 const LOCATION_AURN_VIEW_NOJS = 'location_aurn/index_nojs'
 const CUSTOMDATASET_URL = '/customdataset'
