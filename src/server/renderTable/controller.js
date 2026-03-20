@@ -10,14 +10,6 @@ async function invokeTable(params) {
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
-
-  // dev
-  // try {
-  //   const url = 'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryexceedence/'
-  //   const { res, payload } = await Wreck.post(url, {
-  //     payload: JSON.stringify(params),
-  //     headers: {
-  //       'Content-Type': 'application/json',
   //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
   //     },
   //     json: true

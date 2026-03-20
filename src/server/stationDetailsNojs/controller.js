@@ -121,9 +121,6 @@ const stationDetailsNojsController = {
     const result = monitoringResult.getmonitoringstation
 
     const station = result.find((x) => x.id === request.yar.get('SiteId'))
-    // if (!station) {
-    //  catchAll(request, h)
-    // }
 
     request.yar.set('stationdetails', station)
     const stationDetails = request.yar.get('stationdetails')

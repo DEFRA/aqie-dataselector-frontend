@@ -3,8 +3,6 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 const logger = createLogger()
 
 async function catchProxyFetchError(url, options) {
-  let statusCode = 200
-
   try {
     const startTime = performance.now()
     const date = new Date().toUTCString()
@@ -14,7 +12,7 @@ async function catchProxyFetchError(url, options) {
     logger.info(
       `API response.status: ${response.status} from ${url} fetch took ${date} ${duration} milliseconds`
     )
-    statusCode = response.status
+    const statusCode = response.status
     if (!response.ok) {
       logger.info(
         `Failed to fetch data from ${url}: ${JSON.stringify(response)}`

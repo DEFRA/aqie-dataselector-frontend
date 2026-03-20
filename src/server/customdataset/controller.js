@@ -8,11 +8,15 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import {
+  HTTP_INTERNAL_SERVER_ERROR,
+  STATUS_CODE_LIMITS,
+  STATIONCOUNT_TIMEOUT_MS
+} from '~/src/server/common/constants/magic-numbers.js'
 // import { error } from 'node:console'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 // import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { STATIONCOUNT_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const logger = createLogger()
@@ -43,7 +47,11 @@ function extractStatusCode(maybeError) {
     maybeError?.statusCode ??
     maybeError?.status
 
-  if (typeof candidate === 'number' && candidate >= 100 && candidate <= 599) {
+  if (
+    typeof candidate === 'number' &&
+    candidate >= STATUS_CODE_LIMITS.MIN &&
+    candidate <= STATUS_CODE_LIMITS.MAX
+  ) {
     return candidate
   }
 
@@ -55,7 +63,7 @@ function extractStatusCode(maybeError) {
     }
   }
 
-  return 500
+  return HTTP_INTERNAL_SERVER_ERROR
 }
 
 function renderErrorPage(h, statusCode) {
