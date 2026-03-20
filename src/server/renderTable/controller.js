@@ -1,7 +1,10 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
-// import Wreck from '@hapi/wreck'
+import {
+  HTTP_OK,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
 async function invokeTable(params) {
   // Renamed parameter to avoid shadowing
   try {
@@ -54,9 +57,11 @@ const rendertablecontroller = {
         finalyear
       })
 
-      return h.response(partialContent1).code(200)
+      return h.response(partialContent1).code(HTTP_OK)
     } catch (error) {
-      return h.response('Error rendering partial content').code(500)
+      return h
+        .response('Error rendering partial content')
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
   }
 }

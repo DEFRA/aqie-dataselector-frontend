@@ -5,12 +5,12 @@ import * as CookieFunctions from './cookie-functions.js'
  * Website cookies page
  */
 class CookiesPage {
+  initialized = false
+
   /**
    * @param {Element} $module - HTML element
    */
   constructor($module) {
-    this.initialized = false
-
     if (
       !($module instanceof HTMLElement) ||
       !document.body.classList.contains('govuk-frontend-supported')

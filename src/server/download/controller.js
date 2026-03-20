@@ -1,5 +1,9 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import {
+  HTTP_OK,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
 
 async function invokeDownload(apiparams) {
   try {
@@ -37,9 +41,11 @@ const downloadcontroller = {
       if (request.url.pathname.includes('/downloaddatanojs/')) {
         return h.view('stationDetailsNojs/index', viewData)
       }
-      return h.response(downloadresult).type('application/json').code(200)
+      return h.response(downloadresult).type('application/json').code(HTTP_OK)
     } catch (error) {
-      return h.response('Error rendering partial content').code(500)
+      return h
+        .response('Error rendering partial content')
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
   }
 }

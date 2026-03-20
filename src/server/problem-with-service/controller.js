@@ -1,5 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { STATUS_CODE_LIMITS } from '~/src/server/common/constants/magic-numbers.js'
 
 const content = english.errorpages
 
@@ -22,7 +23,11 @@ function statusCodeMessage(statusCode) {
 
 function parseStatusCode(input) {
   const value = Number.parseInt(String(input ?? ''), 10)
-  if (Number.isFinite(value) && value >= 100 && value <= 599) {
+  if (
+    Number.isFinite(value) &&
+    value >= STATUS_CODE_LIMITS.MIN &&
+    value <= STATUS_CODE_LIMITS.MAX
+  ) {
     return value
   }
   return statusCodes.internalServerError
