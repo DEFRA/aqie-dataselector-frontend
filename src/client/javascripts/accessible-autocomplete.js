@@ -114,11 +114,11 @@ class AccessibleAutoComplete {
       autocompleteElement?.getAttribute(
         AccessibleAutoComplete.ARIA_DESCRIBEDBY
       ) || ''
-    const autocompleteElementMissingAriaDescribedAttrs =
+    const autocompleteElementHasAriaDescribedAttrs =
       autocompleteElement &&
       autocompleteElement.tagName !== 'select' &&
-      !autocompleteElementAriaDescribedBy.includes(selectElementAriaDescribedBy)
-    if (autocompleteElementMissingAriaDescribedAttrs) {
+      autocompleteElementAriaDescribedBy.includes(selectElementAriaDescribedBy)
+    if (!autocompleteElementHasAriaDescribedAttrs) {
       // if there is a hint and/or error then the autocomplete element
       // needs to be aria-describedby these, which it isn't by default.
       // we need to check if it hasn't already been done to avoid adding
