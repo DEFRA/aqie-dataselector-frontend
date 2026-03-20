@@ -11,6 +11,7 @@ import { config } from '~/src/config/config.js'
 import {
   HTTP_INTERNAL_SERVER_ERROR,
   HTTP_OK,
+  HTTP_REDIRECT_MAX,
   STATUS_CODE_LIMITS,
   STATIONCOUNT_TIMEOUT_MS
 } from '~/src/server/common/constants/magic-numbers.js'
@@ -364,7 +365,11 @@ async function invokeStationCount(stationcountparameters) {
       validateStatus: () => true
     })
 
-    if (!response || response.status < HTTP_OK || response.status >= 300) {
+    if (
+      !response ||
+      response.status < HTTP_OK ||
+      response.status >= HTTP_REDIRECT_MAX
+    ) {
       return Object.assign(
         new Error(`Station count API returned status ${response?.status}`),
         {

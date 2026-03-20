@@ -299,7 +299,7 @@ function getCookie(name) {
  */
 function setCookie(name, value, options) {
   if (userAllowsCookie(name)) {
-    if (typeof options === 'undefined') {
+    if (options === undefined) {
       options = {}
     }
     let cookieString = `${name}=${value}; path=/`
