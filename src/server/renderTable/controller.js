@@ -2,7 +2,7 @@ import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
 // import Wreck from '@hapi/wreck'
-async function Invoketable(params) {
+async function invokeTable(params) {
   // Renamed parameter to avoid shadowing
   try {
     const response = await axios.post(config.get('Table_URL'), params)
@@ -41,7 +41,7 @@ const rendertablecontroller = {
         year: request.params.year
       }
 
-      const tabledata = await Invoketable(apiparams)
+      const tabledata = await invokeTable(apiparams)
       const finalyear = request.yar.get('selectedYear')
 
       if (

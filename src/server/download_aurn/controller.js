@@ -3,7 +3,7 @@ import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 // import Wreck from '@hapi/wreck' // NOSONAR
 const logger = createLogger()
-async function Invokedownload(apiparams) {
+async function invokeDownload(apiparams) {
   // prod
   logger.info(`apiparams ${JSON.stringify(apiparams)}`)
   try {
@@ -18,7 +18,7 @@ async function Invokedownload(apiparams) {
     return error // Rethrow the error so it can be handled appropriately
   }
 }
-async function invokedownloadS3(downloadstatusapiparams) {
+async function invokeDownloadS3(downloadstatusapiparams) {
   // Poll the status endpoint every 2 seconds until status is completed
   let statusResponse
 
@@ -64,7 +64,7 @@ const downloadAurnController = {
           dataselectordownloadtype: 'dataSelectorSingle'
         }
       }
-      const downloadstatusapiparams = await Invokedownload(apiparams)
+      const downloadstatusapiparams = await invokeDownload(apiparams)
 
       if (downloadstatusapiparams?.error) {
         return h.redirect(
@@ -73,7 +73,7 @@ const downloadAurnController = {
       }
 
       if (request.url.pathname.includes('/download_aurn_nojs/')) {
-        const downloadResultaurn = await invokedownloadS3(
+        const downloadResultaurn = await invokeDownloadS3(
           downloadstatusapiparams
         )
 

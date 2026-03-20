@@ -11,7 +11,7 @@ import axios from 'axios'
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
-async function Invokestationcount(stationcountparameters) {
+async function invokeStationCount(stationcountparameters) {
   // prod
   try {
     const response = await axios.post(
@@ -123,7 +123,7 @@ export const emailrequestController = {
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
-      const result = await Invokestationcount(stationcountparameters)
+      const result = await invokeStationCount(stationcountparameters)
       // console.log('stationcountparameters in email', stationcountparameters)
       if (result === 'Success') {
         return h.view('emailrequest/requestconfirm.njk', {

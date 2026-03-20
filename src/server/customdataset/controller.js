@@ -320,7 +320,7 @@ async function handleStationCountCalculation(request, h) {
   )
 
   request.yar.set('finalyear1', finalyear)
-  const stationcount = await Invokestationcount(stationcountparameters)
+  const stationcount = await invokeStationCount(stationcountparameters)
 
   if (
     stationcount == null ||
@@ -342,7 +342,7 @@ async function handleStationCountCalculation(request, h) {
   return null
 }
 
-async function Invokestationcount(stationcountparameters) {
+async function invokeStationCount(stationcountparameters) {
   try {
     const url = config.get('Download_aurn_URL')
     if (!url) {

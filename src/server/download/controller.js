@@ -1,7 +1,7 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 
-async function Invokedownload(apiparams) {
+async function invokeDownload(apiparams) {
   try {
     const response = await axios.post(config.get('Download_URL'), apiparams)
     return response.data
@@ -26,7 +26,7 @@ const downloadcontroller = {
         downloadpollutanttype: request.params.freq,
         stationreaddate: request.yar.get('latesttime')
       }
-      const downloadresult = await Invokedownload(apiparams)
+      const downloadresult = await invokeDownload(apiparams)
 
       request.yar.set('downloadresult', downloadresult)
       const viewData = {

@@ -23,9 +23,8 @@ class AccessibleAutoComplete {
   }
 
   filterMatchingValues(values, query) {
-    return Array.prototype.filter.call(
-      values,
-      (r) => r.toLowerCase().indexOf(query.toLowerCase().trim()) !== -1
+    return Array.prototype.filter.call(values, (r) =>
+      r.toLowerCase().includes(query.toLowerCase().trim())
     )
   }
 
@@ -40,7 +39,7 @@ class AccessibleAutoComplete {
   handleConfirm(chosenOption, selectOptions, selectElement, autocompleteId) {
     selectElement.value = ''
     const chosenOptionOrCurrentValue =
-      typeof chosenOption !== 'undefined'
+      chosenOption !== undefined
         ? chosenOption
         : this.document.getElementById(autocompleteId)?.value
     const selectedOption = this.getSelectedOption(
@@ -99,7 +98,7 @@ class AccessibleAutoComplete {
         }
       }
 
-      this.window.HMRCAccessibleAutocomplete.enhanceSelectElement(
+      this.window.HMRCAccessibleAutocomplete?.enhanceSelectElement(
         configurationOptions
       )
 

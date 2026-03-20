@@ -4,7 +4,7 @@ import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const PROBLEM_SERVICE_500_URL = '/problem-with-service?statusCode=500'
 
-async function invokedownloadS3(downloadstatusapiparams) {
+async function invokeDownloadS3(downloadstatusapiparams) {
   // Single status check - no polling loop!
 
   try {
@@ -61,7 +61,7 @@ const downloadAurnstatusController = {
 
       const downloadstatusapiparams = { jobID }
 
-      const statusData = await invokedownloadS3(downloadstatusapiparams)
+      const statusData = await invokeDownloadS3(downloadstatusapiparams)
 
       // Check for error
       if (statusData?.error) {
