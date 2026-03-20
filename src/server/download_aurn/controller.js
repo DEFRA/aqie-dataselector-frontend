@@ -1,6 +1,10 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import {
+  HTTP_OK,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
 // import Wreck from '@hapi/wreck' // NOSONAR
 const logger = createLogger()
 async function invokeDownload(apiparams) {
@@ -68,7 +72,7 @@ const downloadAurnController = {
 
       if (downloadstatusapiparams?.error) {
         return h.redirect(
-          `/problem-with-service?statusCode=${downloadstatusapiparams.statusCode || 500}`
+          `/problem-with-service?statusCode=${downloadstatusapiparams.statusCode || HTTP_INTERNAL_SERVER_ERROR}`
         )
       }
 
@@ -80,7 +84,7 @@ const downloadAurnController = {
         // Check for error from polling
         if (downloadResultaurn?.error) {
           return h.redirect(
-            `/problem-with-service?statusCode=${downloadResultaurn.statusCode || 500}`
+            `/problem-with-service?statusCode=${downloadResultaurn.statusCode || HTTP_INTERNAL_SERVER_ERROR}`
           )
         }
 
@@ -95,9 +99,11 @@ const downloadAurnController = {
       return h
         .response(downloadstatusapiparams)
         .type('application/json')
-        .code(200)
+        .code(HTTP_OK)
     } catch (error) {
-      return h.response({ error: 'An error occurred' }).code(500)
+      return h
+        .response({ error: 'An error occurred' })
+        .code(HTTP_INTERNAL_SERVER_ERROR)
     }
   }
 }

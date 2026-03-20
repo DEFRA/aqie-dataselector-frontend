@@ -168,12 +168,7 @@ export function resetCookies() {
     structuredClone(DEFAULT_COOKIE_CONSENT)
 
   for (const cookieType in options) {
-    if (cookieType === 'version') {
-      continue
-    }
-
-    // Essential cookies cannot be deselected, ignore this cookie type
-    if (cookieType === 'essential') {
+    if (cookieType === 'version' || cookieType === 'essential') {
       continue
     }
 

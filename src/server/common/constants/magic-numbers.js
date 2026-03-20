@@ -48,6 +48,20 @@ const MAX_LOCAL_AUTHORITIES = 10 // Maximum local authorities per selection
 // Regulatory/Monitoring Constants
 const NO2_ANNUAL_THRESHOLD = 18 // Annual NO₂ limit checks (18 times per year)
 
+// UI/Client Constants
+const AUTOCOMPLETE_DELAY_MS = 3000 // Delay before autocomplete fetch
+const MONTHS_PER_YEAR = 12
+
+// Year range constants for data availability
+const YEAR_2017 = 2017
+const YEAR_2018 = 2018
+
+// Status code subcategories for error handling
+const HTTP_SERVICE_UNAVAILABLE = 503
+const HTTP_MOVED_PERMANENTLY = 301
+const HTTP_CREATED = 201
+const HTTP_ACCEPTED = 202
+
 // Collection sizes and limits
 const ARRAY_EMPTY_LENGTH = 0
 const SINGLE_ITEM = 1
@@ -59,6 +73,10 @@ export {
   HTTP_FORBIDDEN,
   HTTP_NOT_FOUND,
   HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_SERVICE_UNAVAILABLE,
+  HTTP_MOVED_PERMANENTLY,
+  HTTP_CREATED,
+  HTTP_ACCEPTED,
   STATUS_CODE_LIMITS,
   POLL_INTERVAL_MS,
   POLL_PROGRESS_INTERVAL_MS,
@@ -82,5 +100,9 @@ export {
   MAX_LOCAL_AUTHORITIES,
   NO2_ANNUAL_THRESHOLD,
   ARRAY_EMPTY_LENGTH,
-  SINGLE_ITEM
+  SINGLE_ITEM,
+  AUTOCOMPLETE_DELAY_MS,
+  MONTHS_PER_YEAR,
+  YEAR_2017,
+  YEAR_2018
 }

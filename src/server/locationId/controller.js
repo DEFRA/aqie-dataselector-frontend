@@ -1,6 +1,10 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import {
+  HTTP_BAD_REQUEST,
+  HTTP_NOT_FOUND
+} from '~/src/server/common/constants/magic-numbers.js'
 const getLocationDetailsController = {
   handler: async (request, h) => {
     const locationID = request.params.id
@@ -14,12 +18,12 @@ const getLocationDetailsController = {
     request.yar.set('errorMessage', '')
 
     if (!result || !locationID) {
-      return h.response('Invalid request').code(400)
+      return h.response('Invalid request').code(HTTP_BAD_REQUEST)
     }
 
     const userLocation = findUserLocation(result.getOSPlaces, locationID)
     if (!userLocation) {
-      return h.response('Location not found').code(404)
+      return h.response('Location not found').code(HTTP_NOT_FOUND)
     }
 
     const monitoringResult = await fetchMonitoringStations(

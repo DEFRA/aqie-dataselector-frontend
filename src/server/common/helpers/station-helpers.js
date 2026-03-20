@@ -1,6 +1,10 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import {
+  YEAR_2017,
+  YEAR_2018
+} from '~/src/server/common/constants/magic-numbers.js'
 
 const FORMAT_HOURS = 12
 
@@ -85,7 +89,10 @@ export function buildMapLocation(lat, lon) {
  */
 export function buildYearsArray() {
   const currentYear = new Date().getFullYear()
-  return Array.from({ length: currentYear - 2017 }, (_, i) => 2018 + i)
+  return Array.from(
+    { length: currentYear - YEAR_2017 },
+    (_, i) => YEAR_2018 + i
+  )
 }
 
 /**

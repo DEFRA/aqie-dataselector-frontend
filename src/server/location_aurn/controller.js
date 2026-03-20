@@ -211,7 +211,7 @@ function mapLocalAuthorityIDs(selectedLocations, laResult) {
 }
 
 function buildViewContext(
-  request,
+  _request,
   laResult,
   localAuthorityNames,
   laqmMetadata,
@@ -562,7 +562,7 @@ function getLocalAuthorityNames(laResult) {
   if (laResult?.data && Array.isArray(laResult.data)) {
     return laResult.data
       .map((item) => item['Local Authority Name'])
-      .filter((name) => name)
+      .filter(Boolean)
   }
   return []
 }

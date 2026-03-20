@@ -10,6 +10,7 @@ import axios from 'axios'
 import { config } from '~/src/config/config.js'
 import {
   HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_OK,
   STATUS_CODE_LIMITS,
   STATIONCOUNT_TIMEOUT_MS
 } from '~/src/server/common/constants/magic-numbers.js'
@@ -57,7 +58,7 @@ function extractStatusCode(maybeError) {
 
   const message = maybeError?.message
   if (typeof message === 'string') {
-    const match = message.match(/\b([1-5]\d\d)\b/)
+    const match = /\b([1-5]\d\d)\b/.exec(message)
     if (match) {
       return Number(match[1])
     }
@@ -355,7 +356,7 @@ async function invokeStationCount(stationcountparameters) {
     const url = config.get('Download_aurn_URL')
     if (!url) {
       return Object.assign(new Error('Missing Download_aurn_URL'), {
-        statusCode: 500
+        statusCode: HTTP_INTERNAL_SERVER_ERROR
       })
     }
     const response = await axios.post(url, stationcountparameters, {
@@ -363,11 +364,11 @@ async function invokeStationCount(stationcountparameters) {
       validateStatus: () => true
     })
 
-    if (!response || response.status < 200 || response.status >= 300) {
+    if (!response || response.status < HTTP_OK || response.status >= 300) {
       return Object.assign(
         new Error(`Station count API returned status ${response?.status}`),
         {
-          statusCode: response?.status || 500,
+          statusCode: response?.status || HTTP_INTERNAL_SERVER_ERROR,
           response
         }
       )

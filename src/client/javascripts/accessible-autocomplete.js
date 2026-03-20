@@ -1,3 +1,5 @@
+import { AUTOCOMPLETE_DELAY_MS } from '~/src/server/common/constants/magic-numbers.js'
+
 class AccessibleAutoComplete {
   static ARIA_DESCRIBEDBY = 'aria-describedby'
 
@@ -64,7 +66,8 @@ class AccessibleAutoComplete {
 
   init() {
     if (this.$module) {
-      const delay = Number.parseInt(this.$module.dataset.delay, 10) || 3000
+      const delay =
+        Number.parseInt(this.$module.dataset.delay, 10) || AUTOCOMPLETE_DELAY_MS
       const selectElement = this.$module
       const selectOptions = Array.from(selectElement.options)
       const autocompleteId = selectElement.id

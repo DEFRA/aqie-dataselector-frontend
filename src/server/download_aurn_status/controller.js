@@ -1,8 +1,13 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import {
+  HTTP_BAD_REQUEST,
+  HTTP_OK,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
 
-const PROBLEM_SERVICE_500_URL = '/problem-with-service?statusCode=500'
+const PROBLEM_SERVICE_500_URL = `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
 
 async function invokeDownloadS3(downloadstatusapiparams) {
   // Single status check - no polling loop!
@@ -54,7 +59,7 @@ const downloadAurnstatusController = {
             error: true,
             message: 'Job ID is required'
           })
-          .code(400)
+          .code(HTTP_BAD_REQUEST)
       }
 
       // Check status once (no loop!)
@@ -71,11 +76,11 @@ const downloadAurnstatusController = {
             statusCode: statusData.statusCode,
             redirectUrl:
               statusData.redirectUrl ||
-              `/problem-with-service?statusCode=${statusData.statusCode || 500}`,
+              `/problem-with-service?statusCode=${statusData.statusCode || HTTP_INTERNAL_SERVER_ERROR}`,
             message: 'Status check failed'
           })
           .type('application/json')
-          .code(200)
+          .code(HTTP_OK)
       }
 
       // If completed, save to session
@@ -93,18 +98,18 @@ const downloadAurnstatusController = {
           viewData: viewData || null
         })
         .type('application/json')
-        .code(200)
+        .code(HTTP_OK)
     } catch (error) {
       // logger.error('Error in status handler:', error)
       return h
         .response({
           error: true,
-          statusCode: 500,
+          statusCode: HTTP_INTERNAL_SERVER_ERROR,
           redirectUrl: PROBLEM_SERVICE_500_URL,
           message: 'An error occurred'
         })
         .type('application/json')
-        .code(200)
+        .code(HTTP_OK)
     }
   }
 }
