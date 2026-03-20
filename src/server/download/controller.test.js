@@ -35,11 +35,12 @@ describe('downloadcontroller', () => {
     // Mock h object
     mockH = {
       view: jest.fn().mockReturnValue('view-response'),
-      response: jest.fn().mockReturnValue({
-        type: jest.fn().mockReturnValue({
+      response: jest.fn().mockImplementation(() => ({
+        type: jest.fn().mockImplementation(() => ({
           code: jest.fn().mockReturnValue('json-response')
-        })
-      })
+        })),
+        code: jest.fn().mockReturnValue('json-response')
+      }))
     }
 
     // Mock config
