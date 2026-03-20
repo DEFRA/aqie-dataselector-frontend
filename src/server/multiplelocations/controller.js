@@ -36,74 +36,43 @@ function buildPollutantMap(monitoringStations) {
   return pollutantMap
 }
 
+async function invokeosnameAPI(searchv) {
+  const nameApiparams = {
+    userLocation: searchv
+  }
+  try {
+    const response = await axios.post(
+      config.get('OS_NAMES_API_URL'),
+      nameApiparams
+    )
+
+    return response.data
+  } catch (error) {
+    return error
+  }
+}
+
+async function InvokeMonitstnAPI(sValue, lMiles) {
+  const locationvalues = {
+    userLocation: sValue,
+    usermiles: lMiles
+  }
+  try {
+    const response = await axios.post(
+      config.get('OS_NAMES_API_URL_1'),
+      locationvalues
+    )
+
+    return response.data
+  } catch (error) {
+    return error
+  }
+}
+
 const multipleLocationsController = {
   handler: async (request, h) => {
     // Set js_enabled to false by default
     h.state('js_enabled', 'false')
-
-    async function invokeosnameAPI(searchv) {
-      const nameApiparams = {
-        userLocation: searchv
-      }
-      try {
-        const response = await axios.post(
-          config.get('OS_NAMES_API_URL'),
-          nameApiparams
-        )
-
-        // logger.info('repsonse of osnameAPI', response)
-        return response.data
-      } catch (error) {
-        return error // Rethrow the error so it can be handled appropriately
-      }
-
-      // dev
-      // try {
-
-      //     payload: JSON.stringify(nameApiparams),
-      //     headers: {
-      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
-      //     },
-      //     json: true
-      //   })
-      //   console.log('PAYLOAD', payload)
-      //   return payload
-      // } catch (error) {
-      //   return error // Rethrow the error so it can be handled appropriately
-      // }
-    }
-
-    async function InvokeMonitstnAPI(sValue, lMiles) {
-      const locationvalues = {
-        userLocation: sValue,
-        usermiles: lMiles
-      }
-      try {
-        const response = await axios.post(
-          config.get('OS_NAMES_API_URL_1'),
-          locationvalues
-        )
-
-        return response.data
-      } catch (error) {
-        return error // Rethrow the error so it can be handled appropriately
-      }
-
-      // dev
-      // try {
-
-      //     payload: JSON.stringify(locationvalues),
-      //     headers: {
-      //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
-      //     },
-      //     json: true
-      //   })
-      //   console.log('PAYLOAD', payload)
-      //   return payload
-      // } catch (error) {
-      //   return error // Rethrow the error so it can be handled appropriately
-      // }
-    }
     // const logger = createLogger()
     const searchlocationurl = '/search-location'
 
@@ -209,7 +178,7 @@ const multipleLocationsController = {
         }
       }
 
-      if (locations && locations.length === 0) {
+      if (locations?.length === 0) {
         request.yar.set('errors', '')
         request.yar.set('errorMessage', '')
         request.yar.set('nooflocation', 'none')
@@ -221,7 +190,7 @@ const multipleLocationsController = {
           displayBacklink: true,
           hrefq: searchlocationurl
         })
-      } else if (locations && locations.length === 1) {
+      } else if (locations?.length === 1) {
         request.yar.set('errors', '')
         request.yar.set('errorMessage', '')
         request.yar.set('nooflocation', 'single')

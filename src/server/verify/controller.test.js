@@ -1,6 +1,7 @@
 import { verifyController } from './controller.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import { HTTP_REQUEST_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 jest.mock('axios')
 jest.mock('~/src/config/config.js', () => ({
@@ -184,7 +185,10 @@ describe('verifyController', () => {
       expect(axios.post).toHaveBeenCalledWith(
         'https://api.example.com/download',
         { jobID: 'test-job-id-123' },
-        { timeout: 30000, headers: { 'Content-Type': 'application/json' } }
+        {
+          timeout: HTTP_REQUEST_TIMEOUT_MS,
+          headers: { 'Content-Type': 'application/json' }
+        }
       )
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
         pageTitle: 'Verification',
@@ -314,7 +318,9 @@ describe('verifyController', () => {
     })
 
     it('should redirect on a timeout error (ECONNABORTED)', async () => {
-      const timeoutError = new Error('timeout of 30000ms exceeded')
+      const timeoutError = new Error(
+        `timeout of ${HTTP_REQUEST_TIMEOUT_MS}ms exceeded`
+      )
       timeoutError.code = 'ECONNABORTED'
       jest.mocked(axios.post).mockRejectedValue(timeoutError)
 

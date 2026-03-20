@@ -71,12 +71,8 @@ function buildViewData(
   request,
   stationDetails,
   mapLocation,
-  updatedTime,
-  years,
-  currentDate,
-  currentYear,
-  fullSearchQuery,
-  multipleLocID
+  dateContext,
+  locationContext
 ) {
   return {
     pageTitle: english.stationdetails.pageTitle,
@@ -84,13 +80,12 @@ function buildViewData(
     serviceName: english.stationdetails.serviceName,
     stationdetails: stationDetails,
     maplocation: mapLocation,
-    updatedTime,
+    updatedTime: dateContext.updatedTime,
     displayBacklink: true,
-    fullSearchQuery,
-
-    years,
-    currentdate: currentDate,
-    currentYear,
+    fullSearchQuery: dateContext.fullSearchQuery,
+    years: dateContext.years,
+    currentdate: dateContext.currentDate,
+    currentYear: dateContext.currentYear,
     pollutantKeys: stationDetails.pollutants,
     maptoggletips: getToggletip(stationDetails.siteType),
     selectedYear: request.yar.get('selectedYear'),
@@ -98,7 +93,7 @@ function buildViewData(
     hrefq:
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location/${multipleLocID}`
+        : `/location/${locationContext.multipleLocID}`
   }
 }
 
@@ -178,12 +173,14 @@ const stationDetailsNojsController = {
       request,
       stationDetails,
       mapLocation,
-      updatedTime,
-      years,
-      currentDate,
-      currentYear,
-      fullSearchQuery,
-      multipleLocID
+      {
+        updatedTime,
+        years,
+        currentDate,
+        currentYear,
+        fullSearchQuery
+      },
+      { multipleLocID }
     )
     request.yar.set('viewData', viewData)
 

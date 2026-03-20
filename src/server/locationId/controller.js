@@ -1,10 +1,8 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
-// import Wreck from '@hapi/wreck'
 import axios from 'axios'
 const getLocationDetailsController = {
   handler: async (request, h) => {
-    // const logger = createLogger()
     const locationID = request.params.id
     const result = request.yar.get('osnameapiresult')
     const fullSearchQuery = request.yar.get('fullSearchQuery')?.value || ''
@@ -16,12 +14,12 @@ const getLocationDetailsController = {
     request.yar.set('errorMessage', '')
 
     if (!result || !locationID) {
-      return
+      return h.response('Invalid request').code(400)
     }
 
     const userLocation = findUserLocation(result.getOSPlaces, locationID)
     if (!userLocation) {
-      return
+      return h.response('Location not found').code(404)
     }
 
     const monitoringResult = await fetchMonitoringStations(
@@ -75,24 +73,8 @@ async function fetchMonitoringStations(location, miles) {
 
     return response.data
   } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
+    return error
   }
-  // dev
-  // try {
-  //   const url =
-  //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation'
-  //   const { res, payload } = await Wreck.post(url, {
-  //     payload: JSON.stringify(locationvalues),
-  //     headers: {
-  //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
-  //     },
-  //     json: true
-  //   })
-  //   console.log('PAYLOAD', payload)
-  //   return payload
-  // } catch (error) {
-  //   return error // Rethrow the error so it can be handled appropriately
-  // }
 }
 
 function buildPollutantMap(stations) {

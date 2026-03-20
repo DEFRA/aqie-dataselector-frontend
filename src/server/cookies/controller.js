@@ -2,7 +2,7 @@
 
 import { english } from '~/src/server/data/en/homecontent.js'
 const cookiesController = {
-  handler: (request, h) => {
+  handler: (_request, h) => {
     const {
       footer: {
         cookies: {

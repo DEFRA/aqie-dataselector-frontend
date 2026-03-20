@@ -4,6 +4,7 @@ import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import axios from 'axios'
+import { STATIONCOUNT_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js')
 jest.mock('~/src/server/data/en/homecontent.js')
@@ -499,7 +500,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 50000,
+          timeout: STATIONCOUNT_TIMEOUT_MS,
           validateStatus: expect.any(Function)
         })
       )
@@ -536,7 +537,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 50000,
+          timeout: STATIONCOUNT_TIMEOUT_MS,
           validateStatus: expect.any(Function)
         })
       )
@@ -732,31 +733,6 @@ describe('customdatasetController', () => {
       )
     })
   })
-
-  // describe('error handling', () => {
-  //   it('should handle station count API error and store error in session', async () => {
-  //     mockRequest.params.pollutants = undefined
-  //     mockRequest.yar.get.mockImplementation((key) => {
-  //       const values = {
-  //         selectedpollutant: ['Ozone (O3)'],
-  //         selectedyear: '1 January to 31 December 2024',
-  //         selectedlocation: ['England'],
-  //         Location: 'Country',
-  //         selectedPollutants: null,
-  //         selectedTimePeriod: null
-  //       }
-  //       return values[key]
-  //     })
-
-  //     const error = new Error('API Error')
-  //     axios.post.mockRejectedValue(error)
-
-  //     await customdatasetController.handler(mockRequest, mockH)
-
-  //     // The controller sets nooflocation to the error object when API fails
-  //     expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', error)
-  //   })
-  // })
 
   describe('view rendering', () => {
     it('should render customdataset view with all data', async () => {

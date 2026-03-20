@@ -13,7 +13,10 @@ describe('getLocationDetailsController.handler', () => {
 
   beforeEach(() => {
     h = {
-      view: jest.fn().mockReturnThis()
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockImplementation(() => ({
+        code: jest.fn().mockReturnValue('error-response')
+      }))
     }
 
     request = {
@@ -84,9 +87,9 @@ describe('getLocationDetailsController.handler', () => {
       return session[key]
     })
 
-    const result = await getLocationDetailsController.handler(request, h)
+    await getLocationDetailsController.handler(request, h)
 
-    expect(result).toBeUndefined()
+    expect(h.response).toHaveBeenCalledWith('Invalid request')
     expect(h.view).not.toHaveBeenCalled()
   })
 
@@ -94,9 +97,9 @@ describe('getLocationDetailsController.handler', () => {
     request.params.id = undefined
     request.yar.get.mockReturnValue({ getOSPlaces: [] })
 
-    const result = await getLocationDetailsController.handler(request, h)
+    await getLocationDetailsController.handler(request, h)
 
-    expect(result).toBeUndefined()
+    expect(h.response).toHaveBeenCalledWith('Invalid request')
     expect(h.view).not.toHaveBeenCalled()
   })
 
@@ -110,9 +113,9 @@ describe('getLocationDetailsController.handler', () => {
       return session[key]
     })
 
-    const result = await getLocationDetailsController.handler(request, h)
+    await getLocationDetailsController.handler(request, h)
 
-    expect(result).toBeUndefined()
+    expect(h.response).toHaveBeenCalledWith('Location not found')
     expect(h.view).not.toHaveBeenCalled()
   })
 

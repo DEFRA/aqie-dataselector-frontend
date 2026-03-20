@@ -2,7 +2,7 @@
 
 import { english } from '~/src/server/data/en/homecontent.js'
 const privacyController = {
-  handler: (request, h) => {
+  handler: (_request, h) => {
     const {
       footer: {
         privacy: { title, pageTitle, heading, headings, paragraphs }

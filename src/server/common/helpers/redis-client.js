@@ -1,6 +1,7 @@
 import { Cluster, Redis } from 'ioredis'
 
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { REDIS_SLOTS_REFRESH_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 export function buildRedisClient(redisConfig) {
   const logger = createLogger()
@@ -38,7 +39,7 @@ export function buildRedisClient(redisConfig) {
       ],
       {
         keyPrefix,
-        slotsRefreshTimeout: 10000,
+        slotsRefreshTimeout: REDIS_SLOTS_REFRESH_TIMEOUT_MS,
         dnsLookup: (address, callback) => callback(null, address),
         redisOptions: {
           db,

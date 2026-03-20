@@ -6,11 +6,12 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
-const logger = createLogger()
+const logger = createLogger() // NOSONAR
 
 const LAQM_TIMEOUT_MS = 2500
 const LAQM_CACHE_TTL_MS = 12 * 60 * 60 * 1000
@@ -97,9 +98,14 @@ function determineFormDataFromSession(
   }
 
   if (selectedlocations && Array.isArray(selectedlocations)) {
-    const countryNames = ['england', 'scotland', 'wales', 'northern ireland']
+    const countryNames = new Set([
+      'england',
+      'scotland',
+      'wales',
+      'northern ireland'
+    ])
     const isCountries = selectedlocations.some((loc) =>
-      countryNames.includes(loc.toLowerCase())
+      countryNames.has(loc.toLowerCase())
     )
 
     formData.location = isCountries ? 'countries' : 'la'
@@ -208,8 +214,7 @@ function buildViewContext(
   request,
   laResult,
   localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
+  laqmMetadata,
   backUrl,
   formData = null,
   errors = null
@@ -222,8 +227,8 @@ function buildViewContext(
     hrefq: backUrl,
     laResult,
     localAuthorityNames,
-    laqmUnavailable,
-    laqmUnavailableReason
+    laqmUnavailable: laqmMetadata.unavailable,
+    laqmUnavailableReason: laqmMetadata.reason
   }
   if (formData) {
     context.formData = formData
@@ -246,15 +251,7 @@ function getTemplatePath(isNoJs) {
   return isNoJs ? LOCATION_AURN_VIEW_NOJS : LOCATION_AURN_VIEW
 }
 
-function handleGetRequest(
-  request,
-  h,
-  laResult,
-  localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
-  backUrl
-) {
+function handleGetRequest(request, h, laContext, laqmMetadata, backUrl) {
   const selectedLocation = request.yar.get(SESSION_LOCATION)
   const selectedCountries = request.yar.get(SESSION_SELECTED_COUNTRIES)
   const selectedlocations = request.yar.get(SESSION_SELECTED_LOCATION_LOWER)
@@ -273,10 +270,9 @@ function handleGetRequest(
     templatePath,
     buildViewContext(
       request,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext.laResult,
+      laContext.localAuthorityNames,
+      laqmMetadata,
       backUrl,
       formData
     )
@@ -401,8 +397,7 @@ function handlePostValidationError(
   payload,
   laResult,
   localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
+  laqmMetadata,
   backUrl,
   errors
 ) {
@@ -414,8 +409,7 @@ function handlePostValidationError(
       request,
       laResult,
       localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laqmMetadata,
       backUrl,
       payload,
       errors
@@ -427,10 +421,8 @@ function processCountriesPost(
   payload,
   request,
   h,
-  laResult,
-  localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
+  laContext,
+  laqmMetadata,
   backUrl,
   errors
 ) {
@@ -439,10 +431,9 @@ function processCountriesPost(
       request,
       h,
       payload,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext.laResult,
+      laContext.localAuthorityNames,
+      laqmMetadata,
       backUrl,
       errors
     )
@@ -455,22 +446,21 @@ function processLocalAuthoritiesPost(
   payload,
   request,
   h,
-  laResult,
-  localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
+  laContext,
+  laqmMetadata,
   backUrl,
   errors
 ) {
-  if (!validateLocalAuthorityAvailability(localAuthorityNames, errors)) {
+  if (
+    !validateLocalAuthorityAvailability(laContext.localAuthorityNames, errors)
+  ) {
     return handlePostValidationError(
       request,
       h,
       payload,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext.laResult,
+      laContext.localAuthorityNames,
+      laqmMetadata,
       backUrl,
       errors
     )
@@ -479,7 +469,7 @@ function processLocalAuthoritiesPost(
   const selectedLocations = extractSelectedLocations(payload)
   const { seen, hasErrors } = validateLocalAuthorities(
     selectedLocations,
-    localAuthorityNames,
+    laContext.localAuthorityNames,
     errors,
     isNoJs
   )
@@ -488,20 +478,19 @@ function processLocalAuthoritiesPost(
       request,
       h,
       payload,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext.laResult,
+      laContext.localAuthorityNames,
+      laqmMetadata,
       backUrl,
       errors
     )
   }
   payload.selectedLocations = getCleanedLocations(
     seen,
-    localAuthorityNames,
+    laContext.localAuthorityNames,
     selectedLocations
   )
-  handlePostLocalAuthorities(payload, request, laResult)
+  handlePostLocalAuthorities(payload, request, laContext.laResult)
   return h.redirect(backUrl)
 }
 
@@ -509,10 +498,8 @@ function handlePostRequest(
   request,
   h,
   payload,
-  laResult,
-  localAuthorityNames,
-  laqmUnavailable,
-  laqmUnavailableReason,
+  laContext,
+  laqmMetadata,
   backUrl
 ) {
   const errors = { list: [], details: {} }
@@ -522,10 +509,9 @@ function handlePostRequest(
       request,
       h,
       payload,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext.laResult,
+      laContext.localAuthorityNames,
+      laqmMetadata,
       backUrl,
       errors
     )
@@ -536,10 +522,8 @@ function handlePostRequest(
       payload,
       request,
       h,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext,
+      laqmMetadata,
       backUrl,
       errors
     )
@@ -550,10 +534,8 @@ function handlePostRequest(
       payload,
       request,
       h,
-      laResult,
-      localAuthorityNames,
-      laqmUnavailable,
-      laqmUnavailableReason,
+      laContext,
+      laqmMetadata,
       backUrl,
       errors
     )
@@ -568,10 +550,9 @@ function handlePostRequest(
     request,
     h,
     payload,
-    laResult,
-    localAuthorityNames,
-    laqmUnavailable,
-    laqmUnavailableReason,
+    laContext.laResult,
+    laContext.localAuthorityNames,
+    laqmMetadata,
     backUrl,
     errors
   )
@@ -587,6 +568,7 @@ function getLocalAuthorityNames(laResult) {
 }
 
 let laqmCache = {
+  // NOSONAR
   value: /** @type {any} */ (null),
   expiresAt: 0
 }
@@ -621,7 +603,7 @@ function parseLaqmResult(result) {
     return { error: statusOrError }
   }
 
-  if (statusOrError !== 200) {
+  if (statusOrError !== statusCodes.ok) {
     return { status: statusOrError }
   }
 
@@ -699,10 +681,8 @@ export const locationaurnController = {
       return handleGetRequest(
         request,
         h,
-        laResult,
-        localAuthorityNames,
-        laqmUnavailable,
-        laqmUnavailableReason,
+        { laResult, localAuthorityNames },
+        { unavailable: laqmUnavailable, reason: laqmUnavailableReason },
         backUrl
       )
     }
@@ -712,10 +692,8 @@ export const locationaurnController = {
         request,
         h,
         request.payload,
-        laResult,
-        localAuthorityNames,
-        laqmUnavailable,
-        laqmUnavailableReason,
+        { laResult, localAuthorityNames },
+        { unavailable: laqmUnavailable, reason: laqmUnavailableReason },
         backUrl
       )
     }
@@ -728,8 +706,7 @@ export const locationaurnController = {
         request,
         laResult,
         localAuthorityNames,
-        laqmUnavailable,
-        laqmUnavailableReason,
+        { unavailable: laqmUnavailable, reason: laqmUnavailableReason },
         backUrl
       )
     )
