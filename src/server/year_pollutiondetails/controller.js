@@ -1,7 +1,7 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 
 const getpollutantsDetailsController = {
-  handler: (request, h) => {
+  handler: (_request, h) => {
     const { home } = english
 
     return h.redirect('/', {

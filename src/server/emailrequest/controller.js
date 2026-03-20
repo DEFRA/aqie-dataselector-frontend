@@ -69,14 +69,14 @@ export const emailrequestController = {
       request.yar.set('email', email)
 
       // Email validation function
-      const isValidEmail = (email) => {
-        if (!email || typeof email !== 'string') {
+      const isValidEmail = (emailAddress) => {
+        if (!emailAddress || typeof emailAddress !== 'string') {
           return false
         }
 
         // Basic email regex pattern
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-        return emailRegex.test(email.trim())
+        return emailRegex.test(emailAddress.trim())
       }
 
       // Check if email is provided and valid

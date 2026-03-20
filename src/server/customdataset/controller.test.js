@@ -4,6 +4,7 @@ import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import axios from 'axios'
+import { STATIONCOUNT_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js')
 jest.mock('~/src/server/data/en/homecontent.js')
@@ -499,7 +500,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 50000,
+          timeout: STATIONCOUNT_TIMEOUT_MS,
           validateStatus: expect.any(Function)
         })
       )
@@ -536,7 +537,7 @@ describe('customdatasetController', () => {
           dataselectordownloadtype: ''
         }),
         expect.objectContaining({
-          timeout: 50000,
+          timeout: STATIONCOUNT_TIMEOUT_MS,
           validateStatus: expect.any(Function)
         })
       )

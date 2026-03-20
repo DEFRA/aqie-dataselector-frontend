@@ -1,5 +1,6 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const PROBLEM_SERVICE_500_URL = '/problem-with-service?statusCode=500'
 
@@ -28,13 +29,13 @@ async function invokedownloadS3(downloadstatusapiparams) {
     } else if (error.request) {
       return {
         error: true,
-        statusCode: 500,
+        statusCode: statusCodes.internalServerError,
         redirectUrl: PROBLEM_SERVICE_500_URL
       }
     } else {
       return {
         error: true,
-        statusCode: 500,
+        statusCode: statusCodes.internalServerError,
         redirectUrl: PROBLEM_SERVICE_500_URL
       }
     }

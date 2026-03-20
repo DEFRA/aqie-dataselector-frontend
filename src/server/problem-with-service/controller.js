@@ -1,18 +1,19 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const content = english.errorpages
 
 function statusCodeMessage(statusCode) {
   switch (true) {
-    case statusCode === 404:
+    case statusCode === statusCodes.notFound:
       return 'Page not found'
-    case statusCode === 403:
+    case statusCode === statusCodes.forbidden:
       return 'Forbidden'
-    case statusCode === 401:
+    case statusCode === statusCodes.unauthorized:
       return 'Unauthorized'
-    case statusCode === 400:
+    case statusCode === statusCodes.badRequest:
       return 'Bad Request'
-    case statusCode === 500:
+    case statusCode === statusCodes.internalServerError:
       return 'Sorry, there is a problem with the service'
     default:
       return 'Sorry, there is a problem with the service'
@@ -24,7 +25,7 @@ function parseStatusCode(input) {
   if (Number.isFinite(value) && value >= 100 && value <= 599) {
     return value
   }
-  return 500
+  return statusCodes.internalServerError
 }
 
 export const problemWithServiceController = {

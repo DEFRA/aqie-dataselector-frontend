@@ -12,24 +12,24 @@ import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 // import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { STATIONCOUNT_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
+import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 
 const logger = createLogger()
-
-const STATIONCOUNT_TIMEOUT_MS = 50000
 
 const errorContent = english.errorpages
 
 function statusCodeMessage(statusCode) {
   switch (true) {
-    case statusCode === 404:
+    case statusCode === statusCodes.notFound:
       return 'Page not found'
-    case statusCode === 403:
+    case statusCode === statusCodes.forbidden:
       return 'Forbidden'
-    case statusCode === 401:
+    case statusCode === statusCodes.unauthorized:
       return 'Unauthorized'
-    case statusCode === 400:
+    case statusCode === statusCodes.badRequest:
       return 'Bad Request'
-    case statusCode === 500:
+    case statusCode === statusCodes.internalServerError:
       return 'Sorry, there is a problem with the service'
     default:
       return 'Sorry, there is a problem with the service'
@@ -230,20 +230,15 @@ function handleTimePeriodSelection(request) {
 }
 
 function handleLocationSelection(request) {
-  if (!request.path?.includes('/location')) {
-    return
-  }
-
-  let selectedCountry = request.payload.country
-  if (selectedCountry && !Array.isArray(selectedCountry)) {
-    selectedCountry = [selectedCountry]
+  if (request.path?.includes('/location')) {
+    // Location selection handling logic would go here
   }
 }
 
 function parseYearRange(selectedyear, request) {
   const years = selectedyear.match(/\d{4}/g)
 
-  if (years && years.length === 2) {
+  if (years?.length === 2) {
     request.yar.set('yearrange', 'Multiple')
     const start = Number.parseInt(years[0], 10)
     const end = Number.parseInt(years[1], 10)
@@ -256,7 +251,7 @@ function parseYearRange(selectedyear, request) {
     return finalyear
   }
 
-  if (years && years.length === 1) {
+  if (years?.length === 1) {
     request.yar.set('yearrange', 'Single')
     const finalyear = years[0]
     request.yar.set('finalyear', finalyear)

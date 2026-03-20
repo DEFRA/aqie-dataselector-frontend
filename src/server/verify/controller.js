@@ -6,47 +6,48 @@
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-// import Wreck from '@hapi/wreck'
+import {
+  HTTP_REQUEST_TIMEOUT_MS,
+  TWO_DAYS_MS
+} from '~/src/server/common/constants/magic-numbers.js'
 const logger = createLogger()
+
+async function invokeDownloadEmail(apiparams) {
+  const emailParams = { jobID: apiparams.id }
+
+  try {
+    logger.info('About to call axios.post...')
+    const response = await axios.post(
+      config.get('downloadEmailUrl'),
+      emailParams,
+      {
+        timeout: HTTP_REQUEST_TIMEOUT_MS,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    logger.info('Axios call completed successfully')
+    const emaildownloadUrl = response.data
+
+    return emaildownloadUrl
+  } catch (error) {
+    logger.error(`Error invoking download email API: ${error.message}`)
+    logger.error(`Error stack: ${error.stack}`)
+    logger.error(`Error name: ${error.name}`)
+    if (error.code) {
+      logger.error(`Error code: ${error.code}`)
+    }
+    if (error.response) {
+      logger.error(`Response status: ${error.response.status}`)
+      logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
+    }
+    return error
+  }
+}
 
 export const verifyController = {
   async handler(request, h) {
-    // prod
-    async function invokeDownloadEmail(apiparams) {
-      const emailParams = { jobID: apiparams.id }
-
-      try {
-        logger.info('About to call axios.post...')
-        const response = await axios.post(
-          config.get('downloadEmailUrl'),
-          emailParams,
-          {
-            timeout: 30000, // 30 second timeout
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        )
-        logger.info('Axios call completed successfully')
-        const emaildownloadUrl = response.data
-
-        return emaildownloadUrl
-      } catch (error) {
-        logger.error(`Error invoking download email API: ${error.message}`)
-        logger.error(`Error stack: ${error.stack}`)
-        logger.error(`Error name: ${error.name}`)
-        if (error.code) {
-          logger.error(`Error code: ${error.code}`)
-        }
-        if (error.response) {
-          logger.error(`Response status: ${error.response.status}`)
-          logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
-        }
-        return error
-      }
-    }
-    // dev
-
     // Extract path parameters (unique ID and timestamp)
     const { id, timestamp } = request.params
 
@@ -66,11 +67,10 @@ export const verifyController = {
     // Check if timestamp is expired (more than 2 days old)
     const currentTime = Date.now()
     const providedTime = Number.parseInt(timestamp, 10)
-    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000 // 2 days in milliseconds
 
     if (
       Number.isNaN(providedTime) ||
-      currentTime - providedTime > twoDaysInMs
+      currentTime - providedTime > TWO_DAYS_MS
     ) {
       // console.log('Link has expired. Current time:', currentTime, 'Provided time:', providedTime)
       return h.view('verify/index_exp', {

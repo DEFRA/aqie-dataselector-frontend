@@ -5,6 +5,11 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import {
+  MIN_YEAR,
+  EXAMPLE_YEAR,
+  MAX_YEARS_RANGE
+} from '~/src/server/common/constants/magic-numbers.js'
 
 const VIEW_PATH = 'year_aurn/index'
 const HREF_RANGE_START_YEAR = '#range-start-year'
@@ -29,9 +34,8 @@ const HREF_ANY_YEAR_INPUT = '#any-year-input'
 const MSG_ENTER_YEAR = 'Enter a year.'
 const MSG_ENTER_START_YEAR = 'Enter a start year.'
 const MSG_ENTER_END_YEAR = 'Enter an end year.'
-const MSG_FOUR_DIGIT_YEAR_EXAMPLE = 'Enter a 4-digit year, for example 2009.'
-const MSG_START_YEAR_FOUR_DIGITS =
-  'Start year must be 4 digits, for example 2009.'
+const MSG_FOUR_DIGIT_YEAR_EXAMPLE = `Enter a 4-digit year, for example ${EXAMPLE_YEAR}.`
+const MSG_START_YEAR_FOUR_DIGITS = `Start year must be 4 digits, for example ${EXAMPLE_YEAR}.`
 const MSG_END_YEAR_FOUR_DIGITS = 'End year must be 4 digits, for example 2010.'
 const MSG_START_BEFORE_END =
   'Start year must be the same as or before the end year.'
@@ -53,12 +57,12 @@ function isFourDigitYear(value) {
 
 function withinRange(year) {
   const n = Number(year)
-  return n >= 1973 && n <= getCurrentYear()
+  return n >= MIN_YEAR && n <= getCurrentYear()
 }
 
 function isValidYearRange(startYear, endYear) {
   const yearCount = endYear - startYear + 1
-  return yearCount <= 5
+  return yearCount <= MAX_YEARS_RANGE
 }
 
 function addError(errors, text, href, detailField, detailText = text) {
@@ -153,7 +157,7 @@ function validateAnyYear(payload, request, errors) {
   }
 
   if (!withinRange(year)) {
-    const msg = `Year must be between 1973 and ${getCurrentYear()}.`
+    const msg = `Year must be between ${MIN_YEAR} and ${getCurrentYear()}.`
     addError(errors, msg, HREF_ANY_YEAR_INPUT, ERROR_FIELD_ANY_YEAR, msg)
   }
 }
@@ -243,7 +247,7 @@ function validateRangeYears(payload, request, errors) {
     startYear,
     MSG_ENTER_START_YEAR,
     MSG_START_YEAR_FOUR_DIGITS,
-    `Start year must be between 1973 and ${getCurrentYear()}.`,
+    `Start year must be between ${MIN_YEAR} and ${getCurrentYear()}.`,
     HREF_RANGE_START_YEAR,
     ERROR_FIELD_RANGE_START,
     errors
@@ -253,7 +257,7 @@ function validateRangeYears(payload, request, errors) {
     endYear,
     MSG_ENTER_END_YEAR,
     MSG_END_YEAR_FOUR_DIGITS,
-    `End year must be between 1973 and ${getCurrentYear()}.`,
+    `End year must be between ${MIN_YEAR} and ${getCurrentYear()}.`,
     HREF_RANGE_END_YEAR,
     ERROR_FIELD_RANGE_END,
     errors

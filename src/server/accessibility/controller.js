@@ -2,7 +2,7 @@
 
 import { english } from '~/src/server/data/en/homecontent.js'
 const accessibilityController = {
-  handler: (request, h) => {
+  handler: (_request, h) => {
     const {
       footer: {
         accessibility: { title, pageTitle, heading, headings, paragraphs }
