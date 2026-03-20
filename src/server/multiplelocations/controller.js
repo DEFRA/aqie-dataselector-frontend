@@ -36,7 +36,7 @@ function buildPollutantMap(monitoringStations) {
   return pollutantMap
 }
 
-async function invokeosnameAPI(searchv) {
+async function invokeOsNameAPI(searchv) {
   const nameApiparams = {
     userLocation: searchv
   }
@@ -52,7 +52,7 @@ async function invokeosnameAPI(searchv) {
   }
 }
 
-async function InvokeMonitstnAPI(sValue, lMiles) {
+async function invokeMonitoringStationAPI(sValue, lMiles) {
   const locationvalues = {
     userLocation: sValue,
     usermiles: lMiles
@@ -87,9 +87,7 @@ const multipleLocationsController = {
 
       if (
         !sessionQuery ||
-        (payloadQuery !== null &&
-          payloadQuery !== undefined &&
-          payloadQuery !== sessionQuery)
+        (payloadQuery != null && payloadQuery !== sessionQuery)
       ) {
         request.yar.set('selectedLocation', '')
 
@@ -107,9 +105,7 @@ const multipleLocationsController = {
       }
       if (
         !milessession ||
-        (payloadmiles !== null &&
-          payloadmiles !== undefined &&
-          payloadmiles !== milessession)
+        (payloadmiles != null && payloadmiles !== milessession)
       ) {
         request.yar.set('locationMiles', request.payload?.locationMiles)
       }
@@ -137,7 +133,7 @@ const multipleLocationsController = {
       let map1 = new Map()
 
       if (!Array.isArray(locationdetails) || locationdetails.length === 0) {
-        const result = await invokeosnameAPI(searchValue)
+        const result = await invokeOsNameAPI(searchValue)
         // console.log('Result of OSNAMEAPI', result.getOSPlaces)
         if (result !== null) {
           request.yar.set('osnameapiresult', result)
@@ -149,7 +145,10 @@ const multipleLocationsController = {
       }
 
       if (searchValue !== '' && searchValue !== null) {
-        MonitoringstResult = await InvokeMonitstnAPI(searchValue, locationMiles)
+        MonitoringstResult = await invokeMonitoringStationAPI(
+          searchValue,
+          locationMiles
+        )
 
         if (MonitoringstResult !== null) {
           request.yar.set('MonitoringstResult', MonitoringstResult)

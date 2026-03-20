@@ -617,7 +617,7 @@ function parseLaqmResult(result) {
   return { response: responselaqm }
 }
 
-async function Invokelocalauthority() {
+async function invokeLocalAuthority() {
   const laqmurl = 'https://www.laqmportal.co.uk/xapi/getLocalAuthorities/json'
   const apiKey = config.get('laqmAPIkey')
   const partnerId = config.get('laqmAPIPartnerId')
@@ -672,7 +672,7 @@ export const locationaurnController = {
       request.yar.set('osnameapiresult', '')
     }
 
-    const laResult = await Invokelocalauthority()
+    const laResult = await invokeLocalAuthority()
     const localAuthorityNames = getLocalAuthorityNames(laResult)
     const laqmUnavailable = Boolean(laResult?._meta?.unavailable)
     const laqmUnavailableReason = laResult?._meta?.reason

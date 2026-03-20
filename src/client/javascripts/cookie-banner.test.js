@@ -16,7 +16,7 @@ describe('CookieBanner', () => {
 
   beforeEach(() => {
     document.body.classList.add('govuk-frontend-supported')
-    window.location.pathname = '/'
+    globalThis.location.pathname = '/'
 
     document.body.innerHTML = `
       <div class="cookie-banner">

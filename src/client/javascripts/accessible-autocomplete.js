@@ -23,9 +23,8 @@ class AccessibleAutoComplete {
   }
 
   filterMatchingValues(values, query) {
-    return Array.prototype.filter.call(
-      values,
-      (r) => r.toLowerCase().indexOf(query.toLowerCase().trim()) !== -1
+    return Array.prototype.filter.call(values, (r) =>
+      r.toLowerCase().includes(query.toLowerCase().trim())
     )
   }
 
@@ -40,7 +39,7 @@ class AccessibleAutoComplete {
   handleConfirm(chosenOption, selectOptions, selectElement, autocompleteId) {
     selectElement.value = ''
     const chosenOptionOrCurrentValue =
-      typeof chosenOption !== 'undefined'
+      chosenOption !== undefined
         ? chosenOption
         : this.document.getElementById(autocompleteId)?.value
     const selectedOption = this.getSelectedOption(
@@ -99,7 +98,7 @@ class AccessibleAutoComplete {
         }
       }
 
-      this.window.HMRCAccessibleAutocomplete.enhanceSelectElement(
+      this.window.HMRCAccessibleAutocomplete?.enhanceSelectElement(
         configurationOptions
       )
 
@@ -115,11 +114,11 @@ class AccessibleAutoComplete {
       autocompleteElement?.getAttribute(
         AccessibleAutoComplete.ARIA_DESCRIBEDBY
       ) || ''
-    const autocompleteElementMissingAriaDescribedAttrs =
+    const autocompleteElementHasAriaDescribedAttrs =
       autocompleteElement &&
       autocompleteElement.tagName !== 'select' &&
-      !autocompleteElementAriaDescribedBy.includes(selectElementAriaDescribedBy)
-    if (autocompleteElementMissingAriaDescribedAttrs) {
+      autocompleteElementAriaDescribedBy.includes(selectElementAriaDescribedBy)
+    if (!autocompleteElementHasAriaDescribedAttrs) {
       // if there is a hint and/or error then the autocomplete element
       // needs to be aria-describedby these, which it isn't by default.
       // we need to check if it hasn't already been done to avoid adding

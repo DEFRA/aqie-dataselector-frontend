@@ -29,7 +29,7 @@ const $accessibleAutocompletes = document.querySelectorAll(
   '[data-module="accessible-autocomplete"]'
 )
 $accessibleAutocompletes.forEach(($autocomplete) => {
-  new AccessibleAutoComplete($autocomplete, window, document).init()
+  new AccessibleAutoComplete($autocomplete, globalThis, document).init()
 })
 
 // Initialise cookie banner
@@ -59,7 +59,7 @@ if ($cookiesPage) {
 }
 
 // Make accessibleAutocomplete available globally for use in page-specific scripts
-window.accessibleAutocomplete = accessibleAutocomplete
-window.AccessibleAutoComplete = AccessibleAutoComplete
+globalThis.accessibleAutocomplete = accessibleAutocomplete
+globalThis.AccessibleAutoComplete = AccessibleAutoComplete
 
 // initAll()

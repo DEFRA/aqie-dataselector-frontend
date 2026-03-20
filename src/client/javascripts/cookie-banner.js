@@ -90,13 +90,13 @@ class CookieBanner {
     this.revealConfirmationMessage(this.$cookieConfirmationReject)
   }
 
-  rejectCookies_cookiepage() {
+  rejectCookiesCookiepage() {
     CookieFunctions.setConsentCookie({ analytics: false })
     this.$cookieMessage.setAttribute('hidden', 'true')
     // this.revealConfirmationMessage(this.$cookieConfirmationReject)
   }
 
-  acceptCookies_cookiepage() {
+  acceptCookiesCookiepage() {
     CookieFunctions.setConsentCookie({ analytics: true })
     this.$cookieMessage.setAttribute('hidden', 'true')
     // this.revealConfirmationMessage(this.$cookieConfirmationAccept)
@@ -114,7 +114,7 @@ class CookieBanner {
   }
 
   onCookiesPage() {
-    return window.location.pathname === '/cookies/'
+    return globalThis.location.pathname === '/cookies/'
   }
 }
 

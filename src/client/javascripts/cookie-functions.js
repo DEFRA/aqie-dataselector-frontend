@@ -22,7 +22,7 @@ const previewID = 'GTM-5ZWS27T3'
 const TRACKING_PREVIEW_ID = previewID
 const TRACKING_LIVE_ID = previewID
 function gtag() {
-  window.dataLayer.push(arguments)
+  globalThis.dataLayer.push(arguments)
 }
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
@@ -63,13 +63,13 @@ const DEFAULT_COOKIE_CONSENT = {
  * @param {{ days?: number }} [options] - Cookie options
  * @returns {string | null | undefined} - Returns value when setting or deleting
  */
-export function Cookie(name, value, options) {
-  if (typeof value !== 'undefined') {
+export function cookie(name, value, options) {
+  if (value !== undefined) {
     if (value === false || value === null) {
       deleteCookie(name)
     } else {
       // Default expiry date of 30 days
-      if (typeof options === 'undefined') {
+      if (options === undefined) {
         options = { days: 30 }
       }
       setCookie(name, value, options)
@@ -114,7 +114,7 @@ export function getConsentCookie() {
  */
 export function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
-  return options && options.version >= window.AQIE_CONSENT_COOKIE_VERSION
+  return options && options.version >= globalThis.AQIE_CONSENT_COOKIE_VERSION
 }
 
 /**
@@ -125,7 +125,7 @@ export function setConsentCookie(options) {
   const cookieConsent =
     getConsentCookie() ||
     // If no preferences or old version use the default
-    JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
+    structuredClone(DEFAULT_COOKIE_CONSENT)
 
   // Merge current cookie preferences and new preferences
   for (const option in options) {
@@ -136,7 +136,7 @@ export function setConsentCookie(options) {
   delete cookieConsent.essential
 
   // @ts-expect-error Property does not exist on window
-  cookieConsent.version = window.AQIE_CONSENT_COOKIE_VERSION
+  cookieConsent.version = globalThis.AQIE_CONSENT_COOKIE_VERSION
 
   // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
@@ -150,10 +150,10 @@ function loadGoogleAnalytics() {
   script.src = ganalytics
   script.async = true
   document.head.appendChild(script)
-  window.dataLayer = window.dataLayer || []
+  globalThis.dataLayer = globalThis.dataLayer || []
 
   gtag('js', new Date())
-  gtag('config', tagID, { page_path: window.location.pathname })
+  gtag('config', tagID, { page_path: globalThis.location.pathname })
 }
 
 /**
@@ -165,7 +165,7 @@ export function resetCookies() {
   const options =
     getConsentCookie() ||
     // If no preferences or old version use the default
-    JSON.parse(JSON.stringify(DEFAULT_COOKIE_CONSENT))
+    structuredClone(DEFAULT_COOKIE_CONSENT)
 
   for (const cookieType in options) {
     if (cookieType === 'version') {
@@ -180,8 +180,8 @@ export function resetCookies() {
     // Initialise analytics if allowed
     if (cookieType === 'analytics' && options[cookieType]) {
       // Enable GA if allowed
-      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
+      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
+      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
 
       if (options[cookieType] === true) {
         loadGoogleAnalytics()
@@ -191,17 +191,17 @@ export function resetCookies() {
       }
     } else {
       // Disable GA if not allowed
-      window[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      window[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
+      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
+      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
     }
 
-    if (!options[cookieType]) {
+    if (options[cookieType]) {
       // Fetch the cookies in that category
       const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
 
-      cookiesInCategory.forEach((cookie) => {
+      cookiesInCategory.forEach((cookieName) => {
         // Delete cookie
-        Cookie(cookie, null)
+        cookie(cookieName, null)
       })
     }
   }
@@ -217,7 +217,7 @@ export function resetCookies() {
  */
 export function removeUACookies() {
   for (const UACookie of ['_gid', '_ga']) {
-    Cookie(UACookie, null)
+    cookie(UACookie, null)
   }
 }
 
@@ -263,10 +263,10 @@ function userAllowsCookie(cookieName) {
   }
 
   for (const category in COOKIE_CATEGORIES) {
-    if (Object.prototype.hasOwnProperty.call(COOKIE_CATEGORIES, category)) {
+    if (Object.hasOwn(COOKIE_CATEGORIES, category)) {
       const cookiesInCategory = COOKIE_CATEGORIES[category]
 
-      if (cookiesInCategory.indexOf(cookieName) !== -1) {
+      if (cookiesInCategory.includes(cookieName)) {
         return userAllowsCookieCategory(category, cookiePreferences)
       }
     }
@@ -285,12 +285,12 @@ function getCookie(name) {
   const nameEQ = `${name}=`
   const cookies = document.cookie.split(';')
   for (let i = 0, len = cookies.length; i < len; i++) {
-    let cookie = cookies[i]
-    while (cookie.startsWith(' ')) {
-      cookie = cookie.substring(1, cookie.length)
+    let cookieString = cookies[i]
+    while (cookieString.startsWith(' ')) {
+      cookieString = cookieString.substring(1, cookieString.length)
     }
-    if (cookie.startsWith(nameEQ)) {
-      return decodeURIComponent(cookie.substring(nameEQ.length))
+    if (cookieString.startsWith(nameEQ)) {
+      return decodeURIComponent(cookieString.substring(nameEQ.length))
     }
   }
   return null
@@ -325,15 +325,15 @@ function setCookie(name, value, options) {
  * @param {string} name - Cookie name
  */
 function deleteCookie(name) {
-  if (Cookie(name)) {
+  if (cookie(name)) {
     // Cookies need to be deleted in the same level of specificity in which they were set
     // If a cookie was set with a specified domain, it needs to be specified when deleted
     // If a cookie wasn't set with the domain attribute, it shouldn't be there when deleted
     // You can't tell if a cookie was set with a domain attribute or not, so try both options
 
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${window.location.hostname};path=/`
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${window.location.hostname};path=/`
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${globalThis.location.hostname};path=/`
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${globalThis.location.hostname};path=/`
   }
 }
 
