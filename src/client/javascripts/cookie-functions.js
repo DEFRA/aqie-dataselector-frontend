@@ -195,13 +195,13 @@ export function resetCookies() {
       globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
     }
 
-    if (!options[cookieType]) {
+    if (options[cookieType]) {
       // Fetch the cookies in that category
       const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
 
-      cookiesInCategory.forEach((cookie) => {
+      cookiesInCategory.forEach((cookieName) => {
         // Delete cookie
-        cookie(cookie, null)
+        cookie(cookieName, null)
       })
     }
   }
@@ -285,12 +285,12 @@ function getCookie(name) {
   const nameEQ = `${name}=`
   const cookies = document.cookie.split(';')
   for (let i = 0, len = cookies.length; i < len; i++) {
-    let cookie = cookies[i]
-    while (cookie.startsWith(' ')) {
-      cookie = cookie.substring(1, cookie.length)
+    let cookieString = cookies[i]
+    while (cookieString.startsWith(' ')) {
+      cookieString = cookieString.substring(1, cookieString.length)
     }
-    if (cookie.startsWith(nameEQ)) {
-      return decodeURIComponent(cookie.substring(nameEQ.length))
+    if (cookieString.startsWith(nameEQ)) {
+      return decodeURIComponent(cookieString.substring(nameEQ.length))
     }
   }
   return null
