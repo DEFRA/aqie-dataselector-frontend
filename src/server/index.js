@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import hapi from '@hapi/hapi'
 import hapiCookie from '@hapi/cookie'
 import { config } from '~/src/config/config.js'
@@ -53,16 +53,8 @@ export async function createServer() {
       strictHeader: false
     }
   })
+
   await server.register([hapiCookie])
-  // const cookiePassword = config.get('cookiePassword')
-  // server.auth.strategy('login', 'cookie', {
-  //   cookie: {
-  //     name: 'airaqie_cookies_analytics_session',
-  //     path: '/',
-  //     password: cookiePassword,
-  //     isSecure: isProduction
-  //   },
-  //   redirectTo: '/',
   //   keepAlive: true,
   //   // to validate cookie content on each request and returns boolean(isauthenticated/not)
   //   validate: (request, session) => {

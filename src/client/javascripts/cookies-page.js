@@ -9,18 +9,20 @@ class CookiesPage {
    * @param {Element} $module - HTML element
    */
   constructor($module) {
+    this.initialized = false
+
     if (
       !($module instanceof HTMLElement) ||
       !document.body.classList.contains('govuk-frontend-supported')
     ) {
-      return this
+      return
     }
 
     this.$page = $module
 
     const $cookieForm = this.$page.querySelector('.js-cookies-page-form')
     if (!($cookieForm instanceof HTMLFormElement)) {
-      return this
+      return
     }
 
     this.$cookieForm = $cookieForm
@@ -37,7 +39,7 @@ class CookiesPage {
       !$cookieFormFieldsets.length ||
       !($cookieFormButton instanceof HTMLButtonElement)
     ) {
-      return this
+      return
     }
 
     this.$cookieFormFieldsets = $cookieFormFieldsets
@@ -64,6 +66,8 @@ class CookiesPage {
     this.$cookieForm.addEventListener('submit', (event) =>
       this.savePreferences(event)
     )
+
+    this.initialized = true
   }
 
   /**

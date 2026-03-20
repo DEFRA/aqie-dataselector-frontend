@@ -11,6 +11,12 @@ const HTTP_FORBIDDEN = 403
 const HTTP_NOT_FOUND = 404
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
+// Status code range limits
+const STATUS_CODE_LIMITS = {
+  MIN: 100,
+  MAX: 599
+}
+
 // Timeout/Timer Values (in milliseconds)
 const POLL_INTERVAL_MS = 1000 // 1 second
 const POLL_PROGRESS_INTERVAL_MS = 2000 // 2 seconds
@@ -53,6 +59,7 @@ export {
   HTTP_FORBIDDEN,
   HTTP_NOT_FOUND,
   HTTP_INTERNAL_SERVER_ERROR,
+  STATUS_CODE_LIMITS,
   POLL_INTERVAL_MS,
   POLL_PROGRESS_INTERVAL_MS,
   LAQM_TIMEOUT_MS,
