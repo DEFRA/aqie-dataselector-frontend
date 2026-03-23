@@ -394,16 +394,9 @@ function handlePostLocalAuthorities(payload, request, laResult) {
   request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedLocations)
 }
 
-function handlePostValidationError(
-  request,
-  h,
-  payload,
-  laResult,
-  localAuthorityNames,
-  laqmMetadata,
-  backUrl,
-  errors
-) {
+function handlePostValidationError(request, h, context, errors) {
+  const { laResult, localAuthorityNames, laqmMetadata, backUrl, payload } =
+    context
   const isNoJs = isNoJsRequest(request)
   const templatePath = getTemplatePath(isNoJs)
   return h.view(
@@ -433,11 +426,13 @@ function processCountriesPost(
     return handlePostValidationError(
       request,
       h,
-      payload,
-      laContext.laResult,
-      laContext.localAuthorityNames,
-      laqmMetadata,
-      backUrl,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
       errors
     )
   }
@@ -460,11 +455,13 @@ function processLocalAuthoritiesPost(
     return handlePostValidationError(
       request,
       h,
-      payload,
-      laContext.laResult,
-      laContext.localAuthorityNames,
-      laqmMetadata,
-      backUrl,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
       errors
     )
   }
@@ -480,11 +477,13 @@ function processLocalAuthoritiesPost(
     return handlePostValidationError(
       request,
       h,
-      payload,
-      laContext.laResult,
-      laContext.localAuthorityNames,
-      laqmMetadata,
-      backUrl,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
       errors
     )
   }
@@ -511,11 +510,13 @@ function handlePostRequest(
     return handlePostValidationError(
       request,
       h,
-      payload,
-      laContext.laResult,
-      laContext.localAuthorityNames,
-      laqmMetadata,
-      backUrl,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
       errors
     )
   }
@@ -552,11 +553,13 @@ function handlePostRequest(
   return handlePostValidationError(
     request,
     h,
-    payload,
-    laContext.laResult,
-    laContext.localAuthorityNames,
-    laqmMetadata,
-    backUrl,
+    {
+      laResult: laContext.laResult,
+      localAuthorityNames: laContext.localAuthorityNames,
+      laqmMetadata,
+      backUrl,
+      payload
+    },
     errors
   )
 }

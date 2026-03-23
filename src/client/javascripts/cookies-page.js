@@ -117,11 +117,10 @@ class CookiesPage {
    */
   showUserPreference($cookieFormFieldset, preferences) {
     const cookieType = this.getCookieType($cookieFormFieldset)
-    let preference = false
-
-    if (cookieType && preferences && preferences[cookieType] !== undefined) {
-      preference = preferences[cookieType]
-    }
+    const preference =
+      cookieType && preferences?.[cookieType] !== undefined
+        ? preferences[cookieType]
+        : false
 
     const radioValue = preference ? 'yes' : 'no'
 

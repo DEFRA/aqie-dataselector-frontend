@@ -216,7 +216,9 @@ function validateRangeRelationship(startYear, endYear, errors) {
       ERROR_FIELD_RANGE_END,
       MSG_END_AFTER_START
     )
-  } else if (!isValidYearRange(start, end)) {
+  } else if (isValidYearRange(start, end)) {
+    // start <= end and range is valid — no error needed
+  } else {
     addError(
       errors,
       MSG_MAX_FIVE_YEARS,
@@ -231,8 +233,6 @@ function validateRangeRelationship(startYear, endYear, errors) {
       ERROR_FIELD_RANGE_END,
       MSG_MAX_FIVE_YEARS
     )
-  } else {
-    // start <= end and range is valid — no error needed
   }
 }
 

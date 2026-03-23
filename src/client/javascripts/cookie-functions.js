@@ -63,19 +63,16 @@ const DEFAULT_COOKIE_CONSENT = {
  * @param {{ days?: number }} [options] - Cookie options
  * @returns {string | null | undefined} - Returns value when setting or deleting
  */
-export function cookie(name, value, options) {
-  if (value !== undefined) {
-    if (value === false || value === null) {
-      deleteCookie(name)
-    } else {
-      // Default expiry date of 30 days
-      if (options === undefined) {
-        options = { days: 30 }
-      }
-      setCookie(name, value, options)
-    }
-  } else {
+export function cookie(name, value = undefined, options) {
+  if (value === undefined) {
     return getCookie(name)
+  }
+
+  if (value === false || value === null) {
+    deleteCookie(name)
+  } else {
+    const cookieOptions = options ?? { days: 30 }
+    setCookie(name, value, cookieOptions)
   }
 }
 

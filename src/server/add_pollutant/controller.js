@@ -5,8 +5,9 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
-// Pollutant name constants
+const logger = createLogger()
 const POLLUTANT_PM25_FULL = 'Fine particulate matter (PM2.5)'
 const POLLUTANT_PM25_SHORT = 'Particulate matter (PM2.5)'
 const POLLUTANT_PM25_ABBR = 'PM2.5'
@@ -119,6 +120,9 @@ const parsePollutantsData = (rawFromPayload, errors) => {
 
     return []
   } catch (e) {
+    logger.error(
+      `Failed to parse pollutants: ${e instanceof Error ? e.message : 'unknown error'}`
+    )
     errors.push({
       text: 'Invalid pollutants data format.',
       href: '#selected-pollutants'
