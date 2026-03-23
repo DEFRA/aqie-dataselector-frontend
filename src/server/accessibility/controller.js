@@ -9,9 +9,8 @@ const accessibilityController = {
       }
     } = english
     /* eslint-disable camelcase */
-
     const cleanPageTitle = pageTitle
-      ? pageTitle.replaceAll(/['"]/, '')
+      ? pageTitle.replaceAll(/['"]/g, '')
       : pageTitle
     return h.view('accessibility/index', {
       pageTitle: cleanPageTitle,

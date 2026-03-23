@@ -4,20 +4,22 @@ import { english } from '~/src/server/data/en/homecontent.js'
  * @param {number} statusCode
  */ const content = english.errorpages
 function statusCodeMessage(statusCode) {
-  switch (true) {
-    case statusCode === statusCodes.notFound:
-      return 'Page not found'
-    case statusCode === statusCodes.forbidden:
-      return 'Forbidden'
-    case statusCode === statusCodes.unauthorized:
-      return 'Unauthorized'
-    case statusCode === statusCodes.badRequest:
-      return 'Bad Request'
-    case statusCode === statusCodes.internalServerError:
-      return 'Sorry, there is a problem with the service'
-    default:
-      return 'Sorry, there is a problem with the service'
+  if (statusCode === statusCodes.notFound) {
+    return 'Page not found'
   }
+  if (statusCode === statusCodes.forbidden) {
+    return 'Forbidden'
+  }
+  if (statusCode === statusCodes.unauthorized) {
+    return 'Unauthorized'
+  }
+  if (statusCode === statusCodes.badRequest) {
+    return 'Bad Request'
+  }
+  if (statusCode === statusCodes.internalServerError) {
+    return 'Sorry, there is a problem with the service'
+  }
+  return 'Sorry, there is a problem with the service'
 }
 
 /**
