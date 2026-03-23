@@ -88,7 +88,8 @@ const mockYar = (initialData = {}) => {
 
 const mockH = () => ({
   state: jest.fn(),
-  view: jest.fn((template, context) => ({ template, context }))
+  view: jest.fn((template, context) => ({ template, context })),
+  redirect: jest.fn().mockReturnValue('redirected')
 })
 
 describe('multipleLocationsController', () => {
@@ -140,14 +141,16 @@ describe('multipleLocationsController', () => {
   })
 
   it('should render no location view when no locations found', async () => {
-    axios.post.mockResolvedValueOnce({ data: { getOSPlaces: [] } })
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [] } }) // OS name API
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } }) // Monitoring API
 
     const yar = mockYar({
       fullSearchQuery: { value: 'London' },
       locationMiles: '10',
       hasSpecialCharacter: false,
       searchLocation: 'London',
-      osnameapiresult: [] // This ensures locationdetails is an empty array
+      osnameapiresult: undefined // Not cached, will trigger API call
     })
 
     const request = {
@@ -160,6 +163,7 @@ describe('multipleLocationsController', () => {
     const h = mockH()
 
     await multipleLocationsController.handler(request, h)
+
     expect(h.view).toHaveBeenCalledWith(
       'multiplelocations/nolocation',
       expect.any(Object)
@@ -280,8 +284,8 @@ describe('multipleLocationsController', () => {
   })
 
   it('should handle API errors gracefully', async () => {
-    const error = new Error('API Error')
-    axios.post.mockRejectedValueOnce(error)
+    const apiError = new Error('OS Names API failed')
+    axios.post.mockRejectedValueOnce(apiError)
 
     const yar = mockYar({
       fullSearchQuery: { value: 'London' },
@@ -300,8 +304,12 @@ describe('multipleLocationsController', () => {
     }
     const h = mockH()
 
-    await multipleLocationsController.handler(request, h)
-    expect(yar.set).toHaveBeenCalledWith('osnameapiresult', error)
+    const result = await multipleLocationsController.handler(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith(
+      '/problem-with-service?statusCode=500'
+    )
+    expect(result).toBe('redirected')
   })
 
   it('should handle pollutant name mapping for GR25, GE10, GR10', async () => {

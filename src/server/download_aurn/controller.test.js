@@ -38,7 +38,8 @@ describe('downloadAurnController', () => {
       response: jest.fn().mockReturnThis(),
       type: jest.fn().mockReturnThis(),
       code: jest.fn().mockReturnThis(),
-      view: jest.fn().mockReturnValue('view-response')
+      view: jest.fn().mockReturnValue('view-response'),
+      redirect: jest.fn().mockReturnValue('redirected')
     }
 
     // Session values
@@ -441,11 +442,12 @@ describe('downloadAurnController', () => {
         error.statusCode = 503
         axios.post.mockRejectedValueOnce(error)
 
-        await downloadAurnController.handler(mockRequest, mockH)
+        const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.response).toHaveBeenCalledWith(error)
-        expect(mockH.type).toHaveBeenCalledWith('application/json')
-        expect(mockH.code).toHaveBeenCalledWith(200)
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -456,10 +458,12 @@ describe('downloadAurnController', () => {
         const error = { error: true, statusCode: 400, message: 'Bad request' }
         axios.post.mockResolvedValueOnce({ data: error })
 
-        await downloadAurnController.handler(mockRequest, mockH)
+        const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.response).toHaveBeenCalledWith({ jobID: error })
-        expect(mockH.type).toHaveBeenCalledWith('application/json')
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -475,10 +479,12 @@ describe('downloadAurnController', () => {
 
         const promise = downloadAurnController.handler(mockRequest, mockH)
         await jest.runAllTimersAsync()
-        await promise
+        const result = await promise
 
-        // Should still render view even with download error (error is returned as jobID)
-        expect(mockH.view).toHaveBeenCalled()
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -501,10 +507,12 @@ describe('downloadAurnController', () => {
 
         const promise = downloadAurnController.handler(mockRequest, mockH)
         await jest.runAllTimersAsync()
-        await promise
+        const result = await promise
 
-        // Should not render view on polling error
-        expect(mockH.view).not.toHaveBeenCalled()
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirect-response')
       },
       TEST_TIMEOUT_MS
     )
@@ -521,11 +529,12 @@ describe('downloadAurnController', () => {
         const error = new Error('Request failed')
         axios.post.mockRejectedValueOnce(error)
 
-        await downloadAurnController.handler(mockRequest, mockH)
+        const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        // Should return error response
-        expect(mockH.response).toHaveBeenCalledWith(error)
-        expect(mockH.type).toHaveBeenCalledWith('application/json')
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -550,10 +559,12 @@ describe('downloadAurnController', () => {
 
         const promise = downloadAurnController.handler(mockRequest, mockH)
         await jest.runAllTimersAsync()
-        await promise
+        const result = await promise
 
-        // Should still render view with error handled
-        expect(mockH.view).toHaveBeenCalled()
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -565,10 +576,12 @@ describe('downloadAurnController', () => {
         networkError.code = 'ENOTFOUND'
         axios.post.mockRejectedValueOnce(networkError)
 
-        await downloadAurnController.handler(mockRequest, mockH)
+        const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.response).toHaveBeenCalledWith(networkError)
-        expect(mockH.type).toHaveBeenCalledWith('application/json')
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )
@@ -580,9 +593,12 @@ describe('downloadAurnController', () => {
         timeoutError.code = 'ECONNABORTED'
         axios.post.mockRejectedValueOnce(timeoutError)
 
-        await downloadAurnController.handler(mockRequest, mockH)
+        const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.response).toHaveBeenCalledWith(timeoutError)
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
     )

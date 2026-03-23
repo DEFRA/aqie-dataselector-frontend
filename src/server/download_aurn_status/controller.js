@@ -1,11 +1,14 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_OK,
   HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+
+const logger = createLogger()
 
 const PROBLEM_SERVICE_500_URL = `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
 
@@ -98,7 +101,7 @@ const downloadAurnstatusController = {
         .type('application/json')
         .code(HTTP_OK)
     } catch (error) {
-      // logger.error('Error in status handler:', error)
+      logger.error(`Download AURN status handler error: ${error.message}`)
       return h
         .response({
           error: true,

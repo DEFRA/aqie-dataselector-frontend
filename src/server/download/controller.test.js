@@ -40,7 +40,8 @@ describe('downloadcontroller', () => {
           code: jest.fn().mockReturnValue('json-response')
         })),
         code: jest.fn().mockReturnValue('json-response')
-      }))
+      })),
+      redirect: jest.fn().mockReturnValue('redirected')
     }
 
     // Mock config
@@ -148,10 +149,12 @@ describe('downloadcontroller', () => {
         return null
       })
 
-      await downloadcontroller.handler(mockRequest, mockH)
+      const result = await downloadcontroller.handler(mockRequest, mockH)
 
-      // Test that function handles missing data gracefully
-      expect(mockRequest.yar.get).toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+      expect(result).toBe('redirected')
     })
 
     it('should handle different URL pathnames', async () => {

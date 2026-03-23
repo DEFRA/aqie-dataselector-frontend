@@ -1,10 +1,13 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
   HTTP_OK,
   HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+
+const logger = createLogger()
 async function invokeTable(params) {
   // Renamed parameter to avoid shadowing
   try {
@@ -59,8 +62,9 @@ const rendertablecontroller = {
 
       return h.response(partialContent1).code(HTTP_OK)
     } catch (error) {
+      logger.error(`Render table error: ${error.message}`)
       return h
-        .response('Error rendering partial content')
+        .response('Error rendering table')
         .code(HTTP_INTERNAL_SERVER_ERROR)
     }
   }

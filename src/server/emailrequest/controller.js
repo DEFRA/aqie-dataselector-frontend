@@ -5,9 +5,11 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-// import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
+
+const logger = createLogger()
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
@@ -21,7 +23,8 @@ async function invokeStationCount(stationcountparameters) {
 
     return response.data
   } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
+    logger.error(`Email request API error: ${error.message}`)
+    return null
   }
 
   // dev
