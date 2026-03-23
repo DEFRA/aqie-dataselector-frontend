@@ -1,10 +1,14 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 import {
   HTTP_BAD_REQUEST,
-  HTTP_NOT_FOUND
+  HTTP_NOT_FOUND,
+  HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+
+const logger = createLogger()
 const getLocationDetailsController = {
   handler: async (request, h) => {
     const locationID = request.params.id
@@ -30,6 +34,14 @@ const getLocationDetailsController = {
       userLocation,
       locationMiles
     )
+
+    if (monitoringResult === null) {
+      logger.error('Monitoring stations API returned null')
+      return h
+        .response('Error retrieving monitoring stations')
+        .code(HTTP_INTERNAL_SERVER_ERROR)
+    }
+
     request.yar.set('MonitoringstResult', monitoringResult)
 
     const pollMap = buildPollutantMap(monitoringResult.getmonitoringstation)
@@ -77,7 +89,8 @@ async function fetchMonitoringStations(location, miles) {
 
     return response.data
   } catch (error) {
-    return error
+    logger.error(`Location ID API error: ${error.message}`)
+    return null
   }
 }
 

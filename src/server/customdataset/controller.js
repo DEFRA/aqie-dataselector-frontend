@@ -388,7 +388,8 @@ async function invokeStationCount(stationcountparameters) {
 
     return response.data
   } catch (error) {
-    return error
+    logger.error(`Station count API error: ${error.message}`)
+    return null
   }
 }
 

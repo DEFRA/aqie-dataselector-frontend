@@ -10,35 +10,30 @@ const logger = createLogger()
 async function invokeDownload(apiparams) {
   // prod
   logger.info(`apiparams ${JSON.stringify(apiparams)}`)
-  try {
-    const response = await axios.post(
-      config.get('Download_aurn_URL'),
-      apiparams
-    )
-    const idDownload = response.data
-    const downloadstatusapiparams = { jobID: idDownload }
-    return downloadstatusapiparams
-  } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
+  const response = await axios.post(config.get('Download_aurn_URL'), apiparams)
+  const idDownload = response.data
+
+  // If the response is an error object, return it directly
+  if (idDownload?.error) {
+    return idDownload
   }
+
+  const downloadstatusapiparams = { jobID: idDownload }
+  return downloadstatusapiparams
 }
 async function invokeDownloadS3(downloadstatusapiparams) {
   // Poll the status endpoint every 2 seconds until status is completed
   let statusResponse
 
-  try {
-    do {
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
-      const statusResult = await axios.post(
-        config.get('Polling_URL'),
-        downloadstatusapiparams
-      )
-      statusResponse = statusResult.data
-    } while (statusResponse.status !== 'Completed')
-    return statusResponse.resultUrl
-  } catch (error) {
-    return error
-  }
+  do {
+    await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1 second
+    const statusResult = await axios.post(
+      config.get('Polling_URL'),
+      downloadstatusapiparams
+    )
+    statusResponse = statusResult.data
+  } while (statusResponse.status !== 'Completed')
+  return statusResponse.resultUrl
 }
 
 const downloadAurnController = {
@@ -72,7 +67,7 @@ const downloadAurnController = {
 
       if (downloadstatusapiparams?.error) {
         return h.redirect(
-          `/problem-with-service?statusCode=${downloadstatusapiparams.statusCode || HTTP_INTERNAL_SERVER_ERROR}`
+          `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
         )
       }
 
@@ -84,7 +79,7 @@ const downloadAurnController = {
         // Check for error from polling
         if (downloadResultaurn?.error) {
           return h.redirect(
-            `/problem-with-service?statusCode=${downloadResultaurn.statusCode || HTTP_INTERNAL_SERVER_ERROR}`
+            `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
           )
         }
 
@@ -101,9 +96,8 @@ const downloadAurnController = {
         .type('application/json')
         .code(HTTP_OK)
     } catch (error) {
-      return h
-        .response({ error: 'An error occurred' })
-        .code(HTTP_INTERNAL_SERVER_ERROR)
+      logger.error(`Download AURN handler error: ${error.message}`)
+      return h.redirect('/problem-with-service?statusCode=500')
     }
   }
 }

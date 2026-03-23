@@ -1,16 +1,17 @@
 import { config } from '~/src/config/config.js'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
-import {
-  HTTP_OK,
-  HTTP_INTERNAL_SERVER_ERROR
-} from '~/src/server/common/constants/magic-numbers.js'
+import { HTTP_OK } from '~/src/server/common/constants/magic-numbers.js'
+
+const logger = createLogger()
 
 async function invokeDownload(apiparams) {
   try {
     const response = await axios.post(config.get('Download_URL'), apiparams)
     return response.data
   } catch (error) {
-    return error
+    logger.error(`Download API error: ${error.message}`)
+    return null
   }
 }
 
@@ -32,6 +33,11 @@ const downloadcontroller = {
       }
       const downloadresult = await invokeDownload(apiparams)
 
+      if (downloadresult === null) {
+        logger.error('Download API returned null')
+        throw new Error('Download API failed')
+      }
+
       request.yar.set('downloadresult', downloadresult)
       const viewData = {
         ...request.yar.get('viewData'),
@@ -43,9 +49,8 @@ const downloadcontroller = {
       }
       return h.response(downloadresult).type('application/json').code(HTTP_OK)
     } catch (error) {
-      return h
-        .response('Error rendering partial content')
-        .code(HTTP_INTERNAL_SERVER_ERROR)
+      logger.error(`Download handler error: ${error.message}`)
+      return h.redirect('/problem-with-service?statusCode=500')
     }
   }
 }
