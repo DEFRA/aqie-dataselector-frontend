@@ -3,6 +3,7 @@ import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 
 const logger = createLogger()
 
@@ -36,21 +37,40 @@ function buildPollutantMap(monitoringStations) {
 
   return pollutantMap
 }
-
 async function invokeOsNameAPI(searchv) {
   const nameApiparams = {
     userLocation: searchv
   }
-  try {
-    const response = await axios.post(
-      config.get('OS_NAMES_API_URL'),
-      nameApiparams
-    )
 
-    return response.data
-  } catch (error) {
-    logger.error(`OS Names API error: ${error.message}`)
-    throw error
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url =
+        'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(nameApiparams),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      return error
+    }
+  } else {
+    // dev / test / prod environments: use axios with config URL
+    try {
+      const response = await axios.post(
+        config.get('OS_NAMES_API_URL'),
+        nameApiparams
+      )
+      return response.data
+    } catch (error) {
+      logger.error(`OS Names API error: ${error.message}`)
+      throw error
+    }
   }
 }
 

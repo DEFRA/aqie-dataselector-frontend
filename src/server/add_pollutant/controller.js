@@ -4,33 +4,11 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
+import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
-const POLLUTANT_PM25_FULL = 'Fine particulate matter (PM2.5)'
-const POLLUTANT_PM25_SHORT = 'Particulate matter (PM2.5)'
-const POLLUTANT_PM25_ABBR = 'PM2.5'
-const POLLUTANT_PM10_FULL = 'Particulate matter (PM10)'
-const POLLUTANT_PM10_ABBR = 'PM10'
-const POLLUTANT_NO2_FULL = 'Nitrogen dioxide (NO2)'
-const POLLUTANT_NO2_NAME = 'Nitrogen dioxide'
-const POLLUTANT_NO2_ABBR = 'NO2'
-const POLLUTANT_O3_FULL = 'Ozone (O3)'
-const POLLUTANT_O3_NAME = 'Ozone'
-const POLLUTANT_O3_ABBR = 'O3'
-const POLLUTANT_SO2_FULL = 'Sulphur dioxide (SO2)'
-const POLLUTANT_SO2_NAME = 'Sulphur dioxide'
-const POLLUTANT_SO2_ABBR = 'SO2'
-const POLLUTANT_NO_FULL = 'Nitric oxide (NO)'
-const POLLUTANT_NO_NAME = 'Nitric oxide'
-const POLLUTANT_NO_ABBR = 'NO'
-const POLLUTANT_NOX_FULL = 'Nitrogen oxides as nitrogen dioxide (NOx as NO2)'
-const POLLUTANT_NOX_NAME = 'Nitrogen oxides as nitrogen dioxide'
-const POLLUTANT_NOX_ABBR = 'NOx as NO2'
-const POLLUTANT_CO_FULL = 'Carbon monoxide (CO)'
-const POLLUTANT_CO_NAME = 'Carbon monoxide'
-const POLLUTANT_CO_ABBR = 'CO'
 
 // Error anchor constants
 const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
@@ -38,58 +16,52 @@ const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 // Route constants
 const CUSTOMDATASET_URL = '/customdataset'
 
-const allowedPollutants = [
-  POLLUTANT_PM25_FULL,
-  POLLUTANT_PM10_FULL,
-  POLLUTANT_NO2_FULL,
-  POLLUTANT_O3_FULL,
-  POLLUTANT_SO2_FULL,
-  POLLUTANT_NO_FULL,
-  POLLUTANT_NOX_FULL,
-  POLLUTANT_CO_FULL,
-  // Additional variations for better matching
-  POLLUTANT_PM25_SHORT,
-  POLLUTANT_PM25_ABBR,
-  POLLUTANT_PM10_ABBR,
-  POLLUTANT_NO2_NAME,
-  POLLUTANT_NO2_ABBR,
-  POLLUTANT_O3_NAME,
-  POLLUTANT_O3_ABBR,
-  POLLUTANT_SO2_NAME,
-  POLLUTANT_SO2_ABBR,
-  POLLUTANT_NO_NAME,
-  POLLUTANT_NO_ABBR,
-  POLLUTANT_NOX_NAME,
-  POLLUTANT_NOX_ABBR,
-  POLLUTANT_CO_NAME,
-  POLLUTANT_CO_ABBR
-]
+// Pollutant master API
+const POLLUTANT_MASTER_API_URL =
+  'https://localhost:44352/AtomDataSelectionPollutantMaster/'
+
+// Fetch pollutant list from API — returns array of { pollutantID, pollutantName, pollutant_Abbreviation, pollutant_value }
+async function fetchPollutantList() {
+  try {
+    const { payload } = await Wreck.get(POLLUTANT_MASTER_API_URL, {
+      json: true
+    })
+    const list = Array.isArray(payload) ? payload : []
+    logger.info(`Fetched ${list.length} pollutants from master API`)
+    return list
+  } catch (error) {
+    logger.error(
+      `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
+    )
+    return []
+  }
+}
 
 const pollutantGroups = {
   core: [
-    POLLUTANT_PM25_SHORT,
-    POLLUTANT_PM10_FULL,
-    POLLUTANT_NO2_FULL,
-    POLLUTANT_O3_FULL,
-    POLLUTANT_SO2_FULL
+    'Fine particulate matter (PM2.5)',
+    'Particulate matter (PM10)',
+    'Nitrogen dioxide (NO2)',
+    'Ozone (O3)',
+    'Sulphur dioxide (SO2)'
   ],
   compliance: [
-    POLLUTANT_PM25_SHORT,
-    POLLUTANT_PM10_FULL,
-    POLLUTANT_NO2_FULL,
-    POLLUTANT_O3_FULL,
-    POLLUTANT_SO2_FULL,
-    POLLUTANT_NO_FULL,
-    POLLUTANT_NOX_FULL,
-    POLLUTANT_CO_FULL
+    'Fine particulate matter (PM2.5)',
+    'Particulate matter (PM10)',
+    'Nitrogen dioxide (NO2)',
+    'Ozone (O3)',
+    'Sulphur dioxide (SO2)',
+    'Nitric oxide (NO)',
+    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
+    'Carbon monoxide (CO)'
   ]
 }
 
-// Helper function to check if a pollutant is allowed
-const isAllowedPollutant = (value) => {
+// Helper function to check if a pollutant is allowed against the API-fetched list
+const isAllowedPollutant = (value, pollutantMasterList) => {
   const lowerValue = (value || '').toLowerCase().trim()
-  return allowedPollutants.some(
-    (pollutant) => pollutant.toLowerCase().trim() === lowerValue
+  return pollutantMasterList.some(
+    (p) => p.pollutant_value.toLowerCase().trim() === lowerValue
   )
 }
 
@@ -145,19 +117,23 @@ const getRawPayloadForSpecificMode = (isNoJS, request, pollutantsData) => {
 }
 
 // Helper function to validate specific pollutants
-const validateSpecificPollutants = (finalPollutantsSp, errors, isNoJS) => {
+const validateSpecificPollutants = (
+  finalPollutantsSp,
+  errors,
+  isNoJS,
+  pollutantMasterList
+) => {
   const invalidPollutants = []
   const duplicates = []
   const seen = new Set()
 
-  // Use different anchor based on JS/noJS version
   const pollutantAnchor = isNoJS
     ? '#selected-pollutants'
     : ANCHOR_MY_AUTOCOMPLETE
 
   finalPollutantsSp.forEach((pollutant) => {
     const trimmed = (pollutant || '').trim()
-    if (!isAllowedPollutant(trimmed)) {
+    if (!isAllowedPollutant(trimmed, pollutantMasterList)) {
       invalidPollutants.push(trimmed)
     }
     const lower = trimmed.toLowerCase()
@@ -204,14 +180,25 @@ const processGroupMode = (selectedGroup, errors) => {
 }
 
 // Helper function to process specific mode
-const processSpecificMode = (isNoJS, request, pollutantsData, errors) => {
+const processSpecificMode = (
+  isNoJS,
+  request,
+  pollutantsData,
+  errors,
+  pollutantMasterList
+) => {
   const rawFromPayload = getRawPayloadForSpecificMode(
     isNoJS,
     request,
     pollutantsData
   )
   const finalPollutantsSp = parsePollutantsData(rawFromPayload, errors)
-  validateSpecificPollutants(finalPollutantsSp, errors, isNoJS)
+  validateSpecificPollutants(
+    finalPollutantsSp,
+    errors,
+    isNoJS,
+    pollutantMasterList
+  )
   return finalPollutantsSp
 }
 
@@ -223,6 +210,7 @@ const handleValidationErrors = (
   finalPollutantsGr,
   finalPollutantsSp,
   selectedGroup,
+  pollutants,
   h
 ) => {
   const templatePath = isNoJS
@@ -246,7 +234,8 @@ const handleValidationErrors = (
     },
     selectedMode,
     selectedGroup: selectedMode === 'group' ? selectedGroup : '',
-    selectedPollutants: selectedForView
+    selectedPollutants: selectedForView,
+    pollutants
   })
 }
 
@@ -289,7 +278,10 @@ const handlePostRequest = (request, h) => {
     selectedPollutants: pollutantsData
   } = request.payload || {}
 
-  // Clear group selection from session immediately if mode is 'specific'
+  // Use pollutant master list from session (fetched on GET)
+  const pollutantMasterList = request.yar.get('pollutantMasterList') || []
+  const pollutants = pollutantMasterList
+
   if (selectedMode === 'specific') {
     request.yar.set('selectedPollutantGroup', '')
   }
@@ -298,7 +290,6 @@ const handlePostRequest = (request, h) => {
   let finalPollutantsSp = []
   const errors = []
 
-  // VALIDATION 1: Check if mode is selected
   if (!selectedMode) {
     errors.push({
       text: 'Select an option before continuing',
@@ -306,7 +297,6 @@ const handlePostRequest = (request, h) => {
     })
   }
 
-  // Handle group selection
   if (selectedMode === 'group') {
     finalPollutantsGr = processGroupMode(selectedGroup, errors)
   } else if (selectedMode === 'specific') {
@@ -314,13 +304,11 @@ const handlePostRequest = (request, h) => {
       isNoJS,
       request,
       pollutantsData,
-      errors
+      errors,
+      pollutantMasterList
     )
-  } else {
-    // Unknown mode - error will be caught by validation above
   }
 
-  // If there are validation errors, return to form with errors
   if (errors.length > 0) {
     return handleValidationErrors(
       errors,
@@ -329,11 +317,11 @@ const handlePostRequest = (request, h) => {
       finalPollutantsGr,
       finalPollutantsSp,
       selectedGroup,
+      pollutants,
       h
     )
   }
 
-  // Clear session when switching modes and update session
   const previousMode = request.yar.get('selectedPollutantMode')
   const finalPollutants =
     selectedMode === 'group' ? finalPollutantsGr : finalPollutantsSp
@@ -348,14 +336,22 @@ const handlePostRequest = (request, h) => {
     selectedGroup
   )
 
+  // Store the pollutantID for the first selected pollutant so the datasource page can call the API
+  const firstPollutantValue = finalPollutants[0]
+  const matched = pollutantMasterList.find(
+    (p) => p.pollutant_value === firstPollutantValue
+  )
+  if (matched) {
+    request.yar.set('selectedPollutantID', matched.pollutantID)
+  }
+
   return h.redirect(CUSTOMDATASET_URL)
 }
 
 // Helper function to handle GET request
-const handleGetRequest = (request, h) => {
+const handleGetRequest = async (request, h) => {
   const backUrl = CUSTOMDATASET_URL
 
-  // Clear existing session values
   request.yar.set('searchQuery', null)
   request.yar.set('fullSearchQuery', null)
   request.yar.set('searchLocation', '')
@@ -363,7 +359,10 @@ const handleGetRequest = (request, h) => {
   request.yar.set('selectedLocation', '')
   request.yar.set('nooflocation', '')
 
-  // Pre-populate strictly from session
+  // Fetch pollutant list from API and store in session for POST validation
+  const pollutants = await fetchPollutantList()
+  request.yar.set('pollutantMasterList', pollutants)
+
   const existingPollutants = request.yar.get('selectedPollutants') || []
   const existingMode = request.yar.get('selectedPollutantMode') || ''
   const existingGroup =
@@ -384,12 +383,13 @@ const handleGetRequest = (request, h) => {
     hrefq: backUrl,
     selectedPollutants: existingPollutants,
     selectedMode: existingMode,
-    selectedGroup: existingGroup
+    selectedGroup: existingGroup,
+    pollutants
   })
 }
 
 export const airpollutantController = {
-  handler(request, h) {
+  async handler(request, h) {
     if (request.method === 'post') {
       return handlePostRequest(request, h)
     }

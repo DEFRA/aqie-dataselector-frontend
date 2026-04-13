@@ -1,5 +1,6 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import nunjucks from 'nunjucks'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
@@ -9,24 +10,33 @@ import {
 
 const logger = createLogger()
 async function invokeTable(params) {
-  // Renamed parameter to avoid shadowing
-  try {
-    const response = await axios.post(config.get('Table_URL'), params)
-    return response.data
-  } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url = config.get('tableDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(params),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      logger.error(`Table API error (local): ${error.message}`)
+      return null
+    }
+  } else {
+    // dev / test / prod environments: use axios with config URL
+    try {
+      const response = await axios.post(config.get('Table_URL'), params)
+      return response.data
+    } catch (error) {
+      logger.error(`Table API error: ${error.message}`)
+      return null
+    }
   }
-  //       'x-api-key': 'cFg6wtLp5oOKue2aAT1O897rGpHJm2g3'
-  //     },
-  //     json: true
-  //   })
-  //   console.log("PAYLOAD", payload)
-  //   return payload
-  // } catch (error) {
-  //   // Return a safe error object instead of the full error which may contain circular references
-  //   console.error('API Error:', error.message)
-  //   return { error: error.message || 'API request failed' }
-  // }
 }
 
 const rendertablecontroller = {

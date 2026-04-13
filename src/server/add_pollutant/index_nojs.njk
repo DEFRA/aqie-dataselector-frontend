@@ -63,31 +63,21 @@
          
 
           <select class="govuk-select" id="selected-pollutants" name="selected-pollutants" aria-label="Select a pollutant">
-          {% set allPollutants = [
-            'Fine particulate matter (PM2.5)',
-            'Particulate matter (PM10)',
-            'Nitrogen dioxide (NO2)',
-            'Ozone (O3)',
-            'Sulphur dioxide (SO2)',
-            'Nitric oxide (NO)',
-            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-            'Carbon monoxide (CO)'
-          ] %}
           {% if selectedPollutants and selectedPollutants | length > 0 and selectedMode == 'specific' %}
             {% set firstSelected = selectedPollutants[0] %}
             <option value="{{ firstSelected }}" selected>{{ firstSelected }}</option>
-            {% for pollutant in allPollutants %}
-              {% if pollutant != firstSelected %}
-                <option value="{{ pollutant }}">{{ pollutant }}</option>
+            {% for p in pollutants %}
+              {% if p.pollutant_value != firstSelected %}
+                <option value="{{ p.pollutant_value }}">{{ p.pollutant_value }}</option>
               {% endif %}
             {% endfor %}
           {% else %}
             <option value="" selected disabled>Select a pollutant</option>
-            {% for pollutant in allPollutants %}
-              <option value="{{ pollutant }}">{{ pollutant }}</option>
+            {% for p in pollutants %}
+              <option value="{{ p.pollutant_value }}">{{ p.pollutant_value }}</option>
             {% endfor %}
           {% endif %}
-  </select>
+          </select>
               </div>
             </div>
             

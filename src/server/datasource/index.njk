@@ -3,7 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% block content %}
-  
+
 {# <a href="create-pollutant.html" class="govuk-back-link">Back</a> #}
 
 
@@ -11,21 +11,68 @@
   <div class="govuk-grid-column-full">
 
     <h1 class="govuk-heading-l">View data sources</h1>
-    <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
-    <p class="govuk-body">This data is automatically measured and published every hour.</p>
-    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">Automatic Urban and Rural Network (AURN)</h3>
-    <p class="govuk-body govuk-!-margin-bottom-3">The most reliable air pollution data in the UK.</p>
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Pollutants:</strong> fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO)</p>
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> 1972</p>
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> Hourly</p>
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> Hourly</p>
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Instrument and method:</strong> TEOM-FDMS/BAM and gravimetric (PM2.5, PM10), chemiluminescence (NO2, NO, NOx), UV photometry (O3), UV fluorescence (SO2) and NDIR (CO)</p>
-   
-    
+
+    <div class="govuk-tabs" data-module="govuk-tabs">
+      <h2 class="govuk-tabs__title">Contents</h2>
+      <ul class="govuk-tabs__list">
+        <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+          <a class="govuk-tabs__tab" href="#tab-relevant">Data sources for the pollutant(s) you selected</a>
+        </li>
+        <li class="govuk-tabs__list-item">
+          <a class="govuk-tabs__tab" href="#tab-other">Data sources for other pollutants</a>
+        </li>
+      </ul>
+
+      <div class="govuk-tabs__panel" id="tab-relevant">
+        {% if datasourceGroups and datasourceGroups | length > 0 %}
+          {% for group in datasourceGroups %}
+            {% if not loop.first %}
+              <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+            {% endif %}
+            <h2 class="govuk-heading-m">{{ group.category }}</h2>
+            {% for network in group.networks %}
+              <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ network }}</h3>
+            {% endfor %}
+          {% endfor %}
+        {% else %}
+          <p class="govuk-body">No data sources found for the selected pollutant.</p>
+        {% endif %}
+      </div>
+
+      <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
+        <p class="govuk-body">No other data sources available.</p>
+      </div>
     </div>
+
     </div>
-    
-<!-- TABS UI -->
+  </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const tabs = document.querySelectorAll('.govuk-tabs__tab');
+    const panels = document.querySelectorAll('.govuk-tabs__panel');
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        // Deactivate all tabs
+        tabs.forEach(function (t) {
+          t.closest('.govuk-tabs__list-item').classList.remove('govuk-tabs__list-item--selected');
+        });
+
+        // Hide all panels
+        panels.forEach(function (panel) {
+          panel.classList.add('govuk-tabs__panel--hidden');
+        });
+
+        // Activate clicked tab and show its panel
+        tab.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
+        const target = document.querySelector(tab.getAttribute('href'));
+        if (target) target.classList.remove('govuk-tabs__panel--hidden');
+      });
+    });
+  });
+</script>
+
 {% endblock %}
-
-

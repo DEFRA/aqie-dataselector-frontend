@@ -10,16 +10,16 @@
 {% set errors = errors or { list: [], details: {} } %}
 {% set formData = formData or {} %}
 
-{# Error Summary #}
-{% if errors.list and errors.list.length > 0 %}
-  {{ govukErrorSummary({
-    titleText: "There is a problem",
-    errorList: errors.list
-  }) }}
-{% endif %}
-
 <div class="govuk-grid-row">
-  <div class="govuk-grid-column-full">
+  <div class="govuk-grid-column-two-thirds">
+
+    {# Error Summary #}
+    {% if errors.list and errors.list.length > 0 %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: errors.list
+      }) }}
+    {% endif %}
 
     <form method="post" action="/year-aurn" novalidate>
       <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">

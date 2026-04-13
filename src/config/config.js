@@ -332,31 +332,52 @@ export const config = convict({
   //   `default:` `https://aqie-historicaldata-backend.dev.cdp-int.defra.cloud/AtomDataSelection/`,
   //   env: 'Download_aurn_URL'
   // },
-  // laqmAPIkey: {
-  //   doc: 'laqmAPIkey',
-  //   format: String,
-  //   default: '5444af89cc52380a81111d5623ea74d5',
-  //   env: 'AQIE_PASSWORD'
-  // },
-  // laqmAPIPartnerId: {
-  //   doc: 'laqmAPIPartnerId',
-  //   format: String,
-  //   default: '1035',
-  //   env: 'AQIE_PASSWORD'
-  // },
-
+  osNamesDevApiKey: {
+    doc: 'Common API key for all dev endpoints (localhost only)',
+    format: String,
+    default: 'qVlceALqlvwyn45KGiin3cdfMWa5sZ9Y',
+    sensitive: true,
+    env: 'OS_NAMES_DEV_API_KEY'
+  },
+  osMonitoringStationDevUrl: {
+    doc: 'Monitoring station API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation/',
+    env: 'OS_MONITORING_STATION_DEV_URL'
+  },
+  tableDevUrl: {
+    doc: 'Table (exceedence) API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryexceedence/',
+    env: 'TABLE_DEV_URL'
+  },
   laqmAPIkey: {
     doc: 'laqmAPIkey',
     format: String,
-    default: '',
-    env: 'LAQMAPIKEY'
+    default: '5444af89cc52380a81111d5623ea74d5',
+    env: 'AQIE_PASSWORD'
   },
   laqmAPIPartnerId: {
     doc: 'laqmAPIPartnerId',
     format: String,
-    default: '',
-    env: 'LAQMAPIPARTNERID'
+    default: '1035',
+    env: 'AQIE_PASSWORD'
   },
+
+  // laqmAPIkey: {
+  //   doc: 'laqmAPIkey',
+  //   format: String,
+  //   default: '',
+  //   env: 'LAQMAPIKEY'
+  // },
+  // laqmAPIPartnerId: {
+  //   doc: 'laqmAPIPartnerId',
+  //   format: String,
+  //   default: '',
+  //   env: 'LAQMAPIPARTNERID'
+  // },
 
   aqiePassword: {
     doc: 'password for daqie',

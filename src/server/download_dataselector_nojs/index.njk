@@ -12,161 +12,195 @@
 
     <h2 class="govuk-heading-l">Download your data</h2>
     <details class="govuk-details govuk-!-margin-top-0">
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text">
-      File format and metadata
-    </span>
-  </summary>
-  <div class="govuk-details__text">
-   <h3 class="govuk-heading-s">File format</h3>
-                  <p class="govuk-body">This data will download in a long format (CSV).</p>
-              <p class="govuk-body">Data in a long format is stacked vertically.</p>
-           <!--    <p class="govuk-body">You can use wide format when you want to interpret and analyse data.</p> -->
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text">
+          File format and metadata
+        </span>
+      </summary>
+      <div class="govuk-details__text">
+        <h3 class="govuk-heading-s">File format</h3>
+        <p class="govuk-body">This data will download in a long format (CSV).</p>
+        <p class="govuk-body">Data in a long format is stacked vertically.</p>
+        <h3 class="govuk-heading-s">Metadata</h3>
+        <p class="govuk-body">These files could contain the following metadata:</p>
+        <ul class="govuk-body govuk-list--bullet">
+          <li>name of monitoring station</li>
+          <li>site type</li>
+          <li>site ID</li>
+          <li>map coordinates</li>
+          <li>local authority</li>
+          <li>region</li>
+          <li>instrument type</li>
+          <li>inlet height</li>
+        </ul>
+      </div>
+    </details>
 
-                 <h3 class="govuk-heading-s">Metadata</h3>
-                 <p class="govuk-body">These files could contain the following metadata:</p>
-                 <ul class="govuk-body govuk-list--bullet">
-                  <li>name of monitoring station</li>
-                  <li>site type</li>
-                  <li>site ID</li>
-                  <li>map coordinates</li>
-                  <li>local authority</li>
-                  <li>region</li>
-                  <li>instrument type</li>
-                  <li>inlet height</li>
-                 </ul>
-  </div>
-</details>
-                
+    <!-- TABS UI -->
+    <div class="govuk-tabs" data-module="govuk-tabs">
+      <h2 class="govuk-tabs__title">Contents</h2>
+      <ul class="govuk-tabs__list">
+        <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+          <a class="govuk-tabs__tab" href="#tab-nearrealtime">Near real-time data from Defra</a>
+        </li>
+        <li class="govuk-tabs__list-item">
+          <a class="govuk-tabs__tab" href="#tab-other">Other data from Defra</a>
+        </li>
+      </ul>
 
+      <!-- NEAR REAL-TIME TAB -->
+      <div class="govuk-tabs__panel" id="tab-nearrealtime">
+        <div class="govuk-!-margin-top-3">
+          <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
+          <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
+          <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
+          <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
 
-<div class="govuk-grid-row govuk-!-margin-top-3">
-  <div class="govuk-grid-column-full">
-    
-  <div class="govuk-!-margin-top-3">
-    <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
-    <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
-<h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
-<p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
-   
-   {# Embed the initial count in a data attribute so JS can restore it #}
-   <div id="station-count"
-        class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
-        data-initial-count="{{ stationcount | default(0) }}">
-      {{ stationcount | default(0) }} stations available
-   </div>
+          <div id="station-count"
+               class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
+               data-initial-count="{{ stationcount | default(0) }}">
+            {{ stationcount | default(0) }} stations available
+          </div>
+        </div>
+
+        {% if yearrange == 'Single' %}
+        <a id="download-link"
+           href="/download_aurn_nojs/{{ finalyear }}"
+           role="button"
+           class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+           aria-label="Download daily average data">
+          <span class="aq-button-secondary__icon">
+            <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+              <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+            </svg>
+          </span>
+          <span class="aq-button-secondary__text">
+            Download hourly data
+            <span class="govuk-visually-hidden">(Visual only)</span>
+          </span>
+        </a>
+        {% endif %}
+
+        {% if yearrange == 'Multiple' %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Year</th>
+              <th scope="col" class="govuk-table__header">Hourly data</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Download all years</th>
+              <td class="govuk-table__cell">
+                <a href="/emailrequest" class="govuk-link">Request Data</a>
+              </td>
+            </tr>
+            {% for year in finalyear %}
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">{{ year }}</th>
+              <td class="govuk-table__cell">
+                <a href="/download_aurn_nojs/{{ year }}" class="govuk-link">Download hourly data</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+
+        <div id="download-content-container"></div>
+      </div>
+
+      <!-- OTHER DATA TAB -->
+      <div class="govuk-tabs__panel" id="tab-other">
+        <div class="govuk-!-margin-top-3">
+          <h2 class="govuk-heading-m">Other data from Defra</h2>
+          <h3 class="govuk-heading-s">UKEAP: Rural NO2 Network</h3>
+          <p class="govuk-body">Monthly diffusion tube measurements of nitrogen dioxide at rural background locations.</p>
+
+          <div id="ukeap-station-count"
+               class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
+               data-initial-count="{{ stationcountukeap | default(0) }}">
+            {{ stationcountukeap | default(0) }} stations available
+          </div>
+        </div>
+
+        {% if yearrange == 'Single' %}
+        <a id="download-link-ukeap"
+           href="/download_ukeap_nojs/{{ finalyear }}"
+           role="button"
+           class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+           aria-label="Download monthly data for UKEAP Rural NO2 Network">
+          <span class="aq-button-secondary__icon">
+            <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+              <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+            </svg>
+          </span>
+          <span class="aq-button-secondary__text">
+            Download monthly data
+            <span class="govuk-visually-hidden">(Visual only)</span>
+          </span>
+        </a>
+        {% endif %}
+
+        {% if yearrange == 'Multiple' %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">Year</th>
+              <th scope="col" class="govuk-table__header">Monthly data</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">Download all years</th>
+              <td class="govuk-table__cell">
+                <a href="/emailrequest" class="govuk-link">Request Data</a>
+              </td>
+            </tr>
+            {% for year in finalyear %}
+            <tr class="govuk-table__row">
+              <th scope="row" class="govuk-table__header">{{ year }}</th>
+              <td class="govuk-table__cell">
+                <a href="/download_ukeap_nojs/{{ year }}" class="govuk-link">Download monthly data</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+
     </div>
+    {# end govuk-tabs #}
 
-   {# For Single year, this link is same-origin and best to auto-trigger #}
-   {% if yearrange == 'Single' %}
-         <a id="download-link"
-        href="/download_aurn_nojs/{{ finalyear }}"
-        role="button"
-        class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
-       <span class="aq-button-secondary__icon">
-         <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-           <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-         </svg>
-       </span>
-       <span class="aq-button-secondary__text">
-         Download hourly data
-         <span class="govuk-visually-hidden">(Visual only)</span>
-       </span>
-     </a>
-   {% endif %} 
-                   
-                    {% if yearrange == 'Multiple' %}
-            <table class="govuk-table">
-  <thead class="govuk-table__head">
-    <tr class="govuk-table__row">
-      <th scope="col" class="govuk-table__header">Year</th>
-      <th scope="col" class="govuk-table__header">Hourly data</th>
-    </tr>
-  </thead>
-  <tbody class="govuk-table__body">
-    <tr class="govuk-table__row">
-      <th scope="row" class="govuk-table__header">
-        Download all years
-      </th>
-         <td class="govuk-table__cell">
-        <a href="/emailrequest"  class="govuk-link">Request Data</a>
-      </td>
-    </tr>
-    
-    {% for year in finalyear %}
-    <tr class="govuk-table__row">
-      <th scope="row" class="govuk-table__header">
-        {{ year }}
-      </th>
-      <td class="govuk-table__cell">
-        <a href="/download_aurn_nojs/{{ year }}" class="govuk-link">Download hourly data</a>
-        {# //<a href="#" onclick = "getAPIdownload()"  class="govuk-link">Download hourly data</a> #}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
- {% endif %} 
-
-
-                    
-  </div>
-</div>
- 
-  <div class="govuk-grid-column-full" id="download-content-container">
- 
-   
-{#       
-    <div class="govuk-inset-text govuk-!-margin-top-0">
-  <h3 class="govuk-heading-s">Save your search</h3>
-<p class="govuk-body">Bookmark this URL to save your selections for next time.</p>
-
-<p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p> #}
-{# <p class="govuk-body"><a href="/customdataset" class="govuk-link" target="_blank" rel="noopener noreferrer">https://get-air-pollution-data.defra.gov.uk/data-selector/download-data?saved=url</a></p> #}
-
-</div>
-</div>
-      
-    </div>
-    
   </div>
 </div>
 
-{# keep your fetch-based download (no navigation) #}
+{# Restore AURN station count from sessionStorage if available #}
 <script>
   (function () {
     var countEl = document.getElementById('station-count');
     if (!countEl) return;
-
-    // Prefer cached value from a previous render; otherwise use data-initial-count
     var cached = sessionStorage.getItem('download_station_count');
     var cachedNum = cached ? parseInt(cached, 10) : NaN;
     var dataInitial = parseInt(countEl.getAttribute('data-initial-count'), 10);
-
-    // If we have a positive cached value, keep it for reuse
     if (Number.isFinite(cachedNum) && cachedNum > 0) {
       countEl.textContent = cachedNum + ' stations available';
     } else if (Number.isFinite(dataInitial) && dataInitial > 0) {
-      // Store for later (e.g. after download)
       sessionStorage.setItem('download_station_count', String(dataInitial));
       countEl.textContent = dataInitial + ' stations available';
     } else {
-      // If both are zero/invalid, keep 0
       countEl.textContent = '0 stations available';
     }
   })();
 </script>
 
-{# Remove previous auto-download scripts/logic #}
-
-{# Expose URL safely #}
+{# Auto-redirect after AURN download completes #}
 {% if downloadresultnojs %}
   <span id="auto-download" data-url="{{ downloadresultnojs | urlencode }}" hidden></span>
-
   <script>
     (function () {
-      // Persist station count before navigating (optional)
       var el = document.getElementById('station-count');
       if (el) {
         var m = el.textContent.trim().match(/^(\d+)/);
@@ -175,26 +209,49 @@
           try { sessionStorage.setItem('download_station_count', String(n)); } catch (e) {}
         }
       }
-
       var holder = document.getElementById('auto-download');
       if (!holder) return;
       var enc = holder.getAttribute('data-url') || '';
       if (!enc) return;
-
       var url;
       try { url = decodeURIComponent(enc); } catch (e) { url = enc; }
       if (!url) return;
-
-      // Same behaviour as stationDetailsNojs
       window.location.href = url;
     })();
   </script>
-
   <noscript>
     <meta http-equiv="refresh" content="0; url={{ downloadresultnojs }}">
     <p class="govuk-visually-hidden"><a href="{{ downloadresultnojs }}">Download file</a></p>
   </noscript>
 {% endif %}
 
-{% endblock %}
+{# Auto-redirect after UKEAP download completes #}
+{% if downloadukeapresult %}
+  <span id="auto-download-ukeap" data-url="{{ downloadukeapresult | urlencode }}" hidden></span>
+  <script>
+    (function () {
+      var el = document.getElementById('ukeap-station-count');
+      if (el) {
+        var m = el.textContent.trim().match(/^(\d+)/);
+        var n = m ? parseInt(m[1], 10) : 0;
+        if (Number.isFinite(n) && n > 0) {
+          try { sessionStorage.setItem('ukeap_station_count', String(n)); } catch (e) {}
+        }
+      }
+      var holder = document.getElementById('auto-download-ukeap');
+      if (!holder) return;
+      var enc = holder.getAttribute('data-url') || '';
+      if (!enc) return;
+      var url;
+      try { url = decodeURIComponent(enc); } catch (e) { url = enc; }
+      if (!url) return;
+      window.location.href = url;
+    })();
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url={{ downloadukeapresult }}">
+    <p class="govuk-visually-hidden"><a href="{{ downloadukeapresult }}">Download file</a></p>
+  </noscript>
+{% endif %}
 
+{% endblock %}

@@ -32,6 +32,7 @@ export const downloadDataselectorController = {
         selectedyear: request.yar.get('selectedyear'),
         selectedlocation: request.yar.get('selectedlocation'),
         stationcount: request.yar.get('nooflocation'),
+        stationcountukeap: request.yar.get('nooflocationukeap'),
         displayBacklink: true,
         hrefq: backUrl
       }
@@ -110,6 +111,7 @@ export const downloadDataselectorController = {
       texts: englishNew.custom.texts,
       downloadaurnresult: null, // Don't auto-download, wait for user to click
       stationcount: request.yar.get('nooflocation'),
+      stationcountukeap: request.yar.get('nooflocationukeap'),
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,

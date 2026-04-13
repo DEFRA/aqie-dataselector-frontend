@@ -91,7 +91,7 @@ export const emailrequestController = {
           texts: englishNew.custom.texts,
           displayBacklink: true,
           hrefq: backUrl,
-          error: 'Please enter an email address',
+          error: 'Enter an email address',
           email // Preserve the entered value
         })
       }
@@ -104,7 +104,7 @@ export const emailrequestController = {
           texts: englishNew.custom.texts,
           displayBacklink: true,
           hrefq: backUrl,
-          error: 'Please enter a valid email address',
+          error: 'Enter a valid email address',
           email // Preserve the entered value
         })
       }

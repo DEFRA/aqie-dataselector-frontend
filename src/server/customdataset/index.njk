@@ -74,12 +74,14 @@
       {{texts.e}}
     </dt>
     <dd class="govuk-summary-list__value" id="data-source-list">
-     {% if selectedpollutant %}
-     <strong> {{texts.datasource}}</strong>
-      {{texts.datasource1}}
+      {% if selectedpollutant %}
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{texts.datasource}}</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-2">{{texts.datasource1}}</p>
+        <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{texts.datasource2}}</strong></p>
+        <p class="govuk-body govuk-!-margin-bottom-0">{{texts.datasource3}}</p>
       {% else %}
-    {{texts.m}}
-    {% endif %}
+        {{texts.m}}
+      {% endif %}
     </dd>
     {% if selectedpollutant %}
     <dd class="govuk-summary-list__actions" id="data-source-action" hidden>
