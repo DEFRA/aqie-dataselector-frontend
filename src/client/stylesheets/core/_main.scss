@@ -676,10 +676,10 @@ width: 100%;
 
     &__head {
       display: table-header-group !important;
+    }
 
-      tr {
-        display: table-row !important;
-      }
+    &__head tr {
+      display: table-row !important;
     }
 
     &__body {
