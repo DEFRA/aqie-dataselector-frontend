@@ -35,7 +35,6 @@ function parseYearRange(selectedyear) {
 
 export const stationcountUkeapController = {
   handler: async (request, h) => {
-    console.log('Invoking UKEAP station count with params:')
     const selectedyear = request.yar.get('selectedyear')
     const finalyear = parseYearRange(selectedyear)
     const isCountry = request.yar.get('Location') === 'Country'

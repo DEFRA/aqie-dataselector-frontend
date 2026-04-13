@@ -144,8 +144,6 @@
         .then(response => response.text())
         .then(data => {
             document.getElementById('download-container').innerHTML = data;
-            console.log("dataresponseindownload", data);
-            
         })
         .catch(error => console.error('Error fetching partial content:', error));
     // Your existing code to handle the year selection

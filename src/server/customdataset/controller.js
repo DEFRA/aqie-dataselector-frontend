@@ -6,15 +6,10 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { english } from '~/src/server/data/en/homecontent.js'
-import axios from 'axios'
-import { config } from '~/src/config/config.js'
 import Wreck from '@hapi/wreck'
 import {
   HTTP_INTERNAL_SERVER_ERROR,
-  HTTP_OK,
-  HTTP_REDIRECT_MAX,
-  STATUS_CODE_LIMITS,
-  STATIONCOUNT_TIMEOUT_MS
+  STATUS_CODE_LIMITS
 } from '~/src/server/common/constants/magic-numbers.js'
 // import { error } from 'node:console'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
@@ -353,12 +348,12 @@ async function handleStationCountCalculation(request, h) {
   request.yar.set('nooflocation', stationcount)
   return null
 }
-//dev
+// dev
 async function invokeStationCount(stationcountparameters) {
   try {
     const url =
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-    const { res, payload } = await Wreck.post(url, {
+    const { payload } = await Wreck.post(url, {
       payload: JSON.stringify(stationcountparameters),
       headers: {
         'x-api-key': 'mEa1rzO62DE6dot8yFLShL7ZMN4ydFu8',
@@ -366,13 +361,12 @@ async function invokeStationCount(stationcountparameters) {
       },
       json: true
     })
-    console.log('PAYLOAD', payload)
     return payload
   } catch (error) {
     return error // Rethrow the error so it can be handled appropriately
   }
 }
-//prod
+// prod
 // async function invokeStationCount(stationcountparameters) {
 //   try {
 //     const url = config.get('Download_aurn_URL')

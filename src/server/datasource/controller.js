@@ -63,13 +63,10 @@ export const datasourceController = {
     const backUrl = '/customdataset'
     const pollutantID = request.yar.get('selectedPollutantID')
 
-    console.log('[datasource] selectedPollutantID from session:', pollutantID)
-
     let datasourceGroups = []
 
     if (pollutantID) {
       const flat = await fetchDatasourceForPollutant(pollutantID)
-      console.log('[datasource] API response:', flat)
       datasourceGroups = groupDatasources(flat)
     } else {
       logger.warn(

@@ -269,7 +269,7 @@ const updateSessionAfterValidation = (
 }
 
 // Helper function to handle POST request
-const handlePostRequest = async (request, h) => {
+const handlePostRequest = (request, h) => {
   const isNoJS = checkIsNoJS(request)
 
   const {
@@ -343,16 +343,8 @@ const handlePostRequest = async (request, h) => {
   )
   if (matched) {
     request.yar.set('selectedPollutantID', matched.pollutantID)
-    console.log(
-      '[add_pollutant] selectedPollutantID stored in session:',
-      matched.pollutantID
-    )
   }
 
-  console.log(
-    '[add_pollutant] Final pollutants saved to session:',
-    finalPollutants
-  )
   return h.redirect(CUSTOMDATASET_URL)
 }
 
@@ -397,7 +389,7 @@ const handleGetRequest = async (request, h) => {
 }
 
 export const airpollutantController = {
-  handler(request, h) {
+  async handler(request, h) {
     if (request.method === 'post') {
       return handlePostRequest(request, h)
     }

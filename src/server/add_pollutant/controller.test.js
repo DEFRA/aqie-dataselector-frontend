@@ -44,7 +44,7 @@ describe('airpollutantController', () => {
   })
 
   describe('GET requests', () => {
-    it('pre-populates form from session without defaulting year', () => {
+    it('pre-populates form from session without defaulting year', async () => {
       mockRequest.method = 'get'
       mockRequest.yar.get.mockImplementation((key) => {
         switch (key) {
@@ -59,7 +59,7 @@ describe('airpollutantController', () => {
         }
       })
 
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
 
       // Clears these session values on GET
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
@@ -88,39 +88,39 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('renders no-JS template when nojs query parameter is true', () => {
+    it('renders no-JS template when nojs query parameter is true', async () => {
       mockRequest.method = 'get'
       mockRequest.query = { nojs: 'true' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('renders no-JS template when path includes nojs', () => {
+    it('renders no-JS template when path includes nojs', async () => {
       mockRequest.method = 'get'
       mockRequest.path = '/add_pollutant/nojs'
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('renders no-JS template when user-agent contains noscript', () => {
+    it('renders no-JS template when user-agent contains noscript', async () => {
       mockRequest.method = 'get'
       mockRequest.headers = { 'user-agent': 'SomeBot/1.0 (noscript)' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('sets backlink flags', () => {
+    it('sets backlink flags', async () => {
       mockRequest.method = 'get'
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -136,9 +136,9 @@ describe('airpollutantController', () => {
       mockRequest.method = 'post'
     })
 
-    it('returns error when no mode is selected', () => {
+    it('returns error when no mode is selected', async () => {
       mockRequest.payload = {}
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -157,9 +157,9 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('returns error when group mode selected but no group chosen', () => {
+    it('returns error when group mode selected but no group chosen', async () => {
       mockRequest.payload = { 'pollutant-mode': 'group' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -172,9 +172,9 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('returns error when specific mode selected but no pollutants', () => {
+    it('returns error when specific mode selected but no pollutants', async () => {
       mockRequest.payload = { 'pollutant-mode': 'specific' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -201,7 +201,7 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('does not resurrect old session pollutants when no pollutants are submitted (JS flow)', () => {
+    it('does not resurrect old session pollutants when no pollutants are submitted (JS flow)', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedpollutants_specific') {
           return ['Nitrogen dioxide (NO2)']
@@ -210,7 +210,7 @@ describe('airpollutantController', () => {
       })
 
       mockRequest.payload = { 'pollutant-mode': 'specific' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
@@ -232,13 +232,13 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('returns error when specific mode has invalid JSON in selectedPollutants', () => {
+    it('returns error when specific mode has invalid JSON in selectedPollutants', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: '[not-valid-json'
       }
 
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
@@ -260,7 +260,7 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('returns error when invalid pollutants provided', () => {
+    it('returns error when invalid pollutants provided', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -268,7 +268,7 @@ describe('airpollutantController', () => {
           'Another Invalid One'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -287,7 +287,7 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('returns error when duplicate pollutants provided', () => {
+    it('returns error when duplicate pollutants provided', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -296,7 +296,7 @@ describe('airpollutantController', () => {
           'Particulate matter (PM10)'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -315,10 +315,10 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('uses no-JS template when nojs query is true', () => {
+    it('uses no-JS template when nojs query is true', async () => {
       mockRequest.payload = {}
       mockRequest.query = { nojs: 'true' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.objectContaining({
@@ -328,35 +328,35 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('uses no-JS template when path contains nojs', () => {
+    it('uses no-JS template when path contains nojs', async () => {
       mockRequest.payload = { 'pollutant-mode': 'specific' }
       mockRequest.path = '/add_pollutant/nojs'
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('uses no-JS template when user-agent contains noscript', () => {
+    it('uses no-JS template when user-agent contains noscript', async () => {
       mockRequest.payload = { 'pollutant-mode': 'group' }
       mockRequest.headers = {
         'user-agent': 'Mozilla/5.0 (compatible; noscript)'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('preserves form state on validation fail (specific mode)', () => {
+    it('preserves form state on validation fail (specific mode)', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         'pollutant-group': 'core',
         selectedPollutants: JSON.stringify(['Invalid'])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -367,9 +367,9 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('preserves form state on validation fail (group mode)', () => {
+    it('preserves form state on validation fail (group mode)', async () => {
       mockRequest.payload = { 'pollutant-mode': 'group' }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -380,12 +380,12 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('handles empty pollutants array', () => {
+    it('handles empty pollutants array', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -404,9 +404,9 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('handles null or undefined request payload', () => {
+    it('handles null or undefined request payload', async () => {
       mockRequest.payload = null
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -431,12 +431,12 @@ describe('airpollutantController', () => {
       mockRequest.method = 'post'
     })
 
-    it('hnandles core group selection successfully', () => {
+    it('hnandles core group selection successfully', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'group',
         'pollutant-group': 'core'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Particulate matter (PM2.5)',
         'Particulate matter (PM10)',
@@ -455,12 +455,12 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles compliance group selection successfully', () => {
+    it('handles compliance group selection successfully', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'group',
         'pollutant-group': 'compliance'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Particulate matter (PM2.5)',
         'Particulate matter (PM10)',
@@ -482,7 +482,7 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles specific pollutants selection successfully', () => {
+    it('handles specific pollutants selection successfully', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -491,7 +491,7 @@ describe('airpollutantController', () => {
           'Ozone (O3)'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Nitrogen dioxide (NO2)',
         'Particulate matter (PM10)',
@@ -509,14 +509,14 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles no-JS dropdown selection (selected-pollutants) in specific mode', () => {
+    it('handles no-JS dropdown selection (selected-pollutants) in specific mode', async () => {
       mockRequest.query = { nojs: 'true' }
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         'selected-pollutants': 'PM10'
       }
 
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedPollutantGroup',
@@ -532,7 +532,7 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('clears prior selections when switching modes', () => {
+    it('clears prior selections when switching modes', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedPollutantMode') return 'specific'
         return null
@@ -543,7 +543,7 @@ describe('airpollutantController', () => {
         'pollutant-group': 'core'
       }
 
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
@@ -557,7 +557,7 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles valid pollutant variations successfully', () => {
+    it('handles valid pollutant variations successfully', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -566,7 +566,7 @@ describe('airpollutantController', () => {
           'Carbon monoxide (CO)'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Fine particulate matter (PM2.5)',
         'Nitrogen dioxide (NO2)',
@@ -575,12 +575,12 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalled()
     })
 
-    it('handles unknown group gracefully', () => {
+    it('handles unknown group gracefully', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'group',
         'pollutant-group': 'unknown'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [])
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedPollutantMode',
@@ -593,13 +593,13 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles JSON string pollutants data', () => {
+    it('handles JSON string pollutants data', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants:
           '["Nitrogen dioxide (NO2)", "Particulate matter (PM10)"]'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         'Nitrogen dioxide (NO2)',
         'Particulate matter (PM10)'
@@ -611,7 +611,7 @@ describe('airpollutantController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
     })
 
-    it('handles whitespace-padded pollutants and redirects', () => {
+    it('handles whitespace-padded pollutants and redirects', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -620,7 +620,7 @@ describe('airpollutantController', () => {
           'Ozone (O3)'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutants', [
         '  Nitrogen dioxide (NO2)  ',
         ' Particulate matter (PM10) ',
@@ -635,7 +635,7 @@ describe('airpollutantController', () => {
       mockRequest.method = 'post'
     })
 
-    it('handles multiple validation errors at once (invalid + duplicate)', () => {
+    it('handles multiple validation errors at once (invalid + duplicate)', async () => {
       mockRequest.payload = {
         'pollutant-mode': 'specific',
         selectedPollutants: JSON.stringify([
@@ -644,7 +644,7 @@ describe('airpollutantController', () => {
           'nitrogen dioxide (NO2)'
         ])
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index',
         expect.objectContaining({
@@ -665,22 +665,22 @@ describe('airpollutantController', () => {
       )
     })
 
-    it('uses no-JS template for POST when path contains nojs', () => {
+    it('uses no-JS template for POST when path contains nojs', async () => {
       mockRequest.payload = { 'pollutant-mode': 'specific' }
       mockRequest.path = '/add_pollutant/nojs'
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)
       )
     })
 
-    it('uses no-JS template for POST when UA contains noscript', () => {
+    it('uses no-JS template for POST when UA contains noscript', async () => {
       mockRequest.payload = { 'pollutant-mode': 'group' }
       mockRequest.headers = {
         'user-agent': 'Mozilla/5.0 (compatible; noscript)'
       }
-      airpollutantController.handler(mockRequest, mockH)
+      await airpollutantController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'add_pollutant/index_nojs',
         expect.any(Object)

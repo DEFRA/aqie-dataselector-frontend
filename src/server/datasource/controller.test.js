@@ -29,8 +29,8 @@ describe('datasourceController', () => {
     }
   })
 
-  it('should set session values and render the view with correct data', () => {
-    const result = datasourceController.handler(mockRequest, mockH)
+  it('should set session values and render the view with correct data', async () => {
+    const result = await datasourceController.handler(mockRequest, mockH)
 
     // Get current year for comparison
     const currentYear = new Date().getFullYear().toString()
@@ -61,8 +61,8 @@ describe('datasourceController', () => {
     expect(result).toBe('datasource-view-response')
   })
 
-  it('should set all session variables to expected values', () => {
-    datasourceController.handler(mockRequest, mockH)
+  it('should set all session variables to expected values', async () => {
+    await datasourceController.handler(mockRequest, mockH)
 
     const currentYear = new Date().getFullYear().toString()
 
@@ -98,8 +98,8 @@ describe('datasourceController', () => {
     )
   })
 
-  it('should not set selectedpollutant since that code is commented out', () => {
-    datasourceController.handler(mockRequest, mockH)
+  it('should not set selectedpollutant since that code is commented out', async () => {
+    await datasourceController.handler(mockRequest, mockH)
 
     // The selectedpollutant code is commented out, so it should not be called
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
@@ -108,10 +108,10 @@ describe('datasourceController', () => {
     )
   })
 
-  it('should work with params.pollutants defined (but not use it due to commented code)', () => {
+  it('should work with params.pollutants defined (but not use it due to commented code)', async () => {
     mockRequest.params.pollutants = 'NO2,PM10,O3'
 
-    datasourceController.handler(mockRequest, mockH)
+    await datasourceController.handler(mockRequest, mockH)
 
     // Even with pollutants in params, the code is commented out so nothing should happen
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
@@ -120,10 +120,10 @@ describe('datasourceController', () => {
     )
   })
 
-  it('should work with undefined params.pollutants', () => {
+  it('should work with undefined params.pollutants', async () => {
     mockRequest.params.pollutants = undefined
 
-    datasourceController.handler(mockRequest, mockH)
+    await datasourceController.handler(mockRequest, mockH)
 
     // Should not set selectedpollutant regardless
     expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
@@ -132,8 +132,8 @@ describe('datasourceController', () => {
     )
   })
 
-  it('should set correct backUrl and render properties', () => {
-    datasourceController.handler(mockRequest, mockH)
+  it('should set correct backUrl and render properties', async () => {
+    await datasourceController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith(
       'datasource/index',
@@ -147,8 +147,8 @@ describe('datasourceController', () => {
     )
   })
 
-  it('should render view with all required properties', () => {
-    const result = datasourceController.handler(mockRequest, mockH)
+  it('should render view with all required properties', async () => {
+    const result = await datasourceController.handler(mockRequest, mockH)
 
     expect(mockH.view).toHaveBeenCalledWith('datasource/index', {
       pageTitle: expect.any(String),
@@ -161,28 +161,28 @@ describe('datasourceController', () => {
     expect(result).toBe('datasource-view-response')
   })
 
-  it('should handle missing params object', () => {
+  it('should handle missing params object', async () => {
     delete mockRequest.params
 
-    const result = datasourceController.handler(mockRequest, mockH)
+    const result = await datasourceController.handler(mockRequest, mockH)
 
     // Should still work since params are not actively used (code is commented)
     expect(mockH.view).toHaveBeenCalled()
     expect(result).toBe('datasource-view-response')
   })
 
-  it('should handle null params object', () => {
+  it('should handle null params object', async () => {
     mockRequest.params = null
 
-    const result = datasourceController.handler(mockRequest, mockH)
+    const result = await datasourceController.handler(mockRequest, mockH)
 
     // Should still work since params are not actively used
     expect(mockH.view).toHaveBeenCalled()
     expect(result).toBe('datasource-view-response')
   })
 
-  it('should use consistent backUrl throughout', () => {
-    datasourceController.handler(mockRequest, mockH)
+  it('should use consistent backUrl throughout', async () => {
+    await datasourceController.handler(mockRequest, mockH)
 
     // Verify the backUrl is correctly set to '/customdataset'
     expect(mockH.view).toHaveBeenCalledWith(
@@ -194,10 +194,10 @@ describe('datasourceController', () => {
   })
 
   describe('Year handling', () => {
-    it('should use current year for both yearselected and selectedYear', () => {
+    it('should use current year for both yearselected and selectedYear', async () => {
       const currentYear = new Date().getFullYear().toString()
 
-      datasourceController.handler(mockRequest, mockH)
+      await datasourceController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'yearselected',
@@ -209,7 +209,7 @@ describe('datasourceController', () => {
       )
     })
 
-    it('should handle year changes correctly if run in different years', () => {
+    it('should handle year changes correctly if run in different years', async () => {
       // Mock Date to test future year
       const originalDate = Date
       const mockDate = new Date('2030-01-01')
@@ -220,7 +220,7 @@ describe('datasourceController', () => {
       Object.setPrototypeOf(global.Date, originalDate)
       global.Date.prototype = originalDate.prototype
 
-      datasourceController.handler(mockRequest, mockH)
+      await datasourceController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith('yearselected', '2030')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedYear', '2030')
@@ -231,8 +231,8 @@ describe('datasourceController', () => {
   })
 
   describe('Session management', () => {
-    it('should reset search-related session variables', () => {
-      datasourceController.handler(mockRequest, mockH)
+    it('should reset search-related session variables', async () => {
+      await datasourceController.handler(mockRequest, mockH)
 
       // Verify search-related variables are reset
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
@@ -241,18 +241,18 @@ describe('datasourceController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
     })
 
-    it('should reset location-related session variables', () => {
-      datasourceController.handler(mockRequest, mockH)
+    it('should reset location-related session variables', async () => {
+      await datasourceController.handler(mockRequest, mockH)
 
       // Verify location-related variables are reset
       expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedLocation', '')
       expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', '')
     })
 
-    it('should set year-related session variables to current year', () => {
+    it('should set year-related session variables to current year', async () => {
       const currentYear = new Date().getFullYear().toString()
 
-      datasourceController.handler(mockRequest, mockH)
+      await datasourceController.handler(mockRequest, mockH)
 
       // Verify year variables are set to current year
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
@@ -267,20 +267,20 @@ describe('datasourceController', () => {
   })
 
   describe('Error handling', () => {
-    it('should handle missing yar object', () => {
+    it('should handle missing yar object', async () => {
       mockRequest.yar = null
 
-      expect(() => {
+      await expect(
         datasourceController.handler(mockRequest, mockH)
-      }).toThrow()
+      ).rejects.toThrow()
     })
 
-    it('should handle missing h.view function', () => {
+    it('should handle missing h.view function', async () => {
       mockH.view = null
 
-      expect(() => {
+      await expect(
         datasourceController.handler(mockRequest, mockH)
-      }).toThrow()
+      ).rejects.toThrow()
     })
   })
 })

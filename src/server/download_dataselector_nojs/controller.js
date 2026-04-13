@@ -125,64 +125,28 @@ export const downloadDataselectornojsController = {
   handler(request, h) {
     const backUrl = '/customdataset'
 
-    console.log('[nojs] handler hit — method:', request.method)
-
     if (request.method === 'get') {
-      console.log('[nojs] GET — rendering download page')
       return h.view(
         'download_dataselector_nojs/index',
         buildViewData(request, backUrl)
       )
     }
 
-    console.log('[nojs] POST — validating session data')
-    console.log(
-      '[nojs] selectedpollutant:',
-      request.yar.get('selectedpollutant')
-    )
-    console.log('[nojs] selectedyear:', request.yar.get('selectedyear'))
-    console.log('[nojs] selectedlocation:', request.yar.get('selectedlocation'))
-    console.log('[nojs] nooflocation (AURN):', request.yar.get('nooflocation'))
-    console.log(
-      '[nojs] nooflocationukeap:',
-      request.yar.get('nooflocationukeap')
-    )
-
     // Validate all required fields
     const pollutantError = validateSelectedPollutant(request, h, backUrl)
-    if (pollutantError) {
-      console.log('[nojs] validation failed — no pollutant selected')
-      return pollutantError
-    }
+    if (pollutantError) return pollutantError
 
     const yearError = validateSelectedYear(request, h, backUrl)
-    if (yearError) {
-      console.log('[nojs] validation failed — no year selected')
-      return yearError
-    }
+    if (yearError) return yearError
 
     const locationError = validateSelectedLocation(request, h, backUrl)
-    if (locationError) {
-      console.log('[nojs] validation failed — no location selected')
-      return locationError
-    }
+    if (locationError) return locationError
 
     const locationsError = validateNumberOfLocations(request, h, backUrl)
-    if (locationsError) {
-      console.log('[nojs] validation failed — zero stations available')
-      return locationsError
-    }
+    if (locationsError) return locationsError
 
     // Success case - render download page
     const viewData = buildViewData(request, backUrl)
-    console.log(
-      '[nojs] validation passed — stationcount:',
-      viewData.stationcount,
-      '| stationcountukeap:',
-      viewData.stationcountukeap,
-      '| yearrange:',
-      viewData.yearrange
-    )
     request.yar.set('viewDatanojs', viewData)
 
     return h.view('download_dataselector_nojs/index', viewData)
