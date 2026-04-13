@@ -8,6 +8,7 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
+import Wreck from '@hapi/wreck'
 import {
   HTTP_INTERNAL_SERVER_ERROR,
   HTTP_OK,
@@ -123,6 +124,7 @@ function handleClearPath(request, h, backUrl) {
     selectedyear: request.yar.get('selectedyear'),
     selectedlocation: request.yar.get('selectedlocation'),
     stationcount: request.yar.get('nooflocation'),
+    datasource: request.yar.get('datasource'),
     displayBacklink: true,
     hrefq: backUrl
   })
@@ -351,47 +353,66 @@ async function handleStationCountCalculation(request, h) {
   request.yar.set('nooflocation', stationcount)
   return null
 }
-
+//dev
 async function invokeStationCount(stationcountparameters) {
   try {
-    const url = config.get('Download_aurn_URL')
-    if (!url) {
-      return Object.assign(new Error('Missing Download_aurn_URL'), {
-        statusCode: HTTP_INTERNAL_SERVER_ERROR
-      })
-    }
-    const response = await axios.post(url, stationcountparameters, {
-      timeout: STATIONCOUNT_TIMEOUT_MS,
-      validateStatus: () => true
+    const url =
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
+    const { res, payload } = await Wreck.post(url, {
+      payload: JSON.stringify(stationcountparameters),
+      headers: {
+        'x-api-key': 'mEa1rzO62DE6dot8yFLShL7ZMN4ydFu8',
+        'Content-Type': 'application/json'
+      },
+      json: true
     })
-
-    if (
-      !response ||
-      response.status < HTTP_OK ||
-      response.status >= HTTP_REDIRECT_MAX
-    ) {
-      return Object.assign(
-        new Error(`Station count API returned status ${response?.status}`),
-        {
-          statusCode: response?.status || HTTP_INTERNAL_SERVER_ERROR,
-          response
-        }
-      )
-    }
-
-    if (response.data == null) {
-      return Object.assign(new Error('Station count API returned no data'), {
-        statusCode: 500,
-        response
-      })
-    }
-
-    return response.data
+    console.log('PAYLOAD', payload)
+    return payload
   } catch (error) {
-    logger.error(`Station count API error: ${error.message}`)
-    return null
+    return error // Rethrow the error so it can be handled appropriately
   }
 }
+//prod
+// async function invokeStationCount(stationcountparameters) {
+//   try {
+//     const url = config.get('Download_aurn_URL')
+//     if (!url) {
+//       return Object.assign(new Error('Missing Download_aurn_URL'), {
+//         statusCode: HTTP_INTERNAL_SERVER_ERROR
+//       })
+//     }
+//     const response = await axios.post(url, stationcountparameters, {
+//       timeout: STATIONCOUNT_TIMEOUT_MS,
+//       validateStatus: () => true
+//     })
+
+//     if (
+//       !response ||
+//       response.status < HTTP_OK ||
+//       response.status >= HTTP_REDIRECT_MAX
+//     ) {
+//       return Object.assign(
+//         new Error(`Station count API returned status ${response?.status}`),
+//         {
+//           statusCode: response?.status || HTTP_INTERNAL_SERVER_ERROR,
+//           response
+//         }
+//       )
+//     }
+
+//     if (response.data == null) {
+//       return Object.assign(new Error('Station count API returned no data'), {
+//         statusCode: 500,
+//         response
+//       })
+//     }
+
+//     return response.data
+//   } catch (error) {
+//     logger.error(`Station count API error: ${error.message}`)
+//     return null
+//   }
+// }
 
 export const customdatasetController = {
   handler: async (request, h) => {
@@ -431,6 +452,7 @@ export const customdatasetController = {
       selectedyear: request.yar.get('selectedyear'),
       selectedlocation: request.yar.get('selectedlocation'),
       stationcount: request.yar.get('nooflocation'),
+      datasource: request.yar.get('datasource'),
       displayBacklink: true,
       hrefq: backUrl
     })

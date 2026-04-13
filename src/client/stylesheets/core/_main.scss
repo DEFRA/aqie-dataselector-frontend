@@ -1,5 +1,10 @@
 @use "govuk-frontend" as *;
 
+.govuk-frontend-supported .govuk-tabs .govuk-tabs__panel {
+  border: none;
+  padding: 25px 15px 15px 15px;
+}
+
 .display-none {
   display: none !important;
 }
@@ -548,6 +553,7 @@ width: 100%;
   &__cell--pollutant {
     @include govuk-font($size: 19, $weight: bold);
     width: 25%;
+    min-width: 140px;
     padding-right:20px;
     @include mq ($until: tablet) {
       padding-top:10px;
@@ -574,6 +580,7 @@ width: 100%;
     }
   &__cell--average {
     width: 15%;
+    min-width: 110px;
     text-align: right;
     position: relative;
     padding-right: 30px;
@@ -595,6 +602,7 @@ width: 100%;
 
   &__cell--daily {
     width: 30%;
+    min-width: 130px;
     text-align: right;
     position: relative;
     padding-right: 30px;
@@ -609,6 +617,7 @@ width: 100%;
 
   &__cell--hourly {
     width: 30%;
+    min-width: 130px;
     text-align: right;
     position: relative;
     padding-right: 30px;
@@ -647,15 +656,62 @@ width: 100%;
   top: -18px;
 }
 
-@media (max-width: 330px) {
-  .table-scroll-container {
-    overflow-x: scroll; /* always show scrollbar */
-    -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
-    max-width: 100%;
-  }
+// Keep value + unit + toggletip icon on the same line when zoomed
+.defra-aq-value-with-tip {
+  display: inline-block;
+  white-space: nowrap;
+}
 
-  .table-scroll-container table {
-    min-width: 500px; /* adjust to prevent squishing */
+.table-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+
+  // Force proper table layout at all zoom levels — overrides tablet breakpoint
+  // stacked-flex styles that kick in when zoom shrinks the CSS viewport below 641px
+  .defra-aq-levels-table {
+    display: table !important;
+    min-width: 650px;
+    width: 100%;
+
+    &__head {
+      display: table-header-group !important;
+
+      tr {
+        display: table-row !important;
+      }
+    }
+
+    &__body {
+      display: table-row-group !important;
+    }
+
+    &__row {
+      display: table-row !important;
+    }
+
+    &__cell {
+      display: table-cell !important;
+      padding-top: 20px !important;
+      padding-bottom: 20px !important;
+    }
+
+    // Undo visually-hidden on "Pollutant" header at tablet breakpoint
+    &__cell--pollutant-title {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      overflow: visible !important;
+      clip: auto !important;
+      clip-path: none !important;
+      white-space: nowrap !important;
+    }
+
+    // Prevent column headers from wrapping
+    th {
+      white-space: nowrap;
+    }
   }
 }
 @include govuk-exports("govuk/component/cookie-banner") {

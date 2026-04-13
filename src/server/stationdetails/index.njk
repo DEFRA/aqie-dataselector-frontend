@@ -53,8 +53,10 @@
               <dt class="defra-aq-features__key ">Site type</dt>
              
               <dd class="defra-aq-features__value govuk-body defra-aq-features__value--wrap">
-  <span class="defra-aq-features__value-text">{{ stationdetails.siteType }}</span>
-  <span class="defra-aq-features__value-tip">{{ mapToggletip | safe }}</span>
+  <span class="defra-aq-value-with-tip">
+    <span class="defra-aq-features__value-text">{{ stationdetails.siteType }}</span>
+    <span class="defra-aq-features__value-tip">{{ mapToggletip | safe }}</span>
+  </span>
 
   <p class="govuk-body govuk-!-margin-top-1">
     <a href={{maplocation}} class="govuk-link" target="_blank">View on Google Maps (opens in new tab)</a>

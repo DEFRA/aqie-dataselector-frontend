@@ -47,7 +47,9 @@ export const englishNew = {
       n: 'Change',
 
       datasource: 'Near real-time data from Defra',
-      datasource1: 'Automatic Urban and Rural Network (AURN)'
+      datasource1: 'Automatic Urban and Rural Network (AURN)',
+      datasource2: 'Other data from Defra',
+      datasource3: 'UK Urban NO2 Network'
     },
     errorText: {
       uk: {

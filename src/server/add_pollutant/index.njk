@@ -226,21 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // event fires the value is gone, causing the 2–3 click issue.
   let pendingButtonValue = '';
 
+  // Pollutant list from server (fetched from API)
+  const pollutantList = {{ pollutants | dump | safe }}.map(function(p) { return p.pollutant_value; });
+
   // Initialize autocomplete for pollutant selection
   function initializeAutocomplete() {
       const container = document.querySelector('#autocomplete-container-p');
       if (container && !container.querySelector('#my-autocomplete')) {
         if (window.accessibleAutocomplete) {
-          const pollutantList = [
-            'Fine particulate matter (PM2.5)',
-            'Particulate matter (PM10)',
-            'Nitrogen dioxide (NO2)',
-            'Ozone (O3)',
-            'Sulphur dioxide (SO2)',
-            'Nitric oxide (NO)',
-            'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-            'Carbon monoxide (CO)'
-          ];
 
           // Restore any persisted value from sessionStorage (e.g., after validation error)
           const persistedValue = sessionStorage.getItem(KEY_AUTOCOMPLETE_VALUE) || '';
@@ -317,17 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   }
 
-  // Define allowed pollutants for client-side validation
-  const allowedPollutants = [
-    'Fine particulate matter (PM2.5)',
-    'Particulate matter (PM10)',
-    'Nitrogen dioxide (NO2)',
-    'Ozone (O3)',
-    'Sulphur dioxide (SO2)',
-    'Nitric oxide (NO)',
-    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-    'Carbon monoxide (CO)'
-  ];
+  // allowedPollutants reuses the API-fetched list — no separate hardcoded array needed
+  const allowedPollutants = pollutantList;
 
   // Helper function to check if a pollutant is allowed
   const isAllowedPollutant = (value) => {
@@ -551,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // CLIENT-SIDE VALIDATION
       // Check if mode is selected
       if (!selectedMode) {
-        showClientError('Please select how you want to add pollutants', '#mode-specific');
+        showClientError('Select an option before continuing', '#mode-specific');
         return;
       }
 
