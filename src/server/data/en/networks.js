@@ -6,7 +6,7 @@ export const networkData = {
   // ── Near real-time data from Defra ──────────────────────────────────────
   AURN: {
     abbreviation: 'AURN',
-    name: 'Automatic Urban and Rural Network',
+    name: 'Automatic Urban and Rural Network (AURN)',
     fullName: 'Automatic Urban and Rural Network (AURN)',
     category: 'Near real-time data from Defra',
     description:
@@ -93,7 +93,7 @@ export const networkData = {
 
   MARGA: {
     abbreviation: 'MARGA',
-    name: 'UKEAP: MARGA Network',
+    name: 'UKEAP - MARGA  Network (MARGA)',
     fullName: 'UKEAP: MARGA Network (MARGA)',
     category: 'Other data from Defra',
     description: 'Hourly inorganic ions and related gases at background sites.',
@@ -274,7 +274,7 @@ export const networkData = {
 
   'Rural NO2': {
     abbreviation: 'Rural NO2',
-    name: 'UKEAP: Rural NO2 Network',
+    name: 'UKEAP - Rural NO2 Network',
     fullName: 'UKEAP: Rural NO2 Network (Rural NO2)',
     category: 'Other data from Defra',
     description: 'Rural/background nitrogen dioxide using diffusion tubes.',

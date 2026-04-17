@@ -14,7 +14,8 @@ export default {
     '<rootDir>/src/server/add_pollutant/controller.test.js',
     '<rootDir>/src/server/emailrequest/controller.test.js',
     '<rootDir>/src/server/customdataset/controller.test.js',
-    '<rootDir>/src/server/datasource/controller.test.js'
+    '<rootDir>/src/server/datasource/controller.test.js',
+    '<rootDir>/src/server/download_dataselector/controller.test.js'
   ],
   reporters: ['default', ['github-actions', { silent: false }], 'summary'],
   setupFiles: ['<rootDir>/.jest/setup-file.js'],

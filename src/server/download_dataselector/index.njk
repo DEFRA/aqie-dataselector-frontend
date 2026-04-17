@@ -56,9 +56,11 @@
     <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
       <a class="govuk-tabs__tab" href="#tab-nearrealtime">Near real-time data from Defra</a>
     </li>
+    {% if not ukeapUnavailable %}
     <li class="govuk-tabs__list-item">
       <a class="govuk-tabs__tab" href="#tab-other">Other data from Defra</a>
     </li>
+    {% endif %}
   </ul>
 
   <div class="govuk-tabs__panel" id="tab-nearrealtime">
@@ -69,7 +71,11 @@
       <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
 
       <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen">
-        {{stationcount}} stations available
+        {% if stationCountUnavailable %}
+          Station count unavailable
+        {% else %}
+          {{stationcount}} stations available
+        {% endif %}
       </div>
     </div>
 
@@ -118,15 +124,17 @@
     <div id="download-content-container"></div>
   </div>
 
+  {% if not ukeapUnavailable %}
   <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Other data from Defra</h2>
-      <h3 class="govuk-heading-s">UKEAP: Rural NO2 Network</h3>
-      <p class="govuk-body">Monthly diffusion tube measurements of nitrogen dioxide at rural background locations.</p>
 
-      <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen">
-        <span id="ukeap-station-count">{{stationcountukeap if stationcountukeap else 'Loading…'}}</span>
-      </div>
+      {% for network in ukeapNetworks %}
+        <h3 class="govuk-heading-s">{{ network.NetworkType }}</h3>
+        <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen">
+          {{ network.Count }} stations available
+        </div>
+      {% endfor %}
     </div>
 
     {% if yearrange == 'Single' %}
@@ -171,6 +179,7 @@
     </table>
     {% endif %}
   </div>
+  {% endif %}
 
   <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-local">
   </div>
@@ -180,7 +189,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     const tabs = document.querySelectorAll('.govuk-tabs__tab');
     const panels = document.querySelectorAll('.govuk-tabs__panel');
-    let ukeapLoaded = false;
 
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function (e) {
@@ -197,31 +205,8 @@
         tab.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
         const target = document.querySelector(tab.getAttribute('href'));
         if (target) target.classList.remove('govuk-tabs__panel--hidden');
-
-        if (tab.getAttribute('href') === '#tab-other' && !ukeapLoaded) {
-          fetchUKEAPStationCount();
-        }
       });
     });
-
-    function fetchUKEAPStationCount() {
-      const countEl = document.getElementById('ukeap-station-count');
-      if (countEl) countEl.textContent = 'Loading\u2026';
-
-      fetch('/stationcount_ukeap')
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-          if (countEl) {
-            countEl.textContent = data.error
-              ? 'Station count unavailable'
-              : data.stationcount + ' stations available';
-          }
-          ukeapLoaded = !data.error;
-        })
-        .catch(function () {
-          if (countEl) countEl.textContent = 'Station count unavailable';
-        });
-    }
   });
 </script>
 

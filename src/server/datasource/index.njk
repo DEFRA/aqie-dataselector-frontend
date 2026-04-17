@@ -1,78 +1,143 @@
 {% extends 'layouts/page.njk' %}
-{% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% macro networkCard(network) %}
+<article class="govuk-!-margin-bottom-6">
+  <h3 class="govuk-heading-s govuk-!-margin-bottom-2">{{ network.fullName or network.name }}</h3>
+
+  {% if network.description %}
+    <p class="govuk-body govuk-!-margin-bottom-3">{{ network.description }}</p>
+  {% endif %}
+
+  {% if network.pollutants and network.pollutants | length > 0 %}
+    <p class="govuk-body govuk-!-margin-bottom-1">
+      <strong>Pollutants:</strong> {{ network.pollutants | join(', ') }}
+    </p>
+  {% endif %}
+
+  {% if network.startDate %}
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> {{ network.startDate }}</p>
+  {% endif %}
+
+  {% if network.timeResolution %}
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> {{ network.timeResolution }}</p>
+  {% endif %}
+
+  {% if network.published %}
+    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> {{ network.published }}</p>
+  {% endif %}
+
+  {% if network.instrument %}
+    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Instrument:</strong> {{ network.instrument }}</p>
+  {% endif %}
+</article>
+{% endmacro %}
+
 {% block content %}
-
-{# <a href="create-pollutant.html" class="govuk-back-link">Back</a> #}
-
 
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
 
     <h1 class="govuk-heading-l">View data sources</h1>
 
-    <div class="govuk-tabs" data-module="govuk-tabs">
-      <h2 class="govuk-tabs__title">Contents</h2>
-      <ul class="govuk-tabs__list">
-        <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-          <a class="govuk-tabs__tab" href="#tab-relevant">Data sources for the pollutant(s) you selected</a>
-        </li>
-        <li class="govuk-tabs__list-item">
-          <a class="govuk-tabs__tab" href="#tab-other">Data sources for other pollutants</a>
-        </li>
-      </ul>
+    <form method="post" action="/datasource">
+      <input type="hidden" name="datasource-type" id="datasource-type-input" value="AURN">
 
-      <div class="govuk-tabs__panel" id="tab-relevant">
-        {% if datasourceGroups and datasourceGroups | length > 0 %}
+      <div class="govuk-tabs" data-module="govuk-tabs">
+        <h2 class="govuk-tabs__title">Contents</h2>
+        <ul class="govuk-tabs__list">
+          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected" id="tab-item-relevant">
+            <a class="govuk-tabs__tab" href="#tab-relevant">Data sources for the pollutant(s) you selected</a>
+          </li>
+          <li class="govuk-tabs__list-item" id="tab-item-other">
+            <a class="govuk-tabs__tab" href="#tab-other">Data sources for other pollutants</a>
+          </li>
+        </ul>
+
+        {# ── Tab 1: relevant networks from API ── #}
+        <div class="govuk-tabs__panel" id="tab-relevant">
+          {% set hasAnyGroup = false %}
           {% for group in datasourceGroups %}
-            {% if not loop.first %}
-              <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+            {% if group.networks | length > 0 %}
+              {% set hasAnyGroup = true %}
             {% endif %}
-            <h2 class="govuk-heading-m">{{ group.category }}</h2>
-            {% for network in group.networks %}
-              <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ network }}</h3>
-            {% endfor %}
           {% endfor %}
-        {% else %}
-          <p class="govuk-body">No data sources found for the selected pollutant.</p>
-        {% endif %}
+
+          {% if hasAnyGroup %}
+            {% set firstVisible = true %}
+            {% for group in datasourceGroups %}
+              {% if group.networks | length > 0 %}
+                {% if not firstVisible %}
+                  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+                {% endif %}
+                {% set firstVisible = false %}
+                <h2 class="govuk-heading-m">{{ group.category }}</h2>
+                {% for network in group.networks %}
+                  {{ networkCard(network) }}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <p class="govuk-body">No data sources found for the selected pollutant.</p>
+          {% endif %}
+        </div>
+
+        {# ── Tab 2: all other networks ── #}
+        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
+          {% if otherGroups and otherGroups | length > 0 %}
+            {% for group in otherGroups %}
+              {% if not loop.first %}
+                <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+              {% endif %}
+              <h2 class="govuk-heading-m">{{ group.category }}</h2>
+              {% for network in group.networks %}
+                {{ networkCard(network) }}
+              {% endfor %}
+            {% endfor %}
+          {% else %}
+            <p class="govuk-body">No other data sources available.</p>
+          {% endif %}
+        </div>
+
       </div>
 
-      <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
-        <p class="govuk-body">No other data sources available.</p>
-      </div>
-    </div>
+      {{ govukButton({ text: "Continue" }) }}
 
-    </div>
+    </form>
+
   </div>
+</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const tabs = document.querySelectorAll('.govuk-tabs__tab');
-    const panels = document.querySelectorAll('.govuk-tabs__panel');
+    const tabs = document.querySelectorAll('.govuk-tabs__tab')
+    const panels = document.querySelectorAll('.govuk-tabs__panel')
+    const datasourceInput = document.getElementById('datasource-type-input')
+
+    function setDatasourceType(panelId) {
+      datasourceInput.value = panelId === 'tab-other' ? 'NON-AURN' : 'AURN'
+    }
 
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function (e) {
-        e.preventDefault();
+        e.preventDefault()
 
-        // Deactivate all tabs
         tabs.forEach(function (t) {
-          t.closest('.govuk-tabs__list-item').classList.remove('govuk-tabs__list-item--selected');
-        });
-
-        // Hide all panels
+          t.closest('.govuk-tabs__list-item').classList.remove('govuk-tabs__list-item--selected')
+        })
         panels.forEach(function (panel) {
-          panel.classList.add('govuk-tabs__panel--hidden');
-        });
+          panel.classList.add('govuk-tabs__panel--hidden')
+        })
 
-        // Activate clicked tab and show its panel
-        tab.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected');
-        const target = document.querySelector(tab.getAttribute('href'));
-        if (target) target.classList.remove('govuk-tabs__panel--hidden');
-      });
-    });
-  });
+        tab.closest('.govuk-tabs__list-item').classList.add('govuk-tabs__list-item--selected')
+        const targetId = tab.getAttribute('href').replace('#', '')
+        const target = document.getElementById(targetId)
+        if (target) target.classList.remove('govuk-tabs__panel--hidden')
+
+        setDatasourceType(targetId)
+      })
+    })
+  })
 </script>
 
 {% endblock %}

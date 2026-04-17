@@ -33,6 +33,7 @@ export const downloadDataselectorController = {
         selectedlocation: request.yar.get('selectedlocation'),
         stationcount: request.yar.get('nooflocation'),
         stationcountukeap: request.yar.get('nooflocationukeap'),
+        datasourceGroups: request.yar.get('datasourceGroups') || [],
         displayBacklink: true,
         hrefq: backUrl
       }
@@ -79,27 +80,48 @@ export const downloadDataselectorController = {
     }
 
     const numberOfLocations = request.yar.get('nooflocation')
-    // console.log(
-    //   'Number of locations:',
-    //   numberOfLocations,
-    //   'Type:',
-    //   typeof numberOfLocations
-    // )
+    const stationCountError = request.yar.get('stationCountError')
 
+    // 0 stations — safety net (customdataset should have caught this first)
     if (
-      numberOfLocations === 0 ||
-      numberOfLocations === '0' ||
-      !numberOfLocations
+      !stationCountError &&
+      (numberOfLocations === 0 ||
+        numberOfLocations === '0' ||
+        Number(numberOfLocations) === 0)
     ) {
-      // console.log('no stations found')
       return renderErrorState(
-        'There are no stations available based on your selection. Change the year or location',
+        'There are no stations available for your selection. Change the year or location',
         'Change the year',
         '/year-aurn',
         'Change the location',
         '/location-aurn'
       )
     }
+
+    // API error — proceed to download page but flag AURN count as unavailable
+    // Arrays are NOT errors (NON-AURN returns [{NetworkType, Count}])
+    const stationCountUnavailable =
+      stationCountError ||
+      numberOfLocations == null ||
+      numberOfLocations instanceof Error ||
+      (typeof numberOfLocations === 'object' &&
+        !Array.isArray(numberOfLocations) &&
+        numberOfLocations !== null)
+
+    // Only show the "Other data from Defra" tab if the pollutant's datasource
+    // actually includes that category (determined at pollutant-selection time)
+    const datasourceGroups = request.yar.get('datasourceGroups') || []
+    const hasOtherDataSource = datasourceGroups.some(
+      (g) =>
+        g.category === 'Other data from Defra' &&
+        Array.isArray(g.networks) &&
+        g.networks.length > 0
+    )
+
+    // NON-AURN networks — array of {NetworkType, Count} objects
+    const rawUkeap = request.yar.get('nooflocationukeap')
+    const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
+    const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
 
     // Clear any previous download result to prevent auto-download
     request.yar.set('downloadaurnresult', null)
@@ -110,8 +132,10 @@ export const downloadDataselectorController = {
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
       downloadaurnresult: null, // Don't auto-download, wait for user to click
-      stationcount: request.yar.get('nooflocation'),
-      stationcountukeap: request.yar.get('nooflocationukeap'),
+      stationcount: stationCountUnavailable ? null : numberOfLocations,
+      stationCountUnavailable,
+      ukeapNetworks,
+      ukeapUnavailable,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,
