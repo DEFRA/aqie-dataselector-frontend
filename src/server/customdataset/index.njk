@@ -74,21 +74,29 @@
       {{texts.e}}
     </dt>
     <dd class="govuk-summary-list__value" id="data-source-list">
-      {% if selectedpollutant %}
-        <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{texts.datasource}}</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-2">{{texts.datasource1}}</p>
-        <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{texts.datasource2}}</strong></p>
-        <p class="govuk-body govuk-!-margin-bottom-0">{{texts.datasource3}}</p>
+      {% if selectedpollutant and datasourceGroups and datasourceGroups | length > 0 %}
+        {% for group in datasourceGroups %}
+          {% if group.networks | length > 0 %}
+            <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{ group.category }}</strong></p>
+            <ul class="govuk-list govuk-!-margin-bottom-2">
+              {% for network in group.networks %}
+                <li>{{ network }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endfor %}
       {% else %}
         {{texts.m}}
       {% endif %}
     </dd>
     {% if selectedpollutant %}
     <dd class="govuk-summary-list__actions" id="data-source-action" hidden>
-        
-  <a class="govuk-link" href="/datasource">View<span class="govuk-visually-hidden"> {{texts.e}}</span></a>
-</dd>
- {% endif %}
+      <a class="govuk-link" href="/datasource">
+        {% if datasourceGroups and datasourceGroups | length > 0 %}View{% else %}{{texts.c}}{% endif %}
+        <span class="govuk-visually-hidden"> {{texts.e}}</span>
+      </a>
+    </dd>
+    {% endif %}
   </div>
    
   

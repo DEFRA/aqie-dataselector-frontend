@@ -335,7 +335,7 @@ export const config = convict({
   osNamesDevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: 'qVlceALqlvwyn45KGiin3cdfMWa5sZ9Y',
+    default: 'PxmkhdM4NKfdI6rnGvr4fOjIkCN4urIP',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEY'
   },
@@ -352,6 +352,45 @@ export const config = convict({
     default:
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryexceedence/',
     env: 'TABLE_DEV_URL'
+  },
+  pollutantMasterDevUrl: {
+    doc: 'Pollutant master API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionPollutantMaster',
+    env: 'POLLUTANT_MASTER_DEV_URL'
+  },
+  pollutantMasterApiUrl: {
+    doc: 'Pollutant master API URL for CDP environments',
+    format: String,
+    default: '',
+    env: 'POLLUTANT_MASTER_API_URL'
+  },
+  datasourceDevUrl: {
+    doc: 'Datasource API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionPollutantDataSource',
+    env: 'DATASOURCE_DEV_URL'
+  },
+  datasourceApiUrl: {
+    doc: 'Datasource API URL for CDP environments',
+    format: String,
+    default: '',
+    env: 'DATASOURCE_API_URL'
+  },
+  stationCountDevUrl: {
+    doc: 'Station count API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection',
+    env: 'STATION_COUNT_DEV_URL'
+  },
+  stationCountApiUrl: {
+    doc: 'Station count API URL for CDP environments',
+    format: String,
+    default: '',
+    env: 'STATION_COUNT_API_URL'
   },
   laqmAPIkey: {
     doc: 'laqmAPIkey',

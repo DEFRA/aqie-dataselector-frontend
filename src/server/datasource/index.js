@@ -17,6 +17,11 @@ export const datasource = {
           method: 'GET',
           path: '/datasource',
           ...datasourceController
+        },
+        {
+          method: 'POST',
+          path: '/datasource',
+          ...datasourceController
         }
       ])
     }

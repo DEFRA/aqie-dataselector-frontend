@@ -4,9 +4,15 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
+import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { config } from '~/src/config/config.js'
+import {
+  fetchDatasourceForPollutant,
+  groupDatasources
+} from '~/src/server/datasource/controller.js'
 
 const logger = createLogger()
 
@@ -16,24 +22,38 @@ const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 // Route constants
 const CUSTOMDATASET_URL = '/customdataset'
 
-// Pollutant master API
-const POLLUTANT_MASTER_API_URL =
-  'https://localhost:44352/AtomDataSelectionPollutantMaster/'
-
 // Fetch pollutant list from API — returns array of { pollutantID, pollutantName, pollutant_Abbreviation, pollutant_value }
 async function fetchPollutantList() {
-  try {
-    const { payload } = await Wreck.get(POLLUTANT_MASTER_API_URL, {
-      json: true
-    })
-    const list = Array.isArray(payload) ? payload : []
-    logger.info(`Fetched ${list.length} pollutants from master API`)
-    return list
-  } catch (error) {
-    logger.error(
-      `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
-    )
-    return []
+  if (config.get('isDevelopment')) {
+    try {
+      const url = config.get('pollutantMasterDevUrl')
+      const { payload } = await Wreck.get(url, {
+        headers: {
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      const list = Array.isArray(payload) ? payload : []
+      logger.info(`Fetched ${list.length} pollutants from master API`)
+      return list
+    } catch (error) {
+      logger.error(
+        `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return []
+    }
+  } else {
+    try {
+      const response = await axios.get(config.get('pollutantMasterApiUrl'))
+      const list = Array.isArray(response.data) ? response.data : []
+      logger.info(`Fetched ${list.length} pollutants from master API`)
+      return list
+    } catch (error) {
+      logger.error(
+        `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return []
+    }
   }
 }
 
@@ -61,7 +81,9 @@ const pollutantGroups = {
 const isAllowedPollutant = (value, pollutantMasterList) => {
   const lowerValue = (value || '').toLowerCase().trim()
   return pollutantMasterList.some(
-    (p) => p.pollutant_value.toLowerCase().trim() === lowerValue
+    (p) =>
+      (p.pollutant_value || '').toLowerCase().trim() === lowerValue ||
+      (p.pollutantName || '').toLowerCase().trim() === lowerValue
   )
 }
 
@@ -269,7 +291,7 @@ const updateSessionAfterValidation = (
 }
 
 // Helper function to handle POST request
-const handlePostRequest = (request, h) => {
+const handlePostRequest = async (request, h) => {
   const isNoJS = checkIsNoJS(request)
 
   const {
@@ -336,13 +358,17 @@ const handlePostRequest = (request, h) => {
     selectedGroup
   )
 
-  // Store the pollutantID for the first selected pollutant so the datasource page can call the API
+  // Find the pollutantID for the first selected pollutant and pre-fetch datasources
   const firstPollutantValue = finalPollutants[0]
   const matched = pollutantMasterList.find(
     (p) => p.pollutant_value === firstPollutantValue
   )
   if (matched) {
     request.yar.set('selectedPollutantID', matched.pollutantID)
+    const flat = await fetchDatasourceForPollutant(matched.pollutantID)
+    request.yar.set('datasourceGroups', groupDatasources(flat))
+  } else {
+    request.yar.set('datasourceGroups', [])
   }
 
   return h.redirect(CUSTOMDATASET_URL)
@@ -391,7 +417,7 @@ const handleGetRequest = async (request, h) => {
 export const airpollutantController = {
   async handler(request, h) {
     if (request.method === 'post') {
-      return handlePostRequest(request, h)
+      return await handlePostRequest(request, h)
     }
 
     return handleGetRequest(request, h)

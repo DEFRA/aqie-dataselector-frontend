@@ -4,77 +4,15 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { english } from '~/src/server/data/en/homecontent.js'
+import axios from 'axios'
 import Wreck from '@hapi/wreck'
-import {
-  HTTP_INTERNAL_SERVER_ERROR,
-  STATUS_CODE_LIMITS
-} from '~/src/server/common/constants/magic-numbers.js'
-// import { error } from 'node:console'
+import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { HTTP_INTERNAL_SERVER_ERROR } from '~/src/server/common/constants/magic-numbers.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-// import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { statusCodes } from '~/src/server/common/constants/status-codes.js'
+import { config } from '~/src/config/config.js'
 
 const logger = createLogger()
-
-const errorContent = english.errorpages
-
-function statusCodeMessage(statusCode) {
-  switch (true) {
-    case statusCode === statusCodes.notFound:
-      return 'Page not found'
-    case statusCode === statusCodes.forbidden:
-      return 'Forbidden'
-    case statusCode === statusCodes.unauthorized:
-      return 'Unauthorized'
-    case statusCode === statusCodes.badRequest:
-      return 'Bad Request'
-    case statusCode === statusCodes.internalServerError:
-      return 'Sorry, there is a problem with the service'
-    default:
-      return 'Sorry, there is a problem with the service'
-  }
-}
-
-function extractStatusCode(maybeError) {
-  const candidate =
-    maybeError?.response?.status ??
-    maybeError?.output?.statusCode ??
-    maybeError?.statusCode ??
-    maybeError?.status
-
-  if (
-    typeof candidate === 'number' &&
-    candidate >= STATUS_CODE_LIMITS.MIN &&
-    candidate <= STATUS_CODE_LIMITS.MAX
-  ) {
-    return candidate
-  }
-
-  const message = maybeError?.message
-  if (typeof message === 'string') {
-    const match = /\b([1-5]\d\d)\b/.exec(message)
-    if (match) {
-      return Number(match[1])
-    }
-  }
-
-  return HTTP_INTERNAL_SERVER_ERROR
-}
-
-function renderErrorPage(h, statusCode) {
-  const message = statusCodeMessage(statusCode)
-  return h
-    .view('error/index', {
-      pageTitle: message,
-      statusCode,
-      message,
-      content: errorContent
-    })
-    .code(statusCode)
-}
 
 function clearAllSessionData(request) {
   // Clear all selected options and pollutants
@@ -119,7 +57,7 @@ function handleClearPath(request, h, backUrl) {
     selectedyear: request.yar.get('selectedyear'),
     selectedlocation: request.yar.get('selectedlocation'),
     stationcount: request.yar.get('nooflocation'),
-    datasource: request.yar.get('datasource'),
+    datasourceGroups: request.yar.get('datasourceGroups') || [],
     displayBacklink: true,
     hrefq: backUrl
   })
@@ -282,13 +220,15 @@ function getPollutantNames() {
   }
 }
 
-function buildStationCountParameters(request, finalyear, formattedPollutants) {
+function buildStationCountParameters(request, finalyear) {
   const isCountry = request.yar.get('Location') === 'Country'
+  const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
+  const pollutantID = request.yar.get('selectedPollutantID')
 
   if (isCountry) {
     return {
-      pollutantName: formattedPollutants,
-      dataSource: 'AURN',
+      pollutantName: pollutantID,
+      dataSource,
       Region: request.yar.get('selectedlocation').join(','),
       regiontype: 'Country',
       Year: finalyear,
@@ -298,8 +238,8 @@ function buildStationCountParameters(request, finalyear, formattedPollutants) {
   }
 
   return {
-    pollutantName: formattedPollutants,
-    dataSource: 'AURN',
+    pollutantName: pollutantID,
+    dataSource,
     Region: request.yar.get('selectedLAIDs'),
     regiontype: 'LocalAuthority',
     Year: finalyear,
@@ -319,94 +259,162 @@ async function handleStationCountCalculation(request, h) {
     .join(',')
 
   request.yar.set('formattedPollutants', formattedPollutants)
-
-  const stationcountparameters = buildStationCountParameters(
-    request,
-    finalyear,
-    formattedPollutants
-  )
-
   request.yar.set('finalyear1', finalyear)
-  const stationcount = await invokeStationCount(stationcountparameters)
 
-  if (
-    stationcount == null ||
-    stationcount instanceof Error ||
-    stationcount?.isAxiosError ||
-    (typeof stationcount === 'object' && stationcount?.message)
-  ) {
-    const statusCode = extractStatusCode(stationcount)
+  const baseParams = buildStationCountParameters(request, finalyear)
+
+  const [aurnCount, nonAurnCount] = await Promise.all([
+    invokeStationCount({ ...baseParams, dataSource: 'AURN' }),
+    invokeStationCount({ ...baseParams, dataSource: 'NON-AURN' })
+    // console.log('Station count results:', { aurnCount, nonAurnCount })
+  ])
+  // NON-AURN returns [{NetworkType, Count}, ...] — exclude arrays from error check
+  const isError = (val) =>
+    val == null ||
+    val instanceof Error ||
+    val?.isBoom === true ||
+    val?.isAxiosError === true ||
+    (typeof val === 'object' &&
+      !Array.isArray(val) &&
+      val !== null &&
+      Boolean(val?.message))
+
+  // Only gate on AURN count — it is the primary station count
+  if (isError(aurnCount)) {
     logger.error(
-      `Station count API failed: statusCode=${statusCode} message=${
-        stationcount?.message || 'no response'
-      }`
+      `Station count API failed: ${aurnCount?.message || 'no response'}`
     )
-    return renderErrorPage(h, statusCode)
+    // API error — allow the user to proceed to download, which shows "unavailable"
+    request.yar.set('stationCountError', true)
+    request.yar.set('nooflocation', null)
+    return null
   }
 
+  // Normalise AURN to a plain number (in case it came back as a single-entry array)
+  const aurnNumeric = Array.isArray(aurnCount)
+    ? aurnCount.reduce((sum, n) => sum + (Number(n.Count) || 0), 0)
+    : Number(aurnCount)
+
+  request.yar.set('stationCountError', false)
   request.yar.set('Region', request.yar.get('selectedlocation').join(','))
-  request.yar.set('nooflocation', stationcount)
+  request.yar.set('stationCountAURN', aurnNumeric)
+  request.yar.set('stationCountNONAURN', nonAurnCount)
+  // NON-AURN is an array of {NetworkType, Count} — stored for the download page "Other data" tab
+  request.yar.set(
+    'nooflocationukeap',
+    Array.isArray(nonAurnCount) ? nonAurnCount : []
+  )
+  // nooflocation is always the AURN numeric count used for summary display
+  request.yar.set('nooflocation', aurnNumeric)
+
+  // 0 AURN stations — block here on the customdataset page with a clear error
+  if (aurnNumeric === 0) {
+    return h.view('customdataset/index', {
+      pageTitle: englishNew.custom.pageTitle,
+      heading: englishNew.custom.heading,
+      texts: englishNew.custom.texts,
+      error: true,
+      errormsg: 'There are no stations available for your selection.',
+      errorref1: 'Change the year',
+      errorhref1: '/year-aurn',
+      errorref2: 'Change the location',
+      errorhref2: '/location-aurn',
+      selectedpollutant: request.yar.get('selectedpollutant'),
+      selectedyear: request.yar.get('selectedyear'),
+      selectedlocation: request.yar.get('selectedlocation'),
+      stationcount: 0,
+      datasourceGroups: request.yar.get('datasourceGroups') || [],
+      displayBacklink: true,
+      hrefq: '/hubpage'
+    })
+  }
+
   return null
 }
-// dev
-async function invokeStationCount(stationcountparameters) {
+
+/**
+ * Parse the raw station count API response.
+ * The API returns a custom string format, not JSON:
+ *   AURN  → "15"  (single number) or  Count:"15"
+ *   NON-AURN → NetworkType:"X",Count:"10"[, NetworkType:"Y",Count:"5"]
+ */
+function parseStationCountPayload(payload) {
+  if (payload == null) return null
+  if (typeof payload === 'number') return payload
+  if (Array.isArray(payload)) return payload
+
+  const str = Buffer.isBuffer(payload)
+    ? payload.toString('utf8').trim()
+    : typeof payload === 'string'
+      ? payload.trim()
+      : null
+
+  if (!str) return null
+
+  // Pure number: "15"
+  const asNum = Number(str)
+  if (str !== '' && !isNaN(asNum)) return asNum
+
+  // NetworkType+Count pairs → array of {NetworkType, Count}
+  const networks = []
+  const pairRe = /NetworkType:"([^"]+)",Count:"([^"]+)"/g
+  let m
+  while ((m = pairRe.exec(str)) !== null) {
+    networks.push({ NetworkType: m[1], Count: m[2] })
+  }
+  if (networks.length > 0) return networks
+
+  // Count-only: Count:"15"
+  const countOnly = /Count:"(\d+)"/.exec(str)
+  if (countOnly) return Number(countOnly[1])
+
+  // JSON fallback
   try {
-    const url =
-      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelection'
-    const { payload } = await Wreck.post(url, {
-      payload: JSON.stringify(stationcountparameters),
-      headers: {
-        'x-api-key': 'mEa1rzO62DE6dot8yFLShL7ZMN4ydFu8',
-        'Content-Type': 'application/json'
-      },
-      json: true
-    })
-    return payload
-  } catch (error) {
-    return error // Rethrow the error so it can be handled appropriately
+    return JSON.parse(str)
+  } catch {
+    return null
   }
 }
-// prod
-// async function invokeStationCount(stationcountparameters) {
-//   try {
-//     const url = config.get('Download_aurn_URL')
-//     if (!url) {
-//       return Object.assign(new Error('Missing Download_aurn_URL'), {
-//         statusCode: HTTP_INTERNAL_SERVER_ERROR
-//       })
-//     }
-//     const response = await axios.post(url, stationcountparameters, {
-//       timeout: STATIONCOUNT_TIMEOUT_MS,
-//       validateStatus: () => true
-//     })
 
-//     if (
-//       !response ||
-//       response.status < HTTP_OK ||
-//       response.status >= HTTP_REDIRECT_MAX
-//     ) {
-//       return Object.assign(
-//         new Error(`Station count API returned status ${response?.status}`),
-//         {
-//           statusCode: response?.status || HTTP_INTERNAL_SERVER_ERROR,
-//           response
-//         }
-//       )
-//     }
-
-//     if (response.data == null) {
-//       return Object.assign(new Error('Station count API returned no data'), {
-//         statusCode: 500,
-//         response
-//       })
-//     }
-
-//     return response.data
-//   } catch (error) {
-//     logger.error(`Station count API error: ${error.message}`)
-//     return null
-//   }
-// }
+export async function invokeStationCount(stationcountparameters) {
+  if (config.get('isDevelopment')) {
+    try {
+      const url = config.get('stationCountDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(stationcountparameters),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return parseStationCountPayload(payload)
+    } catch (error) {
+      logger.error(
+        `Station count API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return error
+    }
+  } else {
+    try {
+      const response = await axios.post(
+        config.get('stationCountApiUrl'),
+        stationcountparameters
+      )
+      return parseStationCountPayload(response.data)
+    } catch (error) {
+      logger.error(
+        `Station count API error: ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return Object.assign(
+        new Error(
+          `Station count API error: ${error instanceof Error ? error.message : 'unknown error'}`
+        ),
+        { statusCode: HTTP_INTERNAL_SERVER_ERROR }
+      )
+    }
+  }
+}
 
 export const customdatasetController = {
   handler: async (request, h) => {
@@ -446,7 +454,7 @@ export const customdatasetController = {
       selectedyear: request.yar.get('selectedyear'),
       selectedlocation: request.yar.get('selectedlocation'),
       stationcount: request.yar.get('nooflocation'),
-      datasource: request.yar.get('datasource'),
+      datasourceGroups: request.yar.get('datasourceGroups') || [],
       displayBacklink: true,
       hrefq: backUrl
     })
