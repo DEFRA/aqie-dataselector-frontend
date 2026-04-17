@@ -130,9 +130,9 @@
       <h2 class="govuk-heading-m">Other data from Defra</h2>
 
       {% for network in ukeapNetworks %}
-        <h3 class="govuk-heading-s">{{ network.NetworkType }}</h3>
+        <h3 class="govuk-heading-s">{{ network.networkType }}</h3>
         <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen">
-          {{ network.Count }} stations available
+          {{ network.count }} stations available
         </div>
       {% endfor %}
     </div>

@@ -355,17 +355,17 @@ function parseStationCountPayload(payload) {
   const asNum = Number(str)
   if (str !== '' && !isNaN(asNum)) return asNum
 
-  // NetworkType+Count pairs → array of {NetworkType, Count}
+  // networkType+count pairs (case-insensitive keys) → array of {networkType, count}
   const networks = []
-  const pairRe = /NetworkType:"([^"]+)",Count:"([^"]+)"/g
+  const pairRe = /[Nn]etwork[Tt]ype:"([^"]+)",[Cc]ount:"([^"]+)"/g
   let m
   while ((m = pairRe.exec(str)) !== null) {
-    networks.push({ NetworkType: m[1], Count: m[2] })
+    networks.push({ networkType: m[1], count: Number(m[2]) || m[2] })
   }
   if (networks.length > 0) return networks
 
-  // Count-only: Count:"15"
-  const countOnly = /Count:"(\d+)"/.exec(str)
+  // count-only: Count:"15" or count:"15"
+  const countOnly = /[Cc]ount:"(\d+)"/.exec(str)
   if (countOnly) return Number(countOnly[1])
 
   // JSON fallback
