@@ -43,9 +43,11 @@
         <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
           <a class="govuk-tabs__tab" href="#tab-nearrealtime">Near real-time data from Defra</a>
         </li>
+        {% if not ukeapUnavailable %}
         <li class="govuk-tabs__list-item">
           <a class="govuk-tabs__tab" href="#tab-other">Other data from Defra</a>
         </li>
+        {% endif %}
       </ul>
 
       <!-- NEAR REAL-TIME TAB -->
@@ -112,64 +114,84 @@
       </div>
 
       <!-- OTHER DATA TAB -->
+      {% if not ukeapUnavailable %}
       <div class="govuk-tabs__panel" id="tab-other">
         <div class="govuk-!-margin-top-3">
           <h2 class="govuk-heading-m">Other data from Defra</h2>
-          <h3 class="govuk-heading-s">UKEAP: Rural NO2 Network</h3>
-          <p class="govuk-body">Monthly diffusion tube measurements of nitrogen dioxide at rural background locations.</p>
+          <p class="govuk-body">Data is measured hourly, weekly or monthly depending on the network.</p>
 
-          <div id="ukeap-station-count"
-               class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
-               data-initial-count="{{ stationcountukeap | default(0) }}">
-            {{ stationcountukeap | default(0) }} stations available
-          </div>
+          {% set networkDescriptions = {
+            "UK Urban NO2 Network": "Measures nitrogen dioxide at urban traffic sites.",
+            "UKEAP: Rural NO2 Network": "Monthly diffusion tube measurements of nitrogen dioxide at rural background locations.",
+            "UKEAP - Rural NO2 Network": "Monthly diffusion tube measurements of nitrogen dioxide at rural background locations.",
+            "UKEAP: Rural SO2 Network": "Monthly measurements of sulphur dioxide at rural background locations.",
+            "UKEAP - Rural SO2 Network": "Monthly measurements of sulphur dioxide at rural background locations.",
+            "UKEAP: Hydrocarbon Network": "Measurements of volatile organic compounds at rural background locations.",
+            "UKEAP - Hydrocarbon Network": "Measurements of volatile organic compounds at rural background locations.",
+            "UKEAP: Metals Network": "Monthly measurements of heavy metals at rural background locations.",
+            "UKEAP - Metals Network": "Monthly measurements of heavy metals at rural background locations.",
+            "UKEAP: Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations.",
+            "UKEAP - Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations."
+          } %}
+
+          {% for network in ukeapNetworks %}
+            <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ network.networkType }}</h3>
+            {% if networkDescriptions[network.networkType] %}
+              <p class="govuk-body govuk-!-margin-bottom-2">{{ networkDescriptions[network.networkType] }}</p>
+            {% endif %}
+            <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 {% if network.count == 0 %}insettextorange{% else %}insettextgreen{% endif %}">
+              {{ network.count }} stations available
+            </div>
+            {% if network.count == 0 %}
+              <p class="govuk-body">No data available for the selected range.</p>
+            {% else %}
+              {% if yearrange == 'Single' %}
+              <a href="/download_ukeap_nojs/{{ network.networkType | urlencode }}/{{ finalyear }}"
+                 role="button"
+                 class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
+                 aria-label="Download data for {{ network.networkType }}">
+                <span class="aq-button-secondary__icon">
+                  <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                    <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                  </svg>
+                </span>
+                <span class="aq-button-secondary__text">
+                  Download data
+                  <span class="govuk-visually-hidden">(Visual only)</span>
+                </span>
+              </a>
+              {% endif %}
+              {% if yearrange == 'Multiple' %}
+              <table class="govuk-table govuk-!-margin-bottom-5">
+                <thead class="govuk-table__head">
+                  <tr class="govuk-table__row">
+                    <th scope="col" class="govuk-table__header">Year</th>
+                    <th scope="col" class="govuk-table__header">Monthly data</th>
+                  </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                  <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__header">Download all years</th>
+                    <td class="govuk-table__cell">
+                      <a href="/emailrequest" class="govuk-link">Request Data</a>
+                    </td>
+                  </tr>
+                  {% for year in finalyear %}
+                  <tr class="govuk-table__row">
+                    <th scope="row" class="govuk-table__header">{{ year }}</th>
+                    <td class="govuk-table__cell">
+                      <a href="/download_ukeap_nojs/{{ network.networkType | urlencode }}/{{ year }}" class="govuk-link">Download monthly data</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
         </div>
-
-        {% if yearrange == 'Single' %}
-        <a id="download-link-ukeap"
-           href="/download_ukeap_nojs/{{ finalyear }}"
-           role="button"
-           class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-           aria-label="Download monthly data for UKEAP Rural NO2 Network">
-          <span class="aq-button-secondary__icon">
-            <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-              <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-            </svg>
-          </span>
-          <span class="aq-button-secondary__text">
-            Download monthly data
-            <span class="govuk-visually-hidden">(Visual only)</span>
-          </span>
-        </a>
-        {% endif %}
-
-        {% if yearrange == 'Multiple' %}
-        <table class="govuk-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Year</th>
-              <th scope="col" class="govuk-table__header">Monthly data</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Download all years</th>
-              <td class="govuk-table__cell">
-                <a href="/emailrequest" class="govuk-link">Request Data</a>
-              </td>
-            </tr>
-            {% for year in finalyear %}
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">{{ year }}</th>
-              <td class="govuk-table__cell">
-                <a href="/download_ukeap_nojs/{{ year }}" class="govuk-link">Download monthly data</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
       </div>
+      {% endif %}
 
     </div>
     {# end govuk-tabs #}
@@ -230,14 +252,6 @@
   <span id="auto-download-ukeap" data-url="{{ downloadukeapresult | urlencode }}" hidden></span>
   <script>
     (function () {
-      var el = document.getElementById('ukeap-station-count');
-      if (el) {
-        var m = el.textContent.trim().match(/^(\d+)/);
-        var n = m ? parseInt(m[1], 10) : 0;
-        if (Number.isFinite(n) && n > 0) {
-          try { sessionStorage.setItem('ukeap_station_count', String(n)); } catch (e) {}
-        }
-      }
       var holder = document.getElementById('auto-download-ukeap');
       if (!holder) return;
       var enc = holder.getAttribute('data-url') || '';

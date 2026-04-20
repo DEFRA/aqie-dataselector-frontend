@@ -26,7 +26,7 @@ describe('downloadAurnController', () => {
     axios.post.mockReset()
 
     mockRequest = {
-      params: { year: '2024' },
+      params: { year: '2024', dataSource: 'AURN' },
       url: { pathname: '/download_aurn/2024' },
       yar: {
         get: jest.fn(),
@@ -45,7 +45,7 @@ describe('downloadAurnController', () => {
     // Session values
     mockRequest.yar.get.mockImplementation((key) => {
       const values = {
-        formattedPollutants:
+        selectedPollutantID:
           'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
         selectedlocation: ['England'],
         Location: 'Country',
@@ -191,7 +191,7 @@ describe('downloadAurnController', () => {
       async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'PM2.5',
+            selectedPollutantID: 'PM2.5',
             // Controller uses selectedLAIDs for non-Country
             selectedLAIDs: '1,2,3',
             Location: 'LocalAuthority',
@@ -228,7 +228,7 @@ describe('downloadAurnController', () => {
 
         await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
+        expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutantID')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedlocation')
         expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
         // JS route doesn't read viewDatanojs
@@ -352,7 +352,7 @@ describe('downloadAurnController', () => {
         mockRequest.url.pathname = '/download_aurn_nojs/2024'
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'PM2.5',
+            selectedPollutantID: 'PM2.5',
             selectedlocation: ['England'],
             Location: 'Country',
             viewDatanojs: undefined
@@ -610,7 +610,7 @@ describe('downloadAurnController', () => {
       async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'PM2.5,PM10',
+            selectedPollutantID: 'PM2.5,PM10',
             selectedlocation: ['England', 'Wales', 'Scotland'],
             Location: 'Country',
             viewDatanojs: { pageTitle: 'Test' }
@@ -639,7 +639,7 @@ describe('downloadAurnController', () => {
       async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'PM2.5',
+            selectedPollutantID: 'PM2.5',
             selectedlocation: ['England'],
             Location: 'Country',
             viewDatanojs: { pageTitle: 'Test' }
@@ -667,7 +667,7 @@ describe('downloadAurnController', () => {
       async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'NO2,O3',
+            selectedPollutantID: 'NO2,O3',
             selectedLAIDs: '1,5,10,25,50',
             Location: 'LocalAuthority',
             viewDatanojs: { pageTitle: 'Test' }
@@ -736,7 +736,7 @@ describe('downloadAurnController', () => {
         mockRequest.url.pathname = '/download_aurn_nojs/2024'
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: 'PM2.5',
+            selectedPollutantID: 'PM2.5',
             selectedlocation: ['England'],
             Location: 'Country',
             viewDatanojs: {}
@@ -806,7 +806,7 @@ describe('downloadAurnController', () => {
       async () => {
         mockRequest.yar.get.mockImplementation((key) => {
           const values = {
-            formattedPollutants: null,
+            selectedPollutantID: null,
             selectedlocation: ['England'],
             Location: 'Country',
             viewDatanojs: null

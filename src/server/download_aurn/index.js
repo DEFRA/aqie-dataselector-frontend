@@ -10,12 +10,22 @@ const configureRoutes = (server) => {
     },
     {
       method: 'GET',
+      path: '/download_aurn/{year}/{dataSource}',
+      ...downloadAurnController
+    },
+    {
+      method: 'GET',
       path: '/download_aurn/status/{jobID}',
       ...downloadAurnstatusController
     },
     {
       method: 'GET',
       path: '/download_aurn_nojs/{year}',
+      ...downloadAurnController
+    },
+    {
+      method: 'GET',
+      path: '/download_aurn_nojs/{year}/{dataSource}',
       ...downloadAurnController
     }
   ])

@@ -11,10 +11,13 @@ describe('downloadAurnstatusController', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    // Mock config.get to return the polling URL
-    config.get.mockReturnValue(
-      'https://api.example.com/AtomDataSelectionJobStatus/'
-    )
+    // Mock config.get — prod path (isDevelopment=false), return URL for Polling_URL
+    config.get.mockImplementation((key) => {
+      if (key === 'isDevelopment') return false
+      if (key === 'Polling_URL')
+        return 'https://api.example.com/AtomDataSelectionJobStatus/'
+      return undefined
+    })
 
     // Mock request with yar session
     mockRequest = {

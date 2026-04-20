@@ -40,7 +40,7 @@ async function fetchPollutantList() {
       logger.error(
         `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
       )
-      return []
+      return null
     }
   } else {
     try {
@@ -52,7 +52,7 @@ async function fetchPollutantList() {
       logger.error(
         `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
       )
-      return []
+      return null
     }
   }
 }
@@ -366,6 +366,9 @@ const handlePostRequest = async (request, h) => {
   if (matched) {
     request.yar.set('selectedPollutantID', matched.pollutantID)
     const flat = await fetchDatasourceForPollutant(matched.pollutantID)
+    if (flat === null) {
+      return h.redirect('/problem-with-service?statusCode=500')
+    }
     request.yar.set('datasourceGroups', groupDatasources(flat))
   } else {
     request.yar.set('datasourceGroups', [])
@@ -387,6 +390,11 @@ const handleGetRequest = async (request, h) => {
 
   // Fetch pollutant list from API and store in session for POST validation
   const pollutants = await fetchPollutantList()
+
+  if (pollutants === null) {
+    return h.redirect('/problem-with-service?statusCode=500')
+  }
+
   request.yar.set('pollutantMasterList', pollutants)
 
   const existingPollutants = request.yar.get('selectedPollutants') || []
