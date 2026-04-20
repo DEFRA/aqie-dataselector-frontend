@@ -63,7 +63,6 @@ const KNOWN_CATEGORIES = new Set([
 // POST pollutantID to the API, returns flat array of strings
 export async function fetchDatasourceForPollutant(pollutantID) {
   const body = { pollutantID: String(pollutantID) }
-
   if (config.get('isDevelopment')) {
     try {
       const url = config.get('datasourceDevUrl')

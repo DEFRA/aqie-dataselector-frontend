@@ -1,5 +1,6 @@
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import {
@@ -21,28 +22,49 @@ function createServerErrorResponse() {
 }
 
 async function invokeDownloadS3(downloadstatusapiparams) {
-  // Single status check - no polling loop!
-
-  try {
-    const statusResult = await axios.post(
-      config.get('Polling_URL'),
-      downloadstatusapiparams
-    )
-    const statusResponse = statusResult.data
-
-    return {
-      status: statusResponse.status,
-      resultUrl: statusResponse.resultUrl || null
-    }
-  } catch (error) {
-    // Return structured error
-    if (error.response) {
+  if (config.get('isDevelopment')) {
+    try {
+      const url = config.get('pollingDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(downloadstatusapiparams),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
       return {
-        error: true,
-        statusCode: error.response.status,
-        redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
+        status: payload.status,
+        resultUrl: payload.resultUrl || null
       }
-    } else {
+    } catch (error) {
+      logger.error(
+        `AURN status polling API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return createServerErrorResponse()
+    }
+  } else {
+    try {
+      const statusResult = await axios.post(
+        config.get('Polling_URL'),
+        downloadstatusapiparams
+      )
+      const statusResponse = statusResult.data
+      return {
+        status: statusResponse.status,
+        resultUrl: statusResponse.resultUrl || null
+      }
+    } catch (error) {
+      logger.error(
+        `AURN status polling API error: ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      if (error.response) {
+        return {
+          error: true,
+          statusCode: error.response.status,
+          redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
+        }
+      }
       return createServerErrorResponse()
     }
   }

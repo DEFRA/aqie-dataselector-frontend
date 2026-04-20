@@ -31,7 +31,7 @@ import { downloadAurnstatus } from '~/src/server/download_aurn_status/index.js'
 import { problemWithService } from '~/src/server/problem-with-service/index.js'
 import { downloadEmailreq } from '~/src/server/verify/index.js'
 import { stationcountUkeap } from '~/src/server/stationcount_ukeap/index.js'
-import { downloadUkeap } from '~/src/server/download_ukeap/index.js'
+// import { downloadUkeap } from '~/src/server/download_ukeap/index.js'
 /**
  * @satisfies {ServerRegisterPluginObject<void>}
  */
@@ -97,8 +97,8 @@ export const router = {
         emailrequest,
         problemWithService,
         downloadEmailreq,
-        stationcountUkeap,
-        downloadUkeap
+        stationcountUkeap
+        //  downloadUkeap
       ])
 
       // Static assets

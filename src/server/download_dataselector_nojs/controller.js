@@ -13,13 +13,19 @@ const getStationCount = (request) => {
   return Number.isFinite(num) ? num : 0
 }
 
-const getUkeapStationCount = (request) => {
-  const raw = request.yar.get('nooflocationukeap') ?? 0
-  const num = Number(raw)
-  return Number.isFinite(num) ? num : 0
-}
-
 const buildViewData = (request, backUrl) => {
+  const rawUkeap = request.yar.get('nooflocationukeap')
+  const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
+
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const hasOtherDataSource = datasourceGroups.some(
+    (g) =>
+      g.category === 'Other data from Defra' &&
+      Array.isArray(g.networks) &&
+      g.networks.length > 0
+  )
+  const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
+
   return {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -27,7 +33,8 @@ const buildViewData = (request, backUrl) => {
     downloadaurnresult: request.yar.get('downloadaurnresult'),
     downloadukeapresult: request.yar.get('downloadukeapresult'),
     stationcount: getStationCount(request),
-    stationcountukeap: getUkeapStationCount(request),
+    ukeapNetworks,
+    ukeapUnavailable,
     yearrange: request.yar.get('yearrange'),
     hrefq: backUrl,
     finalyear:

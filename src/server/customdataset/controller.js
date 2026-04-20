@@ -299,16 +299,50 @@ async function handleStationCountCalculation(request, h) {
   request.yar.set('Region', request.yar.get('selectedlocation').join(','))
   request.yar.set('stationCountAURN', aurnNumeric)
   request.yar.set('stationCountNONAURN', nonAurnCount)
-  // NON-AURN is an array of {NetworkType, Count} — stored for the download page "Other data" tab
-  request.yar.set(
-    'nooflocationukeap',
-    Array.isArray(nonAurnCount) ? nonAurnCount : []
+
+  // Normalise NON-AURN result: the API returns networkType:"Unknown" when count is 0.
+  // Replace those with the actual network names stored in datasourceGroups so the
+  // download page always shows real network headings, never "Unknown".
+  const rawNonAurn = Array.isArray(nonAurnCount) ? nonAurnCount : []
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const otherDataGroup = datasourceGroups.find(
+    (g) => g.category === 'Other data from Defra'
   )
+  const expectedNetworks = Array.isArray(otherDataGroup?.networks)
+    ? otherDataGroup.networks
+    : []
+
+  let ukeapNetworks
+  if (expectedNetworks.length > 0) {
+    // Build a lookup of API-returned counts (excluding "Unknown" entries)
+    const apiCountMap = new Map()
+    for (const n of rawNonAurn) {
+      if (n.networkType && n.networkType !== 'Unknown') {
+        apiCountMap.set(n.networkType, Number(n.count) || 0)
+      }
+    }
+    // Map each expected network to its count (0 if API didn't return it or returned "Unknown")
+    ukeapNetworks = expectedNetworks.map((name) => ({
+      networkType: name,
+      count: apiCountMap.has(name) ? apiCountMap.get(name) : 0
+    }))
+  } else {
+    // No datasourceGroups info — use raw API result, filtering out Unknown
+    ukeapNetworks = rawNonAurn.filter((n) => n.networkType !== 'Unknown')
+  }
+
+  // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
+  request.yar.set('nooflocationukeap', ukeapNetworks)
   // nooflocation is always the AURN numeric count used for summary display
   request.yar.set('nooflocation', aurnNumeric)
 
-  // 0 AURN stations — block here on the customdataset page with a clear error
-  if (aurnNumeric === 0) {
+  // Block on customdataset only when ALL networks have 0 stations.
+  // If at least one network has stations the user can still download from that tab.
+  const allUkeapZero =
+    ukeapNetworks.length === 0 ||
+    ukeapNetworks.every((n) => Number(n.count) === 0)
+
+  if (aurnNumeric === 0 && allUkeapZero) {
     return h.view('customdataset/index', {
       pageTitle: englishNew.custom.pageTitle,
       heading: englishNew.custom.heading,
