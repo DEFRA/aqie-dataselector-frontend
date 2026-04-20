@@ -83,7 +83,7 @@ export async function fetchDatasourceForPollutant(pollutantID) {
       logger.error(
         `Datasource API call failed for pollutantID ${pollutantID}: ${error instanceof Error ? error.message : 'unknown error'}`
       )
-      return []
+      return null
     }
   } else {
     try {
@@ -97,7 +97,7 @@ export async function fetchDatasourceForPollutant(pollutantID) {
       logger.error(
         `Datasource API call failed for pollutantID ${pollutantID}: ${error instanceof Error ? error.message : 'unknown error'}`
       )
-      return []
+      return null
     }
   }
 }
@@ -174,6 +174,9 @@ export const datasourceController = {
       const pollutantID = request.yar.get('selectedPollutantID')
       if (pollutantID) {
         const flat = await fetchDatasourceForPollutant(pollutantID)
+        if (flat === null) {
+          return h.redirect('/problem-with-service?statusCode=500')
+        }
         datasourceGroups = groupDatasources(flat)
         request.yar.set('datasourceGroups', datasourceGroups)
       } else {
