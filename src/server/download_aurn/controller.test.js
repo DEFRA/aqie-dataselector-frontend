@@ -1,6 +1,7 @@
 import { downloadAurnController } from './controller.js'
 import { config } from '~/src/config/config.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { TEST_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
@@ -14,6 +15,7 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
 
 jest.mock('~/src/config/config.js')
 jest.mock('axios')
+jest.mock('@hapi/wreck')
 
 describe('downloadAurnController', () => {
   let mockRequest
@@ -24,6 +26,7 @@ describe('downloadAurnController', () => {
     jest.clearAllMocks()
 
     axios.post.mockReset()
+    Wreck.post.mockReset()
 
     mockRequest = {
       params: { year: '2024', dataSource: 'AURN' },
@@ -841,6 +844,209 @@ describe('downloadAurnController', () => {
 
         // Logger should be called (mocked in beforeEach)
         expect(axios.post).toHaveBeenCalled()
+      },
+      TEST_TIMEOUT_MS
+    )
+  })
+
+  describe('development mode — invokeDownload (Wreck)', () => {
+    const devDownloadUrl = 'https://dev.api.example.com/download'
+    const devApiKey = 'test-dev-key'
+
+    beforeEach(() => {
+      config.get.mockImplementation((key) => {
+        const values = {
+          isDevelopment: true,
+          downloadAurnDevUrl: devDownloadUrl,
+          osNamesDevApiKey: devApiKey
+        }
+        return values[key]
+      })
+    })
+
+    it(
+      'uses Wreck.post for download and returns jobID on JS route',
+      async () => {
+        Wreck.post.mockResolvedValueOnce({ payload: 'job-dev-123' })
+        await downloadAurnController.handler(mockRequest, mockH)
+        expect(Wreck.post).toHaveBeenCalledWith(
+          devDownloadUrl,
+          expect.objectContaining({
+            headers: expect.objectContaining({
+              'Content-Type': 'application/json',
+              'x-api-key': devApiKey
+            }),
+            json: true
+          })
+        )
+        expect(mockH.response).toHaveBeenCalledWith({ jobID: 'job-dev-123' })
+        expect(mockH.code).toHaveBeenCalledWith(200)
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'redirects when Wreck download payload has error flag',
+      async () => {
+        Wreck.post.mockResolvedValueOnce({
+          payload: { error: true, message: 'Bad request' }
+        })
+        const result = await downloadAurnController.handler(mockRequest, mockH)
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'redirects when Wreck.post throws during download',
+      async () => {
+        Wreck.post.mockRejectedValueOnce(new Error('Wreck connection error'))
+        const result = await downloadAurnController.handler(mockRequest, mockH)
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'sends correct JSON body to Wreck for download',
+      async () => {
+        Wreck.post.mockResolvedValueOnce({ payload: 'job-dev-body' })
+        await downloadAurnController.handler(mockRequest, mockH)
+        const call = Wreck.post.mock.calls[0]
+        const sentBody = JSON.parse(call[1].payload)
+        expect(sentBody).toMatchObject({
+          pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
+          dataSource: 'AURN',
+          Region: 'England',
+          regiontype: 'Country',
+          Year: '2024',
+          dataselectorfiltertype: 'dataSelectorHourly',
+          dataselectordownloadtype: 'dataSelectorSingle'
+        })
+      },
+      TEST_TIMEOUT_MS
+    )
+  })
+
+  describe('development mode — invokeDownloadS3 (Wreck polling, noJS route)', () => {
+    const devDownloadUrl = 'https://dev.api.example.com/download'
+    const devPollingUrl = 'https://dev.api.example.com/status'
+    const devApiKey = 'test-dev-key'
+
+    beforeEach(() => {
+      mockRequest.url.pathname = '/download_aurn_nojs/2024'
+      config.get.mockImplementation((key) => {
+        const values = {
+          isDevelopment: true,
+          downloadAurnDevUrl: devDownloadUrl,
+          pollingDevUrl: devPollingUrl,
+          osNamesDevApiKey: devApiKey
+        }
+        return values[key]
+      })
+    })
+
+    it(
+      'uses Wreck for polling and renders view when Completed on first poll',
+      async () => {
+        Wreck.post
+          .mockResolvedValueOnce({ payload: 'job-dev-nojs' })
+          .mockResolvedValueOnce({
+            payload: {
+              status: 'Completed',
+              resultUrl: 'https://dev.result/file.csv'
+            }
+          })
+        const promise = downloadAurnController.handler(mockRequest, mockH)
+        await jest.runAllTimersAsync()
+        await promise
+        expect(mockH.view).toHaveBeenCalledWith(
+          'download_dataselector_nojs/index',
+          expect.objectContaining({
+            downloadresultnojs: 'https://dev.result/file.csv'
+          })
+        )
+        expect(mockRequest.yar.set).toHaveBeenCalledWith(
+          'downloadaurnresult',
+          'https://dev.result/file.csv'
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'polls multiple times via Wreck until status is Completed',
+      async () => {
+        Wreck.post
+          .mockResolvedValueOnce({ payload: 'job-dev-multi' })
+          .mockResolvedValueOnce({
+            payload: { status: 'Pending', resultUrl: null }
+          })
+          .mockResolvedValueOnce({
+            payload: { status: 'Processing', resultUrl: null }
+          })
+          .mockResolvedValueOnce({
+            payload: {
+              status: 'Completed',
+              resultUrl: 'https://dev.result/multi.csv'
+            }
+          })
+        const promise = downloadAurnController.handler(mockRequest, mockH)
+        await jest.runAllTimersAsync()
+        await promise
+        // 1 download + 3 polls
+        expect(Wreck.post).toHaveBeenCalledTimes(4)
+        expect(mockH.view).toHaveBeenCalledWith(
+          'download_dataselector_nojs/index',
+          expect.objectContaining({
+            downloadresultnojs: 'https://dev.result/multi.csv'
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'redirects to problem-with-service when Wreck polling throws',
+      async () => {
+        Wreck.post
+          .mockResolvedValueOnce({ payload: 'job-dev-poll-err' })
+          .mockRejectedValueOnce(new Error('Polling Wreck error'))
+        const promise = downloadAurnController.handler(mockRequest, mockH)
+        await jest.runAllTimersAsync()
+        const result = await promise
+        expect(mockH.redirect).toHaveBeenCalledWith(
+          '/problem-with-service?statusCode=500'
+        )
+        expect(result).toBe('redirected')
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'sends correct polling body to Wreck',
+      async () => {
+        Wreck.post
+          .mockResolvedValueOnce({ payload: 'job-dev-body-poll' })
+          .mockResolvedValueOnce({
+            payload: {
+              status: 'Completed',
+              resultUrl: 'https://dev.result/body.csv'
+            }
+          })
+        const promise = downloadAurnController.handler(mockRequest, mockH)
+        await jest.runAllTimersAsync()
+        await promise
+        const pollCall = Wreck.post.mock.calls[1]
+        const sentBody = JSON.parse(pollCall[1].payload)
+        expect(sentBody).toEqual({ jobID: 'job-dev-body-poll' })
+        expect(pollCall[0]).toBe(devPollingUrl)
       },
       TEST_TIMEOUT_MS
     )

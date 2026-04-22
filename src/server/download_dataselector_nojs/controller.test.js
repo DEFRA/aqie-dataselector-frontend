@@ -53,7 +53,10 @@ describe('downloadDataselectornojsController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         downloadaurnresult: 'https://example.com/file.csv',
+        downloadukeapresult: undefined,
         stationcount: 4,
+        ukeapNetworks: [],
+        ukeapUnavailable: true,
         yearrange: 'Single',
         hrefq: '/customdataset',
         finalyear: ['2019', '2020']
@@ -142,51 +145,43 @@ describe('downloadDataselectornojsController', () => {
       expect(res).toBe('view-response')
     })
 
-    it('returns error when no stations found (0, "0", or falsy)', () => {
+    it('renders download page with stationcount 0 when nooflocation is 0', () => {
+      request.yar.set('selectedpollutant', ['SO2'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['A'])
+      request.yar.set('nooflocation', 0)
+
+      const res = downloadDataselectornojsController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ stationcount: 0 })
+      )
+      expect(res).toBe('view-response')
+    })
+
+    it('renders download page with stationcount 0 when nooflocation is string "0"', () => {
+      request.yar.set('selectedpollutant', ['SO2'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['A'])
+      request.yar.set('nooflocation', '0')
+
+      downloadDataselectornojsController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ stationcount: 0 })
+      )
+    })
+
+    it('renders download page with stationcount 0 when nooflocation is missing', () => {
       request.yar.set('selectedpollutant', ['SO2'])
       request.yar.set('selectedyear', '2024')
       request.yar.set('selectedlocation', ['A'])
 
-      // Case 1: numeric 0
-      request.yar.set('nooflocation', 0)
       downloadDataselectornojsController.handler(request, h)
-      expect(h.view).toHaveBeenLastCalledWith(
-        'customdataset/index',
-        expect.objectContaining({
-          error: true,
-          errormsg:
-            'There are no stations available based on your selection. Change the year or location',
-          errorref1: 'Change the year',
-          errorhref1: '/year-aurn',
-          errorref2: 'Change the location',
-          errorhref2: '/location-aurn/nojs'
-        })
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ stationcount: 0 })
       )
-
-      // Case 2: string "0"
-      request.yar.set('nooflocation', '0')
-      downloadDataselectornojsController.handler(request, h)
-      expect(h.view).toHaveBeenLastCalledWith(
-        'customdataset/index',
-        expect.objectContaining({
-          error: true,
-          errormsg:
-            'There are no stations available based on your selection. Change the year or location'
-        })
-      )
-
-      // Case 3: undefined/falsy
-      request.yar.set('nooflocation', undefined)
-      const res = downloadDataselectornojsController.handler(request, h)
-      expect(h.view).toHaveBeenLastCalledWith(
-        'customdataset/index',
-        expect.objectContaining({
-          error: true,
-          errormsg:
-            'There are no stations available based on your selection. Change the year or location'
-        })
-      )
-      expect(res).toBe('view-response')
     })
   })
 
@@ -211,7 +206,10 @@ describe('downloadDataselectornojsController', () => {
         heading: englishNew.custom.heading,
         texts: englishNew.custom.texts,
         downloadaurnresult: 'https://example.com/file.csv',
+        downloadukeapresult: undefined,
         stationcount: 4,
+        ukeapNetworks: [],
+        ukeapUnavailable: true,
         yearrange: 'Multiple',
         hrefq: '/customdataset',
         finalyear: ['2020', '2022']

@@ -107,22 +107,6 @@ export const downloadDataselectorController = {
     const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
     const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
 
-    // Safety net: if ALL networks are 0, block here (customdataset should have caught this)
-    if (!stationCountUnavailable) {
-      const aurnZero = Number(numberOfLocations) === 0
-      const allUkeapZero =
-        ukeapUnavailable || ukeapNetworks.every((n) => Number(n.count) === 0)
-      if (aurnZero && allUkeapZero) {
-        return renderErrorState(
-          'There are no stations available for your selection. Change the year or location',
-          'Change the year',
-          '/year-aurn',
-          'Change the location',
-          '/location-aurn'
-        )
-      }
-    }
-
     // Clear any previous download result to prevent auto-download
     request.yar.set('downloadaurnresult', null)
 

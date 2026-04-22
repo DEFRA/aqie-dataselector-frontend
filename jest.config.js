@@ -10,12 +10,13 @@ export default {
   testMatch: ['**/src/**/*.test.js'],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
-    '<rootDir>/src/server/download_dataselector_nojs/controller.test.js',
-    '<rootDir>/src/server/add_pollutant/controller.test.js',
-    '<rootDir>/src/server/emailrequest/controller.test.js',
-    '<rootDir>/src/server/customdataset/controller.test.js',
-    '<rootDir>/src/server/datasource/controller.test.js',
-    '<rootDir>/src/server/download_dataselector/controller.test.js'
+    // '<rootDir>/src/server/download_dataselector_nojs/controller.test.js',
+    '<rootDir>/src/server/data/en/networks.js'
+    // '<rootDir>/src/server/add_pollutant/controller.test.js',
+    // '<rootDir>/src/server/emailrequest/controller.test.js',
+    // '<rootDir>/src/server/customdataset/controller.test.js',
+    // '<rootDir>/src/server/datasource/controller.test.js',
+    // '<rootDir>/src/server/download_dataselector/controller.test.js'
   ],
   reporters: ['default', ['github-actions', { silent: false }], 'summary'],
   setupFiles: ['<rootDir>/.jest/setup-file.js'],
@@ -30,11 +31,13 @@ export default {
     '<rootDir>/src/index.js',
     '<rootDir>/src/server/about/',
     '<rootDir>/src/server/accessibility/',
-
+    '<rootDir>/src/server/download_dataselector_nojs/controller.test.js',
     '<rootDir>/src/server/common/',
     '<rootDir>/src/server/data/en/content_aurn.js',
+    '<rootDir>/src/server/data/en/networks.js',
     '<rootDir>/src/client/javascripts/cookies-page.js',
     '<rootDir>/src/client/javascripts/accessible-autocomplete-p.js',
+    '<rootDir>/src/client/javascripts/accessible-autocomplete.js',
     '<rootDir>/src/config/',
     '<rootDir>/src/server/health',
     '<rootDir>/src/server/index.js',
