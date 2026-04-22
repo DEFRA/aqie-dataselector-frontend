@@ -109,25 +109,6 @@ const validateSelectedLocation = (request, h, backUrl) => {
   return null
 }
 
-const validateNumberOfLocations = (request, h, backUrl) => {
-  const numberOfLocations = request.yar.get('nooflocation')
-  if (
-    numberOfLocations === 0 ||
-    numberOfLocations === '0' ||
-    !numberOfLocations
-  ) {
-    return renderErrorState(h, request, backUrl, {
-      errormsg:
-        'There are no stations available based on your selection. Change the year or location',
-      errorref1: 'Change the year',
-      errorhref1: '/year-aurn',
-      errorref2: 'Change the location',
-      errorhref2: '/location-aurn/nojs'
-    })
-  }
-  return null
-}
-
 export const downloadDataselectornojsController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -148,9 +129,6 @@ export const downloadDataselectornojsController = {
 
     const locationError = validateSelectedLocation(request, h, backUrl)
     if (locationError) return locationError
-
-    const locationsError = validateNumberOfLocations(request, h, backUrl)
-    if (locationsError) return locationsError
 
     // Success case - render download page
     const viewData = buildViewData(request, backUrl)

@@ -248,7 +248,7 @@ function buildStationCountParameters(request, finalyear) {
   }
 }
 
-async function handleStationCountCalculation(request, h) {
+async function handleStationCountCalculation(request) {
   const selectedyear = request.yar.get('selectedyear')
   const finalyear = parseYearRange(selectedyear, request)
 
@@ -335,33 +335,6 @@ async function handleStationCountCalculation(request, h) {
   request.yar.set('nooflocationukeap', ukeapNetworks)
   // nooflocation is always the AURN numeric count used for summary display
   request.yar.set('nooflocation', aurnNumeric)
-
-  // Block on customdataset only when ALL networks have 0 stations.
-  // If at least one network has stations the user can still download from that tab.
-  const allUkeapZero =
-    ukeapNetworks.length === 0 ||
-    ukeapNetworks.every((n) => Number(n.count) === 0)
-
-  if (aurnNumeric === 0 && allUkeapZero) {
-    return h.view('customdataset/index', {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      error: true,
-      errormsg: 'There are no stations available for your selection.',
-      errorref1: 'Change the year',
-      errorhref1: '/year-aurn',
-      errorref2: 'Change the location',
-      errorhref2: '/location-aurn',
-      selectedpollutant: request.yar.get('selectedpollutant'),
-      selectedyear: request.yar.get('selectedyear'),
-      selectedlocation: request.yar.get('selectedlocation'),
-      stationcount: 0,
-      datasourceGroups: request.yar.get('datasourceGroups') || [],
-      displayBacklink: true,
-      hrefq: '/hubpage'
-    })
-  }
 
   return null
 }
@@ -474,7 +447,7 @@ export const customdatasetController = {
       request.yar.get('selectedpollutant')
 
     if (hasAllRequiredData) {
-      const errorResponse = await handleStationCountCalculation(request, h)
+      const errorResponse = await handleStationCountCalculation(request)
       if (errorResponse) {
         return errorResponse
       }
