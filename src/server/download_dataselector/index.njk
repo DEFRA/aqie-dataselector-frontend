@@ -69,22 +69,23 @@
       <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
       <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
       <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
-
+   {% if  stationcount > 0 %}
      <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen" >
-        {% if stationCountUnavailable %}
-          Station count unavailable
-        {% else %}
+     
+         
           {{stationcount}} stations available
-        {% endif %}
-      </div>
       
-      {% if not stationCountUnavailable and stationcount == 0 %}
-       <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextorange" >
-        <p class="govuk-body">No data available for the selected range.</p>
+      </div>
+        {% endif %}
+      {% if stationcount == 0 %}
+        <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextorange">
+        {{stationcount}} stations available
+              </div>
+            <p class="govuk-body">No data available for the selected range.</p>
       {% endif %}
     </div>
 
-    {% if yearrange == 'Single' %}
+    {% if yearrange == 'Single' and stationcount > 0 %}
     <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}/AURN" onclick="getAPIdownload('{{ finalyear }}', 'AURN'); return false;" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
       aria-label=" Download daily average data for {{pollutant.pollutantName}}">
       <span class="aq-button-secondary__icon">
@@ -99,7 +100,7 @@
     </a>
     {% endif %}
 
-    {% if yearrange == 'Multiple' %}
+    {% if yearrange == 'Multiple' and stationcount > 0 %}
     <table class="govuk-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">

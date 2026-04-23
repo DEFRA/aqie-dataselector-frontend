@@ -333,13 +333,13 @@ describe('datasourceController GET handler', () => {
     })
     request.yar.get.mockImplementation((key) => {
       if (key === 'datasourceGroups') return []
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40'
       return null
     })
     await datasourceController.handler(request, h)
     expect(axios.post).toHaveBeenCalledWith(
       'https://api.example.com/datasource',
-      { pollutantID: 'pm25-id' }
+      { pollutantID: '40' }
     )
     expect(request.yar.set).toHaveBeenCalledWith('datasourceGroups', [
       { category: 'Near real-time data from Defra', networks: ['AURN'] }
@@ -347,11 +347,28 @@ describe('datasourceController GET handler', () => {
     expect(h.view).toHaveBeenCalled()
   })
 
+  it('fetches datasource using comma-separated IDs when a group is selected', async () => {
+    axios.post.mockResolvedValue({
+      data: ['Near real-time data from Defra', 'AURN', 'Other data from Defra', 'UKEAP']
+    })
+    request.yar.get.mockImplementation((key) => {
+      if (key === 'datasourceGroups') return []
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
+      return null
+    })
+    await datasourceController.handler(request, h)
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://api.example.com/datasource',
+      { pollutantID: '40,39,44,37,38' }
+    )
+    expect(h.view).toHaveBeenCalled()
+  })
+
   it('redirects to problem-with-service when API fetch returns null', async () => {
     axios.post.mockRejectedValue(new Error('API error'))
     request.yar.get.mockImplementation((key) => {
       if (key === 'datasourceGroups') return []
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40'
       return null
     })
     const result = await datasourceController.handler(request, h)
@@ -468,7 +485,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       if (key === 'Location') return 'Country'
       return null
@@ -488,7 +505,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       if (key === 'Location') return 'Country'
       return null
@@ -504,7 +521,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       if (key === 'Location') return 'Country'
       return null
@@ -518,7 +535,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'NON-AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       if (key === 'Location') return 'Country'
       return null
@@ -532,7 +549,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England', 'Wales']
       if (key === 'Location') return 'Country'
       return null
@@ -541,7 +558,7 @@ describe('datasourceController POST handler', () => {
     await datasourceController.handler(request, h)
     expect(invokeStationCount).toHaveBeenCalledWith(
       expect.objectContaining({
-        pollutantName: 'pm25-id',
+        pollutantName: '40,39,44,37,38',
         Region: 'England,Wales',
         regiontype: 'Country',
         Year: '2023',
@@ -555,7 +572,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['London']
       if (key === 'Location') return 'LocalAuthority'
       if (key === 'selectedLAIDs') return 'LA1,LA2'
@@ -574,7 +591,7 @@ describe('datasourceController POST handler', () => {
   it('skips station count when finalyear1 is missing', async () => {
     request.payload = {}
     request.yar.get.mockImplementation((key) => {
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       return null
     })
@@ -598,7 +615,7 @@ describe('datasourceController POST handler', () => {
     request.payload = {}
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       return null
     })
     await datasourceController.handler(request, h)
@@ -609,7 +626,7 @@ describe('datasourceController POST handler', () => {
     request.payload = { 'datasource-type': 'AURN' }
     request.yar.get.mockImplementation((key) => {
       if (key === 'finalyear1') return '2023'
-      if (key === 'selectedPollutantID') return 'pm25-id'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
       if (key === 'selectedlocation') return ['England']
       if (key === 'Location') return 'Country'
       return null

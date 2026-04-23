@@ -358,14 +358,15 @@ const handlePostRequest = async (request, h) => {
     selectedGroup
   )
 
-  // Find the pollutantID for the first selected pollutant and pre-fetch datasources
-  const firstPollutantValue = finalPollutants[0]
-  const matched = pollutantMasterList.find(
-    (p) => p.pollutant_value === firstPollutantValue
-  )
-  if (matched) {
-    request.yar.set('selectedPollutantID', matched.pollutantID)
-    const flat = await fetchDatasourceForPollutant(matched.pollutantID)
+  // Find pollutant IDs for ALL selected pollutants and pre-fetch datasources
+  const allMatched = finalPollutants
+    .map((value) => pollutantMasterList.find((p) => p.pollutant_value === value))
+    .filter(Boolean)
+
+  if (allMatched.length > 0) {
+    const allIDs = allMatched.map((p) => p.pollutantID).join(',')
+    request.yar.set('selectedPollutantID', allIDs)
+    const flat = await fetchDatasourceForPollutant(allIDs)
     if (flat === null) {
       return h.redirect('/problem-with-service?statusCode=500')
     }
