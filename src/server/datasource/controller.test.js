@@ -349,7 +349,12 @@ describe('datasourceController GET handler', () => {
 
   it('fetches datasource using comma-separated IDs when a group is selected', async () => {
     axios.post.mockResolvedValue({
-      data: ['Near real-time data from Defra', 'AURN', 'Other data from Defra', 'UKEAP']
+      data: [
+        'Near real-time data from Defra',
+        'AURN',
+        'Other data from Defra',
+        'UKEAP'
+      ]
     })
     request.yar.get.mockImplementation((key) => {
       if (key === 'datasourceGroups') return []

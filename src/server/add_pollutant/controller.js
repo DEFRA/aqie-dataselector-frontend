@@ -360,7 +360,9 @@ const handlePostRequest = async (request, h) => {
 
   // Find pollutant IDs for ALL selected pollutants and pre-fetch datasources
   const allMatched = finalPollutants
-    .map((value) => pollutantMasterList.find((p) => p.pollutant_value === value))
+    .map((value) =>
+      pollutantMasterList.find((p) => p.pollutant_value === value)
+    )
     .filter(Boolean)
 
   if (allMatched.length > 0) {
