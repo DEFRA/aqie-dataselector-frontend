@@ -682,6 +682,12 @@ describe('airpollutantController POST success scenarios', () => {
       'selectedPollutantGroup',
       'core'
     )
+    // all 5 core pollutant IDs joined as comma-separated string
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedPollutantID',
+      '1,2,3,4,5'
+    )
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('1,2,3,4,5')
     expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
   })
 
@@ -709,6 +715,12 @@ describe('airpollutantController POST success scenarios', () => {
       'selectedPollutantGroup',
       'compliance'
     )
+    // all 8 compliance pollutant IDs joined as comma-separated string
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedPollutantID',
+      '1,2,3,4,5,6,7,8'
+    )
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('1,2,3,4,5,6,7,8')
     expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
   })
 
@@ -735,19 +747,44 @@ describe('airpollutantController POST success scenarios', () => {
       'selectedPollutantGroup',
       ''
     )
+    // IDs for NO2=3, PM10=2, O3=4 — joined in selection order
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedPollutantID',
+      '3,2,4'
+    )
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('3,2,4')
     expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
   })
 
-  it('sets selectedPollutantID and calls fetchDatasourceForPollutant when pollutant matched', async () => {
+  it('sets selectedPollutantID as single ID and calls fetchDatasourceForPollutant', async () => {
     mockRequest.payload = {
       'pollutant-mode': 'specific',
       selectedPollutants: JSON.stringify(['Nitrogen dioxide (NO2)'])
     }
     await airpollutantController.handler(mockRequest, mockH)
+    // single pollutant — ID '3', no comma separator needed
     expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedPollutantID', '3')
     expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('3')
     expect(groupDatasources).toHaveBeenCalledWith([])
     expect(mockRequest.yar.set).toHaveBeenCalledWith('datasourceGroups', [])
+  })
+
+  it('joins all pollutant IDs as comma-separated string for multi-pollutant specific selection', async () => {
+    mockRequest.payload = {
+      'pollutant-mode': 'specific',
+      selectedPollutants: JSON.stringify([
+        'Fine particulate matter (PM2.5)',
+        'Ozone (O3)',
+        'Carbon monoxide (CO)'
+      ])
+    }
+    await airpollutantController.handler(mockRequest, mockH)
+    // PM2.5=1, O3=4, CO=8
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedPollutantID',
+      '1,4,8'
+    )
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('1,4,8')
   })
 
   it('sets empty datasourceGroups when no pollutant match in master list', async () => {
