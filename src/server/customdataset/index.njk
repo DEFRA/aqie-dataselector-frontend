@@ -92,7 +92,7 @@
     {% if selectedpollutant %}
     <dd class="govuk-summary-list__actions" id="data-source-action" hidden>
       <a class="govuk-link" href="/datasource">
-        {% if datasourceGroups and datasourceGroups | length > 0 %}View{% else %}{{texts.c}}{% endif %}
+        {% if datasourceGroups and datasourceGroups | length > 0 %}View network information{% else %}{{texts.c}}{% endif %}
         <span class="govuk-visually-hidden"> {{texts.e}}</span>
       </a>
     </dd>

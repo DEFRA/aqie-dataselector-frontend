@@ -13,15 +13,15 @@
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-two-thirds">
 
-    {# Error Summary #}
-    {% if errors.list and errors.list.length > 0 %}
-      {{ govukErrorSummary({
-        titleText: "There is a problem",
-        errorList: errors.list
-      }) }}
-    {% endif %}
-
     <form method="post" action="/year-aurn" novalidate>
+
+      {# Error Summary #}
+      {% if errors.list and errors.list.length > 0 %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: errors.list
+        }) }}
+      {% endif %}
       <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
         <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
