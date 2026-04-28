@@ -11,7 +11,9 @@ export default {
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     // '<rootDir>/src/server/download_dataselector_nojs/controller.test.js',
-    '<rootDir>/src/server/data/en/networks.js'
+    '<rootDir>/src/server/data/en/networks.js',
+    '<rootDir>/src/server/data/en/datasource.js',
+    '<rootDir>/src/client/javascripts/toggletip.js'
     // '<rootDir>/src/server/add_pollutant/controller.test.js',
     // '<rootDir>/src/server/emailrequest/controller.test.js',
     // '<rootDir>/src/server/customdataset/controller.test.js',
@@ -35,6 +37,7 @@ export default {
     '<rootDir>/src/server/common/',
     '<rootDir>/src/server/data/en/content_aurn.js',
     '<rootDir>/src/server/data/en/networks.js',
+    '<rootDir>/src/server/data/en/datasource.js',
     '<rootDir>/src/client/javascripts/cookies-page.js',
     '<rootDir>/src/client/javascripts/accessible-autocomplete-p.js',
     '<rootDir>/src/client/javascripts/accessible-autocomplete.js',
@@ -47,6 +50,7 @@ export default {
     '<rootDir>/src/client/javascripts/cookie-banner.js',
     '<rootDir>/src/server/common/helpers/errors_message.js',
     '<rootDir>/src/server/common/components/toggletip/toggletip.js',
+    '<rootDir>/src/client/javascripts/toggletip.js',
     '<rootDir>/src/config/config.js',
     '<rootDir>/src/server/common/helpers/logging/logger.js',
     '<rootDir>/src/server/common/helpers/redis-client.js',
