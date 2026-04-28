@@ -28,12 +28,12 @@
    margin-bottom: 0px;
 }
 .status-tag {
-  margin-top: 0px; 
+  margin-top: 0px;
   padding: 6px 12px 6px 12px;
 }
 .status-description {
-  margin-left: 5px; 
-  display: inline-block; 
+  margin-left: 5px;
+  display: inline-block;
   color: #505a5f !important;
 }
 
@@ -55,7 +55,7 @@ padding-bottom: 0px;
 box-shadow: inset 0 -1px 0 #b1b4b6;
 width: 100%;
     }
- 
+
     &__item {
     width: 33.33%;
     box-sizing: border-box;
@@ -63,7 +63,7 @@ width: 100%;
     float: left;
     min-width: 6em;
     }
- 
+
     &__key {
     margin: 0;
     @include govuk-font($size: 19);
@@ -75,7 +75,7 @@ width: 100%;
        @include govuk-font($size: 14);
     }
     }
- 
+
     &__value {
     margin: 5px 0 0 0;
     font-size: 22px !important;
@@ -83,14 +83,13 @@ width: 100%;
       font-size: 16px !important;
     }
 
-    // Reserve space for the toggletip icon and allow wrapping (prevents overlap)
     position: relative;
-    padding-right: 30px;        // ~26px icon + a little gap
+    padding-right: 30px;
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
   }
- 
+
 &__link {
         @include govuk-font($size: 19);
         @media (max-width: 640px) {
@@ -125,7 +124,7 @@ width: 100%;
         background-color: $govuk-focus-colour;
         border-color: $govuk-focus-colour;
         box-shadow: 0 2px 0 govuk-colour('black') !important;
-        
+
 .aq-button-secondary__text {
             color: #0b0c0c;
         }
@@ -143,7 +142,7 @@ width: 100%;
     &__text{
         color: #1d70b8;
     }
-    
+
 }
 
 
@@ -247,7 +246,6 @@ width: 100%;
     text-align: left;
     z-index: 99;
 
-    // Allow long text to wrap within the bubble
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
@@ -263,7 +261,6 @@ width: 100%;
     background: black;
     border: 2px solid currentcolor;
 
-    // Allow wrapping inside content too
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
@@ -298,7 +295,7 @@ width: 100%;
       padding-top: 10px;
       padding-bottom: 0;
     }
-    
+
     &__arrow {
 		bottom: 100%;
 		top: auto;
@@ -336,7 +333,7 @@ width: 100%;
 .moj-sub-navigation__list {
   margin: 0;
   padding: 0;
-  font-size: 0; 
+  font-size: 0;
   list-style: none;
 
   @include govuk-media-query($from: tablet) {
@@ -393,8 +390,8 @@ width: 100%;
   }
 
   &:focus {
-    position: relative; 
-    color: govuk-colour("black"); 
+    position: relative;
+    color: govuk-colour("black");
     box-shadow: none;
   }
 
@@ -505,7 +502,7 @@ width: 100%;
   &__head {
     @include mq ($until: tablet) {
       display: block;
-    }   
+    }
   }
   &__head tr {
     @include mq ($until: tablet) {
@@ -514,7 +511,7 @@ width: 100%;
     }
   }
   &__head &__cell {
-   
+
     padding-top: 10px;
     padding-bottom: 10px;
     &--pollutant {
@@ -571,16 +568,16 @@ width: 100%;
     }
     &__cell--average-title {
       padding-bottom: 10px;
-      text-align: right; 
-      
+      text-align: right;
+
     }
     &__cell--daily-title {
       padding-bottom: 10px;
-      text-align: right; 
+      text-align: right;
     }
     &__cell--hourly-title {
       padding-bottom: 10px;
-      text-align: right; 
+      text-align: right;
     }
   &__cell--average {
     width: 15%;
@@ -592,9 +589,8 @@ width: 100%;
     overflow-wrap: anywhere;
     word-break: break-word;
 
-    // Only in the average cell, tweak the toggletip container top on zoom
     .defra-toggletip__container {
-      top: -16px; // average cell only
+      top: -16px;
       right: 0;
     }
 
@@ -630,49 +626,68 @@ width: 100%;
     word-break: break-word;
   }
 
-  // Non-overlap tweaks scoped to table cells (must be inside the parent)
   &__cell--average,
   &__cell--daily,
   &__cell--hourly {
     .defra-toggletip {
-      margin-left: 6px; // small gap before the icon
+      margin-left: 6px;
     }
     .defra-toggletip__container {
       right: 0;
-      top: -24px; // average cell overrides to -24px above
+      top: -24px;
     }
   }
 }
 
-// Ensure data capture badges/labels render on their own line consistently
 .defra-aq-levels-table__cell--data {
   display: block;
   font-size: 16px;
   margin-top: 5px;
-  font-weight: normal;      // ensure "Data capture: xx%" is not bold
+  font-weight: normal;
 }
 .defra-aq-levels-table__cell--data .govuk-tag {
-  font-weight: 700;         // keep badges bold
+  font-weight: 700;
 }
 
-// Only the "Data capture" toggletip: adjust icon vertical position
 .defra-toggletip--datacapture .defra-toggletip__container {
   top: -18px;
 }
 
-// Keep value + unit + toggletip icon on the same line when zoomed
 .defra-aq-value-with-tip {
   display: inline-block;
   white-space: nowrap;
 }
 
+.defra-aq-features__value--wrap {
+  @media (max-width: 640px) {
+    .defra-aq-value-with-tip {
+      white-space: normal;
+    }
+
+    .defra-aq-features__value-tip {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+
+    .defra-toggletip__button {
+      background-color: transparent;
+    }
+
+    .defra-toggletip__container {
+      top: 0;
+    }
+
+    .defra-aq-features__value-tip .defra-toggletip__info {
+      left: auto;
+      right: 0;
+    }
+  }
+}
+
 .table-scroll-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   width: 100%;
 
-  // Force proper table layout at all zoom levels — overrides tablet breakpoint
-  // stacked-flex styles that kick in when zoom shrinks the CSS viewport below 641px
   .defra-aq-levels-table {
     display: table !important;
     min-width: 650px;
@@ -700,7 +715,6 @@ width: 100%;
       padding-bottom: 20px !important;
     }
 
-    // Undo visually-hidden on "Pollutant" header at tablet breakpoint
     &__cell--pollutant-title {
       position: static !important;
       width: auto !important;
@@ -712,53 +726,31 @@ width: 100%;
       white-space: nowrap !important;
     }
 
-    // Prevent column headers from wrapping
     th {
       white-space: nowrap;
     }
   }
 }
+
 @include govuk-exports("govuk/component/cookie-banner") {
 .govuk-cookie-banner {
   padding-top: govuk-spacing(4);
-  // The component does not set bottom spacing.
-  // The bottom spacing should be created by the items inside the component.
-
-  // Visually separate the cookie banner from content underneath
-  // when user changes colours in their browser.
   border-bottom: $border-bottom-width solid transparent;
-
   background-color: govuk-colour("light-grey");
 }
 
-// Support older browsers which don't hide elements with the `hidden` attribute
-// when user hides the whole cookie banner with a 'Hide' button.
 .govuk-cookie-banner[hidden] {
   display: none;
 }
 
 .govuk-cookie-banner__message {
-  // Remove the extra height added by the separator border.
   margin-bottom: -$border-bottom-width;
 
   &[hidden] {
-    // Support older browsers which don't hide elements with the `hidden` attribute
-    // when the visibility of cookie and replacement messages is toggled.
     display: none;
   }
 
   &:focus {
-    // Remove the native visible focus indicator when the element is programmatically focused.
-    //
-    // The focused cookie banner is the first element on the page and the last thing the user
-    // interacted with prior to it gaining focus.
-    // We therefore assume that moving focus to it is not going to surprise users, and that giving
-    // it a visible focus indicator could be more confusing than helpful, especially as the
-    // element is not normally keyboard operable.
-    //
-    // We have flagged this in the research section of the guidance as something to monitor.
-    //
-    // A related discussion: https://github.com/w3c/wcag/issues/1001
     outline: none;
   }
 }
@@ -772,15 +764,12 @@ width: 100%;
   padding: 0;
   margin: 0;
   display: grid;
-  grid-column-gap: govuk-spacing(6); // Use deprecated grid-column-gap for Grade C browser support
+  grid-column-gap: govuk-spacing(6);
   column-gap: govuk-spacing(6);
 
   @include govuk-media-query($from: "desktop") {
-    // For browsers that don't support CSS grid, constrain the width to 50% to improve usability
-    // especially for screen magnifier users
     width: 50%;
 
-    // Reset the width for browsers that support CSS grid
     @supports (display: grid) {
       width: initial;
     }
@@ -813,15 +802,15 @@ width: 100%;
 
 .gem-c-cards__list--two-column-desktop {
   @include govuk-media-query($from: "tablet") {
-    grid-auto-rows: fractions(1); // Set all rows to same fractional height of the complete grid
-    grid-template-columns: fractions(2); // Note that browsers that don't support CSS grid display the component as one column on all breakpoints
+    grid-auto-rows: fractions(1);
+    grid-template-columns: fractions(2);
   }
 }
 
 .gem-c-cards__list--three-column-desktop {
   @include govuk-media-query($from: "desktop") {
-    grid-auto-rows: fractions(1); // Set all rows to same fractional height of the complete grid
-    grid-template-columns: fractions(3); // Note that browsers that don't support CSS grid display the component as one column on all breakpoints
+    grid-auto-rows: fractions(1);
+    grid-template-columns: fractions(3);
   }
 }
 
@@ -831,9 +820,6 @@ width: 100%;
 }
 
 .gem-c-cards__list-item-wrapper {
-  // this wrapper ensures that the clickable area of the card only
-  // covers the area of the card containing text so in a grid of cards
-  // there is space above and below each link
   padding: 19px 0 4px;
   position: relative;
 }
@@ -841,14 +827,12 @@ width: 100%;
 .gem-c-cards__sub-heading {
   margin: 0 govuk-spacing(6) govuk-spacing(2) 0;
 
-  // Ensure card content width is constrained to two thirds on desktop
   @include govuk-media-query($from: "desktop") {
     max-width: 66.6667%;
   }
 }
 
 .gem-c-cards__link {
-  // Make the entire list item area clickable
   &::after {
     bottom: 0;
     content: "";
@@ -891,7 +875,6 @@ width: 100%;
 .gem-c-cards__description {
   margin: 0 govuk-spacing(6) 0 0;
 
-  // Ensure card content width is constrained to two thirds on desktop
   @include govuk-media-query($from: "desktop") {
     max-width: 66.6667%;
   }
@@ -946,44 +929,44 @@ width: 100%;
 .autocomplete__wrapper {
     position: relative;
   }
-  
+
   .autocomplete__hint,
   .autocomplete__input {
     appearance: none;
     border: 2px solid #0b0c0c;
-    border-radius: 0; /* Safari 10 on iOS adds implicit border rounding. */
+    border-radius: 0;
     box-sizing: border-box;
-    margin-bottom: 0; /* BUG: Safari 10 on macOS seems to add an implicit margin. */
+    margin-bottom: 0;
     line-height: 1.25;
     height: 2.5rem;
     width: 100%;
   }
-  
+
   .autocomplete__input {
     background-color: transparent;
     position: relative;
   }
-  
+
   .autocomplete__hint {
     color: #505a5f;
     position: absolute;
   }
-  
+
   .autocomplete__input--default {
     padding: 5px;
   }
-  
+
   .autocomplete__input--focused {
     outline: 3px solid #ffdd00;
     outline-offset: 0;
     box-shadow: inset 0 0 0 2px;
   }
-  
+
   .autocomplete__input--show-all-values {
-    padding: 5px 35px 5px 5px; /* Space for arrow. Other padding should match .autocomplete__input--default. */
+    padding: 5px 35px 5px 5px;
     cursor: pointer;
   }
-  
+
   .autocomplete__dropdown-arrow-down {
     z-index: -1;
     display: inline-block;
@@ -993,7 +976,7 @@ width: 100%;
     height: 24px;
     top: 10px;
   }
-  
+
   .autocomplete__menu {
     background-color: #ffffff;
     border: 2px solid #0b0c0c;
@@ -1006,15 +989,15 @@ width: 100%;
     width: 100%;
     width: calc(100% - 4px);
   }
-  
+
   .autocomplete__menu--visible {
     display: block;
   }
-  
+
   .autocomplete__menu--hidden {
     display: none;
   }
-  
+
   .autocomplete__menu--overlay {
     box-shadow: rgba(0, 0, 0, 0.2569) 0px 2px 6px;
     left: 0;
@@ -1022,11 +1005,11 @@ width: 100%;
     top: 100%;
     z-index: 100;
   }
-  
+
   .autocomplete__menu--inline {
     position: relative;
   }
-  
+
   .autocomplete__option {
     border-bottom: solid #b1b4b6;
     border-width: 1px 0;
@@ -1034,23 +1017,23 @@ width: 100%;
     display: block;
     position: relative;
   }
-  
+
   .autocomplete__option > * {
     pointer-events: none;
   }
-  
+
   .autocomplete__option:first-of-type {
     border-top-width: 0;
   }
-  
+
   .autocomplete__option:last-of-type {
     border-bottom-width: 0;
   }
-  
+
   .autocomplete__option--odd {
     background-color: #f3f2f1;
   }
-  
+
   .autocomplete__option--focused,
   .autocomplete__option:hover {
     background-color: #1d70b8;
@@ -1058,45 +1041,45 @@ width: 100%;
     color: white;
     outline: none;
   }
-  
+
   @media (-ms-high-contrast: active), (forced-colors: active) {
     .autocomplete__menu {
       border-color: FieldText;
     }
-  
+
     .autocomplete__option {
       background-color: Field;
       color: FieldText;
     }
-  
+
     .autocomplete__option--focused,
     .autocomplete__option:hover {
-      forced-color-adjust: none; /* prevent backplate from obscuring text */
+      forced-color-adjust: none;
       background-color: SelectedItem;
       border-color: SelectedItem;
       color: SelectedItemText;
       outline-color: SelectedItemText;
     }
   }
-  
+
   .autocomplete__option--no-results {
     background-color: #f3f2f1;
     color: #505a5f;
     cursor: not-allowed;
   }
-  
+
   .autocomplete__hint,
   .autocomplete__input,
   .autocomplete__option {
     font-size: 1rem;
     font-weight: 400;
   }
-  
+
   .autocomplete__hint,
   .autocomplete__option {
     padding: 5px;
   }
-  
+
   @media (min-width: 641px) {
     .autocomplete__hint,
     .autocomplete__input,
