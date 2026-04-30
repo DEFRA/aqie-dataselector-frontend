@@ -686,6 +686,8 @@ width: 100%;
 }
 
 .table-scroll-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
 
   .defra-aq-levels-table {

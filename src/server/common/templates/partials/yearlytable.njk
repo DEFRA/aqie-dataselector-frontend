@@ -420,6 +420,57 @@
               
               
               <script>
+(function () {
+  function initTableToggleips() {
+    var scrollContainer = document.querySelector('.table-scroll-container');
+    if (!scrollContainer) return;
+
+    scrollContainer.querySelectorAll('.defra-toggletip__button').forEach(function (button) {
+      var toggletip = button.closest('.defra-toggletip');
+      var info = toggletip && toggletip.querySelector('.defra-toggletip__info');
+      if (!info) return;
+
+      function reposition() {
+        var rect = button.getBoundingClientRect();
+        if (!rect.width) return; // element not visible yet
+        var infoWidth = 200;
+        var leftPos = Math.max(8, rect.left - 85);
+        if (leftPos + infoWidth > window.innerWidth - 8) {
+          leftPos = window.innerWidth - infoWidth - 8;
+        }
+        info.style.position = 'fixed';
+        info.style.left = leftPos + 'px';
+        info.style.right = 'auto';
+        info.style.zIndex = '999';
+        if (rect.top >= 140) {
+          info.style.top = 'auto';
+          info.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+        } else {
+          info.style.top = (rect.bottom + 4) + 'px';
+          info.style.bottom = 'auto';
+        }
+      }
+
+      function reset() {
+        info.style.cssText = '';
+      }
+
+      button.addEventListener('mouseenter', reposition);
+      button.addEventListener('focus', reposition);
+      button.addEventListener('mouseleave', reset);
+      button.addEventListener('blur', reset);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTableToggleips);
+  } else {
+    initTableToggleips();
+  }
+})();
+</script>
+
+              <script>
 
       async function getAPIstn_details1(pollutants,freq) {  
       
