@@ -13,7 +13,12 @@ export default {
     // '<rootDir>/src/server/download_dataselector_nojs/controller.test.js',
     '<rootDir>/src/server/data/en/networks.js',
     '<rootDir>/src/server/data/en/datasource.js',
-    '<rootDir>/src/client/javascripts/toggletip.js'
+    '<rootDir>/src/client/javascripts/toggletip.js',
+    '<rootDir>/src/server/cdp-uploader/',
+    '<rootDir>/src/server/utils/docxParser.js',
+    '<rootDir>/src/server/utils/pdfParser.js',
+    '<rootDir>/src/server/utils/summarizer.js',
+    '<rootDir>/src/server/utils/xlsxParser.js'
     // '<rootDir>/src/server/add_pollutant/controller.test.js',
     // '<rootDir>/src/server/emailrequest/controller.test.js',
     // '<rootDir>/src/server/customdataset/controller.test.js',
@@ -54,7 +59,12 @@ export default {
     '<rootDir>/src/config/config.js',
     '<rootDir>/src/server/common/helpers/logging/logger.js',
     '<rootDir>/src/server/common/helpers/redis-client.js',
-    'index.js'
+    'index.js',
+    '<rootDir>/src/server/cdp-uploader/',
+    '<rootDir>/src/server/utils/docxParser.js',
+    '<rootDir>/src/server/utils/pdfParser.js',
+    '<rootDir>/src/server/utils/summarizer.js',
+    '<rootDir>/src/server/utils/xlsxParser.js'
   ],
   coverageDirectory: '<rootDir>/coverage',
   transform: {

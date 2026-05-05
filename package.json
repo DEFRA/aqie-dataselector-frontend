@@ -37,6 +37,8 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1042.0",
+    "@aws-sdk/credential-providers": "^3.1042.0",
     "@babel/runtime": "^7.26.0",
     "@defra/hapi-tracing": "^1.0.0",
     "@elastic/ecs-pino-format": "^1.5.0",
@@ -48,6 +50,8 @@
     "@hapi/vision": "^7.0.3",
     "@hapi/wreck": "^18.1.0",
     "@hapi/yar": "^11.0.2",
+    "@langchain/community": "^1.1.28",
+    "@langchain/core": "^1.1.44",
     "@ministryofjustice/frontend": "^3.7.0",
     "accessible-autocomplete": "^3.0.1",
     "aws-embedded-metrics": "^4.2.0",
@@ -71,10 +75,12 @@
     "node-polyfill-webpack-plugin": "^4.1.0",
     "nunjucks": "^3.2.4",
     "path-browserify": "^1.0.1",
+    "pdf2json": "^4.0.3",
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
     "undici": "^6.21.1",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.9",

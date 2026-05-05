@@ -339,6 +339,11 @@ export const config = convict({
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEY'
   },
+  localstackEndpoint: {
+    doc: 'Localstack endpoint',
+    format: String,
+    default: 'http://localhost:3000'
+  },
   osMonitoringStationDevUrl: {
     doc: 'Monitoring station API URL for localhost development',
     format: String,
@@ -432,6 +437,32 @@ export const config = convict({
   //   env: 'LAQMAPIPARTNERID'
   // },
 
+  aws: {
+    s3BucketName: {
+      doc: 'AWS S3 bucket name for CDP uploader',
+      format: String,
+      default: 'dev-aqie-historicaldata-backend-c63f2',
+      env: 'AWS_S3_BUCKET_NAME'
+    }
+  },
+  cdpUploaderUrl: {
+    doc: 'CDP Uploader service URL for initiating uploads and checking status',
+    format: String,
+    default: `https://cdp-uploader.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`,
+    env: 'CDP_UPLOADER_URL'
+  },
+  backendApiUrl: {
+    doc: 'Backend API URL for document analysis (getS3 and summarize endpoints)',
+    format: String,
+    default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
+    env: 'BACKEND_API_URL'
+  },
+  analysisTypeMapping: {
+    doc: 'Mapping of user emails to allowed analysis types (red, green, icb, eb)',
+    format: '*',
+    default: { red: [], green: [], icb: [], eb: [] },
+    env: 'ANALYSIS_TYPE_MAPPING'
+  },
   aqiePassword: {
     doc: 'password for daqie',
     format: '*',

@@ -1,0 +1,65 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block pageTitle %}Upload Document{% endblock %}
+
+{% block content %}
+<h1 class="govuk-heading-m">Upload a Document</h1>
+
+{% if success %}
+<div class="govuk-notification-banner govuk-notification-banner--success" role="alert">
+  <div class="govuk-notification-banner__header">
+    <h2 class="govuk-notification-banner__title">Success</h2>
+  </div>
+  <div class="govuk-notification-banner__content">
+    <p class="govuk-notification-banner__heading">File uploaded successfully.</p>
+  </div>
+</div>
+{% endif %}
+
+{% if error %}
+<div class="govuk-error-summary" data-module="govuk-error-summary">
+  <div role="alert">
+    <h2 class="govuk-error-summary__title">There is a problem</h2>
+    <div class="govuk-error-summary__body">
+      <ul class="govuk-list govuk-error-summary__list">
+        <li>{{ error }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<form method="post" action="/Uploader" enctype="multipart/form-data">
+  <div class="govuk-form-group">
+    <label class="govuk-label" for="policyPdf">Select a file (PDF, DOCX, or Excel)</label>
+    <input class="govuk-file-upload" id="policyPdf" name="policyPdf" type="file" accept=".pdf,.docx,.xlsx,.xls" required>
+  </div>
+  {{ govukButton({ text: "Submit", attributes: { type: "submit" } }) }}
+</form>
+
+{% if uploads and uploads.length > 0 %}
+<div class="govuk-form-group" style="margin-top: 2em;">
+  <h2 class="govuk-heading-m">Upload History</h2>
+  <table class="govuk-table">
+    <thead class="govuk-table__head">
+      <tr class="govuk-table__row">
+        <th class="govuk-table__header">Filename</th>
+        <th class="govuk-table__header">Uploaded</th>
+        <th class="govuk-table__header">S3 Key</th>
+      </tr>
+    </thead>
+    <tbody class="govuk-table__body">
+      {% for upload in uploads %}
+      <tr class="govuk-table__row">
+        <td class="govuk-table__cell">{{ upload.filename }}</td>
+        <td class="govuk-table__cell">{{ upload.timestamp }}</td>
+        <td class="govuk-table__cell" style="font-size:13px; word-break:break-all;">{{ upload.s3Key }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}
