@@ -1,6 +1,5 @@
 import path from 'node:path'
 import hapi from '@hapi/hapi'
-import hapiCookie from '@hapi/cookie'
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
@@ -11,8 +10,6 @@ import { sessionCache } from '~/src/server/common/helpers/session-cache/session-
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
-
-// const isProduction = config.get('isProduction')
 
 export async function createServer() {
   const server = hapi.server({
@@ -40,7 +37,6 @@ export async function createServer() {
     router: {
       stripTrailingSlash: true
     },
-
     cache: [
       {
         name: config.get('session.cache.name'),
@@ -54,20 +50,6 @@ export async function createServer() {
     }
   })
 
-  await server.register([hapiCookie])
-  //   keepAlive: true,
-  //   // to validate cookie content on each request and returns boolean(isauthenticated/not)
-  //   validate: (request, session) => {
-  //     if (session.password === config.get('aqiePassword')) {
-  //       return { isValid: true }
-  //     } else {
-  //       return { isValid: false }
-  //     }
-  //   }
-  // })
-
-  // server.auth.default({ strategy: 'login', mode: 'required' })
-
   await server.register([
     requestLogger,
     requestTracing,
@@ -75,7 +57,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
-    router // Register all the controllers/routes defined in src/server/router.js
+    router
   ])
 
   server.ext('onPreResponse', (request, h) => {
@@ -90,7 +72,9 @@ export async function createServer() {
     )
     return h.continue
   })
+
   server.ext('onPreResponse', catchAll)
+
   return server
 }
 
