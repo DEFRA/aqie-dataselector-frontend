@@ -153,7 +153,7 @@ const baseUploadCompleteController = {
           if (status.uploadStatus === 'ready') {
             const startTime = Date.now()
             const s3Key = status.form.policyPdf.s3Key
-            const s3Bucket = status.form.policyPdf.s3Bucket
+            const s3Bucket = config.get('aws.s3BucketName')
             // Step 1: Get PDF file from S3
             const getObjectResponse = await s3Client.send(
               new GetObjectCommand({
@@ -232,7 +232,7 @@ const baseUploadCompleteController = {
             let existingContent = ''
             if (isCompare) {
               // Get comparison data from CDP form data
-              const compareS3Bucket = status.form.compareS3Bucket
+              const compareS3Bucket = config.get('aws.s3BucketName')
               const compareS3Key = status.form.compareS3Key
               const compareUploadId = status.form.compareUploadId
 
@@ -414,7 +414,7 @@ const baseUploadCompleteController = {
               // Add comparison data if this is a compare operation
               if (isCompare) {
                 uploadRequest.compareS3Bucket =
-                  status.form.compareS3Bucket || ''
+                  config.get('aws.s3BucketName')
                 uploadRequest.compareS3Key = status.form.compareS3Key || ''
                 uploadRequest.compareUploadId =
                   status.form.compareUploadId || ''
