@@ -114,7 +114,7 @@ export const emailrequestController = {
       // Build parameters based on region type
       const regionType = request.yar.get('Location')
       const stationcountparameters = {
-        pollutantName: request.yar.get('formattedPollutants'),
+        pollutantId: request.yar.get('selectedPollutantID'),
         dataSource: 'AURN',
         Region:
           regionType === 'Country'

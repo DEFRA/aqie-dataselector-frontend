@@ -51,7 +51,7 @@ describe('emailrequestController', () => {
 
     mockRequest.yar.get.mockImplementation((key) => {
       const mockData = {
-        formattedPollutants: ['NO2', 'PM10'],
+        selectedPollutantID: 'pollutant-id-123',
         selectedlocation: ['London', 'Manchester'],
         selectedLAIDs: 'London,Manchester',
         Location: 'LocalAuthority',
@@ -294,14 +294,14 @@ describe('emailrequestController', () => {
         'email',
         'test@example.com'
       )
-      expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutantID')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedLAIDs')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear1')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('email')
       expect(mockConfig).toHaveBeenCalledWith('email_URL')
       expect(mockAxios).toHaveBeenCalledWith('https://api.example.com/email', {
-        pollutantName: ['NO2', 'PM10'],
+        pollutantId: 'pollutant-id-123',
         dataSource: 'AURN',
         Region: 'London,Manchester',
         regiontype: 'LocalAuthority',
@@ -389,7 +389,7 @@ describe('emailrequestController', () => {
         mockConfig.mockReturnValue('https://api.example.com/email')
         mockRequest.yar.get.mockImplementation((key) => {
           const data = {
-            formattedPollutants: ['NO2'],
+            selectedPollutantID: 'pollutant-id-123',
             selectedlocation: ['London'],
             selectedLAIDs: 'London',
             Location: 'LocalAuthority',
@@ -445,7 +445,7 @@ describe('emailrequestController', () => {
         'email',
         'test@example.com'
       )
-      expect(mockRequest.yar.get).toHaveBeenCalledWith('formattedPollutants')
+      expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedPollutantID')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('Location')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('selectedLAIDs')
       expect(mockRequest.yar.get).toHaveBeenCalledWith('finalyear1')
@@ -454,7 +454,7 @@ describe('emailrequestController', () => {
 
     it('uses selectedlocation.join for Country region type', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
-        if (key === 'formattedPollutants') return ['NO2']
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
         if (key === 'selectedlocation') return ['London', 'Manchester']
         if (key === 'Location') return 'Country'
         if (key === 'finalyear1') return '2023'
@@ -503,7 +503,7 @@ describe('emailrequestController', () => {
 
     it('handles single location', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
-        if (key === 'formattedPollutants') return ['NO2']
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
         if (key === 'selectedlocation') return ['London']
         if (key === 'selectedLAIDs') return 'London'
         if (key === 'Location') return 'LocalAuthority'
@@ -525,7 +525,7 @@ describe('emailrequestController', () => {
 
     it('handles multiple locations', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
-        if (key === 'formattedPollutants') return ['NO2', 'PM10', 'O3']
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
         if (key === 'selectedlocation')
           return ['London', 'Manchester', 'Birmingham']
         if (key === 'selectedLAIDs') return 'London,Manchester,Birmingham'
@@ -546,9 +546,9 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('handles null pollutant names', async () => {
+    it('handles null pollutant ID', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
-        if (key === 'formattedPollutants') return null
+        if (key === 'selectedPollutantID') return null
         if (key === 'selectedlocation') return ['London']
         if (key === 'Location') return 'Country'
         if (key === 'finalyear1') return '2023'
@@ -560,7 +560,7 @@ describe('emailrequestController', () => {
 
       expect(mockAxios).toHaveBeenCalledWith(
         'https://api.example.com/email',
-        expect.objectContaining({ pollutantName: null, regiontype: 'Country' })
+        expect.objectContaining({ pollutantId: null, regiontype: 'Country' })
       )
     })
   })

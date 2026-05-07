@@ -972,6 +972,116 @@ describe('customdatasetController', () => {
     })
   })
 
+  // ─── both AURN and NON-AURN zero ─────────────────────────────────────────────
+
+  describe('both AURN and NON-AURN station counts are zero', () => {
+    const baseYarValues = {
+      selectedpollutant: ['Ozone (O3)'],
+      selectedyear: '1 January to 31 December 2024',
+      selectedlocation: ['England'],
+      Location: 'Country',
+      selectedPollutantID: 'ozone-id',
+      selectedPollutants: null,
+      selectedTimePeriod: null,
+      datasourceGroups: []
+    }
+
+    it('renders error summary when both AURN and NON-AURN counts are 0', async () => {
+      mockRequest.yar.get.mockImplementation((key) => baseYarValues[key])
+      // AURN returns 0, NON-AURN returns empty array
+      axios.post
+        .mockResolvedValueOnce({ data: 0 })
+        .mockResolvedValueOnce({ data: [] })
+
+      const result = await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('customdataset/index', {
+        pageTitle: englishNew.custom.pageTitle,
+        heading: englishNew.custom.heading,
+        texts: englishNew.custom.texts,
+        selectedpollutant: baseYarValues.selectedpollutant,
+        selectedyear: baseYarValues.selectedyear,
+        selectedlocation: baseYarValues.selectedlocation,
+        stationcount: 0,
+        datasourceGroups: [],
+        displayBacklink: true,
+        hrefq: '/hubpage',
+        error: true,
+        errormsg:
+          'No monitoring stations are available for your selection. Please try:',
+        errorref1: 'Change year',
+        errorhref1: '/year_pollutiondetails?change=true',
+        errorref2: 'Change location',
+        errorhref2: '/location-aurn?change=true'
+      })
+      expect(result).toBe('view-response')
+    })
+
+    it('renders error summary when AURN is 0 and NON-AURN networks all have count 0', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'datasourceGroups')
+          return [
+            {
+              category: 'Other data from Defra',
+              networks: ['UKEAP', 'AGANET']
+            }
+          ]
+        return baseYarValues[key]
+      })
+      // AURN returns 0, NON-AURN returns networks with zero counts
+      axios.post.mockResolvedValueOnce({ data: 0 }).mockResolvedValueOnce({
+        data: [
+          { networkType: 'UKEAP', count: 0 },
+          { networkType: 'AGANET', count: 0 }
+        ]
+      })
+
+      const result = await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errorref1: 'Change year',
+          errorhref1: '/year_pollutiondetails?change=true',
+          errorref2: 'Change location',
+          errorhref2: '/location-aurn?change=true'
+        })
+      )
+      expect(result).toBe('view-response')
+    })
+
+    it('does NOT show error when AURN is 0 but NON-AURN has stations', async () => {
+      mockRequest.yar.get.mockImplementation((key) => baseYarValues[key])
+      // AURN returns 0, NON-AURN returns some stations
+      axios.post.mockResolvedValueOnce({ data: 0 }).mockResolvedValueOnce({
+        data: [{ networkType: 'UKEAP', count: 5 }]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.not.objectContaining({ error: true })
+      )
+    })
+
+    it('does NOT show error when AURN has stations but NON-AURN is 0', async () => {
+      mockRequest.yar.get.mockImplementation((key) => baseYarValues[key])
+      // AURN returns 8, NON-AURN returns empty
+      axios.post
+        .mockResolvedValueOnce({ data: 8 })
+        .mockResolvedValueOnce({ data: [] })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.not.objectContaining({ error: true })
+      )
+    })
+  })
+
   // ─── station count conditions ─────────────────────────────────────────────────
 
   describe('condition for station count calculation', () => {

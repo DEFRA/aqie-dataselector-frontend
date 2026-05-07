@@ -336,6 +336,15 @@ async function handleStationCountCalculation(request) {
   // nooflocation is always the AURN numeric count used for summary display
   request.yar.set('nooflocation', aurnNumeric)
 
+  // If BOTH AURN and all NON-AURN counts are 0, return error asking user to change year/location
+  const nonAurnTotal = ukeapNetworks.reduce(
+    (sum, n) => sum + (Number(n.count) || 0),
+    0
+  )
+  if (aurnNumeric === 0 && nonAurnTotal === 0) {
+    return { bothZero: true }
+  }
+
   return null
 }
 
@@ -448,6 +457,27 @@ export const customdatasetController = {
 
     if (hasAllRequiredData) {
       const errorResponse = await handleStationCountCalculation(request)
+      if (errorResponse?.bothZero) {
+        return h.view('customdataset/index', {
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          selectedpollutant: request.yar.get('selectedpollutant'),
+          selectedyear: request.yar.get('selectedyear'),
+          selectedlocation: request.yar.get('selectedlocation'),
+          stationcount: 0,
+          datasourceGroups: request.yar.get('datasourceGroups') || [],
+          displayBacklink: true,
+          hrefq: backUrl,
+          error: true,
+          errormsg:
+            'No monitoring stations are available for your selection. Please try:',
+          errorref1: 'Change year',
+          errorhref1: '/year_pollutiondetails?change=true',
+          errorref2: 'Change location',
+          errorhref2: '/location-aurn?change=true'
+        })
+      }
       if (errorResponse) {
         return errorResponse
       }
