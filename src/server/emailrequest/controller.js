@@ -142,9 +142,7 @@ export const emailrequestController = {
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
-      console.log('stationcountparameters in email', stationcountparameters)
       const result = await invokeStationCount(stationcountparameters)
-      // console.log('stationcountparameters in email', stationcountparameters)
       if (result === 'Success') {
         return h.view('emailrequest/requestconfirm.njk', {
           pageTitle: englishNew.custom.pageTitle,
