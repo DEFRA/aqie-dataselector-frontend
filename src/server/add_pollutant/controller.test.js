@@ -148,12 +148,17 @@ describe('airpollutantController GET requests', () => {
     )
   })
 
-  it('redirects to problem-with-service when axios throws (prod)', async () => {
+  it('renders page with empty pollutant list when axios throws (prod)', async () => {
+    // Pollutant master API failure should NOT redirect — the page degrades
+    // gracefully so the user can still pick the "Add a group of pollutants" option.
     axios.get.mockRejectedValue(new Error('Network error'))
     await airpollutantController.handler(mockRequest, mockH)
-    expect(mockH.redirect).toHaveBeenCalledWith(
-      '/problem-with-service?statusCode=500'
+    expect(mockH.redirect).not.toHaveBeenCalled()
+    expect(mockH.view).toHaveBeenCalledWith(
+      'add_pollutant/index',
+      expect.objectContaining({ pollutants: [] })
     )
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('pollutantMasterList', [])
   })
 
   it('treats non-array axios response as empty pollutant list', async () => {
@@ -179,16 +184,19 @@ describe('airpollutantController GET requests', () => {
     )
   })
 
-  it('redirects to problem-with-service when Wreck throws (dev)', async () => {
+  it('renders page with empty pollutant list when Wreck throws (dev)', async () => {
     config.get.mockImplementation((key) => {
       if (key === 'isDevelopment') return true
       return 'http://mock-dev-url'
     })
     Wreck.get.mockRejectedValue(new Error('Wreck error'))
     await airpollutantController.handler(mockRequest, mockH)
-    expect(mockH.redirect).toHaveBeenCalledWith(
-      '/problem-with-service?statusCode=500'
+    expect(mockH.redirect).not.toHaveBeenCalled()
+    expect(mockH.view).toHaveBeenCalledWith(
+      'add_pollutant/index',
+      expect.objectContaining({ pollutants: [] })
     )
+    expect(mockRequest.yar.set).toHaveBeenCalledWith('pollutantMasterList', [])
   })
 
   it('treats non-array Wreck payload as empty pollutant list (dev)', async () => {
@@ -682,12 +690,12 @@ describe('airpollutantController POST success scenarios', () => {
       'selectedPollutantGroup',
       'core'
     )
-    // all 5 core pollutant IDs joined as comma-separated string
+    // Static core group IDs: PM2.5=40, PM10=39, NO2=44, O3=37, SO2=38
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'selectedPollutantID',
-      '1,2,3,4,5'
+      '40,39,44,37,38'
     )
-    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('1,2,3,4,5')
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('40,39,44,37,38')
     expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
   })
 
@@ -715,12 +723,34 @@ describe('airpollutantController POST success scenarios', () => {
       'selectedPollutantGroup',
       'compliance'
     )
-    // all 8 compliance pollutant IDs joined as comma-separated string
+    // Static compliance group IDs: core + NO=46, NOx as NO2=45, CO=36
     expect(mockRequest.yar.set).toHaveBeenCalledWith(
       'selectedPollutantID',
-      '1,2,3,4,5,6,7,8'
+      '40,39,44,37,38,46,45,36'
     )
-    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('1,2,3,4,5,6,7,8')
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith(
+      '40,39,44,37,38,46,45,36'
+    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+  })
+
+  it('uses static group IDs even when pollutant master list is empty', async () => {
+    // Simulates the pollutant master API being unavailable on GET — group mode
+    // must still resolve datasources via the hardcoded pollutantGroupIDs map.
+    mockRequest.yar.get.mockImplementation((key) => {
+      if (key === 'pollutantMasterList') return []
+      return null
+    })
+    mockRequest.payload = {
+      'pollutant-mode': 'group',
+      'pollutant-group': 'core'
+    }
+    await airpollutantController.handler(mockRequest, mockH)
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedPollutantID',
+      '40,39,44,37,38'
+    )
+    expect(fetchDatasourceForPollutant).toHaveBeenCalledWith('40,39,44,37,38')
     expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
   })
 

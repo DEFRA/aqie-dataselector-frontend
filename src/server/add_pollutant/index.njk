@@ -31,13 +31,13 @@
         </div>
       {% endif %}
 
-      <!-- Client-side duplicate error (for UX only) -->
-      <div id="duplicate-error" class="govuk-error-summary" data-module="govuk-error-summary" hidden>
+      <!-- Single client-side error summary (text/href set dynamically). Hidden by default. -->
+      <div id="client-error-summary" class="govuk-error-summary" hidden style="display:none" aria-atomic="true">
         <div role="alert">
           <h2 class="govuk-error-summary__title">There is a problem</h2>
           <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list">
-              <li><a href="#my-autocomplete">This pollutant has already been added</a></li>
+              <li><a id="client-error-link" href="#my-autocomplete"></a></li>
             </ul>
           </div>
         </div>
@@ -45,7 +45,7 @@
 
       <h1 class="govuk-heading-l">Add pollutant(s)</h1>
     
-      <div class="govuk-form-group {% if errors.list and errors.list | length > 0 %}govuk-form-group--error{% endif %}">
+      <div class="govuk-form-group" id="mode-form-group">
         <fieldset class="govuk-fieldset" aria-describedby="mode-hint">
           <div id="mode-hint" class="govuk-hint">Select one option</div>
 
@@ -64,13 +64,15 @@
               </label>
             </div>
             <div class="govuk-radios__conditional {% if selectedMode != 'specific' %}govuk-radios__conditional--hidden{% endif %}" id="conditional-specific">
-              <div class="govuk-form-group" id="pollutant-form-group">
+              <div class="govuk-form-group {% if pollutants | length == 0 and selectedMode == 'specific' %}govuk-form-group--error{% endif %}" id="pollutant-form-group">
                 <div class="govuk-hint">Add up to 10 pollutants</div>
 
                 <!-- Progressive enhancement: Autocomplete for JS, select fallback for no-JS -->
                   <label id="pollutant-autocomplete-label" for="my-autocomplete" class="govuk-label govuk-visually-hidden">Add pollutant(s)</label>
-                  <p id="pollutant-inline-error" class="govuk-error-message" hidden>
-                    <span class="govuk-visually-hidden">Error:</span> <span id="pollutant-error-text"></span>
+                  <p id="pollutant-inline-error" class="govuk-error-message"
+                     {% if not (pollutants | length == 0 and selectedMode == 'specific') %}hidden{% endif %}>
+                    <span class="govuk-visually-hidden">Error:</span>
+                    <span id="pollutant-error-text">{% if pollutants | length == 0 and selectedMode == 'specific' %}Add pollutant(s) is currently unavailable. Add a group of pollutants or try again later.{% endif %}</span>
                   </p>
                   <div id="autocomplete-container-p" class="govuk-body" aria-labelledby="pollutant-autocomplete-label"></div>
                 
@@ -300,7 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add listeners to persist value as user types
             inp.addEventListener('input', function() {
               setPersistedAutocompleteValue(inp.value);
-              clearClientErrors(); // Clear errors when user starts typing
+              // Don't dismiss the unavailable-API error on typing — user can't recover by typing.
+              if (!pollutantsUnavailable) {
+                clearClientErrors();
+              }
             });
             inp.addEventListener('change', function() {
               setPersistedAutocompleteValue(inp.value);
@@ -312,6 +317,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // allowedPollutants reuses the API-fetched list — no separate hardcoded array needed
   const allowedPollutants = pollutantList;
+  const pollutantsUnavailable = pollutantList.length === 0;
+
+  // Helper to clear server-side errors
+  function clearServerErrors() {
+    // Hide server-side error summary
+    const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
+    if (serverErrorSummary) {
+      serverErrorSummary.style.display = 'none'
+    }
+    
+    // Remove error styling from all form groups
+    const formGroups = document.querySelectorAll('.govuk-form-group--error')
+    formGroups.forEach(fg => fg.classList.remove('govuk-form-group--error'))
+  }
+
+  // Helper to clear client-side errors (single shared summary + inline)
+  function clearClientErrors() {
+    const summary = document.getElementById('client-error-summary');
+    if (summary) {
+      summary.hidden = true;
+      summary.style.display = 'none';
+    }
+
+    const inlineError = document.getElementById('pollutant-inline-error');
+    if (inlineError) {
+      inlineError.hidden = true;
+      inlineError.style.display = 'none';
+    }
+
+    const formGroup = document.getElementById('pollutant-form-group');
+    if (formGroup) {
+      formGroup.classList.remove('govuk-form-group--error');
+    }
+  }
+
+  // Show the 'unavailable' error — delegates to the shared client error renderer
+  function showUnavailableError() {
+    showClientError(
+      'Add pollutant(s) is currently unavailable. Add a group of pollutants or try again later.',
+      '#mode-group'
+    );
+  }
 
   // Helper function to check if a pollutant is allowed
   const isAllowedPollutant = (value) => {
@@ -330,38 +377,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // State for specific mode
   const addedPollutants = new Set(); // Track unique values (lowercased)
 
-  // Helper to clear server-side errors
-  function clearServerErrors() {
-    // Hide server-side error summary
-    const serverErrorSummary = document.querySelector('.govuk-error-summary:not([id])')
-    if (serverErrorSummary) {
-      serverErrorSummary.style.display = 'none'
-    }
-    
-    // Remove error styling from all form groups
-    const formGroups = document.querySelectorAll('.govuk-form-group--error')
-    formGroups.forEach(fg => fg.classList.remove('govuk-form-group--error'))
-  }
-
-  // Helper to show client-side errors (both summary and inline)
+  // Helper to show client-side errors (single shared summary + inline inside pollutant-form-group)
   function showClientError(message, href = '#my-autocomplete') {
+    clearClientErrors();
     clearServerErrors();
-    
-    // Show error summary
-    const errorSummary = document.getElementById('duplicate-error');
-    if (errorSummary) {
-      const errorLink = errorSummary.querySelector('a');
-      if (errorLink) {
-        errorLink.textContent = message;
-        errorLink.href = href;
-      }
-      errorSummary.hidden = false;
-      errorSummary.style.display = 'block';
-      errorSummary.focus();
-      errorSummary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const summary = document.getElementById('client-error-summary');
+    const link = document.getElementById('client-error-link');
+    if (summary && link) {
+      link.textContent = message;
+      link.href = href;
+      summary.hidden = false;
+      summary.style.display = 'block';
+      summary.focus();
+      summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    
-    // Show inline error
+
     const inlineError = document.getElementById('pollutant-inline-error');
     const errorText = document.getElementById('pollutant-error-text');
     if (inlineError && errorText) {
@@ -369,31 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
       inlineError.hidden = false;
       inlineError.style.display = 'block';
     }
-    
-    // Add error styling to form group
+
     const formGroup = document.getElementById('pollutant-form-group');
     if (formGroup) {
       formGroup.classList.add('govuk-form-group--error');
-    }
-  }
-
-  // Helper to clear client-side errors
-  function clearClientErrors() {
-    const errorSummary = document.getElementById('duplicate-error');
-    if (errorSummary) {
-      errorSummary.hidden = true;
-      errorSummary.style.display = 'none';
-    }
-    
-    const inlineError = document.getElementById('pollutant-inline-error');
-    if (inlineError) {
-      inlineError.hidden = true;
-      inlineError.style.display = 'none';
-    }
-    
-    const formGroup = document.getElementById('pollutant-form-group');
-    if (formGroup) {
-      formGroup.classList.remove('govuk-form-group--error');
     }
   }
 
@@ -441,6 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Persist whatever the user has typed/selected, so it stays after server validation
     setPersistedAutocompleteValue(value);
+
+    if (pollutantsUnavailable) {
+      showUnavailableError();
+      return;
+    }
 
     if (!value) {
       showClientError('Enter a pollutant');
@@ -541,6 +556,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Validate specific mode - must have at least one pollutant in table
       if (selectedMode === 'specific') {
+        if (pollutantsUnavailable) {
+          showUnavailableError();
+          return;
+        }
+
         const hasPollutants = tableBody && tableBody.children.length > 0;
         
         if (!hasPollutants) {
@@ -634,19 +654,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (this.value !== 'specific') {
         setPersistedAutocompleteValue('');
+        // Leaving specific mode — clear the unavailable error (summary + inline)
+        clearClientErrors();
       }
-      
+
       syncTableVisibility();
       if (this.value === 'specific' && this.checked) {
+        // If the pollutant API failed, surface the GDS error summary + inline
+        // error as soon as the user picks "Add pollutant(s)".
+        if (pollutantsUnavailable) {
+          showUnavailableError();
+        }
+        // Always render the autocomplete input so the user still sees a text box.
         setTimeout(() => { initializeAutocomplete(); }, 100);
       }
     });
   });
 
-  // Initialize autocomplete if specific mode is already selected (e.g., on form errors)
+  // Initialize autocomplete if specific mode is already selected (e.g., on form errors).
+  // NOTE: do NOT auto-show the unavailable error summary here — the summary should
+  // only appear when the user actively selects the "Add pollutant(s)" radio.
+  // The inline error + red line are server-rendered when applicable.
   const selectedMode = document.querySelector('input[name="pollutant-mode"]:checked');
   if (selectedMode && selectedMode.value === 'specific') {
-    // Small delay to ensure DOM is ready
     setTimeout(() => {
       initializeAutocomplete();
     }, 100);

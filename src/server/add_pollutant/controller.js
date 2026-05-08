@@ -77,6 +77,15 @@ const pollutantGroups = {
   ]
 }
 
+// Static pollutantIDs for each group, sent directly to the datasource API.
+// Used so that group mode keeps working even if the pollutant master API is unavailable.
+// IDs come from the pollutant master API and map to the names in pollutantGroups above:
+//   PM2.5=40, PM10=39, NO2=44, O3=37, SO2=38, NO=46, NOx as NO2=45, CO=36
+const pollutantGroupIDs = {
+  core: '40,39,44,37,38',
+  compliance: '40,39,44,37,38,46,45,36'
+}
+
 // Helper function to check if a pollutant is allowed against the API-fetched list
 const isAllowedPollutant = (value, pollutantMasterList) => {
   const lowerValue = (value || '').toLowerCase().trim()
@@ -319,6 +328,24 @@ const handlePostRequest = async (request, h) => {
     })
   }
 
+  // Pollutant list unavailable — cannot use specific mode
+  if (selectedMode === 'specific' && pollutantMasterList.length === 0) {
+    errors.push({
+      text: 'Add pollutant(s) is currently unavailable. Add a group of pollutants or try again later.',
+      href: '#mode-group'
+    })
+    return handleValidationErrors(
+      errors,
+      isNoJS,
+      selectedMode,
+      [],
+      [],
+      selectedGroup,
+      pollutants,
+      h
+    )
+  }
+
   if (selectedMode === 'group') {
     finalPollutantsGr = processGroupMode(selectedGroup, errors)
   } else if (selectedMode === 'specific') {
@@ -358,15 +385,22 @@ const handlePostRequest = async (request, h) => {
     selectedGroup
   )
 
-  // Find pollutant IDs for ALL selected pollutants and pre-fetch datasources
-  const allMatched = finalPollutants
-    .map((value) =>
-      pollutantMasterList.find((p) => p.pollutant_value === value)
-    )
-    .filter(Boolean)
+  // Resolve the pollutantIDs to send to the datasource API.
+  // Group mode uses the static pollutantGroupIDs map (works even when the
+  // pollutant master API is down). Specific mode resolves IDs from the master list.
+  let allIDs = ''
+  if (selectedMode === 'group') {
+    allIDs = pollutantGroupIDs[selectedGroup] || ''
+  } else if (selectedMode === 'specific') {
+    const allMatched = finalPollutants
+      .map((value) =>
+        pollutantMasterList.find((p) => p.pollutant_value === value)
+      )
+      .filter(Boolean)
+    allIDs = allMatched.map((p) => p.pollutantID).join(',')
+  }
 
-  if (allMatched.length > 0) {
-    const allIDs = allMatched.map((p) => p.pollutantID).join(',')
+  if (allIDs) {
     request.yar.set('selectedPollutantID', allIDs)
     const flat = await fetchDatasourceForPollutant(allIDs)
     if (flat === null) {
@@ -392,11 +426,9 @@ const handleGetRequest = async (request, h) => {
   request.yar.set('nooflocation', '')
 
   // Fetch pollutant list from API and store in session for POST validation
-  const pollutants = await fetchPollutantList()
-
-  if (pollutants === null) {
-    return h.redirect('/problem-with-service?statusCode=500')
-  }
+  // If the API is unavailable, continue with an empty list so the user can
+  // still use the 'Add a group of pollutants' option rather than hitting the error page.
+  const pollutants = (await fetchPollutantList()) ?? []
 
   request.yar.set('pollutantMasterList', pollutants)
 
