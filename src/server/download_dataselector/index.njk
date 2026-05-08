@@ -112,7 +112,7 @@
         <tr class="govuk-table__row">
           <th scope="row" class="govuk-table__header">Download all years</th>
           <td class="govuk-table__cell">
-            <a href="/emailrequest" onclick="this.href='/emailrequest?js=true'; return true;" class="govuk-link">Request Data</a>
+            <a href="/emailrequest" onclick="this.href='/emailrequest?js=true&dataSource=AURN'; return true;" class="govuk-link">Request Data</a>
           </td>
         </tr>
         {% for year in finalyear %}
@@ -197,7 +197,7 @@
               <tr class="govuk-table__row">
                 <th scope="row" class="govuk-table__header">Download all years</th>
                 <td class="govuk-table__cell">
-                  <a href="/emailrequest" onclick="this.href='/emailrequest?js=true'; return true;" class="govuk-link">Request Data</a>
+                  <a href="/emailrequest" onclick="this.href='/emailrequest?js=true&dataSource=NON-AURN'; return true;" class="govuk-link">Request Data</a>
                 </td>
               </tr>
               {% for year in finalyear %}

@@ -36,7 +36,8 @@ describe('emailrequestController', () => {
       info: {},
       yar: {
         get: jest.fn(),
-        set: jest.fn()
+        set: jest.fn(),
+        clear: jest.fn()
       }
     }
 
@@ -56,7 +57,9 @@ describe('emailrequestController', () => {
         selectedLAIDs: 'London,Manchester',
         Location: 'LocalAuthority',
         finalyear1: '2023',
-        email: 'test@example.com'
+        email: 'test@example.com',
+        selectedDatasourceType: 'AURN',
+        pendingDataSource: null
       }
       return mockData[key]
     })
@@ -302,7 +305,7 @@ describe('emailrequestController', () => {
       expect(mockConfig).toHaveBeenCalledWith('email_URL')
       expect(mockAxios).toHaveBeenCalledWith('https://api.example.com/email', {
         pollutantId: 'pollutant-id-123',
-        dataSource: 'AURN',
+        dataSource: 'AURN', // selectedDatasourceType from session
         Region: 'London,Manchester',
         regiontype: 'LocalAuthority',
         Year: '2023',
@@ -822,6 +825,161 @@ describe('emailrequestController', () => {
         'emailrequest/requestconfirm.njk',
         expect.objectContaining({ pageTitle: 'Test Page Title' })
       )
+    })
+  })
+
+  // ─── dataSource query param & pendingDataSource ───────────────────────────────
+
+  describe('dataSource query param handling (GET)', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest'
+    })
+
+    it('stores AURN in pendingDataSource when dataSource=AURN query param present', async () => {
+      mockRequest.query = { dataSource: 'AURN' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'pendingDataSource',
+        'AURN'
+      )
+    })
+
+    it('stores NON-AURN in pendingDataSource when dataSource=NON-AURN query param present', async () => {
+      mockRequest.query = { dataSource: 'NON-AURN' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'pendingDataSource',
+        'NON-AURN'
+      )
+    })
+
+    it('does not set pendingDataSource when dataSource query param is absent', async () => {
+      mockRequest.query = {}
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'pendingDataSource',
+        expect.anything()
+      )
+    })
+
+    it('does not set pendingDataSource when dataSource query param is invalid', async () => {
+      mockRequest.query = { dataSource: 'INVALID' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'pendingDataSource',
+        expect.anything()
+      )
+    })
+  })
+
+  describe('pendingDataSource applied on POST confirm', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockAxios.mockResolvedValue({ data: 'Success' })
+      mockConfig.mockReturnValue('https://api.example.com/email')
+    })
+
+    it('applies pendingDataSource to selectedDatasourceType and clears it before API call', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          pendingDataSource: 'NON-AURN',
+          selectedDatasourceType: 'NON-AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedDatasourceType',
+        'NON-AURN'
+      )
+      expect(mockRequest.yar.clear).toHaveBeenCalledWith('pendingDataSource')
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({ dataSource: 'NON-AURN' })
+      )
+    })
+
+    it('calls API with NON-AURN when selectedDatasourceType is NON-AURN and no pendingDataSource', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'NON-AURN',
+          pendingDataSource: null
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({ dataSource: 'NON-AURN' })
+      )
+    })
+
+    it('falls back to AURN when neither selectedDatasourceType nor pendingDataSource is set', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: null,
+          pendingDataSource: null
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({ dataSource: 'AURN' })
+      )
+    })
+
+    it('does not call yar.clear when pendingDataSource is null', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN',
+          pendingDataSource: null
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.clear).not.toHaveBeenCalled()
     })
   })
 })

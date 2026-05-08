@@ -61,6 +61,15 @@ export const emailrequestController = {
         ? '/download_dataselector'
         : '/download_dataselectornojs'
 
+    // Store dataSource from query param so it survives the POST
+    const dataSourceParam = request.query?.dataSource
+    if (
+      dataSourceParam &&
+      (dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN')
+    ) {
+      request.yar.set('pendingDataSource', dataSourceParam)
+    }
+
     // console.log('comes here into email')
     // const { home } = englishNew.custom
     if (request.path?.includes('/confirm')) {
@@ -111,11 +120,18 @@ export const emailrequestController = {
 
       //  console.log('Valid email provided:', email)
 
+      // If dataSource was passed as a query param (from download page tab), update session
+      const dataSourceFromQuery = request.yar.get('pendingDataSource')
+      if (dataSourceFromQuery) {
+        request.yar.set('selectedDatasourceType', dataSourceFromQuery)
+        request.yar.clear('pendingDataSource')
+      }
+
       // Build parameters based on region type
       const regionType = request.yar.get('Location')
       const stationcountparameters = {
         pollutantId: request.yar.get('selectedPollutantID'),
-        dataSource: 'AURN',
+        dataSource: request.yar.get('selectedDatasourceType') || 'AURN',
         Region:
           regionType === 'Country'
             ? request.yar.get('selectedlocation').join(',')
@@ -127,7 +143,6 @@ export const emailrequestController = {
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
       const result = await invokeStationCount(stationcountparameters)
-      // console.log('stationcountparameters in email', stationcountparameters)
       if (result === 'Success') {
         return h.view('emailrequest/requestconfirm.njk', {
           pageTitle: englishNew.custom.pageTitle,

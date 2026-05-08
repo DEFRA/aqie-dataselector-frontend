@@ -335,7 +335,7 @@ export const config = convict({
   osNamesDevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: '7fvqv2PmBeyr1L5FlRDLClRlk71gm3gz',
+    default: 'VbUIFdHCtF3sge2HCMZgh2KkYgU6sRhw',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEY'
   },
@@ -368,7 +368,7 @@ export const config = convict({
   pollutantMasterApiUrl: {
     doc: 'Pollutant master API URL for CDP environments',
     format: String,
-    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantMaster`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantMasters`,
     env: 'POLLUTANT_MASTER_API_URL'
   },
   datasourceDevUrl: {
@@ -381,7 +381,7 @@ export const config = convict({
   datasourceApiUrl: {
     doc: 'Datasource API URL for CDP environments',
     format: String,
-    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantDataSource`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantDataSources`,
     env: 'DATASOURCE_API_URL'
   },
   stationCountDevUrl: {
