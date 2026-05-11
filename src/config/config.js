@@ -368,7 +368,7 @@ export const config = convict({
   pollutantMasterApiUrl: {
     doc: 'Pollutant master API URL for CDP environments',
     format: String,
-    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantMasters`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantMaster`,
     env: 'POLLUTANT_MASTER_API_URL'
   },
   datasourceDevUrl: {
