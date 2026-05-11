@@ -381,7 +381,7 @@ export const config = convict({
   datasourceApiUrl: {
     doc: 'Datasource API URL for CDP environments',
     format: String,
-    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantDataSource`,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantDataSources`,
     env: 'DATASOURCE_API_URL'
   },
   stationCountDevUrl: {
