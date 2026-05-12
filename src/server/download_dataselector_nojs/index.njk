@@ -146,7 +146,7 @@
               <p class="govuk-body">No data available for the selected range.</p>
             {% else %}
               {% if yearrange == 'Single' %}
-              <a href="/download_ukeap_nojs/{{ network.networkType | urlencode }}/{{ finalyear }}"
+              <a href="/download_aurn_nojs/{{ finalyear }}/NON-AURN"
                  role="button"
                  class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
                  aria-label="Download data for {{ network.networkType }}">
@@ -180,7 +180,7 @@
                   <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header">{{ year }}</th>
                     <td class="govuk-table__cell">
-                      <a href="/download_ukeap_nojs/{{ network.networkType | urlencode }}/{{ year }}" class="govuk-link">Download monthly data</a>
+                      <a href="/download_aurn_nojs/{{ year }}/NON-AURN" class="govuk-link">Download monthly data</a>
                     </td>
                   </tr>
                   {% endfor %}
