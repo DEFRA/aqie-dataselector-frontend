@@ -1,9 +1,11 @@
 import { emailrequestController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
 
 jest.mock('axios')
+jest.mock('@hapi/wreck')
 jest.mock('~/src/config/config.js', () => ({
   config: { get: jest.fn() }
 }))
@@ -24,6 +26,7 @@ describe('emailrequestController', () => {
   let mockRequest
   let mockH
   let mockAxios
+  let mockWreck
   let mockConfig
 
   beforeEach(() => {
@@ -47,8 +50,13 @@ describe('emailrequestController', () => {
     }
 
     mockAxios = jest.mocked(axios.post)
+    mockWreck = jest.mocked(Wreck.post)
     mockConfig = jest.mocked(config.get)
-    mockConfig.mockReturnValue('https://api.example.com/email')
+    mockConfig.mockImplementation((key) => {
+      if (key === 'isDevelopment') return false
+      if (key === 'email_URL') return 'https://api.example.com/email'
+      return undefined
+    })
 
     mockRequest.yar.get.mockImplementation((key) => {
       const mockData = {
@@ -286,6 +294,7 @@ describe('emailrequestController', () => {
     it('accepts valid email, calls API and renders confirm view', async () => {
       mockRequest.payload = { email: 'test@example.com' }
       mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
         if (key === 'email_URL') return 'https://api.example.com/email'
         return undefined
       })
@@ -304,7 +313,7 @@ describe('emailrequestController', () => {
       expect(mockRequest.yar.get).toHaveBeenCalledWith('email')
       expect(mockConfig).toHaveBeenCalledWith('email_URL')
       expect(mockAxios).toHaveBeenCalledWith('https://api.example.com/email', {
-        pollutantId: 'pollutant-id-123',
+        pollutantName: 'pollutant-id-123',
         dataSource: 'AURN', // selectedDatasourceType from session
         Region: 'London,Manchester',
         regiontype: 'LocalAuthority',
@@ -342,7 +351,11 @@ describe('emailrequestController', () => {
     beforeEach(() => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
     })
 
     it('successfully processes valid email and renders confirm view', async () => {
@@ -389,7 +402,11 @@ describe('emailrequestController', () => {
 
       for (const email of validEmails) {
         jest.clearAllMocks()
-        mockConfig.mockReturnValue('https://api.example.com/email')
+        mockConfig.mockImplementation((key) => {
+          if (key === 'isDevelopment') return false
+          if (key === 'email_URL') return 'https://api.example.com/email'
+          return undefined
+        })
         mockRequest.yar.get.mockImplementation((key) => {
           const data = {
             selectedPollutantID: 'pollutant-id-123',
@@ -397,6 +414,7 @@ describe('emailrequestController', () => {
             selectedLAIDs: 'London',
             Location: 'LocalAuthority',
             finalyear1: '2023',
+            selectedDatasourceType: 'AURN',
             email
           }
           return data[key]
@@ -414,9 +432,10 @@ describe('emailrequestController', () => {
       }
     })
 
-    it('handles missing session data gracefully', async () => {
+    it('redirects to problem-with-service when missing required session data', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedlocation') return []
+        if (key === 'email') return 'test@example.com'
         return undefined
       })
       mockAxios.mockResolvedValue({ data: 'Success' })
@@ -427,7 +446,10 @@ describe('emailrequestController', () => {
         'email',
         'test@example.com'
       )
-      expect(mockAxios).toHaveBeenCalled()
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
     })
   })
 
@@ -438,7 +460,11 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
       mockAxios.mockResolvedValue({ data: 'Success' })
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
     })
 
     it('reads all required session keys', async () => {
@@ -462,6 +488,7 @@ describe('emailrequestController', () => {
         if (key === 'Location') return 'Country'
         if (key === 'finalyear1') return '2023'
         if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
         return undefined
       })
 
@@ -470,6 +497,7 @@ describe('emailrequestController', () => {
       expect(mockAxios).toHaveBeenCalledWith(
         'https://api.example.com/email',
         expect.objectContaining({
+          pollutantName: 'pollutant-id-123',
           Region: 'London,Manchester',
           regiontype: 'Country'
         })
@@ -488,19 +516,20 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('handles empty selectedlocation array for Country type', async () => {
+    it('redirects to problem-with-service for empty selectedlocation array for Country type', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedlocation') return []
         if (key === 'Location') return 'Country'
         if (key === 'finalyear1') return '2023'
+        if (key === 'email') return 'test@example.com'
         return undefined
       })
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockAxios).toHaveBeenCalledWith(
-        'https://api.example.com/email',
-        expect.objectContaining({ Region: '', regiontype: 'Country' })
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
       )
     })
 
@@ -512,6 +541,7 @@ describe('emailrequestController', () => {
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2023'
         if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
         return undefined
       })
 
@@ -520,6 +550,7 @@ describe('emailrequestController', () => {
       expect(mockAxios).toHaveBeenCalledWith(
         'https://api.example.com/email',
         expect.objectContaining({
+          pollutantName: 'pollutant-id-123',
           Region: 'London',
           regiontype: 'LocalAuthority'
         })
@@ -535,6 +566,7 @@ describe('emailrequestController', () => {
         if (key === 'Location') return 'LocalAuthority'
         if (key === 'finalyear1') return '2024'
         if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
         return undefined
       })
 
@@ -543,13 +575,14 @@ describe('emailrequestController', () => {
       expect(mockAxios).toHaveBeenCalledWith(
         'https://api.example.com/email',
         expect.objectContaining({
+          pollutantName: 'pollutant-id-123',
           Region: 'London,Manchester,Birmingham',
           regiontype: 'LocalAuthority'
         })
       )
     })
 
-    it('handles null pollutant ID', async () => {
+    it('redirects to problem-with-service when pollutant ID is null', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedPollutantID') return null
         if (key === 'selectedlocation') return ['London']
@@ -561,9 +594,9 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockAxios).toHaveBeenCalledWith(
-        'https://api.example.com/email',
-        expect.objectContaining({ pollutantId: null, regiontype: 'Country' })
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
       )
     })
   })
@@ -656,7 +689,11 @@ describe('emailrequestController', () => {
 
   describe('Path detection', () => {
     beforeEach(() => {
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
     })
 
     it('enters confirm branch for any path containing /confirm', async () => {
@@ -705,7 +742,11 @@ describe('emailrequestController', () => {
     beforeEach(() => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
     })
 
     it('calls API with correct config key (email_URL)', async () => {
@@ -813,7 +854,11 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: '  test@example.com  ' }
       mockAxios.mockResolvedValue({ data: 'Success' })
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -885,7 +930,11 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest/confirm'
       mockRequest.payload = { email: 'test@example.com' }
       mockAxios.mockResolvedValue({ data: 'Success' })
-      mockConfig.mockReturnValue('https://api.example.com/email')
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
     })
 
     it('applies pendingDataSource to selectedDatasourceType and clears it before API call', async () => {
@@ -980,6 +1029,276 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.clear).not.toHaveBeenCalled()
+    })
+  })
+
+  // ─── Development mode API handling ────────────────────────────────────────────
+
+  describe('Development mode API handling', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockRequest.yar.get.mockImplementation((key) => {
+        const mockData = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London', 'Manchester'],
+          selectedLAIDs: 'London,Manchester',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN',
+          pendingDataSource: null
+        }
+        return mockData[key]
+      })
+    })
+
+    it('uses Wreck.post in development mode', async () => {
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        if (key === 'emailDevUrl') return 'https://dev.example.com/email'
+        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        return undefined
+      })
+      mockWreck.mockResolvedValue({ payload: 'Success' })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockWreck).toHaveBeenCalledWith(
+        'https://dev.example.com/email',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'x-api-key': 'test-api-key'
+          }),
+          json: true
+        })
+      )
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'emailrequest/requestconfirm.njk',
+        expect.any(Object)
+      )
+    })
+
+    it('uses axios.post in production mode', async () => {
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
+      mockAxios.mockResolvedValue({ data: 'Success' })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.any(Object)
+      )
+      expect(mockWreck).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'emailrequest/requestconfirm.njk',
+        expect.any(Object)
+      )
+    })
+
+    it('redirects to problem-with-service when Wreck throws error in dev mode', async () => {
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        if (key === 'emailDevUrl') return 'https://dev.example.com/email'
+        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        return undefined
+      })
+      mockWreck.mockRejectedValue(new Error('Dev API Error'))
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+  })
+
+  // ─── XML error response handling ──────────────────────────────────────────────
+
+  describe('XML error response handling', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockRequest.yar.get.mockImplementation((key) => {
+        const mockData = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London', 'Manchester'],
+          selectedLAIDs: 'London,Manchester',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN',
+          pendingDataSource: null
+        }
+        return mockData[key]
+      })
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
+    })
+
+    it('redirects to problem-with-service when API returns XML error', async () => {
+      mockAxios.mockResolvedValue({
+        data: '<?xml version="1.0"?><error>Internal Error</error>'
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when API returns null', async () => {
+      mockAxios.mockResolvedValue({ data: null })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when API returns empty string', async () => {
+      mockAxios.mockResolvedValue({ data: '' })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+  })
+
+  // ─── Missing required parameters validation ───────────────────────────────────
+
+  describe('Missing required parameters validation', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
+    })
+
+    it('redirects to problem-with-service when pollutantName is missing', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: null,
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when Region is empty', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: [],
+          selectedLAIDs: '',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when regiontype is null', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: null,
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when Year is undefined', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: undefined,
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('redirects to problem-with-service when email is empty after storing', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: '',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
     })
   })
 })
