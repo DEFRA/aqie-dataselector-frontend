@@ -31,6 +31,12 @@ async function invokeDownloadEmail(apiparams) {
 
     const emaildownloadUrl = response.data
 
+    // Check if response data is valid
+    if (!emaildownloadUrl) {
+      logger.error('Download email API returned empty response')
+      return { error: true }
+    }
+
     return emaildownloadUrl
   } catch (error) {
     logger.error(`Error invoking download email API: ${error.message}`)
@@ -43,7 +49,7 @@ async function invokeDownloadEmail(apiparams) {
       logger.error(`Response status: ${error.response.status}`)
       logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
     }
-    return error
+    return { error: true }
   }
 }
 
@@ -85,20 +91,17 @@ export const verifyController = {
         isExpired: true
       })
     } else {
-      //  console.log('Link is valid, invoking download email API with id:', id)
       const downloadEmailUrl = await invokeDownloadEmail({ id })
       logger.info(`downloadEmailUrl result type: ${typeof downloadEmailUrl}`)
-      logger.info(
-        `downloadEmailUrl is Error: ${downloadEmailUrl instanceof Error}`
-      )
-      /// / console.log('Download email URL:', downloadEmailUrl)
 
-      // Check if API call failed
-      if (downloadEmailUrl instanceof Error) {
-        logger.error(
-          `API call failed, redirecting to problem page: ${downloadEmailUrl.message}`
-        )
-        return h.redirect('/problem-with-service')
+      // Check if API call failed - redirect to problem-with-service page
+      if (
+        !downloadEmailUrl ||
+        downloadEmailUrl.error === true ||
+        downloadEmailUrl instanceof Error
+      ) {
+        logger.error('API call failed, redirecting to problem page')
+        return h.redirect('/problem-with-service?statusCode=500')
       }
 
       return h.view('verify/index', {
