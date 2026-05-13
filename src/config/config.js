@@ -335,7 +335,7 @@ export const config = convict({
   osNamesDevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: 'do4meGXe0tuRJfeDJBlzDmweOSgz6b4h',
+    default: '4NzQzJ27NYxglPLp5R10wFa4QVspfDvJ',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEY'
   },
@@ -404,6 +404,13 @@ export const config = convict({
     default:
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionJobStatus',
     env: 'POLLING_DEV_URL'
+  },
+  emailDevUrl: {
+    doc: 'Email request API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomEmailJobDataSelection/',
+    env: 'EMAIL_DEV_URL'
   },
   stationCountApiUrl: {
     doc: 'Station count API URL for CDP environments',

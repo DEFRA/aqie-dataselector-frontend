@@ -28,6 +28,7 @@ async function invokeDownloadEmail(apiparams) {
       }
     )
     logger.info('Axios call completed successfully')
+
     const emaildownloadUrl = response.data
 
     return emaildownloadUrl

@@ -4,47 +4,71 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
+import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import axios from 'axios'
 
 const logger = createLogger()
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
-async function invokeStationCount(stationcountparameters) {
-  // prod
-  try {
-    const response = await axios.post(
-      config.get('email_URL'),
-      stationcountparameters
-    )
-
-    return response.data
-  } catch (error) {
-    logger.error(`Email request API error: ${error.message}`)
-    return null
+async function invokeEmailRequest(emailRequestParameters) {
+  if (config.get('isDevelopment')) {
+    // dev
+    try {
+      const url = config.get('emailDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(emailRequestParameters),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      // Check if payload is valid and not an error response
+      if (
+        !payload ||
+        (typeof payload === 'string' && payload.includes('<?xml'))
+      ) {
+        logger.error(
+          'Email request API returned invalid response (XML or empty)'
+        )
+        return { error: true }
+      }
+      return payload
+    } catch (error) {
+      logger.error(
+        `Email request API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return { error: true }
+    }
+  } else {
+    // prod
+    try {
+      const response = await axios.post(
+        config.get('email_URL'),
+        emailRequestParameters
+      )
+      // Check if response data is valid and not an error response
+      if (
+        !response.data ||
+        (typeof response.data === 'string' && response.data.includes('<?xml'))
+      ) {
+        logger.error(
+          'Email request API returned invalid response (XML or empty)'
+        )
+        return { error: true }
+      }
+      return response.data
+    } catch (error) {
+      logger.error(
+        `Email request API error: ${error instanceof Error ? error.message : 'unknown error'}`
+      )
+      return { error: true }
+    }
   }
-
-  // dev
-  // try {
-  //   const url =
-  //     'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomEmailJobDataSelection/'
-  //   const {payload } = await Wreck.post(url, {
-  //     payload: JSON.stringify(stationcountparameters),
-  //     headers: {
-  //       'x-api-key': 'r4Rmu3MxFjnsgLSGtVkH6FLLSfTzhIak',
-  //       'Content-Type': 'application/json'
-  //     },
-  //     json: true
-  //   })
-
-  //   return payload
-  // } catch (error) {
-  //   //console.error('Error fetching station count:', error)
-  //   return error // Rethrow the error so it can be handled appropriately
-  // }
 }
 export const emailrequestController = {
   handler: async (request, h) => {
@@ -70,12 +94,7 @@ export const emailrequestController = {
       request.yar.set('pendingDataSource', dataSourceParam)
     }
 
-    // console.log('comes here into email')
-    // const { home } = englishNew.custom
     if (request.path?.includes('/confirm')) {
-      //  console.log('params from confirm', request.payload?.email)
-      // console.log('comes into confirm')
-
       // Get email from form payload
       const email = request.payload?.email
       request.yar.set('email', email)
@@ -93,7 +112,6 @@ export const emailrequestController = {
 
       // Check if email is provided and valid
       if (!email) {
-        //  console.log('No email provided')
         return h.view(EMAIL_REQUEST_VIEW, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
@@ -106,7 +124,6 @@ export const emailrequestController = {
       }
 
       if (!isValidEmail(email)) {
-        // console.log('Invalid email format:', email)
         return h.view(EMAIL_REQUEST_VIEW, {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
@@ -118,8 +135,6 @@ export const emailrequestController = {
         })
       }
 
-      //  console.log('Valid email provided:', email)
-
       // If dataSource was passed as a query param (from download page tab), update session
       const dataSourceFromQuery = request.yar.get('pendingDataSource')
       if (dataSourceFromQuery) {
@@ -130,7 +145,7 @@ export const emailrequestController = {
       // Build parameters based on region type
       const regionType = request.yar.get('Location')
       const stationcountparameters = {
-        pollutantId: request.yar.get('selectedPollutantID'),
+        pollutantName: request.yar.get('selectedPollutantID'),
         dataSource: request.yar.get('selectedDatasourceType') || 'AURN',
         Region:
           regionType === 'Country'
@@ -142,14 +157,44 @@ export const emailrequestController = {
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
-      const result = await invokeStationCount(stationcountparameters)
+
+      // Validate required parameters - redirect to problem-with-service if any are null or blank
+      const requiredParams = [
+        'pollutantName',
+        'Region',
+        'regiontype',
+        'Year',
+        'email'
+      ]
+      const hasInvalidParams = requiredParams.some((param) => {
+        const value = stationcountparameters[param]
+        return value === null || value === undefined || value === ''
+      })
+
+      if (hasInvalidParams) {
+        logger.error('Email request failed - missing required parameters')
+        return h.redirect('/problem-with-service?statusCode=500')
+      }
+
+      const result = await invokeEmailRequest(stationcountparameters)
+
+      // Check for API errors - redirect to problem-with-service page
+      if (
+        !result ||
+        result.error === true ||
+        (typeof result === 'string' && result.includes('<?xml'))
+      ) {
+        logger.error(
+          'Email request failed - redirecting to problem-with-service'
+        )
+        return h.redirect('/problem-with-service?statusCode=500')
+      }
+
       if (result === 'Success') {
         return h.view('emailrequest/requestconfirm.njk', {
           pageTitle: englishNew.custom.pageTitle,
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts
-
-          //  selectedpollutant: request.yar.get('selectedpollutant')
         })
       } else {
         // Redirect to existing problem with service page when API call fails
@@ -162,7 +207,6 @@ export const emailrequestController = {
         texts: englishNew.custom.texts,
         displayBacklink: true,
         hrefq: backUrl
-        //  selectedpollutant: request.yar.get('selectedpollutant')
       })
     }
   }
