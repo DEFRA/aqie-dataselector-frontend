@@ -71,6 +71,9 @@ describe('verifyController', () => {
     jest.mocked(axios.post).mockResolvedValue({
       data: 'https://example.com/download/file.csv'
     })
+
+    // Mock axios.head for S3 file verification
+    jest.mocked(axios.head).mockResolvedValue({ status: 200 })
   })
 
   // ─── Missing / empty parameters ────────────────────────────────────────────
@@ -179,6 +182,7 @@ describe('verifyController', () => {
     it('should call axios.post with correct 3 arguments and render success view', async () => {
       const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -190,6 +194,9 @@ describe('verifyController', () => {
           headers: { 'Content-Type': 'application/json' }
         }
       )
+      expect(axios.head).toHaveBeenCalledWith(mockUrl, {
+        timeout: HTTP_REQUEST_TIMEOUT_MS
+      })
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
         pageTitle: 'Verification',
         heading: 'Request Received',
@@ -205,6 +212,7 @@ describe('verifyController', () => {
       ).toString()
       const mockUrl = 'https://download.example.com/data.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -225,6 +233,7 @@ describe('verifyController', () => {
         .toString()
       const mockUrl = 'https://cdn.example.com/file.zip'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -243,6 +252,7 @@ describe('verifyController', () => {
       ).toString()
       const mockUrl = 'https://example.com/download.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -258,6 +268,7 @@ describe('verifyController', () => {
       mockRequest.params.timestamp = '9999999999999'
       const mockUrl = 'https://example.com/file.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -275,6 +286,7 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -291,6 +303,7 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -298,6 +311,64 @@ describe('verifyController', () => {
         'https://api.example.com/download',
         { jobID: longId },
         expect.any(Object)
+      )
+    })
+  })
+
+  // ─── S3 HEAD request verification ───────────────────────────────────────────
+
+  describe('S3 file verification (HEAD request)', () => {
+    it('should redirect to problem page when S3 file does not exist (404)', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      const notFoundError = new Error('Request failed with status code 404')
+      notFoundError.response = { status: 404 }
+      jest.mocked(axios.head).mockRejectedValue(notFoundError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('should redirect to problem page when S3 file is not accessible (403)', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      const forbiddenError = new Error('Request failed with status code 403')
+      forbiddenError.response = { status: 403 }
+      jest.mocked(axios.head).mockRejectedValue(forbiddenError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('should redirect to problem page when HEAD request times out', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      const timeoutError = new Error('timeout exceeded')
+      timeoutError.code = 'ECONNABORTED'
+      jest.mocked(axios.head).mockRejectedValue(timeoutError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('should redirect to problem page when HEAD request has network error', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
+      jest.mocked(axios.head).mockRejectedValue(new Error('Network error'))
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
       )
     })
   })
@@ -370,6 +441,7 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 

@@ -37,6 +37,19 @@ async function invokeDownloadEmail(apiparams) {
       return { error: true }
     }
 
+    // Verify the S3 file exists by making a HEAD request
+    try {
+      await axios.head(emaildownloadUrl, {
+        timeout: HTTP_REQUEST_TIMEOUT_MS
+      })
+      logger.info('S3 file verified to exist')
+    } catch (headError) {
+      logger.error(
+        `S3 file does not exist or is not accessible: ${headError.message}`
+      )
+      return { error: true }
+    }
+
     return emaildownloadUrl
   } catch (error) {
     logger.error(`Error invoking download email API: ${error.message}`)
