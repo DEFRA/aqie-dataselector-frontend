@@ -412,6 +412,13 @@ export const config = convict({
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomEmailJobDataSelection/',
     env: 'EMAIL_DEV_URL'
   },
+  downloadEmailDevUrl: {
+    doc: 'Download email presigned URL API for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionPresignedUrlMail',
+    env: 'DOWNLOAD_EMAIL_DEV_URL'
+  },
   stationCountApiUrl: {
     doc: 'Station count API URL for CDP environments',
     format: String,
