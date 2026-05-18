@@ -4,6 +4,7 @@
  */
 
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
@@ -15,60 +16,81 @@ const logger = createLogger()
 async function invokeDownloadEmail(apiparams) {
   const emailParams = { jobID: apiparams.id }
 
-  try {
-    logger.info('About to call axios.post...')
-    const response = await axios.post(
-      config.get('downloadEmailUrl'),
-      emailParams,
-      {
-        timeout: HTTP_REQUEST_TIMEOUT_MS,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    logger.info('Axios call completed successfully')
-
-    const responseData = response.data
-
-    // Check if response data is valid
-    if (!responseData) {
-      logger.error('Download email API returned empty response')
-      return { error: true }
-    }
-
-    // Handle both object response (with resultUrl) and string response
-    const emaildownloadUrl =
-      typeof responseData === 'object' && responseData.resultUrl
-        ? responseData.resultUrl
-        : responseData
-
-    // Verify the S3 file exists by making a HEAD request
+  if (config.get('isDevelopment')) {
     try {
-      await axios.head(emaildownloadUrl, {
-        timeout: HTTP_REQUEST_TIMEOUT_MS
+      const url = config.get('downloadEmailDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(emailParams),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
       })
-      logger.info('S3 file verified to exist')
-    } catch (headError) {
+      logger.info('Download email API call completed successfully (local)')
+
+      // Check if response data is valid
+      if (!payload) {
+        logger.error('Download email API returned empty response')
+        return { error: true }
+      }
+
+      // Handle both object response (with resultUrl) and string response
+      const emaildownloadUrl =
+        typeof payload === 'object' && payload.resultUrl
+          ? payload.resultUrl
+          : payload
+
+      return emaildownloadUrl
+    } catch (error) {
       logger.error(
-        `S3 file does not exist or is not accessible: ${headError.message}`
+        `Download email API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
       )
       return { error: true }
     }
+  } else {
+    try {
+      logger.info('About to call axios.post...')
+      const response = await axios.post(
+        config.get('downloadEmailUrl'),
+        emailParams,
+        {
+          timeout: HTTP_REQUEST_TIMEOUT_MS,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+      logger.info('Axios call completed successfully')
 
-    return emaildownloadUrl
-  } catch (error) {
-    logger.error(`Error invoking download email API: ${error.message}`)
-    logger.error(`Error stack: ${error.stack}`)
-    logger.error(`Error name: ${error.name}`)
-    if (error.code) {
-      logger.error(`Error code: ${error.code}`)
+      const responseData = response.data
+
+      // Check if response data is valid
+      if (!responseData) {
+        logger.error('Download email API returned empty response')
+        return { error: true }
+      }
+
+      // Handle both object response (with resultUrl) and string response
+      const emaildownloadUrl =
+        typeof responseData === 'object' && responseData.resultUrl
+          ? responseData.resultUrl
+          : responseData
+
+      return emaildownloadUrl
+    } catch (error) {
+      logger.error(`Error invoking download email API: ${error.message}`)
+      logger.error(`Error stack: ${error.stack}`)
+      logger.error(`Error name: ${error.name}`)
+      if (error.code) {
+        logger.error(`Error code: ${error.code}`)
+      }
+      if (error.response) {
+        logger.error(`Response status: ${error.response.status}`)
+        logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
+      }
+      return { error: true }
     }
-    if (error.response) {
-      logger.error(`Response status: ${error.response.status}`)
-      logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
-    }
-    return { error: true }
   }
 }
 
@@ -76,8 +98,6 @@ export const verifyController = {
   async handler(request, h) {
     // Extract path parameters (unique ID and timestamp)
     const { id, timestamp } = request.params
-
-    // Log the received parameters
 
     // You can add validation logic here
     if (!id || !timestamp) {

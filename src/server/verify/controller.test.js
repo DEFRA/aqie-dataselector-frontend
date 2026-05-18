@@ -1,9 +1,11 @@
 import { verifyController } from './controller.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
 import { HTTP_REQUEST_TIMEOUT_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 jest.mock('axios')
+jest.mock('@hapi/wreck')
 jest.mock('~/src/config/config.js', () => ({
   config: {
     get: jest.fn()
@@ -71,9 +73,6 @@ describe('verifyController', () => {
     jest.mocked(axios.post).mockResolvedValue({
       data: 'https://example.com/download/file.csv'
     })
-
-    // Mock axios.head for S3 file verification
-    jest.mocked(axios.head).mockResolvedValue({ status: 200 })
   })
 
   // ─── Missing / empty parameters ────────────────────────────────────────────
@@ -182,7 +181,6 @@ describe('verifyController', () => {
     it('should call axios.post with correct 3 arguments and render success view', async () => {
       const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -194,9 +192,6 @@ describe('verifyController', () => {
           headers: { 'Content-Type': 'application/json' }
         }
       )
-      expect(axios.head).toHaveBeenCalledWith(mockUrl, {
-        timeout: HTTP_REQUEST_TIMEOUT_MS
-      })
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
         pageTitle: 'Verification',
         heading: 'Request Received',
@@ -212,7 +207,6 @@ describe('verifyController', () => {
       ).toString()
       const mockUrl = 'https://download.example.com/data.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -233,7 +227,6 @@ describe('verifyController', () => {
         .toString()
       const mockUrl = 'https://cdn.example.com/file.zip'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -252,7 +245,6 @@ describe('verifyController', () => {
       ).toString()
       const mockUrl = 'https://example.com/download.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -268,7 +260,6 @@ describe('verifyController', () => {
       mockRequest.params.timestamp = '9999999999999'
       const mockUrl = 'https://example.com/file.csv'
       jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -286,7 +277,6 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -303,7 +293,6 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -311,64 +300,6 @@ describe('verifyController', () => {
         'https://api.example.com/download',
         { jobID: longId },
         expect.any(Object)
-      )
-    })
-  })
-
-  // ─── S3 HEAD request verification ───────────────────────────────────────────
-
-  describe('S3 file verification (HEAD request)', () => {
-    it('should redirect to problem page when S3 file does not exist (404)', async () => {
-      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
-      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      const notFoundError = new Error('Request failed with status code 404')
-      notFoundError.response = { status: 404 }
-      jest.mocked(axios.head).mockRejectedValue(notFoundError)
-
-      await verifyController.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
-    })
-
-    it('should redirect to problem page when S3 file is not accessible (403)', async () => {
-      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
-      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      const forbiddenError = new Error('Request failed with status code 403')
-      forbiddenError.response = { status: 403 }
-      jest.mocked(axios.head).mockRejectedValue(forbiddenError)
-
-      await verifyController.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
-    })
-
-    it('should redirect to problem page when HEAD request times out', async () => {
-      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
-      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      const timeoutError = new Error('timeout exceeded')
-      timeoutError.code = 'ECONNABORTED'
-      jest.mocked(axios.head).mockRejectedValue(timeoutError)
-
-      await verifyController.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
-    })
-
-    it('should redirect to problem page when HEAD request has network error', async () => {
-      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
-      jest.mocked(axios.post).mockResolvedValue({ data: mockUrl })
-      jest.mocked(axios.head).mockRejectedValue(new Error('Network error'))
-
-      await verifyController.handler(mockRequest, mockH)
-
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
       )
     })
   })
@@ -441,7 +372,6 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: 'https://example.com/file.csv'
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -462,13 +392,9 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: { resultUrl: mockUrl }
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(axios.head).toHaveBeenCalledWith(mockUrl, {
-        timeout: HTTP_REQUEST_TIMEOUT_MS
-      })
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
         pageTitle: 'Verification',
         heading: 'Request Received',
@@ -486,7 +412,6 @@ describe('verifyController', () => {
       jest.mocked(axios.post).mockResolvedValue({
         data: { resultUrl: mockUrl }
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -498,14 +423,81 @@ describe('verifyController', () => {
       })
     })
 
-    it('should redirect to problem page when S3 file does not exist with object response', async () => {
+    it('should handle string response format (backward compatibility)', async () => {
       const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
       jest.mocked(axios.post).mockResolvedValue({
-        data: { resultUrl: mockUrl }
+        data: mockUrl
       })
-      const notFoundError = new Error('Request failed with status code 404')
-      notFoundError.response = { status: 404 }
-      jest.mocked(axios.head).mockRejectedValue(notFoundError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+  })
+
+  // ─── Development environment (Wreck) ────────────────────────────────────────
+
+  describe('Development environment (isDevelopment = true)', () => {
+    beforeEach(() => {
+      jest.mocked(config.get).mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        if (key === 'downloadEmailDevUrl')
+          return 'https://dev.api.example.com/download'
+        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        return null
+      })
+    })
+
+    it('should use Wreck.post for development environment', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(Wreck.post).mockResolvedValue({
+        payload: mockUrl
+      })
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(Wreck.post).toHaveBeenCalledWith(
+        'https://dev.api.example.com/download',
+        {
+          payload: JSON.stringify({ jobID: 'test-job-id-123' }),
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'test-api-key'
+          },
+          json: true
+        }
+      )
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+
+    it('should handle object response with resultUrl in development', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(Wreck.post).mockResolvedValue({
+        payload: { resultUrl: mockUrl }
+      })
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+
+    it('should redirect to problem page on Wreck error in development', async () => {
+      jest.mocked(Wreck.post).mockRejectedValue(new Error('Network error'))
 
       await verifyController.handler(mockRequest, mockH)
 
@@ -514,21 +506,16 @@ describe('verifyController', () => {
       )
     })
 
-    it('should handle string response format (backward compatibility)', async () => {
-      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
-      jest.mocked(axios.post).mockResolvedValue({
-        data: mockUrl
+    it('should redirect to problem page when payload is empty in development', async () => {
+      jest.mocked(Wreck.post).mockResolvedValue({
+        payload: null
       })
-      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
-        heading: 'Request Received',
-        message: 'Your download request has been received successfully.',
-        downloadEmailUrl: mockUrl
-      })
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
     })
   })
 })
