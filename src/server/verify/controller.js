@@ -50,18 +50,17 @@ async function invokeDownloadEmail(apiparams) {
     }
   } else {
     try {
-      logger.info('About to call axios.post...')
-      const response = await axios.post(
-        config.get('downloadEmailUrl'),
-        emailParams,
-        {
-          timeout: HTTP_REQUEST_TIMEOUT_MS,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+      const url = config.get('downloadEmailUrl')
+      logger.info(`About to call axios.post to: ${url}`)
+      logger.info(`Request payload: ${JSON.stringify(emailParams)}`)
+      const response = await axios.post(url, emailParams, {
+        timeout: HTTP_REQUEST_TIMEOUT_MS,
+        headers: {
+          'Content-Type': 'application/json'
         }
-      )
+      })
       logger.info('Axios call completed successfully')
+      logger.info(`Response data: ${JSON.stringify(response.data)}`)
 
       const responseData = response.data
 
