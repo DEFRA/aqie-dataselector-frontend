@@ -453,4 +453,82 @@ describe('verifyController', () => {
       )
     })
   })
+
+  // ─── Object response format (resultUrl) ─────────────────────────────────────
+
+  describe('Object response format with resultUrl', () => {
+    it('should handle object response with resultUrl property', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({
+        data: { resultUrl: mockUrl }
+      })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(axios.head).toHaveBeenCalledWith(mockUrl, {
+        timeout: HTTP_REQUEST_TIMEOUT_MS
+      })
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+
+    it('should handle object response with resultUrl for timestamp 1 day old', async () => {
+      mockRequest.params.timestamp = (
+        Date.now() -
+        1 * 24 * 60 * 60 * 1000
+      ).toString()
+      const mockUrl = 'https://download.example.com/data.csv'
+      jest.mocked(axios.post).mockResolvedValue({
+        data: { resultUrl: mockUrl }
+      })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+
+    it('should redirect to problem page when S3 file does not exist with object response', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({
+        data: { resultUrl: mockUrl }
+      })
+      const notFoundError = new Error('Request failed with status code 404')
+      notFoundError.response = { status: 404 }
+      jest.mocked(axios.head).mockRejectedValue(notFoundError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith(
+        '/problem-with-service?statusCode=500'
+      )
+    })
+
+    it('should handle string response format (backward compatibility)', async () => {
+      const mockUrl = 'https://s3.amazonaws.com/bucket/file.csv'
+      jest.mocked(axios.post).mockResolvedValue({
+        data: mockUrl
+      })
+      jest.mocked(axios.head).mockResolvedValue({ status: 200 })
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: mockUrl
+      })
+    })
+  })
 })

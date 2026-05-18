@@ -67,7 +67,7 @@
 
         {% if yearrange == 'Single' %}
         <a id="download-link"
-           href="/download_aurn_nojs/{{ finalyear }}"
+           href="/download_aurn_nojs/{{ finalyear }}/AURN"
            role="button"
            class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
            aria-label="Download daily average data">
@@ -102,7 +102,7 @@
             <tr class="govuk-table__row">
               <th scope="row" class="govuk-table__header">{{ year }}</th>
               <td class="govuk-table__cell">
-                <a href="/download_aurn_nojs/{{ year }}" class="govuk-link">Download hourly data</a>
+                <a href="/download_aurn_nojs/{{ year }}/AURN" class="govuk-link">Download hourly data</a>
               </td>
             </tr>
             {% endfor %}

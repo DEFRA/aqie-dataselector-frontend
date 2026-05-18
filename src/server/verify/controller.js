@@ -29,13 +29,19 @@ async function invokeDownloadEmail(apiparams) {
     )
     logger.info('Axios call completed successfully')
 
-    const emaildownloadUrl = response.data
+    const responseData = response.data
 
     // Check if response data is valid
-    if (!emaildownloadUrl) {
+    if (!responseData) {
       logger.error('Download email API returned empty response')
       return { error: true }
     }
+
+    // Handle both object response (with resultUrl) and string response
+    const emaildownloadUrl =
+      typeof responseData === 'object' && responseData.resultUrl
+        ? responseData.resultUrl
+        : responseData
 
     // Verify the S3 file exists by making a HEAD request
     try {
