@@ -1009,9 +1009,9 @@ describe('customdatasetController', () => {
         error: true,
         errormsg:
           'No monitoring stations are available for your selection. Please try:',
-        errorref1: 'Change year',
+        errorref1: 'Change the year',
         errorhref1: '/year-aurn?change=true',
-        errorref2: 'Change location',
+        errorref2: 'Change the location',
         errorhref2: '/location-aurn?change=true'
       })
       expect(result).toBe('view-response')
@@ -1042,9 +1042,9 @@ describe('customdatasetController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errorref1: 'Change year',
+          errorref1: 'Change the year',
           errorhref1: '/year-aurn?change=true',
-          errorref2: 'Change location',
+          errorref2: 'Change the location',
           errorhref2: '/location-aurn?change=true'
         })
       )
