@@ -7,6 +7,7 @@
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 import { HTTP_INTERNAL_SERVER_ERROR } from '~/src/server/common/constants/magic-numbers.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
@@ -436,6 +437,27 @@ export const customdatasetController = {
   handler: async (request, h) => {
     const backUrl = '/hubpage'
 
+    // Check if the request is coming from within the application
+    const referer = request.headers.referer || request.headers.referrer || ''
+    const host = request.info.host || ''
+    const isInternalNavigation =
+      referer && (referer.includes(host) || referer.includes('localhost'))
+
+    // If accessed directly (no valid referer), return 404 page not found
+    // Allow /customdataset/clear path to work for clearing session
+    if (!isInternalNavigation && !request.path?.includes('/clear')) {
+      return h
+        .view('error/index', {
+          pageTitle: 'Page not found',
+          heading: 'Page not found',
+          statusCode: '404',
+          content: english.errorpages,
+          message:
+            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+        })
+        .code(404)
+    }
+
     if (request.path?.includes('/clear')) {
       return handleClearPath(request, h, backUrl)
     }
@@ -473,9 +495,9 @@ export const customdatasetController = {
           errormsg:
             'No monitoring stations are available for your selection. Please try:',
           errorref1: 'Change the year',
-          errorhref1: '/year-aurn?change=true',
+          errorhref1: '/year-aurn/change',
           errorref2: 'Change the location',
-          errorhref2: '/location-aurn?change=true'
+          errorhref2: '/location-aurn/change'
         })
       }
       if (errorResponse) {

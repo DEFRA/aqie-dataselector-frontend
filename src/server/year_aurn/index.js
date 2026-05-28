@@ -1,4 +1,7 @@
-import { yearController } from '~/src/server/year_aurn/controller.js'
+import {
+  yearController,
+  yearChangeController
+} from '~/src/server/year_aurn/controller.js'
 
 /**
  * Sets up the routes used in the customdataset page.
@@ -22,6 +25,16 @@ export const year = {
           method: 'POST',
           path: '/year-aurn',
           ...yearController
+        },
+        {
+          method: 'GET',
+          path: '/year-aurn/change',
+          ...yearChangeController
+        },
+        {
+          method: 'POST',
+          path: '/year-aurn/change',
+          ...yearChangeController
         }
       ])
     }

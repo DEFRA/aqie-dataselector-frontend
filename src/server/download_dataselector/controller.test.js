@@ -175,7 +175,7 @@ describe('downloadDataselectorController', () => {
         error: true,
         errormsg: 'Select a location to continue',
         errorref1: 'Add location',
-        errorhref1: '/location-aurn?change=true',
+        errorhref1: '/location-aurn/change',
         errorref2: '',
         errorhref2: '',
         selectedpollutant: ['NO2'],

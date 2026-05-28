@@ -7,6 +7,7 @@
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
@@ -72,21 +73,41 @@ async function invokeEmailRequest(emailRequestParameters) {
 }
 export const emailrequestController = {
   handler: async (request, h) => {
-    // Determine back URL based on referrer or query parameter
-    // If coming from JS version or has 'js' query param, use /download_dataselector
+    // Check if the request is coming from within the application
+    const referer = request.headers.referer || request.headers.referrer || ''
+    const host = request.info.host || ''
+    const isInternalNavigation =
+      referer && (referer.includes(host) || referer.includes('localhost'))
+
+    // If accessed directly (no valid referer), return 404 page not found
+    if (!isInternalNavigation) {
+      return h
+        .view('error/index', {
+          pageTitle: 'Page not found',
+          heading: 'Page not found',
+          statusCode: '404',
+          content: english.errorpages,
+          message:
+            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+        })
+        .code(404)
+    }
+
+    // Determine back URL based on referrer or path parameter
+    // If coming from JS version (has dataSource in path), use /download_dataselector
     // Otherwise use /download_dataselectornojs for no-JS users
-    const hasJsParam = request.query?.js === 'true'
+    const dataSourceParam = request.params?.dataSource
     const referrer = request.info?.referrer || ''
     const isFromJsPage =
-      referrer.includes('/download_dataselector') && !referrer.includes('nojs')
+      dataSourceParam ||
+      (referrer.includes('/download_dataselector') &&
+        !referrer.includes('nojs'))
 
-    const backUrl =
-      hasJsParam || isFromJsPage
-        ? '/download_dataselector'
-        : '/download_dataselectornojs'
+    const backUrl = isFromJsPage
+      ? '/download_dataselector'
+      : '/download_dataselectornojs'
 
-    // Store dataSource from query param so it survives the POST
-    const dataSourceParam = request.query?.dataSource
+    // Store dataSource from path param so it survives the POST
     if (
       dataSourceParam &&
       (dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN')

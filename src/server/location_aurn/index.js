@@ -1,4 +1,7 @@
-import { locationaurnController } from '~/src/server/location_aurn/controller.js'
+import {
+  locationaurnController,
+  locationaurnChangeController
+} from '~/src/server/location_aurn/controller.js'
 
 /**
  * Sets up the routes used in the customdataset page.
@@ -32,6 +35,16 @@ export const locationaurn = {
           method: 'POST',
           path: '/location-aurn/nojs',
           ...locationaurnController
+        },
+        {
+          method: 'GET',
+          path: '/location-aurn/change',
+          ...locationaurnChangeController
+        },
+        {
+          method: 'POST',
+          path: '/location-aurn/change',
+          ...locationaurnChangeController
         }
       ])
     }

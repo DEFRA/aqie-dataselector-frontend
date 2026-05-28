@@ -5,6 +5,7 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { english } from '~/src/server/data/en/homecontent.js'
 import {
   MIN_YEAR,
   EXAMPLE_YEAR,
@@ -364,6 +365,39 @@ export const yearController = {
     }
 
     return h.redirect('/year-aurn')
+  }
+}
+
+/**
+ * Controller for /year-aurn/change route.
+ * This route should only be accessible via internal navigation (referrer check).
+ * Direct URL access will return a 404 page not found.
+ */
+export const yearChangeController = {
+  handler(request, h) {
+    const referer = request.headers.referer || request.headers.referrer || ''
+    const host = request.info.host || ''
+
+    // Check if the request is coming from within the application
+    const isInternalNavigation =
+      referer && (referer.includes(host) || referer.includes('localhost'))
+
+    // If accessed directly (no valid referer), return 404 page not found
+    if (!isInternalNavigation) {
+      return h
+        .view('error/index', {
+          pageTitle: 'Page not found',
+          heading: 'Page not found',
+          statusCode: '404',
+          content: english.errorpages,
+          message:
+            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+        })
+        .code(404)
+    }
+
+    // Otherwise, delegate to the main year-aurn controller logic
+    return yearController.handler(request, h)
   }
 }
 

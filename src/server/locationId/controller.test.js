@@ -16,11 +16,20 @@ describe('getLocationDetailsController.handler', () => {
       view: jest.fn().mockReturnThis(),
       response: jest.fn().mockImplementation(() => ({
         code: jest.fn().mockReturnValue('error-response')
-      }))
+      })),
+      code: jest.fn().mockReturnThis()
     }
 
     request = {
+      method: 'post',
       params: { id: 'loc123' },
+      payload: { locationId: 'loc123' },
+      headers: {
+        referer: 'http://localhost:3001/multiplelocations'
+      },
+      info: {
+        host: 'localhost:3001'
+      },
       yar: {
         get: jest.fn(),
         set: jest.fn()
@@ -82,7 +91,8 @@ describe('getLocationDetailsController.handler', () => {
       const session = {
         osnameapiresult: undefined,
         fullSearchQuery: { value: 'query' },
-        locationMiles: 5
+        locationMiles: 5,
+        locationID: 'loc123'
       }
       return session[key]
     })
@@ -94,8 +104,16 @@ describe('getLocationDetailsController.handler', () => {
   })
 
   it('should return undefined if locationID is missing', async () => {
-    request.params.id = undefined
-    request.yar.get.mockReturnValue({ getOSPlaces: [] })
+    request.payload = {}
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: { getOSPlaces: [] },
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 5,
+        locationID: undefined
+      }
+      return session[key]
+    })
 
     await getLocationDetailsController.handler(request, h)
 
@@ -108,7 +126,8 @@ describe('getLocationDetailsController.handler', () => {
       const session = {
         osnameapiresult: { getOSPlaces: [] },
         fullSearchQuery: { value: 'query' },
-        locationMiles: 5
+        locationMiles: 5,
+        locationID: 'loc123'
       }
       return session[key]
     })

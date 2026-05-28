@@ -73,6 +73,12 @@ describe('verifyController', () => {
     jest.mocked(axios.post).mockResolvedValue({
       data: 'https://example.com/download/file.csv'
     })
+
+    // Mock axios.get for S3 URL validation
+    jest.mocked(axios.get).mockResolvedValue({
+      status: 200,
+      data: { destroy: jest.fn() }
+    })
   })
 
   // ─── Missing / empty parameters ────────────────────────────────────────────

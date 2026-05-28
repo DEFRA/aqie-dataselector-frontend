@@ -36,7 +36,13 @@ describe('emailrequestController', () => {
       path: undefined,
       payload: {},
       query: {},
-      info: {},
+      params: {},
+      info: {
+        host: 'localhost:3001'
+      },
+      headers: {
+        referer: 'http://localhost:3001/download_dataselector'
+      },
       yar: {
         get: jest.fn(),
         set: jest.fn(),
@@ -94,8 +100,8 @@ describe('emailrequestController', () => {
       })
     })
 
-    it('renders with JS backUrl when js=true query param', async () => {
-      mockRequest.query = { js: 'true' }
+    it('renders with JS backUrl when dataSource path param is provided', async () => {
+      mockRequest.params = { dataSource: 'AURN' }
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -178,9 +184,9 @@ describe('emailrequestController', () => {
       })
     })
 
-    it('shows error with JS backUrl when js=true and no email', async () => {
+    it('shows error with JS backUrl when dataSource param and no email', async () => {
       mockRequest.payload = {}
-      mockRequest.query = { js: 'true' }
+      mockRequest.params = { dataSource: 'AURN' }
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -604,9 +610,9 @@ describe('emailrequestController', () => {
   // ─── BackUrl logic ────────────────────────────────────────────────────────────
 
   describe('BackUrl logic', () => {
-    it('uses /download_dataselector when js=true query param', async () => {
-      mockRequest.query = { js: 'true' }
-      mockRequest.path = '/emailrequest'
+    it('uses /download_dataselector when dataSource path param is provided', async () => {
+      mockRequest.params = { dataSource: 'AURN' }
+      mockRequest.path = '/emailrequest/AURN'
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -669,12 +675,13 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('prioritises js=true query param over nojs referrer', async () => {
-      mockRequest.query = { js: 'true' }
+    it('prioritises dataSource param over nojs referrer', async () => {
+      mockRequest.params = { dataSource: 'AURN' }
       mockRequest.info = {
-        referrer: 'http://example.com/download_dataselectornojs'
+        referrer: 'http://example.com/download_dataselectornojs',
+        host: 'localhost:3001'
       }
-      mockRequest.path = '/emailrequest'
+      mockRequest.path = '/emailrequest/AURN'
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -722,9 +729,9 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('renders index with JS backUrl for non-confirm path when js=true', async () => {
-      mockRequest.path = '/emailrequest/other'
-      mockRequest.query = { js: 'true' }
+    it('renders index with JS backUrl for non-confirm path when dataSource param present', async () => {
+      mockRequest.path = '/emailrequest/AURN'
+      mockRequest.params = { dataSource: 'AURN' }
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -880,8 +887,8 @@ describe('emailrequestController', () => {
       mockRequest.path = '/emailrequest'
     })
 
-    it('stores AURN in pendingDataSource when dataSource=AURN query param present', async () => {
-      mockRequest.query = { dataSource: 'AURN' }
+    it('stores AURN in pendingDataSource when dataSource=AURN path param present', async () => {
+      mockRequest.params = { dataSource: 'AURN' }
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -891,8 +898,8 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('stores NON-AURN in pendingDataSource when dataSource=NON-AURN query param present', async () => {
-      mockRequest.query = { dataSource: 'NON-AURN' }
+    it('stores NON-AURN in pendingDataSource when dataSource=NON-AURN path param present', async () => {
+      mockRequest.params = { dataSource: 'NON-AURN' }
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -902,8 +909,8 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('does not set pendingDataSource when dataSource query param is absent', async () => {
-      mockRequest.query = {}
+    it('does not set pendingDataSource when dataSource path param is absent', async () => {
+      mockRequest.params = {}
 
       await emailrequestController.handler(mockRequest, mockH)
 
@@ -913,8 +920,8 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('does not set pendingDataSource when dataSource query param is invalid', async () => {
-      mockRequest.query = { dataSource: 'INVALID' }
+    it('does not set pendingDataSource when dataSource path param is invalid', async () => {
+      mockRequest.params = { dataSource: 'INVALID' }
 
       await emailrequestController.handler(mockRequest, mockH)
 

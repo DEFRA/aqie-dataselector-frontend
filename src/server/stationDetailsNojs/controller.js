@@ -67,13 +67,7 @@ async function maybeHandleDownloadRequest(
   request.yar.set('downloadresult', downloadResult)
 }
 
-function buildViewData(
-  request,
-  stationDetails,
-  mapLocation,
-  dateContext,
-  locationContext
-) {
+function buildViewData(request, stationDetails, mapLocation, dateContext) {
   return {
     pageTitle: english.stationdetails.pageTitle,
     title: english.stationdetails.title,
@@ -93,14 +87,35 @@ function buildViewData(
     hrefq:
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location/${locationContext.multipleLocID}`
+        : `/location`
   }
 }
 
 const stationDetailsNojsController = {
   handler: async (request, h) => {
-    if (!request.yar.get('SiteId')) {
-      request.yar.set('SiteId', request.params.id)
+    // Check if the request is coming from within the application
+    const referer = request.headers.referer || request.headers.referrer || ''
+    const host = request.info.host || ''
+    const isInternalNavigation =
+      referer && (referer.includes(host) || referer.includes('localhost'))
+
+    // If accessed directly (no valid referer), return 404 page not found
+    if (!isInternalNavigation) {
+      return h
+        .view('error/index', {
+          pageTitle: 'Page not found',
+          heading: 'Page not found',
+          statusCode: '404',
+          content: english.errorpages,
+          message:
+            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+        })
+        .code(404)
+    }
+
+    // Get station ID from POST payload or session
+    if (request.method === 'post' && request.payload?.stationId) {
+      request.yar.set('SiteId', request.payload.stationId)
     }
 
     const logger = createLogger()
@@ -142,7 +157,6 @@ const stationDetailsNojsController = {
     const mapLocation = buildMapLocation(lat, lon)
 
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')?.value
-    const multipleLocID = request?.yar?.get('locationID')
 
     setSelectedYearForNoJs(request)
 
@@ -166,19 +180,13 @@ const stationDetailsNojsController = {
       logger
     )
 
-    const viewData = buildViewData(
-      request,
-      stationDetails,
-      mapLocation,
-      {
-        updatedTime,
-        years,
-        currentDate,
-        currentYear,
-        fullSearchQuery
-      },
-      { multipleLocID }
-    )
+    const viewData = buildViewData(request, stationDetails, mapLocation, {
+      updatedTime,
+      years,
+      currentDate,
+      currentYear,
+      fullSearchQuery
+    })
     request.yar.set('viewData', viewData)
 
     return h.view('stationDetailsNojs/index', viewData)

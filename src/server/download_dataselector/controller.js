@@ -73,7 +73,7 @@ export const downloadDataselectorController = {
       return renderErrorState(
         'Select a location to continue',
         'Add location',
-        '/location-aurn?change=true',
+        '/location-aurn/change',
         '',
         ''
       )

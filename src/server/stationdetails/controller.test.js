@@ -26,8 +26,16 @@ describe('stationDetailsController.handler', () => {
     }
 
     request = {
+      method: 'post',
       params: {
         id: 'site123'
+      },
+      payload: { stationId: 'site123' },
+      headers: {
+        referer: 'http://localhost:3001/location'
+      },
+      info: {
+        host: 'localhost:3001'
       },
       yar: {
         get: jest.fn((key) => {
@@ -40,7 +48,8 @@ describe('stationDetailsController.handler', () => {
             fullSearchQuery: { value: 'mockFullSearchQuery' },
             locationMiles: 10,
             locationID: 'mockLocationID',
-            nooflocation: 'multiple'
+            nooflocation: 'multiple',
+            SiteId: 'site123'
           }
           return session[key]
         }),
@@ -75,7 +84,7 @@ describe('stationDetailsController.handler', () => {
         pollutantKeys: ['NO2', 'PM10'],
         selectedYear: 2024,
         downloadresult: { result: 'downloaded' },
-        hrefq: expect.stringContaining('/location/')
+        hrefq: '/location'
       })
     )
 
@@ -119,19 +128,25 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.response.mock.results[0].value)
   })
 
-  it('should return 400 if request is null', async () => {
-    const result = await stationDetailsController.handler(null, h)
+  it('should return 404 if request has no valid referer (direct access)', async () => {
+    request.headers = {}
+    await stationDetailsController.handler(request, h)
 
-    expect(h.response).toHaveBeenCalledWith('Invalid request')
-    expect(h.code).toHaveBeenCalledWith(400)
-    expect(result).toBe(h.response.mock.results[0].value)
+    expect(h.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({
+        statusCode: '404'
+      })
+    )
+    expect(h.code).toHaveBeenCalledWith(404)
   })
 
   it('should return 404 if monitoring result is missing', async () => {
     request.yar.get = jest.fn((key) => {
       const session = {
         stationdetails: {},
-        selectedYear: 2024
+        selectedYear: 2024,
+        SiteId: 'site123'
       }
       return session[key]
     })
@@ -146,7 +161,8 @@ describe('stationDetailsController.handler', () => {
   it('should return 500 if monitoring result is not an array', async () => {
     request.yar.get = jest.fn((key) => {
       const session = {
-        MonitoringstResult: { getmonitoringstation: 'not-an-array' }
+        MonitoringstResult: { getmonitoringstation: 'not-an-array' },
+        SiteId: 'site123'
       }
       return session[key]
     })
@@ -159,12 +175,13 @@ describe('stationDetailsController.handler', () => {
   })
 
   it('should return 404 if station is not found in monitoring result', async () => {
-    request.params.id = 'nonexistent'
+    request.payload = { stationId: 'nonexistent' }
     request.yar.get = jest.fn((key) => {
       const session = {
         MonitoringstResult: {
           getmonitoringstation: [{ id: 'site123' }]
-        }
+        },
+        SiteId: 'nonexistent'
       }
       return session[key]
     })
