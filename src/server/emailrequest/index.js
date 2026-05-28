@@ -19,6 +19,21 @@ export const emailrequest = {
           ...emailrequestController
         },
         {
+          method: 'POST',
+          path: '/emailrequest',
+          ...emailrequestController
+        },
+        {
+          method: 'GET',
+          path: '/emailrequest/{dataSource}',
+          ...emailrequestController
+        },
+        {
+          method: 'POST',
+          path: '/emailrequest/{dataSource}',
+          ...emailrequestController
+        },
+        {
           method: 'GET',
           path: '/emailrequest/confirm',
           ...emailrequestController

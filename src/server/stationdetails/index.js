@@ -5,7 +5,12 @@ const configureRoutes = (server) => {
   server.route([
     {
       method: 'GET',
-      path: '/stationdetails/{id}',
+      path: '/stationdetails',
+      ...stationDetailsController
+    },
+    {
+      method: 'POST',
+      path: '/stationdetails',
       ...stationDetailsController
     },
     {

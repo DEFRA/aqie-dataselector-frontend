@@ -42,6 +42,7 @@ describe('stationDetailsNojsController', () => {
 
     // Mock request object
     mockRequest = {
+      method: 'post',
       url: {
         pathname: '/stationDetailsNojs/123'
       },
@@ -54,6 +55,13 @@ describe('stationDetailsNojsController', () => {
         poll: 'NO2',
         freq: 'Daily'
       },
+      payload: { stationId: 'site123' },
+      headers: {
+        referer: 'http://localhost:3001/location'
+      },
+      info: {
+        host: 'localhost:3001'
+      },
       yar: {
         get: jest.fn(),
         set: jest.fn()
@@ -63,7 +71,8 @@ describe('stationDetailsNojsController', () => {
     // Mock h object
     mockH = {
       view: jest.fn().mockReturnValue('view-response'),
-      response: jest.fn().mockReturnValue('response-value')
+      response: jest.fn().mockReturnValue('response-value'),
+      code: jest.fn().mockReturnThis()
     }
 
     // Mock config
@@ -401,7 +410,7 @@ describe('stationDetailsNojsController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'stationDetailsNojs/index',
         expect.objectContaining({
-          hrefq: '/location/loc123'
+          hrefq: '/location'
         })
       )
     })

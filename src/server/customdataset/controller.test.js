@@ -26,7 +26,12 @@ describe('customdatasetController', () => {
       params: {},
       payload: {},
       path: '/customdataset',
-      headers: {},
+      headers: {
+        referer: 'http://localhost:3001/hubpage'
+      },
+      info: {
+        host: 'localhost:3001'
+      },
       query: {}
     }
     mockH = {
@@ -138,7 +143,8 @@ describe('customdatasetController', () => {
     it('renders JS template when accept header includes text/javascript', async () => {
       mockRequest.params.pollutants = 'null'
       mockRequest.headers = {
-        accept: 'text/html,application/xhtml+xml,text/javascript'
+        accept: 'text/html,application/xhtml+xml,text/javascript',
+        referer: 'http://localhost:3001/hubpage'
       }
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'errors') return 'Error Title'
@@ -170,7 +176,8 @@ describe('customdatasetController', () => {
     it('renders noJS template when user-agent contains noscript', async () => {
       mockRequest.params.pollutants = 'null'
       mockRequest.headers = {
-        'user-agent': 'Mozilla/5.0 (compatible; noscript)'
+        'user-agent': 'Mozilla/5.0 (compatible; noscript)',
+        referer: 'http://localhost:3001/hubpage'
       }
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'errors') return 'Error Title'
@@ -195,7 +202,10 @@ describe('customdatasetController', () => {
     it('renders noJS template when nojs query parameter is true', async () => {
       mockRequest.params.pollutants = 'null'
       mockRequest.query = { nojs: 'true' }
-      mockRequest.headers = { accept: 'text/html,application/xhtml+xml' }
+      mockRequest.headers = {
+        accept: 'text/html,application/xhtml+xml',
+        referer: 'http://localhost:3001/hubpage'
+      }
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'errors') return 'Error Title'
         if (key === 'errorMessage') return 'Error Text'
@@ -218,7 +228,10 @@ describe('customdatasetController', () => {
 
     it('renders noJS template when accept header lacks text/javascript', async () => {
       mockRequest.params.pollutants = 'null'
-      mockRequest.headers = { accept: 'text/html,application/xhtml+xml' }
+      mockRequest.headers = {
+        accept: 'text/html,application/xhtml+xml',
+        referer: 'http://localhost:3001/hubpage'
+      }
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'errors') return 'Error Title'
         if (key === 'errorMessage') return 'Error Text'
@@ -1010,9 +1023,9 @@ describe('customdatasetController', () => {
         errormsg:
           'No monitoring stations are available for your selection. Please try:',
         errorref1: 'Change the year',
-        errorhref1: '/year-aurn?change=true',
+        errorhref1: '/year-aurn/change',
         errorref2: 'Change the location',
-        errorhref2: '/location-aurn?change=true'
+        errorhref2: '/location-aurn/change'
       })
       expect(result).toBe('view-response')
     })
@@ -1043,9 +1056,9 @@ describe('customdatasetController', () => {
         expect.objectContaining({
           error: true,
           errorref1: 'Change the year',
-          errorhref1: '/year-aurn?change=true',
+          errorhref1: '/year-aurn/change',
           errorref2: 'Change the location',
-          errorhref2: '/location-aurn?change=true'
+          errorhref2: '/location-aurn/change'
         })
       )
       expect(result).toBe('view-response')

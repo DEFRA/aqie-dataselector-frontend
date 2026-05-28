@@ -15,6 +15,27 @@ const stationDetailsController = {
     const HTTP_NOT_FOUND = 404
     const HTTP_INTERNAL_SERVER_ERROR = 500
     const logger = createLogger()
+
+    // Check if the request is coming from within the application
+    const referer = request.headers.referer || request.headers.referrer || ''
+    const host = request.info.host || ''
+    const isInternalNavigation =
+      referer && (referer.includes(host) || referer.includes('localhost'))
+
+    // If accessed directly (no valid referer), return 404 page not found
+    if (!isInternalNavigation) {
+      return h
+        .view('error/index', {
+          pageTitle: 'Page not found',
+          heading: 'Page not found',
+          statusCode: '404',
+          content: english.errorpages,
+          message:
+            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+        })
+        .code(404)
+    }
+
     if (!request) {
       return h.response('Invalid request').code(HTTP_BAD_REQUEST)
     }
@@ -24,6 +45,15 @@ const stationDetailsController = {
     request.yar.set('downloadresult', '')
 
     const stationDetailsView = 'stationdetails/index'
+
+    // Get station ID from POST payload or session
+    let stationId
+    if (request.method === 'post' && request.payload?.stationId) {
+      stationId = request.payload.stationId
+      request.yar.set('SiteId', stationId)
+    } else {
+      stationId = request.yar.get('SiteId')
+    }
 
     // Handle download parameters
     if (request.params.download) {
@@ -46,7 +76,7 @@ const stationDetailsController = {
         .code(HTTP_INTERNAL_SERVER_ERROR)
     }
 
-    const station = result.find((x) => x.id === request.params.id)
+    const station = result.find((x) => x.id === stationId)
     if (!station) {
       return h.response('Station not found').code(HTTP_NOT_FOUND)
     }
@@ -70,7 +100,6 @@ const stationDetailsController = {
     const mapLocation = buildMapLocation(lat, lon)
 
     const fullSearchQuery = request?.yar?.get('fullSearchQuery')?.value
-    const multipleLocID = request?.yar?.get('locationID')
 
     // Prepare API parameters
     const apiParams = {
@@ -117,7 +146,7 @@ const stationDetailsController = {
       hrefq:
         request.yar.get('nooflocation') === 'single'
           ? `/multiplelocations`
-          : `/location/${multipleLocID}`
+          : `/location`
     }
 
     return h.view(stationDetailsView, viewData)

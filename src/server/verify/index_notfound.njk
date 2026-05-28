@@ -1,0 +1,16 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-l">{{ heading }}</h1>
+      <p class="govuk-body">{{ message }}</p>
+      <p class="govuk-body">Please try the following:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>Wait a few minutes and try clicking the link in your email again</li>
+        <li>Request a new download from <a href="/hubpage" class="govuk-link">Get air pollution data</a></li>
+      </ul>
+      <p class="govuk-body">If the problem persists, please <a href="/problem-with-service" class="govuk-link">contact support</a>.</p>
+    </div>
+  </div>
+{% endblock %}

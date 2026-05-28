@@ -97,7 +97,6 @@ export const verifyController = {
   async handler(request, h) {
     // Extract path parameters (unique ID and timestamp)
     const { id, timestamp } = request.params
-
     // You can add validation logic here
     if (!id || !timestamp) {
       return h.view('verify/index', {
@@ -140,6 +139,33 @@ export const verifyController = {
       ) {
         logger.error('API call failed, redirecting to problem page')
         return h.redirect('/problem-with-service?statusCode=500')
+      }
+
+      // Validate the S3 presigned URL returns 200
+      try {
+        const s3Response = await axios.get(downloadEmailUrl, {
+          timeout: HTTP_REQUEST_TIMEOUT_MS,
+          responseType: 'stream', // Don't download full file, just check response
+          maxContentLength: 1 // Stop after receiving minimal data
+        })
+        logger.info(
+          `S3 URL validation successful, status: ${s3Response.status}`
+        )
+        // Abort the stream since we only needed to check the status
+        s3Response.data.destroy()
+      } catch (error) {
+        // Check if error is due to maxContentLength (which means URL is valid)
+        if (error.code === 'ERR_FR_MAX_BODY_LENGTH_EXCEEDED') {
+          logger.info('S3 URL is valid (maxContentLength reached)')
+        } else {
+          const statusCode = error.response?.status || 500
+          logger.error(
+            `S3 URL validation failed, status: ${statusCode}, error: ${error.message}`
+          )
+          // Always redirect with 500 to show "problem with service" page
+          // (not 404 which shows "page not found")
+          return h.redirect('/problem-with-service?statusCode=500')
+        }
       }
 
       return h.view('verify/index', {
