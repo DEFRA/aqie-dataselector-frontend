@@ -9,6 +9,28 @@ import {
 
 const logger = createLogger()
 
+function getNonAurnNetworkIdCsv(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  const otherDataGroup = groups.find(
+    (g) => g?.category === 'Other data from Defra'
+  )
+  const networks = Array.isArray(otherDataGroup?.networks)
+    ? otherDataGroup.networks
+    : []
+
+  const ids = networks
+    .map((network) => {
+      if (typeof network === 'object' && network !== null) {
+        return network.id
+      }
+      return null
+    })
+    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+    .map((id) => String(id).trim())
+
+  return Array.from(new Set(ids)).join(',')
+}
+
 async function invokeDownload(apiparams) {
   logger.info(`AURN download apiparams ${JSON.stringify(apiparams)}`)
 
@@ -100,10 +122,20 @@ const downloadAurnController = {
       const selectedyear = request.params.year
       const dataSource = request.params.dataSource
       const isCountry = request.yar.get('Location') === 'Country'
+      const requestedNetworkId = (request.query?.networkId || '')
+        .toString()
+        .trim()
+      const nonAurnNetworkId = getNonAurnNetworkIdCsv(
+        request.yar.get('datasourceGroups') || []
+      )
 
       const apiparams = {
         pollutantName: request.yar.get('selectedPollutantID'),
         dataSource,
+        networkId:
+          dataSource === 'NON-AURN'
+            ? requestedNetworkId || nonAurnNetworkId
+            : '',
         Region: isCountry
           ? request.yar.get('selectedlocation').join(',')
           : request.yar.get('selectedLAIDs'),

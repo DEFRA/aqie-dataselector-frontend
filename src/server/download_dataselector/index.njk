@@ -146,6 +146,9 @@
         "UKEAP - Hydrocarbon Network": "Measurements of volatile organic compounds at rural background locations.",
         "UKEAP: Metals Network": "Monthly measurements of heavy metals at rural background locations.",
         "UKEAP - Metals Network": "Monthly measurements of heavy metals at rural background locations.",
+        "UKEAP: Acid gases and aerosol network": "Measurements of acid gases and aerosol components at rural background locations.",
+        "UKEAP - Acid gases and aerosol network": "Measurements of acid gases and aerosol components at rural background locations.",
+        "UKEAP - Acid Gas & Aerosol Network": "Measurements of acid gases and aerosol components at rural background locations.",
         "UKEAP: Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations.",
         "UKEAP - Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations."
       } %}
@@ -170,7 +173,7 @@
         {% else %}
           {% if yearrange == 'Single' %}
           <a href="/download_aurn_nojs/{{ finalyear }}/NON-AURN"
-             onclick="getAPIdownload('{{ finalyear }}', 'NON-AURN'); return false;"
+             onclick="getAPIdownload('{{ finalyear }}', 'NON-AURN', '{{ network.id if network.id is not none else '' }}'); return false;"
              role="button"
              class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
              aria-label="Download data for {{ network.networkType }}">
@@ -205,7 +208,7 @@
                 <th scope="row" class="govuk-table__header">{{ year }}</th>
                 <td class="govuk-table__cell">
                   <a href="/download_aurn_nojs/{{ year }}/NON-AURN"
-                     onclick="getAPIdownload('{{ year }}', 'NON-AURN'); return false;"
+                     onclick="getAPIdownload('{{ year }}', 'NON-AURN', '{{ network.id if network.id is not none else '' }}'); return false;"
                      class="govuk-link">Download monthly data</a>
                 </td>
               </tr>
@@ -252,7 +255,7 @@
   </div>
 </div>
 <script>
-async function getAPIdownload(year, dataSource) {
+async function getAPIdownload(year, dataSource, networkId = '') {
    
     // Show loading indicator
   showLoadingIndicator('Preparing your download...');
@@ -260,7 +263,8 @@ async function getAPIdownload(year, dataSource) {
 
     try {
         // Step 1: Start download job and get jobID
-        const response = await fetch(`/download_aurn/${year}/${dataSource}`);
+        const networkIdQuery = networkId ? `?networkId=${encodeURIComponent(networkId)}` : '';
+        const response = await fetch(`/download_aurn/${year}/${dataSource}${networkIdQuery}`);
         
         if (!response.ok) {
             throw new Error(`Failed to start download: ${response.status}`);
@@ -345,7 +349,8 @@ async function getAPIdownload(year, dataSource) {
         console.error('Error fetching download:', error);
         hideLoadingIndicator();
         // Fallback to no-JS route if AJAX fails
-        window.location.href = `/download_aurn_nojs/${year}/${dataSource}`;
+        const networkIdQuery = networkId ? `?networkId=${encodeURIComponent(networkId)}` : '';
+        window.location.href = `/download_aurn_nojs/${year}/${dataSource}${networkIdQuery}`;
     }
 }
 

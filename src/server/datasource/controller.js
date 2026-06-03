@@ -26,16 +26,44 @@ function lookupNetwork(name) {
   return networkLookup.get((name || '').toLowerCase().trim()) || null
 }
 
+const OTHER_DATA_CATEGORY = 'Other data from Defra'
+
+function getNonAurnNetworkIdCsv(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  const otherDataGroup = groups.find((g) => g?.category === OTHER_DATA_CATEGORY)
+  const networks = Array.isArray(otherDataGroup?.networks)
+    ? otherDataGroup.networks
+    : []
+
+  const ids = networks
+    .map((network) => {
+      if (typeof network === 'object' && network !== null) {
+        return network.id
+      }
+      return null
+    })
+    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+    .map((id) => String(id).trim())
+
+  return Array.from(new Set(ids)).join(',')
+}
+
 // Enrich raw string groups with full metadata; also build "other" groups
 function enrichGroupsAndBuildOther(rawGroups) {
   const usedAbbreviations = new Set()
 
   const enrichedGroups = rawGroups.map((group) => ({
     category: group.category,
-    networks: group.networks.map((name) => {
-      const meta = lookupNetwork(name)
+    networks: group.networks.map((network) => {
+      const networkName = typeof network === 'string' ? network : network?.name
+      const meta = lookupNetwork(networkName)
       if (meta) usedAbbreviations.add(meta.abbreviation)
-      return meta || { name, fullName: name }
+      if (meta && typeof network === 'object' && network) {
+        return { ...meta, ...network }
+      }
+      return (
+        meta || { ...(network || {}), name: networkName, fullName: networkName }
+      )
     })
   }))
 
@@ -64,6 +92,7 @@ const KNOWN_CATEGORIES = new Set([
 export async function fetchDatasourceForPollutant(pollutantID) {
   const body = { pollutantID: String(pollutantID) }
   logger.info(`Fetching data sources for pollutantID ${pollutantID}`)
+
   if (config.get('isDevelopment')) {
     try {
       const url = config.get('datasourceDevUrl')
@@ -106,6 +135,19 @@ export async function fetchDatasourceForPollutant(pollutantID) {
 // Parse flat array ["Category", "Network", "Category", "Network", ...]
 // into [{ category: "Category", networks: ["Network", ...] }, ...]
 export function groupDatasources(flat) {
+  if (
+    Array.isArray(flat) &&
+    flat.every(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        typeof item.category === 'string' &&
+        Array.isArray(item.networks)
+    )
+  ) {
+    return flat
+  }
+
   const groups = []
   let currentGroup = null
 
@@ -135,6 +177,8 @@ export const datasourceController = {
       const isCountry = request.yar.get('Location') === 'Country'
 
       if (finalyear && pollutantID && selectedlocation) {
+        const datasourceGroups = request.yar.get('datasourceGroups') || []
+        const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
         const baseParams = {
           pollutantName: pollutantID,
           Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
@@ -145,8 +189,16 @@ export const datasourceController = {
         }
         try {
           const [aurnCount, nonAurnCount] = await Promise.all([
-            invokeStationCount({ ...baseParams, dataSource: 'AURN' }),
-            invokeStationCount({ ...baseParams, dataSource: 'NON-AURN' })
+            invokeStationCount({
+              ...baseParams,
+              dataSource: 'AURN',
+              networkId: ''
+            }),
+            invokeStationCount({
+              ...baseParams,
+              dataSource: 'NON-AURN',
+              networkId: nonAurnNetworkId
+            })
           ])
           request.yar.set('stationCountAURN', aurnCount)
           request.yar.set('stationCountNONAURN', nonAurnCount)
@@ -179,6 +231,7 @@ export const datasourceController = {
           return h.redirect('/problem-with-service?statusCode=500')
         }
         datasourceGroups = groupDatasources(flat)
+
         request.yar.set('datasourceGroups', datasourceGroups)
       } else {
         logger.warn(

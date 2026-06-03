@@ -13,6 +13,26 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
+function getNonAurnNetworkIdCsv(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  const otherDataGroup = groups.find(
+    (g) => g?.category === 'Other data from Defra'
+  )
+  const networks = Array.isArray(otherDataGroup?.networks)
+    ? otherDataGroup.networks
+    : []
+  const ids = networks
+    .map((network) => {
+      if (typeof network === 'object' && network !== null) {
+        return network.id
+      }
+      return null
+    })
+    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+    .map((id) => String(id).trim())
+  return Array.from(new Set(ids)).join(',')
+}
+
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
 async function invokeEmailRequest(emailRequestParameters) {
@@ -115,6 +135,14 @@ export const emailrequestController = {
       request.yar.set('pendingDataSource', dataSourceParam)
     }
 
+    if (dataSourceParam === 'NON-AURN') {
+      const datasourceGroups = request.yar.get('datasourceGroups') || []
+      const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+      if (derivedNetworkId) {
+        request.yar.set('pendingNetworkId', derivedNetworkId)
+      }
+    }
+
     if (request.path?.includes('/confirm')) {
       // Get email from form payload
       const email = request.payload?.email
@@ -163,11 +191,18 @@ export const emailrequestController = {
         request.yar.clear('pendingDataSource')
       }
 
+      const selectedDataSource =
+        request.yar.get('selectedDatasourceType') || 'AURN'
+      const pendingNetworkId = (request.yar.get('pendingNetworkId') || '')
+        .toString()
+        .trim()
+
       // Build parameters based on region type
       const regionType = request.yar.get('Location')
       const stationcountparameters = {
         pollutantName: request.yar.get('selectedPollutantID'),
-        dataSource: request.yar.get('selectedDatasourceType') || 'AURN',
+        dataSource: selectedDataSource,
+        networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
         Region:
           regionType === 'Country'
             ? request.yar.get('selectedlocation').join(',')
@@ -178,6 +213,7 @@ export const emailrequestController = {
         dataselectordownloadtype: 'dataSelectorMultiple',
         email: request.yar.get('email') // Use the validated email instead of hardcoded value
       }
+      request.yar.clear('pendingNetworkId')
 
       // Validate required parameters - redirect to problem-with-service if any are null or blank
       const requiredParams = [

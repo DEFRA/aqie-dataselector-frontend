@@ -221,6 +221,54 @@ function getPollutantNames() {
   }
 }
 
+function normaliseNetworkTypeValue(entry) {
+  return entry?.networkType ?? entry?.NetworkType ?? null
+}
+
+function normaliseCountValue(entry) {
+  const raw = entry?.count ?? entry?.Count ?? 0
+  const numeric = Number(raw)
+  return Number.isFinite(numeric) ? numeric : 0
+}
+
+function aggregateNetworkCounts(networkEntries) {
+  const aggregated = new Map()
+
+  for (const entry of Array.isArray(networkEntries) ? networkEntries : []) {
+    const networkType = normaliseNetworkTypeValue(entry)
+    if (!networkType || networkType === 'Unknown') {
+      continue
+    }
+
+    const current = aggregated.get(networkType) || 0
+    aggregated.set(networkType, current + normaliseCountValue(entry))
+  }
+
+  return aggregated
+}
+
+function getNonAurnNetworkIdCsv(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  const otherDataGroup = groups.find(
+    (g) => g?.category === 'Other data from Defra'
+  )
+  const networks = Array.isArray(otherDataGroup?.networks)
+    ? otherDataGroup.networks
+    : []
+
+  const ids = networks
+    .map((network) => {
+      if (typeof network === 'object' && network !== null) {
+        return network.id
+      }
+      return null
+    })
+    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+    .map((id) => String(id).trim())
+
+  return Array.from(new Set(ids)).join(',')
+}
+
 function buildStationCountParameters(request, finalyear) {
   const isCountry = request.yar.get('Location') === 'Country'
   const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
@@ -263,11 +311,17 @@ async function handleStationCountCalculation(request) {
   request.yar.set('finalyear1', finalyear)
 
   const baseParams = buildStationCountParameters(request, finalyear)
+  const nonAurnNetworkId = getNonAurnNetworkIdCsv(
+    request.yar.get('datasourceGroups') || []
+  )
 
   const [aurnCount, nonAurnCount] = await Promise.all([
-    invokeStationCount({ ...baseParams, dataSource: 'AURN' }),
-    invokeStationCount({ ...baseParams, dataSource: 'NON-AURN' })
-    // console.log('Station count results:', { aurnCount, nonAurnCount })
+    invokeStationCount({ ...baseParams, dataSource: 'AURN', networkId: '' }),
+    invokeStationCount({
+      ...baseParams,
+      dataSource: 'NON-AURN',
+      networkId: nonAurnNetworkId
+    })
   ])
   // NON-AURN returns [{NetworkType, Count}, ...] — exclude arrays from error check
   const isError = (val) =>
@@ -309,27 +363,51 @@ async function handleStationCountCalculation(request) {
   const otherDataGroup = datasourceGroups.find(
     (g) => g.category === 'Other data from Defra'
   )
-  const expectedNetworks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
+  const expectedNetworks = (
+    Array.isArray(otherDataGroup?.networks) ? otherDataGroup.networks : []
+  )
+    .map((network) =>
+      typeof network === 'string'
+        ? { name: network, id: null }
+        : {
+            name: network?.name || '',
+            id: network?.id ?? null
+          }
+    )
+    .map((network) => ({
+      ...network,
+      name: String(network.name).trim()
+    }))
+    .filter((network) => Boolean(network.name))
+
+  const expectedNames = expectedNetworks
+    .map((network) => network.name)
+    .filter(Boolean)
 
   let ukeapNetworks
-  if (expectedNetworks.length > 0) {
+  if (expectedNames.length > 0) {
     // Build a lookup of API-returned counts (excluding "Unknown" entries)
-    const apiCountMap = new Map()
-    for (const n of rawNonAurn) {
-      if (n.networkType && n.networkType !== 'Unknown') {
-        apiCountMap.set(n.networkType, Number(n.count) || 0)
-      }
-    }
+    const apiCountMap = aggregateNetworkCounts(rawNonAurn)
+
     // Map each expected network to its count (0 if API didn't return it or returned "Unknown")
-    ukeapNetworks = expectedNetworks.map((name) => ({
-      networkType: name,
-      count: apiCountMap.has(name) ? apiCountMap.get(name) : 0
+    ukeapNetworks = expectedNetworks.map((network) => ({
+      networkType: network.name,
+      id: network.id,
+      count: apiCountMap.has(network.name) ? apiCountMap.get(network.name) : 0
     }))
+
+    // Include any additional network types returned by API but not present in datasourceGroups
+    const expectedSet = new Set(expectedNames)
+    const additionalNetworks = Array.from(apiCountMap.entries())
+      .filter(([name]) => !expectedSet.has(name))
+      .map(([networkType, count]) => ({ networkType, id: null, count }))
+
+    ukeapNetworks = ukeapNetworks.concat(additionalNetworks)
   } else {
     // No datasourceGroups info — use raw API result, filtering out Unknown
-    ukeapNetworks = rawNonAurn.filter((n) => n.networkType !== 'Unknown')
+    ukeapNetworks = Array.from(
+      aggregateNetworkCounts(rawNonAurn).entries()
+    ).map(([networkType, count]) => ({ networkType, id: null, count }))
   }
 
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
@@ -374,10 +452,15 @@ function parseStationCountPayload(payload) {
 
   // networkType+count pairs (case-insensitive keys) → array of {networkType, count}
   const networks = []
-  const pairRe = /[Nn]etwork[Tt]ype:"([^"]+)",[Cc]ount:"([^"]+)"/g
+  const pairRe =
+    /[Nn]etwork[Tt]ype\s*:\s*"([^"]+)"\s*,\s*[Cc]ount\s*:\s*"([^"]+)"/g
   let m
   while ((m = pairRe.exec(str)) !== null) {
-    networks.push({ networkType: m[1], count: Number(m[2]) || m[2] })
+    const numericCount = Number(m[2])
+    networks.push({
+      networkType: m[1],
+      count: Number.isFinite(numericCount) ? numericCount : 0
+    })
   }
   if (networks.length > 0) return networks
 
@@ -394,6 +477,7 @@ function parseStationCountPayload(payload) {
 }
 
 export async function invokeStationCount(stationcountparameters) {
+  // console.log('Invoking station count with parameters:', stationcountparameters) // Debug log
   if (config.get('isDevelopment')) {
     try {
       const url = config.get('stationCountDevUrl')
