@@ -98,6 +98,7 @@ describe('downloadAurnController', () => {
           {
             pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
             dataSource: 'AURN',
+            networkId: '',
             Region: 'England',
             regiontype: 'Country',
             Year: '2024',
@@ -178,6 +179,7 @@ describe('downloadAurnController', () => {
           {
             pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
             dataSource: 'AURN',
+            networkId: '',
             Region: 'England',
             regiontype: 'Country',
             Year: '2024',
@@ -214,6 +216,81 @@ describe('downloadAurnController', () => {
           expect.objectContaining({
             Region: '1,2,3',
             regiontype: 'LocalAuthority'
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'sends networkId for NON-AURN from datasource groups',
+      async () => {
+        mockRequest.params = { year: '2024', dataSource: 'NON-AURN' }
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedPollutantID: '44',
+            selectedlocation: ['England'],
+            Location: 'Country',
+            datasourceGroups: [
+              {
+                category: 'Other data from Defra',
+                networks: [
+                  { name: 'UKEAP - Rural NO2 Network', id: 1 },
+                  { name: 'UKEAP - Acid Gas & Aerosol Network', id: 2 }
+                ]
+              }
+            ]
+          }
+          return values[key]
+        })
+
+        axios.post.mockResolvedValueOnce({ data: 'job-non-aurn' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({
+            dataSource: 'NON-AURN',
+            networkId: '1,2'
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'uses query networkId for NON-AURN download when provided',
+      async () => {
+        mockRequest.params = { year: '2024', dataSource: 'NON-AURN' }
+        mockRequest.query = { networkId: '2' }
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedPollutantID: '44',
+            selectedlocation: ['England'],
+            Location: 'Country',
+            datasourceGroups: [
+              {
+                category: 'Other data from Defra',
+                networks: [
+                  { name: 'UKEAP - Rural NO2 Network', id: 1 },
+                  { name: 'UKEAP - Acid Gas & Aerosol Network', id: 2 }
+                ]
+              }
+            ]
+          }
+          return values[key]
+        })
+
+        axios.post.mockResolvedValueOnce({ data: 'job-non-aurn-network-2' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({
+            dataSource: 'NON-AURN',
+            networkId: '2'
           })
         )
       },
@@ -923,6 +1000,7 @@ describe('downloadAurnController', () => {
         expect(sentBody).toMatchObject({
           pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
           dataSource: 'AURN',
+          networkId: '',
           Region: 'England',
           regiontype: 'Country',
           Year: '2024',

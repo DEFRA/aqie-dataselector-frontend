@@ -80,7 +80,13 @@
             <p class="govuk-body govuk-!-margin-bottom-1"><strong>{{ group.category }}</strong></p>
             <ul class="govuk-list govuk-!-margin-bottom-2">
               {% for network in group.networks %}
-                <li>{{ network }}</li>
+                <li>
+                  {% if network and network.name %}
+                    {{ network.name }}
+                  {% else %}
+                    {{ network }}
+                  {% endif %}
+                </li>
               {% endfor %}
             </ul>
           {% endif %}

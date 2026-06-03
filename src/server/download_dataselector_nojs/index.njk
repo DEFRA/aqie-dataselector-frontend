@@ -130,6 +130,9 @@
             "UKEAP - Hydrocarbon Network": "Measurements of volatile organic compounds at rural background locations.",
             "UKEAP: Metals Network": "Monthly measurements of heavy metals at rural background locations.",
             "UKEAP - Metals Network": "Monthly measurements of heavy metals at rural background locations.",
+            "UKEAP: Acid gases and aerosol network": "Measurements of acid gases and aerosol components at rural background locations.",
+            "UKEAP - Acid gases and aerosol network": "Measurements of acid gases and aerosol components at rural background locations.",
+            "UKEAP - Acid Gas & Aerosol Network": "Measurements of acid gases and aerosol components at rural background locations.",
             "UKEAP: Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations.",
             "UKEAP - Acid Deposition Network": "Monthly measurements of acid deposition at rural background locations."
           } %}
@@ -146,7 +149,7 @@
               <p class="govuk-body">No data available for the selected range.</p>
             {% else %}
               {% if yearrange == 'Single' %}
-              <a href="/download_aurn_nojs/{{ finalyear }}/NON-AURN"
+                <a href="/download_aurn_nojs/{{ finalyear }}/NON-AURN?networkId={{ network.id if network.id is not none else '' }}"
                  role="button"
                  class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
                  aria-label="Download data for {{ network.networkType }}">
@@ -173,14 +176,14 @@
                   <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header">Download all years</th>
                     <td class="govuk-table__cell">
-                      <a href="/emailrequest" class="govuk-link">Request Data</a>
+                      <a href="/emailrequest/NON-AURN" class="govuk-link">Request Data</a>
                     </td>
                   </tr>
                   {% for year in finalyear %}
                   <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header">{{ year }}</th>
                     <td class="govuk-table__cell">
-                      <a href="/download_aurn_nojs/{{ year }}/NON-AURN" class="govuk-link">Download monthly data</a>
+                      <a href="/download_aurn_nojs/{{ year }}/NON-AURN?networkId={{ network.id if network.id is not none else '' }}" class="govuk-link">Download monthly data</a>
                     </td>
                   </tr>
                   {% endfor %}

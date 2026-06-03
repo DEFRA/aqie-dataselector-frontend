@@ -321,6 +321,7 @@ describe('emailrequestController', () => {
       expect(mockAxios).toHaveBeenCalledWith('https://api.example.com/email', {
         pollutantName: 'pollutant-id-123',
         dataSource: 'AURN', // selectedDatasourceType from session
+        networkId: '',
         Region: 'London,Manchester',
         regiontype: 'LocalAuthority',
         Year: '2023',
@@ -1035,7 +1036,8 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockRequest.yar.clear).not.toHaveBeenCalled()
+      expect(mockRequest.yar.clear).toHaveBeenCalledTimes(1)
+      expect(mockRequest.yar.clear).toHaveBeenCalledWith('pendingNetworkId')
     })
   })
 

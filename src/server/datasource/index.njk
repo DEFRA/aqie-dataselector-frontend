@@ -1,35 +1,43 @@
 {% extends 'layouts/page.njk' %}
 
 {% macro networkCard(network) %}
-<article class="govuk-!-margin-bottom-6">
-  <h3 class="govuk-heading-s govuk-!-margin-bottom-2">{{ network.fullName or network.name }}</h3>
+{% if network and network.name %}
+  {# Handle object networks with full metadata #}
+  <article class="govuk-!-margin-bottom-6">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">{{ network.fullName or network.name }}</h3>
 
-  {% if network.description %}
-    <p class="govuk-body govuk-!-margin-bottom-3">{{ network.description }}</p>
-  {% endif %}
+    {% if network.description %}
+      <p class="govuk-body govuk-!-margin-bottom-3">{{ network.description }}</p>
+    {% endif %}
 
-  {% if network.pollutants and network.pollutants | length > 0 %}
-    <p class="govuk-body govuk-!-margin-bottom-1">
-      <strong>Pollutants:</strong> {{ network.pollutants | join(', ') }}
-    </p>
-  {% endif %}
+    {% if network.pollutants and network.pollutants | length > 0 %}
+      <p class="govuk-body govuk-!-margin-bottom-1">
+        <strong>Pollutants:</strong> {{ network.pollutants | join(', ') }}
+      </p>
+    {% endif %}
 
-  {% if network.startDate %}
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> {{ network.startDate }}</p>
-  {% endif %}
+    {% if network.startDate %}
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Start date:</strong> {{ network.startDate }}</p>
+    {% endif %}
 
-  {% if network.timeResolution %}
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> {{ network.timeResolution }}</p>
-  {% endif %}
+    {% if network.timeResolution %}
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Time resolution:</strong> {{ network.timeResolution }}</p>
+    {% endif %}
 
-  {% if network.published %}
-    <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> {{ network.published }}</p>
-  {% endif %}
+    {% if network.published %}
+      <p class="govuk-body govuk-!-margin-bottom-1"><strong>Published:</strong> {{ network.published }}</p>
+    {% endif %}
 
-  {% if network.instrument %}
-    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Instrument:</strong> {{ network.instrument }}</p>
-  {% endif %}
-</article>
+    {% if network.instrument %}
+      <p class="govuk-body govuk-!-margin-bottom-0"><strong>Instrument:</strong> {{ network.instrument }}</p>
+    {% endif %}
+  </article>
+{% else %}
+  {# Handle string networks (legacy) #}
+  <article class="govuk-!-margin-bottom-6">
+    <h3 class="govuk-heading-s govuk-!-margin-bottom-2">{{ network }}</h3>
+  </article>
+{% endif %}
 {% endmacro %}
 
 {% block content %}
@@ -57,7 +65,7 @@
         <div class="govuk-tabs__panel" id="tab-relevant">
           {% set hasAnyGroup = false %}
           {% for group in datasourceGroups %}
-            {% if group.networks | length > 0 %}
+            {% if group.category != 'Other data from Defra' and group.networks | length > 0 %}
               {% set hasAnyGroup = true %}
             {% endif %}
           {% endfor %}
@@ -65,7 +73,7 @@
           {% if hasAnyGroup %}
             {% set firstVisible = true %}
             {% for group in datasourceGroups %}
-              {% if group.networks | length > 0 %}
+              {% if group.category != 'Other data from Defra' and group.networks | length > 0 %}
                 {% if not firstVisible %}
                   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
                 {% endif %}
@@ -83,15 +91,26 @@
 
         {# ── Tab 2: all other networks ── #}
         <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-other">
-          {% if otherGroups and otherGroups | length > 0 %}
-            {% for group in otherGroups %}
-              {% if not loop.first %}
+          {% set hasOtherDataGroup = false %}
+          {% for group in datasourceGroups %}
+            {% if group.category == 'Other data from Defra' and group.networks | length > 0 %}
+              {% set hasOtherDataGroup = true %}
+            {% endif %}
+          {% endfor %}
+
+          {% if hasOtherDataGroup %}
+            {% set firstOtherVisible = true %}
+            {% for group in datasourceGroups %}
+              {% if group.category == 'Other data from Defra' and group.networks | length > 0 %}
+              {% if not firstOtherVisible %}
                 <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
               {% endif %}
+              {% set firstOtherVisible = false %}
               <h2 class="govuk-heading-m">{{ group.category }}</h2>
               {% for network in group.networks %}
                 {{ networkCard(network) }}
               {% endfor %}
+              {% endif %}
             {% endfor %}
           {% else %}
             <p class="govuk-body">No other data sources available.</p>
