@@ -524,9 +524,7 @@ describe('downloadAurnController', () => {
 
         const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -540,9 +538,7 @@ describe('downloadAurnController', () => {
 
         const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -561,9 +557,7 @@ describe('downloadAurnController', () => {
         await jest.runAllTimersAsync()
         const result = await promise
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -589,9 +583,7 @@ describe('downloadAurnController', () => {
         await jest.runAllTimersAsync()
         const result = await promise
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirect-response')
       },
       TEST_TIMEOUT_MS
@@ -611,9 +603,7 @@ describe('downloadAurnController', () => {
 
         const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -641,9 +631,7 @@ describe('downloadAurnController', () => {
         await jest.runAllTimersAsync()
         const result = await promise
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -658,9 +646,7 @@ describe('downloadAurnController', () => {
 
         const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -675,9 +661,7 @@ describe('downloadAurnController', () => {
 
         const result = await downloadAurnController.handler(mockRequest, mockH)
 
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -969,9 +953,7 @@ describe('downloadAurnController', () => {
           payload: { error: true, message: 'Bad request' }
         })
         const result = await downloadAurnController.handler(mockRequest, mockH)
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -982,9 +964,7 @@ describe('downloadAurnController', () => {
       async () => {
         Wreck.post.mockRejectedValueOnce(new Error('Wreck connection error'))
         const result = await downloadAurnController.handler(mockRequest, mockH)
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS
@@ -1099,9 +1079,7 @@ describe('downloadAurnController', () => {
         const promise = downloadAurnController.handler(mockRequest, mockH)
         await jest.runAllTimersAsync()
         const result = await promise
-        expect(mockH.redirect).toHaveBeenCalledWith(
-          '/problem-with-service?statusCode=500'
-        )
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
         expect(result).toBe('redirected')
       },
       TEST_TIMEOUT_MS

@@ -27,9 +27,7 @@ function catchAll(request, h) {
   request.logger.error(response)
   request.logger.error(response?.stack)
   // return  response.output
-  return h.redirect(
-    '/problem-with-service?statusCode=' + response.output.statusCode
-  )
+  return h.redirect('/problem-with-service')
 }
 
 export { catchAll, setErrorMessage }

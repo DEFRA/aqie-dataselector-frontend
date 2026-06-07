@@ -176,7 +176,7 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 403,
-        redirectUrl: '/problem-with-service?statusCode=403',
+        redirectUrl: '/problem-with-service',
         message: 'Status check failed'
       })
       expect(mockH.type).toHaveBeenCalledWith('application/json')
@@ -196,7 +196,7 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 500,
-        redirectUrl: '/problem-with-service?statusCode=500',
+        redirectUrl: '/problem-with-service',
         message: 'Status check failed'
       })
       expect(mockH.type).toHaveBeenCalledWith('application/json')
@@ -215,7 +215,7 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 500,
-        redirectUrl: '/problem-with-service?statusCode=500',
+        redirectUrl: '/problem-with-service',
         message: 'Status check failed'
       })
       expect(mockH.type).toHaveBeenCalledWith('application/json')
@@ -243,7 +243,7 @@ describe('downloadAurnstatusController', () => {
       expect(mockH.response).toHaveBeenCalledWith({
         error: true,
         statusCode: 500,
-        redirectUrl: '/problem-with-service?statusCode=500',
+        redirectUrl: '/problem-with-service',
         message: 'An error occurred'
       })
       expect(mockH.type).toHaveBeenCalledWith('application/json')

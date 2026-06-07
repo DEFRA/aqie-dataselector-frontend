@@ -151,9 +151,7 @@ describe('downloadcontroller', () => {
 
       const result = await downloadcontroller.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
       expect(result).toBe('redirected')
     })
 

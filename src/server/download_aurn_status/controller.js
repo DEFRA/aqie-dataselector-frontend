@@ -11,7 +11,7 @@ import {
 
 const logger = createLogger()
 
-const PROBLEM_SERVICE_500_URL = `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
+const PROBLEM_SERVICE_500_URL = '/problem-with-service'
 
 function createServerErrorResponse() {
   return {
@@ -62,7 +62,7 @@ async function invokeDownloadS3(downloadstatusapiparams) {
         return {
           error: true,
           statusCode: error.response.status,
-          redirectUrl: `/problem-with-service?statusCode=${error.response.status}`
+          redirectUrl: '/problem-with-service'
         }
       }
       return createServerErrorResponse()
@@ -97,9 +97,7 @@ const downloadAurnstatusController = {
           .response({
             error: true,
             statusCode: statusData.statusCode,
-            redirectUrl:
-              statusData.redirectUrl ||
-              `/problem-with-service?statusCode=${statusData.statusCode || HTTP_INTERNAL_SERVER_ERROR}`,
+            redirectUrl: statusData.redirectUrl || '/problem-with-service',
             message: 'Status check failed'
           })
           .type('application/json')

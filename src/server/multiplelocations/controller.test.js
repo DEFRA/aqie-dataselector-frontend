@@ -306,9 +306,7 @@ describe('multipleLocationsController', () => {
 
     const result = await multipleLocationsController.handler(request, h)
 
-    expect(h.redirect).toHaveBeenCalledWith(
-      '/problem-with-service?statusCode=500'
-    )
+    expect(h.redirect).toHaveBeenCalledWith('/problem-with-service')
     expect(result).toBe('redirected')
   })
 

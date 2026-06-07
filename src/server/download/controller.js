@@ -50,7 +50,7 @@ const downloadcontroller = {
       return h.response(downloadresult).type('application/json').code(HTTP_OK)
     } catch (error) {
       logger.error(`Download handler error: ${error.message}`)
-      return h.redirect('/problem-with-service?statusCode=500')
+      return h.redirect('/problem-with-service')
     }
   }
 }

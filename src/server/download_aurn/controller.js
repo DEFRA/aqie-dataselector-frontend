@@ -2,10 +2,7 @@ import { config } from '~/src/config/config.js'
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import {
-  HTTP_OK,
-  HTTP_INTERNAL_SERVER_ERROR
-} from '~/src/server/common/constants/magic-numbers.js'
+import { HTTP_OK } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
 
@@ -148,9 +145,7 @@ const downloadAurnController = {
       const downloadstatusapiparams = await invokeDownload(apiparams)
 
       if (downloadstatusapiparams?.error) {
-        return h.redirect(
-          `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
-        )
+        return h.redirect('/problem-with-service')
       }
 
       if (request.url.pathname.includes('/download_aurn_nojs/')) {
@@ -160,9 +155,7 @@ const downloadAurnController = {
 
         // Check for error from polling
         if (downloadResultaurn?.error) {
-          return h.redirect(
-            `/problem-with-service?statusCode=${HTTP_INTERNAL_SERVER_ERROR}`
-          )
+          return h.redirect('/problem-with-service')
         }
 
         const viewData = {
@@ -179,7 +172,7 @@ const downloadAurnController = {
         .code(HTTP_OK)
     } catch (error) {
       logger.error(`Download AURN handler error: ${error.message}`)
-      return h.redirect('/problem-with-service?statusCode=500')
+      return h.redirect('/problem-with-service')
     }
   }
 }

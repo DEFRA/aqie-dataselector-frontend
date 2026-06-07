@@ -230,7 +230,7 @@ export const emailrequestController = {
 
       if (hasInvalidParams) {
         logger.error('Email request failed - missing required parameters')
-        return h.redirect('/problem-with-service?statusCode=500')
+        return h.redirect('/problem-with-service')
       }
 
       const result = await invokeEmailRequest(stationcountparameters)
@@ -244,7 +244,7 @@ export const emailrequestController = {
         logger.error(
           'Email request failed - redirecting to problem-with-service'
         )
-        return h.redirect('/problem-with-service?statusCode=500')
+        return h.redirect('/problem-with-service')
       }
 
       if (result === 'Success') {
@@ -255,7 +255,7 @@ export const emailrequestController = {
         })
       } else {
         // Redirect to existing problem with service page when API call fails
-        return h.redirect('/problem-with-service?statusCode=500')
+        return h.redirect('/problem-with-service')
       }
     } else {
       return h.view(EMAIL_REQUEST_VIEW, {

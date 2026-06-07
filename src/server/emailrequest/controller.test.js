@@ -346,9 +346,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -391,9 +389,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('accepts a variety of valid email formats', async () => {
@@ -454,9 +450,7 @@ describe('emailrequestController', () => {
         'test@example.com'
       )
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -535,9 +529,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('handles single location', async () => {
@@ -602,9 +594,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -773,9 +763,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects on network error', async () => {
@@ -785,9 +773,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects when API returns Error string', async () => {
@@ -795,9 +781,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects when API returns null data', async () => {
@@ -805,9 +789,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -1122,9 +1104,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -1161,9 +1141,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when API returns null', async () => {
@@ -1171,9 +1149,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when API returns empty string', async () => {
@@ -1181,9 +1157,7 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -1217,9 +1191,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when Region is empty', async () => {
@@ -1239,9 +1211,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when regiontype is null', async () => {
@@ -1261,9 +1231,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when Year is undefined', async () => {
@@ -1283,9 +1251,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('redirects to problem-with-service when email is empty after storing', async () => {
@@ -1305,9 +1271,7 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 })
