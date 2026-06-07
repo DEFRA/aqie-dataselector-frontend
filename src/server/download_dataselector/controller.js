@@ -102,6 +102,16 @@ export const downloadDataselectorController = {
         g.networks.length > 0
     )
 
+    // Only show the "Near real-time data from Defra" (AURN) tab if the
+    // pollutant's datasource actually includes that category
+    const hasNearRealTimeDataSource = datasourceGroups.some(
+      (g) =>
+        g.category === 'Near real-time data from Defra' &&
+        Array.isArray(g.networks) &&
+        g.networks.length > 0
+    )
+    const aurnUnavailable = !hasNearRealTimeDataSource
+
     // NON-AURN networks — array of {networkType, count} objects
     const rawUkeap = request.yar.get('nooflocationukeap')
     const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
@@ -120,6 +130,7 @@ export const downloadDataselectorController = {
       stationCountUnavailable,
       ukeapNetworks,
       ukeapUnavailable,
+      aurnUnavailable,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,

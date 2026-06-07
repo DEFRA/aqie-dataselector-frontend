@@ -380,6 +380,53 @@ describe('downloadDataselectorController', () => {
     })
   })
 
+  describe('aurnUnavailable logic', () => {
+    it('aurnUnavailable is true when datasourceGroups has no Near real-time category', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          { category: 'Other data from Defra', networks: ['UKEAP'] }
+        ]
+      })
+      const h = makeH()
+      downloadDataselectorController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it('aurnUnavailable is true when Near real-time category has empty networks', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          { category: 'Near real-time data from Defra', networks: [] }
+        ]
+      })
+      const h = makeH()
+      downloadDataselectorController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it('aurnUnavailable is false when Near real-time category has networks', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          { category: 'Near real-time data from Defra', networks: ['AURN'] }
+        ]
+      })
+      const h = makeH()
+      downloadDataselectorController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({ aurnUnavailable: false })
+      )
+    })
+  })
+
   describe('success view rendering', () => {
     it('renders full success view with all fields', () => {
       const request = makeRequest({
@@ -404,6 +451,7 @@ describe('downloadDataselectorController', () => {
         stationCountUnavailable: false,
         ukeapNetworks: [],
         ukeapUnavailable: true,
+        aurnUnavailable: true,
         yearrange: 'Multiple',
         displayBacklink: true,
         hrefq: '/customdataset',
