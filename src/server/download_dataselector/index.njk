@@ -278,7 +278,7 @@ async function getAPIdownload(year, dataSource, networkId = '') {
         
         if (data.error) {
           hideLoadingIndicator();
-            window.location.href = data.redirectUrl || `/problem-with-service?statusCode=${data.statusCode || 500}`;
+            window.location.href = data.redirectUrl || '/problem-with-service';
             return;
         }
         
@@ -320,7 +320,7 @@ async function getAPIdownload(year, dataSource, networkId = '') {
                     
                     if (statusData.error) {
                         hideLoadingIndicator();
-                      window.location.href = statusData.redirectUrl || `/problem-with-service?statusCode=${statusData.statusCode || 500}`;
+                      window.location.href = statusData.redirectUrl || '/problem-with-service';
                         return;
                     }
                     
@@ -377,7 +377,7 @@ async function getAPIdownloadUKEAP(year) {
         
         if (data.error) {
           hideLoadingIndicator();
-            window.location.href = data.redirectUrl || `/problem-with-service?statusCode=${data.statusCode || 500}`;
+            window.location.href = data.redirectUrl || '/problem-with-service';
             return;
         }
         
@@ -419,7 +419,7 @@ async function getAPIdownloadUKEAP(year) {
                     
                     if (statusData.error) {
                         hideLoadingIndicator();
-                      window.location.href = statusData.redirectUrl || `/problem-with-service?statusCode=${statusData.statusCode || 500}`;
+                      window.location.href = statusData.redirectUrl || '/problem-with-service';
                         return;
                     }
                     
@@ -479,7 +479,7 @@ async function getAPIdownloadUKEAP(year) {
 
     if (data.error) {
       hideLoadingIndicator();
-      window.location.href = data.redirectUrl || `/problem-with-service?statusCode=${data.statusCode || 500}`;
+      window.location.href = data.redirectUrl || '/problem-with-service';
       return;
     }
 
@@ -509,7 +509,7 @@ async function getAPIdownloadUKEAP(year) {
         .then(function (statusData) {
           if (statusData.error) {
             hideLoadingIndicator();
-            window.location.href = statusData.redirectUrl || `/problem-with-service?statusCode=${statusData.statusCode || 500}`;
+            window.location.href = statusData.redirectUrl || '/problem-with-service';
             return;
           }
 

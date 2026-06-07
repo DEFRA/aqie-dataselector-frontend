@@ -138,7 +138,7 @@ export const verifyController = {
         downloadEmailUrl instanceof Error
       ) {
         logger.error('API call failed, redirecting to problem page')
-        return h.redirect('/problem-with-service?statusCode=500')
+        return h.redirect('/problem-with-service')
       }
 
       // Validate the S3 presigned URL returns 200
@@ -164,7 +164,7 @@ export const verifyController = {
           )
           // Always redirect with 500 to show "problem with service" page
           // (not 404 which shows "page not found")
-          return h.redirect('/problem-with-service?statusCode=500')
+          return h.redirect('/problem-with-service')
         }
       }
 

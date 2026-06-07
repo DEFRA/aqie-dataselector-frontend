@@ -377,9 +377,7 @@ describe('datasourceController GET handler', () => {
       return null
     })
     const result = await datasourceController.handler(request, h)
-    expect(h.redirect).toHaveBeenCalledWith(
-      '/problem-with-service?statusCode=500'
-    )
+    expect(h.redirect).toHaveBeenCalledWith('/problem-with-service')
     expect(result).toBe('redirect-response')
     expect(h.view).not.toHaveBeenCalled()
   })

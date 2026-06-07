@@ -842,9 +842,7 @@ describe('airpollutantController POST success scenarios', () => {
       selectedPollutants: JSON.stringify(['Nitrogen dioxide (NO2)'])
     }
     await airpollutantController.handler(mockRequest, mockH)
-    expect(mockH.redirect).toHaveBeenCalledWith(
-      '/problem-with-service?statusCode=500'
-    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
   })
 
   it('handles no-JS dropdown selection in specific mode', async () => {

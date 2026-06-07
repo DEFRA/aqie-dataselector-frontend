@@ -318,9 +318,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
       expect(mockH.view).not.toHaveBeenCalledWith(
         'verify/index',
         expect.anything()
@@ -336,9 +334,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('should redirect on a 404 response error', async () => {
@@ -348,9 +344,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('should redirect on a 500 response error', async () => {
@@ -360,9 +354,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 
@@ -507,9 +499,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
     it('should redirect to problem page when payload is empty in development', async () => {
@@ -519,9 +509,7 @@ describe('verifyController', () => {
 
       await verifyController.handler(mockRequest, mockH)
 
-      expect(mockH.redirect).toHaveBeenCalledWith(
-        '/problem-with-service?statusCode=500'
-      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
 })

@@ -228,7 +228,7 @@ export const datasourceController = {
       if (pollutantID) {
         const flat = await fetchDatasourceForPollutant(pollutantID)
         if (flat === null) {
-          return h.redirect('/problem-with-service?statusCode=500')
+          return h.redirect('/problem-with-service')
         }
         datasourceGroups = groupDatasources(flat)
 

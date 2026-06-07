@@ -404,7 +404,7 @@ const handlePostRequest = async (request, h) => {
     request.yar.set('selectedPollutantID', allIDs)
     const flat = await fetchDatasourceForPollutant(allIDs)
     if (flat === null) {
-      return h.redirect('/problem-with-service?statusCode=500')
+      return h.redirect('/problem-with-service')
     }
     request.yar.set('datasourceGroups', groupDatasources(flat))
   } else {
