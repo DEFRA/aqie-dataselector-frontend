@@ -5,17 +5,19 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import {
   LAQM_TIMEOUT_MS,
-  MONTHS_PER_YEAR,
-  HTTP_NOT_FOUND
+  MONTHS_PER_YEAR
 } from '~/src/server/common/constants/magic-numbers.js'
 
 import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import {
+  isInternalNavigation,
+  renderNotFound
+} from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger() // NOSONAR
 
@@ -728,25 +730,9 @@ export const locationaurnController = {
  */
 export const locationaurnChangeController = {
   handler: async (request, h) => {
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-
-    // Check if the request is coming from within the application
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
     // If accessed directly (no valid referer), return 404 page not found
-    if (!isInternalNavigation) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(HTTP_NOT_FOUND)
+    if (!isInternalNavigation(request)) {
+      return renderNotFound(h)
     }
 
     // Otherwise, delegate to the main location-aurn controller logic

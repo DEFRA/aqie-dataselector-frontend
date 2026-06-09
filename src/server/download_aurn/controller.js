@@ -3,32 +3,11 @@ import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { HTTP_OK } from '~/src/server/common/constants/magic-numbers.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
 
 const logger = createLogger()
 
 const PROBLEM_WITH_SERVICE = '/problem-with-service'
-
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find(
-    (g) => g?.category === 'Other data from Defra'
-  )
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
-
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
-    })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
-
-  return Array.from(new Set(ids)).join(',')
-}
 
 async function invokeDownload(apiparams) {
   logger.info(`AURN download apiparams ${JSON.stringify(apiparams)}`)

@@ -11,6 +11,7 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { config } from '~/src/config/config.js'
 import { networkData } from '~/src/server/data/en/networks.js'
 import { invokeStationCount } from '~/src/server/customdataset/controller.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
 
 const logger = createLogger()
 
@@ -24,28 +25,6 @@ for (const entry of Object.values(networkData)) {
 
 function lookupNetwork(name) {
   return networkLookup.get((name || '').toLowerCase().trim()) || null
-}
-
-const OTHER_DATA_CATEGORY = 'Other data from Defra'
-
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find((g) => g?.category === OTHER_DATA_CATEGORY)
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
-
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
-    })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
-
-  return Array.from(new Set(ids)).join(',')
 }
 
 // Enrich raw string groups with full metadata; also build "other" groups

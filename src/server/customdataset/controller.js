@@ -7,14 +7,15 @@
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { english } from '~/src/server/data/en/homecontent.js'
-import {
-  HTTP_INTERNAL_SERVER_ERROR,
-  HTTP_NOT_FOUND
-} from '~/src/server/common/constants/magic-numbers.js'
+import { HTTP_INTERNAL_SERVER_ERROR } from '~/src/server/common/constants/magic-numbers.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { config } from '~/src/config/config.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  isInternalNavigation,
+  renderNotFound
+} from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
 
@@ -248,28 +249,6 @@ function aggregateNetworkCounts(networkEntries) {
   }
 
   return aggregated
-}
-
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find(
-    (g) => g?.category === 'Other data from Defra'
-  )
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
-
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
-    })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
-
-  return Array.from(new Set(ids)).join(',')
 }
 
 function buildStationCountParameters(request, finalyear) {
@@ -518,29 +497,6 @@ export async function invokeStationCount(stationcountparameters) {
       )
     }
   }
-}
-
-// Check if the request is coming from within the application
-function isInternalNavigation(request) {
-  const referer = request.headers.referer || request.headers.referrer || ''
-  const host = request.info.host || ''
-  return Boolean(
-    referer && (referer.includes(host) || referer.includes('localhost'))
-  )
-}
-
-// If accessed directly (no valid referer), return 404 page not found
-function renderNotFound(h) {
-  return h
-    .view('error/index', {
-      pageTitle: 'Page not found',
-      heading: 'Page not found',
-      statusCode: '404',
-      content: english.errorpages,
-      message:
-        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-    })
-    .code(HTTP_NOT_FOUND)
 }
 
 function hasAllRequiredData(request) {

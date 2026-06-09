@@ -7,34 +7,17 @@
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { HTTP_NOT_FOUND } from '~/src/server/common/constants/magic-numbers.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  isInternalNavigation,
+  renderNotFound
+} from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
 
 const PROBLEM_WITH_SERVICE = '/problem-with-service'
-
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find(
-    (g) => g?.category === 'Other data from Defra'
-  )
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
-    })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
-  return Array.from(new Set(ids)).join(',')
-}
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
@@ -93,24 +76,9 @@ async function invokeEmailRequest(emailRequestParameters) {
 }
 export const emailrequestController = {
   handler: async (request, h) => {
-    // Check if the request is coming from within the application
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
     // If accessed directly (no valid referer), return 404 page not found
-    if (!isInternalNavigation) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(HTTP_NOT_FOUND)
+    if (!isInternalNavigation(request)) {
+      return renderNotFound(h)
     }
 
     // Determine back URL based on referrer or path parameter
