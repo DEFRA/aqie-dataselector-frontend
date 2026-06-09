@@ -3,116 +3,107 @@ import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { HTTP_OK } from '~/src/server/common/constants/magic-numbers.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
 
 const logger = createLogger()
 
 const PROBLEM_WITH_SERVICE = '/problem-with-service'
+const POLL_INTERVAL_MS = 1000
 
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find(
-    (g) => g?.category === 'Other data from Defra'
-  )
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
+// Extract a human-readable message from a thrown value.
+const errMsg = (error) =>
+  error instanceof Error ? error.message : 'unknown error'
 
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
+async function invokeDownloadDev(apiparams) {
+  try {
+    const url = config.get('downloadAurnDevUrl')
+    const { payload } = await Wreck.post(url, {
+      payload: JSON.stringify(apiparams),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.get('osNamesDevApiKey')
+      },
+      json: true
     })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
+    if (payload?.error) {
+      return payload
+    }
+    return { jobID: payload }
+  } catch (error) {
+    logger.error(`AURN download API error (local): ${errMsg(error)}`)
+    return { error: true }
+  }
+}
 
-  return Array.from(new Set(ids)).join(',')
+async function invokeDownloadProd(apiparams) {
+  try {
+    const response = await axios.post(
+      config.get('Download_aurn_URL'),
+      apiparams
+    )
+    const idDownload = response.data
+    if (idDownload?.error) {
+      return idDownload
+    }
+    return { jobID: idDownload }
+  } catch (error) {
+    logger.error(`AURN download API error: ${errMsg(error)}`)
+    return { error: true }
+  }
 }
 
 async function invokeDownload(apiparams) {
   logger.info(`AURN download apiparams ${JSON.stringify(apiparams)}`)
+  return config.get('isDevelopment')
+    ? invokeDownloadDev(apiparams)
+    : invokeDownloadProd(apiparams)
+}
 
-  if (config.get('isDevelopment')) {
+async function pollDownloadStatusDev(downloadstatusapiparams) {
+  const url = config.get('pollingDevUrl')
+  let statusResponse
+  do {
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
     try {
-      const url = config.get('downloadAurnDevUrl')
       const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(apiparams),
+        payload: JSON.stringify(downloadstatusapiparams),
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': config.get('osNamesDevApiKey')
         },
         json: true
       })
-      if (payload?.error) return payload
-      return { jobID: payload }
+      statusResponse = payload
     } catch (error) {
-      logger.error(
-        `AURN download API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return { error: true }
+      logger.error(`AURN polling API error (local): ${errMsg(error)}`)
+      throw error
     }
-  } else {
+  } while (statusResponse.status !== 'Completed')
+  return statusResponse.resultUrl
+}
+
+async function pollDownloadStatusProd(downloadstatusapiparams) {
+  let statusResponse
+  do {
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
     try {
-      const response = await axios.post(
-        config.get('Download_aurn_URL'),
-        apiparams
+      const statusResult = await axios.post(
+        config.get('Polling_URL'),
+        downloadstatusapiparams
       )
-      const idDownload = response.data
-      if (idDownload?.error) return idDownload
-      return { jobID: idDownload }
+      statusResponse = statusResult.data
     } catch (error) {
-      logger.error(
-        `AURN download API error: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return { error: true }
+      logger.error(`AURN polling API error: ${errMsg(error)}`)
+      throw error
     }
-  }
+  } while (statusResponse.status !== 'Completed')
+  return statusResponse.resultUrl
 }
 
 async function invokeDownloadS3(downloadstatusapiparams) {
-  let statusResponse
-
-  if (config.get('isDevelopment')) {
-    const url = config.get('pollingDevUrl')
-    do {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      try {
-        const { payload } = await Wreck.post(url, {
-          payload: JSON.stringify(downloadstatusapiparams),
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': config.get('osNamesDevApiKey')
-          },
-          json: true
-        })
-        statusResponse = payload
-      } catch (error) {
-        logger.error(
-          `AURN polling API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
-        )
-        throw error
-      }
-    } while (statusResponse.status !== 'Completed')
-    return statusResponse.resultUrl
-  } else {
-    do {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      try {
-        const statusResult = await axios.post(
-          config.get('Polling_URL'),
-          downloadstatusapiparams
-        )
-        statusResponse = statusResult.data
-      } catch (error) {
-        logger.error(
-          `AURN polling API error: ${error instanceof Error ? error.message : 'unknown error'}`
-        )
-        throw error
-      }
-    } while (statusResponse.status !== 'Completed')
-    return statusResponse.resultUrl
-  }
+  return config.get('isDevelopment')
+    ? pollDownloadStatusDev(downloadstatusapiparams)
+    : pollDownloadStatusProd(downloadstatusapiparams)
 }
 
 const downloadAurnController = {

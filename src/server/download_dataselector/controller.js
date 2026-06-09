@@ -6,11 +6,62 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
+// True when the datasource groups contain the given category with networks.
+function hasCategoryWithNetworks(datasourceGroups, category) {
+  return datasourceGroups.some(
+    (g) =>
+      g.category === category &&
+      Array.isArray(g.networks) &&
+      g.networks.length > 0
+  )
+}
+
+// API error — proceed to download page but flag AURN count as unavailable.
+// Arrays are NOT errors (NON-AURN returns [{networkType, count}]).
+function isStationCountUnavailable(numberOfLocations, stationCountError) {
+  return Boolean(
+    stationCountError ||
+      numberOfLocations == null ||
+      numberOfLocations instanceof Error ||
+      (typeof numberOfLocations === 'object' &&
+        !Array.isArray(numberOfLocations) &&
+        numberOfLocations !== null)
+  )
+}
+
+// Returns error view params [msg, ref1, href1, ref2, href2] when a required
+// selection is missing, otherwise null.
+function getMissingSelectionError(request) {
+  const selectedPollutant = request.yar.get('selectedpollutant')
+  if (!selectedPollutant || selectedPollutant.length === 0) {
+    return [
+      'Select a pollutant to continue',
+      'Add pollutant',
+      '/airpollutant',
+      '',
+      ''
+    ]
+  }
+  if (!request.yar.get('selectedyear')) {
+    return ['Select a year to continue', 'Add year', '/year-aurn', '', '']
+  }
+  if (!request.yar.get('selectedlocation')) {
+    return [
+      'Select a location to continue',
+      'Add location',
+      '/location-aurn/change',
+      '',
+      ''
+    ]
+  }
+  return null
+}
+
 export const downloadDataselectorController = {
   handler(request, h) {
     const backUrl = '/customdataset'
+
     // Helper function to render error state
-    // console.log('In download controller', request.yar.get('nooflocation'))
     const renderErrorState = (
       errormsg,
       errorref1,
@@ -45,70 +96,28 @@ export const downloadDataselectorController = {
     }
 
     // Validation checks
-    const selectedPollutant = request.yar.get('selectedpollutant')
-    const selectedYear = request.yar.get('selectedyear')
-    const selectedLocation = request.yar.get('selectedlocation')
-
-    if (!selectedPollutant || selectedPollutant.length === 0) {
-      return renderErrorState(
-        'Select a pollutant to continue',
-        'Add pollutant',
-        '/airpollutant',
-        '',
-        ''
-      )
-    }
-
-    if (!selectedYear) {
-      return renderErrorState(
-        'Select a year to continue',
-        'Add year',
-        '/year-aurn',
-        '',
-        ''
-      )
-    }
-
-    if (!selectedLocation) {
-      return renderErrorState(
-        'Select a location to continue',
-        'Add location',
-        '/location-aurn/change',
-        '',
-        ''
-      )
+    const missingSelection = getMissingSelectionError(request)
+    if (missingSelection) {
+      return renderErrorState(...missingSelection)
     }
 
     const numberOfLocations = request.yar.get('nooflocation')
     const stationCountError = request.yar.get('stationCountError')
-
-    // API error — proceed to download page but flag AURN count as unavailable
-    // Arrays are NOT errors (NON-AURN returns [{networkType, count}])
-    const stationCountUnavailable =
-      stationCountError ||
-      numberOfLocations == null ||
-      numberOfLocations instanceof Error ||
-      (typeof numberOfLocations === 'object' &&
-        !Array.isArray(numberOfLocations) &&
-        numberOfLocations !== null)
-
-    // Only show the "Other data from Defra" tab if the pollutant's datasource
-    // actually includes that category (determined at pollutant-selection time)
-    const datasourceGroups = request.yar.get('datasourceGroups') || []
-    const hasOtherDataSource = datasourceGroups.some(
-      (g) =>
-        g.category === 'Other data from Defra' &&
-        Array.isArray(g.networks) &&
-        g.networks.length > 0
+    const stationCountUnavailable = isStationCountUnavailable(
+      numberOfLocations,
+      stationCountError
     )
 
-    // Only show the "Near real-time data from Defra" (AURN) tab if the
-    // pollutant's datasource actually includes that category
-    const hasNearRealTimeDataSource = datasourceGroups.some(
-      (g) =>
-        g.category === 'Near real-time data from Defra' &&
-        Array.isArray(g.networks) &&
-        g.networks.length > 0
+    // Only show each tab if the pollutant's datasource includes that category
+    // (determined at pollutant-selection time).
+    const datasourceGroups = request.yar.get('datasourceGroups') || []
+    const hasOtherDataSource = hasCategoryWithNetworks(
+      datasourceGroups,
+      'Other data from Defra'
+    )
+    const hasNearRealTimeDataSource = hasCategoryWithNetworks(
+      datasourceGroups,
+      'Near real-time data from Defra'
     )
     const aurnUnavailable = !hasNearRealTimeDataSource
 
@@ -143,8 +152,6 @@ export const downloadDataselectorController = {
 
     // Store success view data in session
     request.yar.set('downloadViewData', successViewData)
-
-    // Also store individual components for easier access
 
     // Success case - render download page
     return h.view('download_dataselector/index', successViewData)

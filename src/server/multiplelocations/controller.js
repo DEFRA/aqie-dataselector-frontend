@@ -243,6 +243,39 @@ function renderSearchErrorView(
   })
 }
 
+// Resolve the location list from the cached session result or the OS Names API.
+async function resolveLocations(request, searchValue) {
+  const locationdetails = request.yar.get('osnameapiresult')
+  if (Array.isArray(locationdetails) && locationdetails.length > 0) {
+    return locationdetails.getOSPlaces
+  }
+
+  const result = await invokeOsNameAPI(searchValue)
+  if (result !== null) {
+    request.yar.set('osnameapiresult', result)
+  }
+  return result.getOSPlaces
+}
+
+// Resolve the monitoring station result, returning an empty result on failure.
+async function resolveMonitoringResult(request, searchValue, locationMiles) {
+  try {
+    const monitoringResult = await invokeMonitoringStationAPI(
+      searchValue,
+      locationMiles
+    )
+    if (monitoringResult !== null) {
+      request.yar.set('MonitoringstResult', monitoringResult)
+      return monitoringResult
+    }
+  } catch (error) {
+    logger.warn(
+      `Monitoring Station API failed: ${error.message}, using empty results`
+    )
+  }
+  return { getmonitoringstation: [] }
+}
+
 async function processLocationsSearch(
   h,
   request,
@@ -250,37 +283,16 @@ async function processLocationsSearch(
   locationMiles,
   searchlocationurl
 ) {
-  const locationdetails = request.yar.get('osnameapiresult')
-  let locations = ''
+  const locations = await resolveLocations(request, searchValue)
   let MonitoringstResult = { getmonitoringstation: [] }
   let map1 = new Map()
 
-  if (!Array.isArray(locationdetails) || locationdetails.length === 0) {
-    const result = await invokeOsNameAPI(searchValue)
-    if (result !== null) {
-      request.yar.set('osnameapiresult', result)
-    }
-    locations = result.getOSPlaces
-  } else {
-    locations = locationdetails.getOSPlaces
-  }
-
   if (searchValue != null && searchValue !== '') {
-    try {
-      const monitoringResult = await invokeMonitoringStationAPI(
-        searchValue,
-        locationMiles
-      )
-      if (monitoringResult !== null) {
-        MonitoringstResult = monitoringResult
-        request.yar.set('MonitoringstResult', MonitoringstResult)
-      }
-    } catch (error) {
-      logger.warn(
-        `Monitoring Station API failed: ${error.message}, using empty results`
-      )
-      MonitoringstResult = { getmonitoringstation: [] }
-    }
+    MonitoringstResult = await resolveMonitoringResult(
+      request,
+      searchValue,
+      locationMiles
+    )
 
     const hasLocations = locations && locations.length > 0
     const hasStations = MonitoringstResult?.getmonitoringstation?.length > 0
@@ -292,6 +304,8 @@ async function processLocationsSearch(
       request.yar.set('errorMessage', '')
       request.yar.set('nooflocation', 'none')
       return renderNoLocationView(h, locations, searchlocationurl, request)
+    } else {
+      // Locations present but no stations — handled by handleLocationsResult
     }
   }
 

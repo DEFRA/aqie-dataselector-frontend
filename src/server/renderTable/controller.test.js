@@ -28,8 +28,19 @@ describe('rendertablecontroller.handler', () => {
     nunjucks.render.mockReturnValue('<table>content</table>')
   })
 
-  it('renders table with valid data', () => {
+  it('renders table with valid data', async () => {
     axios.post.mockResolvedValue({ data: { some: 'data' } })
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('selectedYear', 2024)
+    expect(request.yar.set).toHaveBeenCalledWith('tabledata', { some: 'data' })
+    expect(nunjucks.render).toHaveBeenCalledWith('partials/yearlytable.njk', {
+      tabledata: { some: 'data' },
+      finalyear: 2024
+    })
+    expect(h.response).toHaveBeenCalledWith('<table>content</table>')
+    expect(h.code).toHaveBeenCalledWith(200)
   })
 
   it('handles null tabledata', async () => {
@@ -66,9 +77,14 @@ describe('rendertablecontroller.handler', () => {
     expect(request.yar.set).toHaveBeenCalledWith('selectedYear', 2024)
   })
 
-  it('handles thrown error in main try/catch', () => {
+  it('handles thrown error in main try/catch', async () => {
     request.yar.set = jest.fn(() => {
       throw new Error('fail')
     })
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Error rendering table')
+    expect(h.code).toHaveBeenCalledWith(500)
   })
 })

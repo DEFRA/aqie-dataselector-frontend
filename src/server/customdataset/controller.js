@@ -7,16 +7,23 @@
 import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { english } from '~/src/server/data/en/homecontent.js'
-import {
-  HTTP_INTERNAL_SERVER_ERROR,
-  HTTP_NOT_FOUND
-} from '~/src/server/common/constants/magic-numbers.js'
+import { HTTP_INTERNAL_SERVER_ERROR } from '~/src/server/common/constants/magic-numbers.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { config } from '~/src/config/config.js'
+import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  isInternalNavigation,
+  renderNotFound
+} from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
+
+const CUSTOMDATASET_VIEW = 'customdataset/index'
+
+// Extract a human-readable message from a thrown value.
+const errMsg = (error) =>
+  error instanceof Error ? error.message : 'unknown error'
 
 function clearAllSessionData(request) {
   // Clear all selected options and pollutants
@@ -53,7 +60,7 @@ function clearAllSessionData(request) {
 function handleClearPath(request, h, backUrl) {
   clearAllSessionData(request)
 
-  return h.view('customdataset/index', {
+  return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
@@ -250,28 +257,6 @@ function aggregateNetworkCounts(networkEntries) {
   return aggregated
 }
 
-function getNonAurnNetworkIdCsv(datasourceGroups) {
-  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
-  const otherDataGroup = groups.find(
-    (g) => g?.category === 'Other data from Defra'
-  )
-  const networks = Array.isArray(otherDataGroup?.networks)
-    ? otherDataGroup.networks
-    : []
-
-  const ids = networks
-    .map((network) => {
-      if (typeof network === 'object' && network !== null) {
-        return network.id
-      }
-      return null
-    })
-    .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
-    .map((id) => String(id).trim())
-
-  return Array.from(new Set(ids)).join(',')
-}
-
 function buildStationCountParameters(request, finalyear) {
   const isCountry = request.yar.get('Location') === 'Country'
   const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
@@ -300,6 +285,17 @@ function buildStationCountParameters(request, finalyear) {
   }
 }
 
+// NON-AURN returns [{NetworkType, Count}, ...] — exclude arrays from error check
+function isStationCountError(val) {
+  if (val == null || val instanceof Error) {
+    return true
+  }
+  if (val?.isBoom === true || val?.isAxiosError === true) {
+    return true
+  }
+  return typeof val === 'object' && !Array.isArray(val) && Boolean(val?.message)
+}
+
 async function handleStationCountCalculation(request) {
   const selectedyear = request.yar.get('selectedyear')
   const finalyear = parseYearRange(selectedyear, request)
@@ -326,19 +322,9 @@ async function handleStationCountCalculation(request) {
       networkId: nonAurnNetworkId
     })
   ])
-  // NON-AURN returns [{NetworkType, Count}, ...] — exclude arrays from error check
-  const isError = (val) =>
-    val == null ||
-    val instanceof Error ||
-    val?.isBoom === true ||
-    val?.isAxiosError === true ||
-    (typeof val === 'object' &&
-      !Array.isArray(val) &&
-      val !== null &&
-      Boolean(val?.message))
 
   // Only gate on AURN count — it is the primary station count
-  if (isError(aurnCount)) {
+  if (isStationCountError(aurnCount)) {
     logger.error(
       `Station count API failed: ${aurnCount?.message || 'no response'}`
     )
@@ -436,24 +422,18 @@ async function handleStationCountCalculation(request) {
  *   AURN  → "15"  (single number) or  Count:"15"
  *   NON-AURN → NetworkType:"X",Count:"10"[, NetworkType:"Y",Count:"5"]
  */
-function parseStationCountPayload(payload) {
-  if (payload == null) return null
-  if (typeof payload === 'number') return payload
-  if (Array.isArray(payload)) return payload
+function coercePayloadToString(payload) {
+  if (Buffer.isBuffer(payload)) {
+    return payload.toString('utf8').trim()
+  }
+  if (typeof payload === 'string') {
+    return payload.trim()
+  }
+  return null
+}
 
-  const str = Buffer.isBuffer(payload)
-    ? payload.toString('utf8').trim()
-    : typeof payload === 'string'
-      ? payload.trim()
-      : null
-
-  if (!str) return null
-
-  // Pure number: "15"
-  const asNum = Number(str)
-  if (str !== '' && !isNaN(asNum)) return asNum
-
-  // networkType+count pairs (case-insensitive keys) → array of {networkType, count}
+// Extract networkType+count pairs (case-insensitive keys) → array of {networkType, count}
+function extractNetworkPairs(str) {
   const networks = []
   const pairRe =
     /[Nn]etwork[Tt]ype\s*:\s*"([^"]+)"\s*,\s*[Cc]ount\s*:\s*"([^"]+)"/g
@@ -465,11 +445,26 @@ function parseStationCountPayload(payload) {
       count: Number.isFinite(numericCount) ? numericCount : 0
     })
   }
-  if (networks.length > 0) return networks
+  return networks
+}
+
+function parseStationCountString(str) {
+  // Pure number: "15"
+  const asNum = Number(str)
+  if (str !== '' && !isNaN(asNum)) {
+    return asNum
+  }
+
+  const networks = extractNetworkPairs(str)
+  if (networks.length > 0) {
+    return networks
+  }
 
   // count-only: Count:"15" or count:"15"
   const countOnly = /[Cc]ount:"(\d+)"/.exec(str)
-  if (countOnly) return Number(countOnly[1])
+  if (countOnly) {
+    return Number(countOnly[1])
+  }
 
   // JSON fallback
   try {
@@ -477,6 +472,25 @@ function parseStationCountPayload(payload) {
   } catch {
     return null
   }
+}
+
+function parseStationCountPayload(payload) {
+  if (payload == null) {
+    return null
+  }
+  if (typeof payload === 'number') {
+    return payload
+  }
+  if (Array.isArray(payload)) {
+    return payload
+  }
+
+  const str = coercePayloadToString(payload)
+  if (!str) {
+    return null
+  }
+
+  return parseStationCountString(str)
 }
 
 export async function invokeStationCount(stationcountparameters) {
@@ -494,9 +508,7 @@ export async function invokeStationCount(stationcountparameters) {
       })
       return parseStationCountPayload(payload)
     } catch (error) {
-      logger.error(
-        `Station count API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
-      )
+      logger.error(`Station count API error (local): ${errMsg(error)}`)
       return error
     }
   } else {
@@ -507,40 +519,13 @@ export async function invokeStationCount(stationcountparameters) {
       )
       return parseStationCountPayload(response.data)
     } catch (error) {
-      logger.error(
-        `Station count API error: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return Object.assign(
-        new Error(
-          `Station count API error: ${error instanceof Error ? error.message : 'unknown error'}`
-        ),
-        { statusCode: HTTP_INTERNAL_SERVER_ERROR }
-      )
+      const message = `Station count API error: ${errMsg(error)}`
+      logger.error(message)
+      return Object.assign(new Error(message), {
+        statusCode: HTTP_INTERNAL_SERVER_ERROR
+      })
     }
   }
-}
-
-// Check if the request is coming from within the application
-function isInternalNavigation(request) {
-  const referer = request.headers.referer || request.headers.referrer || ''
-  const host = request.info.host || ''
-  return Boolean(
-    referer && (referer.includes(host) || referer.includes('localhost'))
-  )
-}
-
-// If accessed directly (no valid referer), return 404 page not found
-function renderNotFound(h) {
-  return h
-    .view('error/index', {
-      pageTitle: 'Page not found',
-      heading: 'Page not found',
-      statusCode: '404',
-      content: english.errorpages,
-      message:
-        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-    })
-    .code(HTTP_NOT_FOUND)
 }
 
 function hasAllRequiredData(request) {
@@ -552,7 +537,7 @@ function hasAllRequiredData(request) {
 }
 
 function renderBothZeroView(request, h, backUrl) {
-  return h.view('customdataset/index', {
+  return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
@@ -574,7 +559,7 @@ function renderBothZeroView(request, h, backUrl) {
 }
 
 function renderCustomDatasetView(request, h, backUrl) {
-  return h.view('customdataset/index', {
+  return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,

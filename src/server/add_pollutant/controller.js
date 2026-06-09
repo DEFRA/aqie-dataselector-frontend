@@ -22,39 +22,45 @@ const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 // Route constants
 const CUSTOMDATASET_URL = '/customdataset'
 
+// Extract a human-readable message from a thrown value.
+const errMsg = (error) =>
+  error instanceof Error ? error.message : 'unknown error'
+
 // Fetch pollutant list from API — returns array of { pollutantID, pollutantName, pollutant_Abbreviation, pollutant_value }
-async function fetchPollutantList() {
-  if (config.get('isDevelopment')) {
-    try {
-      const url = config.get('pollutantMasterDevUrl')
-      const { payload } = await Wreck.get(url, {
-        headers: {
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      const list = Array.isArray(payload) ? payload : []
-      logger.info(`Fetched ${list.length} pollutants from master API`)
-      return list
-    } catch (error) {
-      logger.error(
-        `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return null
-    }
-  } else {
-    try {
-      const response = await axios.get(config.get('pollutantMasterApiUrl'))
-      const list = Array.isArray(response.data) ? response.data : []
-      logger.info(`Fetched ${list.length} pollutants from master API`)
-      return list
-    } catch (error) {
-      logger.error(
-        `Failed to fetch pollutant list: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return null
-    }
+async function fetchPollutantListDev() {
+  try {
+    const url = config.get('pollutantMasterDevUrl')
+    const { payload } = await Wreck.get(url, {
+      headers: {
+        'x-api-key': config.get('osNamesDevApiKey')
+      },
+      json: true
+    })
+    const list = Array.isArray(payload) ? payload : []
+    logger.info(`Fetched ${list.length} pollutants from master API`)
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch pollutant list: ${errMsg(error)}`)
+    return null
   }
+}
+
+async function fetchPollutantListProd() {
+  try {
+    const response = await axios.get(config.get('pollutantMasterApiUrl'))
+    const list = Array.isArray(response.data) ? response.data : []
+    logger.info(`Fetched ${list.length} pollutants from master API`)
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch pollutant list: ${errMsg(error)}`)
+    return null
+  }
+}
+
+async function fetchPollutantList() {
+  return config.get('isDevelopment')
+    ? fetchPollutantListDev()
+    : fetchPollutantListProd()
 }
 
 const pollutantGroups = {
@@ -123,9 +129,7 @@ const parsePollutantsData = (rawFromPayload, errors) => {
 
     return []
   } catch (e) {
-    logger.error(
-      `Failed to parse pollutants: ${e instanceof Error ? e.message : 'unknown error'}`
-    )
+    logger.error(`Failed to parse pollutants: ${errMsg(e)}`)
     errors.push({
       text: 'Invalid pollutants data format.',
       href: '#selected-pollutants'
@@ -299,6 +303,74 @@ const updateSessionAfterValidation = (
   }
 }
 
+// Compute the group/specific pollutant lists for the selected mode.
+const computeModePollutants = (
+  selectedMode,
+  selectedGroup,
+  isNoJS,
+  request,
+  pollutantsData,
+  errors,
+  pollutantMasterList
+) => {
+  if (selectedMode === 'group') {
+    return { gr: processGroupMode(selectedGroup, errors), sp: [] }
+  }
+  if (selectedMode === 'specific') {
+    return {
+      gr: [],
+      sp: processSpecificMode(
+        isNoJS,
+        request,
+        pollutantsData,
+        errors,
+        pollutantMasterList
+      )
+    }
+  }
+  return { gr: [], sp: [] }
+}
+
+// Resolve the comma-separated pollutantIDs to send to the datasource API.
+// Group mode uses the static pollutantGroupIDs map (works even when the
+// pollutant master API is down). Specific mode resolves IDs from the master list.
+const resolvePollutantIDs = (
+  selectedMode,
+  selectedGroup,
+  finalPollutants,
+  pollutantMasterList
+) => {
+  if (selectedMode === 'group') {
+    return pollutantGroupIDs[selectedGroup] || ''
+  }
+  if (selectedMode === 'specific') {
+    return finalPollutants
+      .map((value) =>
+        pollutantMasterList.find((p) => p.pollutant_value === value)
+      )
+      .filter(Boolean)
+      .map((p) => p.pollutantID)
+      .join(',')
+  }
+  return ''
+}
+
+// Fetch and store datasource groups for the resolved pollutant IDs.
+// Returns a redirect response on API failure, otherwise null.
+const applyDatasourceGroups = async (request, allIDs, h) => {
+  if (!allIDs) {
+    request.yar.set('datasourceGroups', [])
+    return null
+  }
+  request.yar.set('selectedPollutantID', allIDs)
+  const flat = await fetchDatasourceForPollutant(allIDs)
+  if (flat === null) {
+    return h.redirect('/problem-with-service')
+  }
+  request.yar.set('datasourceGroups', groupDatasources(flat))
+  return null
+}
+
 // Helper function to handle POST request
 const handlePostRequest = async (request, h) => {
   const isNoJS = checkIsNoJS(request)
@@ -317,8 +389,6 @@ const handlePostRequest = async (request, h) => {
     request.yar.set('selectedPollutantGroup', '')
   }
 
-  let finalPollutantsGr = []
-  let finalPollutantsSp = []
   const errors = []
 
   if (!selectedMode) {
@@ -346,17 +416,16 @@ const handlePostRequest = async (request, h) => {
     )
   }
 
-  if (selectedMode === 'group') {
-    finalPollutantsGr = processGroupMode(selectedGroup, errors)
-  } else if (selectedMode === 'specific') {
-    finalPollutantsSp = processSpecificMode(
+  const { gr: finalPollutantsGr, sp: finalPollutantsSp } =
+    computeModePollutants(
+      selectedMode,
+      selectedGroup,
       isNoJS,
       request,
       pollutantsData,
       errors,
       pollutantMasterList
     )
-  }
 
   if (errors.length > 0) {
     return handleValidationErrors(
@@ -385,30 +454,16 @@ const handlePostRequest = async (request, h) => {
     selectedGroup
   )
 
-  // Resolve the pollutantIDs to send to the datasource API.
-  // Group mode uses the static pollutantGroupIDs map (works even when the
-  // pollutant master API is down). Specific mode resolves IDs from the master list.
-  let allIDs = ''
-  if (selectedMode === 'group') {
-    allIDs = pollutantGroupIDs[selectedGroup] || ''
-  } else if (selectedMode === 'specific') {
-    const allMatched = finalPollutants
-      .map((value) =>
-        pollutantMasterList.find((p) => p.pollutant_value === value)
-      )
-      .filter(Boolean)
-    allIDs = allMatched.map((p) => p.pollutantID).join(',')
-  }
+  const allIDs = resolvePollutantIDs(
+    selectedMode,
+    selectedGroup,
+    finalPollutants,
+    pollutantMasterList
+  )
 
-  if (allIDs) {
-    request.yar.set('selectedPollutantID', allIDs)
-    const flat = await fetchDatasourceForPollutant(allIDs)
-    if (flat === null) {
-      return h.redirect('/problem-with-service')
-    }
-    request.yar.set('datasourceGroups', groupDatasources(flat))
-  } else {
-    request.yar.set('datasourceGroups', [])
+  const redirectResponse = await applyDatasourceGroups(request, allIDs, h)
+  if (redirectResponse) {
+    return redirectResponse
   }
 
   return h.redirect(CUSTOMDATASET_URL)

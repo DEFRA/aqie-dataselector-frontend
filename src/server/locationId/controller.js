@@ -8,6 +8,10 @@ import {
   HTTP_NOT_FOUND,
   HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+import {
+  isInternalNavigation,
+  renderNotFound
+} from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
 const getLocationDetailsController = {
@@ -69,28 +73,6 @@ const getLocationDetailsController = {
 }
 
 // 🔍 Helper Functions
-
-// Check if the request is coming from within the application
-function isInternalNavigation(request) {
-  const referer = request.headers.referer || request.headers.referrer || ''
-  const host = request.info.host || ''
-  return Boolean(
-    referer && (referer.includes(host) || referer.includes('localhost'))
-  )
-}
-
-function renderNotFound(h) {
-  return h
-    .view('error/index', {
-      pageTitle: 'Page not found',
-      heading: 'Page not found',
-      statusCode: '404',
-      content: english.errorpages,
-      message:
-        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-    })
-    .code(HTTP_NOT_FOUND)
-}
 
 // For POST request, get locationID from form payload and store in session.
 // For GET request, get locationID from session.
