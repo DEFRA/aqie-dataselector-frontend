@@ -512,4 +512,41 @@ describe('verifyController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
+
+  // ─── S3 presigned URL validation ────────────────────────────────────────────
+
+  describe('S3 URL validation', () => {
+    it('treats a maxContentLength error as a valid URL and renders the success view', async () => {
+      const maxLengthError = new Error('maxContentLength exceeded')
+      maxLengthError.code = 'ERR_FR_MAX_BODY_LENGTH_EXCEEDED'
+      jest.mocked(axios.get).mockRejectedValue(maxLengthError)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith('verify/index', {
+        pageTitle: 'Verification',
+        heading: 'Request Received',
+        message: 'Your download request has been received successfully.',
+        downloadEmailUrl: 'https://example.com/download/file.csv'
+      })
+    })
+
+    it('redirects to problem page when S3 validation fails with a real error', async () => {
+      const s3Error = new Error('Bad Gateway')
+      s3Error.response = { status: 502 }
+      jest.mocked(axios.get).mockRejectedValue(s3Error)
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
+    it('defaults the status code when the failing S3 error has no response', async () => {
+      jest.mocked(axios.get).mockRejectedValue(new Error('connection reset'))
+
+      await verifyController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+  })
 })

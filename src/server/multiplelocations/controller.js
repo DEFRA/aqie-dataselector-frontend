@@ -297,15 +297,16 @@ async function processLocationsSearch(
     const hasLocations = locations && locations.length > 0
     const hasStations = MonitoringstResult?.getmonitoringstation?.length > 0
 
-    if (hasLocations && hasStations) {
-      map1 = buildPollutantMap(MonitoringstResult.getmonitoringstation)
-    } else if (!hasLocations) {
+    if (!hasLocations) {
       request.yar.set('errors', '')
       request.yar.set('errorMessage', '')
       request.yar.set('nooflocation', 'none')
       return renderNoLocationView(h, locations, searchlocationurl, request)
-    } else {
-      // Locations present but no stations — handled by handleLocationsResult
+    }
+
+    // Locations present — build the pollutant map only when stations exist.
+    if (hasStations) {
+      map1 = buildPollutantMap(MonitoringstResult.getmonitoringstation)
     }
   }
 

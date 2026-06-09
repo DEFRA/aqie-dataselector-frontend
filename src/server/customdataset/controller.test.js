@@ -1357,4 +1357,102 @@ describe('invokeStationCount', () => {
 
     expect(result).toBeInstanceOf(Error)
   })
+
+  // ─── payload parsing variants ────────────────────────────────────────────
+  const prodConfig = (key) =>
+    key === 'isDevelopment' ? false : 'https://api/station-count'
+
+  it('parses networkType/count pairs into an array', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: 'NetworkType:"AURN",Count:"5"' })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toEqual([{ networkType: 'AURN', count: 5 }])
+  })
+
+  it('treats non-numeric counts in pairs as zero', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: 'NetworkType:"X",Count:"abc"' })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toEqual([{ networkType: 'X', count: 0 }])
+  })
+
+  it('parses count-only responses', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: 'Count:"15"' })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBe(15)
+  })
+
+  it('falls back to JSON parsing for JSON string payloads', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: '{"foo":1}' })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toEqual({ foo: 1 })
+  })
+
+  it('returns null for unparseable string payloads', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: 'not json {' })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBeNull()
+  })
+
+  it('returns an array payload unchanged', async () => {
+    config.get.mockImplementation(prodConfig)
+    const arr = [{ networkType: 'X', count: 2 }]
+    axios.post.mockResolvedValue({ data: arr })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBe(arr)
+  })
+
+  it('returns a numeric payload unchanged', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: 42 })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBe(42)
+  })
+
+  it('returns null for a null payload', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: null })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBeNull()
+  })
+
+  it('returns null for an object payload that cannot be coerced to a string', async () => {
+    config.get.mockImplementation(prodConfig)
+    axios.post.mockResolvedValue({ data: {} })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBeNull()
+  })
+
+  it('parses Buffer payloads in development mode', async () => {
+    config.get.mockImplementation((key) => {
+      if (key === 'isDevelopment') return true
+      return 'https://dev.api/station-count'
+    })
+    Wreck.post.mockResolvedValue({ payload: Buffer.from('7') })
+
+    const result = await invokeStationCount({ pollutantName: 'NO2' })
+
+    expect(result).toBe(7)
+  })
 })

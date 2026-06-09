@@ -93,6 +93,25 @@ describe('downloadDataselectornojsController', () => {
       request.method = 'post'
     })
 
+    it('returns error view when selectedpollutant is missing', () => {
+      // year and location present, pollutant missing
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['Somewhere'])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errormsg: 'Select a pollutant to continue',
+          errorref1: 'Add pollutant',
+          errorhref1: '/airpollutant/nojs'
+        })
+      )
+      expect(res).toBe('view-response')
+    })
+
     it('returns error view when selectedyear is missing', () => {
       // selectedlocation present, selectedyear missing
       request.yar.set('selectedpollutant', ['NO2'])
