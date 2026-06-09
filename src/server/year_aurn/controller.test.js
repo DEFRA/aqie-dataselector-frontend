@@ -1,4 +1,4 @@
-import { yearController } from './controller.js'
+import { yearController, yearChangeController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
@@ -575,5 +575,122 @@ describe('yearController', () => {
         })
       )
     })
+  })
+})
+
+describe('yearChangeController', () => {
+  let mockRequest
+  let mockH
+  let codeFn
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    codeFn = jest.fn().mockReturnValue('404-response')
+    mockRequest = {
+      method: 'get',
+      headers: {},
+      info: { host: 'example.com' },
+      yar: {
+        set: jest.fn(),
+        get: jest.fn().mockReturnValue(undefined),
+        clear: jest.fn()
+      },
+      payload: {}
+    }
+    mockH = {
+      view: jest.fn().mockReturnValue({ code: codeFn }),
+      redirect: jest.fn().mockReturnValue('redirect-response')
+    }
+  })
+
+  it('returns a 404 page when accessed directly with no referer', () => {
+    const result = yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({
+        pageTitle: 'Page not found',
+        heading: 'Page not found',
+        statusCode: '404'
+      })
+    )
+    expect(codeFn).toHaveBeenCalledWith(404)
+    expect(result).toBe('404-response')
+  })
+
+  it('returns a 404 page when referer is from a different host', () => {
+    mockRequest.headers.referer = 'https://malicious.example.org/page'
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({ statusCode: '404' })
+    )
+    expect(codeFn).toHaveBeenCalledWith(404)
+  })
+
+  it('delegates to yearController when referer matches the host', () => {
+    mockRequest.headers.referer = 'https://example.com/year-aurn'
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'year_aurn/index',
+      expect.any(Object)
+    )
+    expect(codeFn).not.toHaveBeenCalled()
+  })
+
+  it('delegates to yearController when referer is localhost', () => {
+    mockRequest.headers.referer = 'http://localhost:3000/year-aurn'
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'year_aurn/index',
+      expect.any(Object)
+    )
+    expect(codeFn).not.toHaveBeenCalled()
+  })
+
+  it('accepts the alternate "referrer" header spelling', () => {
+    mockRequest.headers.referrer = 'https://example.com/year-aurn'
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockH.view).toHaveBeenCalledWith(
+      'year_aurn/index',
+      expect.any(Object)
+    )
+    expect(codeFn).not.toHaveBeenCalled()
+  })
+
+  it('delegates POST requests to yearController when navigation is internal', () => {
+    mockRequest.method = 'post'
+    mockRequest.headers.referer = 'https://example.com/year-aurn'
+    mockRequest.payload = { time: 'ytd' }
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'selectedTimePeriod',
+      expect.any(String)
+    )
+    expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+  })
+
+  it('falls back to host check when info.host is empty', () => {
+    mockRequest.info.host = ''
+    mockRequest.headers.referer = 'https://example.com/year-aurn'
+
+    yearChangeController.handler(mockRequest, mockH)
+
+    // Empty host -> referer.includes('') is true, treated as internal
+    expect(mockH.view).toHaveBeenCalledWith(
+      'year_aurn/index',
+      expect.any(Object)
+    )
   })
 })

@@ -12,35 +12,12 @@ import {
 const logger = createLogger()
 const getLocationDetailsController = {
   handler: async (request, h) => {
-    // Check if the request is coming from within the application
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
     // If accessed directly (no valid referer), return 404 page not found
-    if (!isInternalNavigation) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(404)
+    if (!isInternalNavigation(request)) {
+      return renderNotFound(h)
     }
 
-    // For POST request, get locationID from form payload and store in session
-    // For GET request, get locationID from session
-    let locationID
-    if (request.method === 'post' && request.payload?.locationId) {
-      locationID = request.payload.locationId
-      request.yar.set('locationID', locationID)
-    } else {
-      locationID = request.yar.get('locationID')
-    }
+    const locationID = resolveLocationID(request)
 
     const result = request.yar.get('osnameapiresult')
     const fullSearchQuery = request.yar.get('fullSearchQuery')?.value || ''
@@ -92,6 +69,39 @@ const getLocationDetailsController = {
 }
 
 // 🔍 Helper Functions
+
+// Check if the request is coming from within the application
+function isInternalNavigation(request) {
+  const referer = request.headers.referer || request.headers.referrer || ''
+  const host = request.info.host || ''
+  return Boolean(
+    referer && (referer.includes(host) || referer.includes('localhost'))
+  )
+}
+
+function renderNotFound(h) {
+  return h
+    .view('error/index', {
+      pageTitle: 'Page not found',
+      heading: 'Page not found',
+      statusCode: '404',
+      content: english.errorpages,
+      message:
+        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+    })
+    .code(HTTP_NOT_FOUND)
+}
+
+// For POST request, get locationID from form payload and store in session.
+// For GET request, get locationID from session.
+function resolveLocationID(request) {
+  if (request.method === 'post' && request.payload?.locationId) {
+    const locationID = request.payload.locationId
+    request.yar.set('locationID', locationID)
+    return locationID
+  }
+  return request.yar.get('locationID')
+}
 
 function findUserLocation(locations, locationID) {
   if (!locations) {

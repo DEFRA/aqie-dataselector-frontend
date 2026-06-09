@@ -9,7 +9,8 @@ import { english } from '~/src/server/data/en/homecontent.js'
 import {
   MIN_YEAR,
   EXAMPLE_YEAR,
-  MAX_YEARS_RANGE
+  MAX_YEARS_RANGE,
+  HTTP_NOT_FOUND
 } from '~/src/server/common/constants/magic-numbers.js'
 
 const VIEW_PATH = 'year_aurn/index'
@@ -393,7 +394,7 @@ export const yearChangeController = {
           message:
             'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
         })
-        .code(404)
+        .code(HTTP_NOT_FOUND)
     }
 
     // Otherwise, delegate to the main year-aurn controller logic

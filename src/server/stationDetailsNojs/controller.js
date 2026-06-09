@@ -9,6 +9,7 @@ import {
   buildYearsArray,
   formatCurrentDate
 } from '~/src/server/common/helpers/station-helpers.js'
+import { HTTP_NOT_FOUND } from '~/src/server/common/constants/magic-numbers.js'
 
 function handleDownloadParams(request) {
   if (request.params.download) {
@@ -91,26 +92,33 @@ function buildViewData(request, stationDetails, mapLocation, dateContext) {
   }
 }
 
+// Check if the request is coming from within the application
+function isInternalNavigation(request) {
+  const referer = request.headers.referer || request.headers.referrer || ''
+  const host = request.info.host || ''
+  return Boolean(
+    referer && (referer.includes(host) || referer.includes('localhost'))
+  )
+}
+
+function renderNotFound(h) {
+  return h
+    .view('error/index', {
+      pageTitle: 'Page not found',
+      heading: 'Page not found',
+      statusCode: '404',
+      content: english.errorpages,
+      message:
+        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+    })
+    .code(HTTP_NOT_FOUND)
+}
+
 const stationDetailsNojsController = {
   handler: async (request, h) => {
-    // Check if the request is coming from within the application
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
     // If accessed directly (no valid referer), return 404 page not found
-    if (!isInternalNavigation) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(404)
+    if (!isInternalNavigation(request)) {
+      return renderNotFound(h)
     }
 
     // Get station ID from POST payload or session
