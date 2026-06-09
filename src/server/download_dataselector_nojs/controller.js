@@ -122,13 +122,19 @@ export const downloadDataselectornojsController = {
 
     // Validate all required fields
     const pollutantError = validateSelectedPollutant(request, h, backUrl)
-    if (pollutantError) return pollutantError
+    if (pollutantError) {
+      return pollutantError
+    }
 
     const yearError = validateSelectedYear(request, h, backUrl)
-    if (yearError) return yearError
+    if (yearError) {
+      return yearError
+    }
 
     const locationError = validateSelectedLocation(request, h, backUrl)
-    if (locationError) return locationError
+    if (locationError) {
+      return locationError
+    }
 
     // Success case - render download page
     const viewData = buildViewData(request, backUrl)

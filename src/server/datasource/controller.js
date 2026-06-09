@@ -15,12 +15,19 @@ import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-help
 
 const logger = createLogger()
 
+// Extract a human-readable message from a thrown value.
+const errMsg = (error) =>
+  error instanceof Error ? error.message : 'unknown error'
+
 // Build lowercase name/fullName → network entry lookup
 const networkLookup = new Map()
 for (const entry of Object.values(networkData)) {
-  if (entry.name) networkLookup.set(entry.name.toLowerCase().trim(), entry)
-  if (entry.fullName)
+  if (entry.name) {
+    networkLookup.set(entry.name.toLowerCase().trim(), entry)
+  }
+  if (entry.fullName) {
     networkLookup.set(entry.fullName.toLowerCase().trim(), entry)
+  }
 }
 
 function lookupNetwork(name) {
@@ -36,7 +43,9 @@ function enrichGroupsAndBuildOther(rawGroups) {
     networks: group.networks.map((network) => {
       const networkName = typeof network === 'string' ? network : network?.name
       const meta = lookupNetwork(networkName)
-      if (meta) usedAbbreviations.add(meta.abbreviation)
+      if (meta) {
+        usedAbbreviations.add(meta.abbreviation)
+      }
       if (meta && typeof network === 'object' && network) {
         return { ...meta, ...network }
       }
@@ -47,7 +56,9 @@ function enrichGroupsAndBuildOther(rawGroups) {
   const otherByCategory = {}
   for (const entry of Object.values(networkData)) {
     if (!usedAbbreviations.has(entry.abbreviation)) {
-      if (!otherByCategory[entry.category]) otherByCategory[entry.category] = []
+      if (!otherByCategory[entry.category]) {
+        otherByCategory[entry.category] = []
+      }
       otherByCategory[entry.category].push(entry)
     }
   }
@@ -65,48 +76,54 @@ const KNOWN_CATEGORIES = new Set([
   'Other data from Defra'
 ])
 
+async function fetchDatasourceDev(body, pollutantID) {
+  try {
+    const url = config.get('datasourceDevUrl')
+    const { payload } = await Wreck.post(url, {
+      payload: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.get('osNamesDevApiKey')
+      },
+      json: true
+    })
+    const result = Array.isArray(payload) ? payload : []
+    logger.info(
+      `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
+    )
+    return result
+  } catch (error) {
+    logger.error(
+      `Datasource API call failed for pollutantID ${pollutantID}: ${errMsg(error)}`
+    )
+    return null
+  }
+}
+
+async function fetchDatasourceProd(body, pollutantID) {
+  try {
+    const response = await axios.post(config.get('datasourceApiUrl'), body)
+    const result = Array.isArray(response.data) ? response.data : []
+    logger.info(
+      `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
+    )
+    return result
+  } catch (error) {
+    logger.error(
+      `Datasource API call failed for pollutantID ${pollutantID}: ${errMsg(error)}`
+    )
+    return null
+  }
+}
+
 // POST pollutantID to the API, returns flat array of strings
 export async function fetchDatasourceForPollutant(pollutantID) {
   const body = { pollutantID: String(pollutantID) }
   logger.info(`Fetching data sources for pollutantID ${pollutantID}`)
 
-  if (config.get('isDevelopment')) {
-    try {
-      const url = config.get('datasourceDevUrl')
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(body),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      const result = Array.isArray(payload) ? payload : []
-      logger.info(
-        `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
-      )
-      return result
-    } catch (error) {
-      logger.error(
-        `Datasource API call failed for pollutantID ${pollutantID}: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return null
-    }
-  } else {
-    try {
-      const response = await axios.post(config.get('datasourceApiUrl'), body)
-      const result = Array.isArray(response.data) ? response.data : []
-      logger.info(
-        `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
-      )
-      return result
-    } catch (error) {
-      logger.error(
-        `Datasource API call failed for pollutantID ${pollutantID}: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return null
-    }
-  }
+  return config.get('isDevelopment')
+    ? fetchDatasourceDev(body, pollutantID)
+    : fetchDatasourceProd(body, pollutantID)
 }
 
 // Parse flat array ["Category", "Network", "Category", "Network", ...]
@@ -134,101 +151,118 @@ export function groupDatasources(flat) {
       groups.push(currentGroup)
     } else if (currentGroup) {
       currentGroup.networks.push(item)
+    } else {
+      // Leading network with no preceding category header — ignore it
     }
   }
 
   return groups
 }
 
+// Re-trigger the station count with the new datasource type when all the
+// required selection data is present in the session.
+async function recalculateStationCount(request, datasourceType) {
+  const finalyear = request.yar.get('finalyear1')
+  const pollutantID = request.yar.get('selectedPollutantID')
+  const selectedlocation = request.yar.get('selectedlocation')
+  const selectedLAIDs = request.yar.get('selectedLAIDs')
+  const isCountry = request.yar.get('Location') === 'Country'
+
+  if (!(finalyear && pollutantID && selectedlocation)) {
+    return
+  }
+
+  const postDatasourceGroups = request.yar.get('datasourceGroups') || []
+  const nonAurnNetworkId = getNonAurnNetworkIdCsv(postDatasourceGroups)
+  const baseParams = {
+    pollutantName: pollutantID,
+    Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
+    regiontype: isCountry ? 'Country' : 'LocalAuthority',
+    Year: finalyear,
+    dataselectorfiltertype: 'dataSelectorCount',
+    dataselectordownloadtype: ''
+  }
+  try {
+    const [aurnCount, nonAurnCount] = await Promise.all([
+      invokeStationCount({ ...baseParams, dataSource: 'AURN', networkId: '' }),
+      invokeStationCount({
+        ...baseParams,
+        dataSource: 'NON-AURN',
+        networkId: nonAurnNetworkId
+      })
+    ])
+    request.yar.set('stationCountAURN', aurnCount)
+    request.yar.set('stationCountNONAURN', nonAurnCount)
+    request.yar.set('nooflocationukeap', nonAurnCount)
+    request.yar.set(
+      'nooflocation',
+      datasourceType === 'NON-AURN' ? nonAurnCount : aurnCount
+    )
+  } catch (error) {
+    logger.error(`Station count re-calculation failed: ${errMsg(error)}`)
+  }
+}
+
+async function handleDatasourcePost(request, h) {
+  const datasourceType = request.payload?.['datasource-type'] || 'AURN'
+  request.yar.set('selectedDatasourceType', datasourceType)
+  await recalculateStationCount(request, datasourceType)
+  return h.redirect('/customdataset')
+}
+
+// Resolve datasource groups from session, fetching as a fallback when empty.
+// Returns { groups } normally, or { redirect } when the fetch fails.
+async function resolveDatasourceGroups(request, h) {
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  if (datasourceGroups.length > 0) {
+    return { groups: datasourceGroups }
+  }
+
+  const pollutantID = request.yar.get('selectedPollutantID')
+  if (!pollutantID) {
+    logger.warn('No selectedPollutantID in session — cannot fetch data sources')
+    return { groups: datasourceGroups }
+  }
+
+  const flat = await fetchDatasourceForPollutant(pollutantID)
+  if (flat === null) {
+    return { redirect: h.redirect('/problem-with-service') }
+  }
+
+  const grouped = groupDatasources(flat)
+  request.yar.set('datasourceGroups', grouped)
+  return { groups: grouped }
+}
+
+async function handleDatasourceGet(request, h) {
+  const backUrl = '/customdataset'
+
+  const resolved = await resolveDatasourceGroups(request, h)
+  if (resolved.redirect) {
+    return resolved.redirect
+  }
+
+  const { enrichedGroups, otherGroups } = enrichGroupsAndBuildOther(
+    resolved.groups
+  )
+
+  return h.view('datasource/index', {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    displayBacklink: true,
+    hrefq: backUrl,
+    datasourceGroups: enrichedGroups,
+    otherGroups
+  })
+}
+
 export const datasourceController = {
   handler: async (request, h) => {
     if (request.method === 'post') {
-      const datasourceType = request.payload?.['datasource-type'] || 'AURN'
-      request.yar.set('selectedDatasourceType', datasourceType)
-
-      // Re-trigger station count with the new datasource type if all required data is in session
-      const finalyear = request.yar.get('finalyear1')
-      const pollutantID = request.yar.get('selectedPollutantID')
-      const selectedlocation = request.yar.get('selectedlocation')
-      const selectedLAIDs = request.yar.get('selectedLAIDs')
-      const isCountry = request.yar.get('Location') === 'Country'
-
-      if (finalyear && pollutantID && selectedlocation) {
-        const postDatasourceGroups = request.yar.get('datasourceGroups') || []
-        const nonAurnNetworkId = getNonAurnNetworkIdCsv(postDatasourceGroups)
-        const baseParams = {
-          pollutantName: pollutantID,
-          Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
-          regiontype: isCountry ? 'Country' : 'LocalAuthority',
-          Year: finalyear,
-          dataselectorfiltertype: 'dataSelectorCount',
-          dataselectordownloadtype: ''
-        }
-        try {
-          const [aurnCount, nonAurnCount] = await Promise.all([
-            invokeStationCount({
-              ...baseParams,
-              dataSource: 'AURN',
-              networkId: ''
-            }),
-            invokeStationCount({
-              ...baseParams,
-              dataSource: 'NON-AURN',
-              networkId: nonAurnNetworkId
-            })
-          ])
-          request.yar.set('stationCountAURN', aurnCount)
-          request.yar.set('stationCountNONAURN', nonAurnCount)
-          request.yar.set('nooflocationukeap', nonAurnCount)
-          request.yar.set(
-            'nooflocation',
-            datasourceType === 'NON-AURN' ? nonAurnCount : aurnCount
-          )
-        } catch (error) {
-          logger.error(
-            `Station count re-calculation failed: ${error instanceof Error ? error.message : 'unknown error'}`
-          )
-        }
-      }
-
-      return h.redirect('/customdataset')
+      return handleDatasourcePost(request, h)
     }
-
-    const backUrl = '/customdataset'
-
-    // datasourceGroups is pre-fetched and stored in session by add_pollutant POST
-    let datasourceGroups = request.yar.get('datasourceGroups') || []
-
-    // Fallback: fetch if session is empty (e.g. direct navigation)
-    if (datasourceGroups.length === 0) {
-      const pollutantID = request.yar.get('selectedPollutantID')
-      if (pollutantID) {
-        const flat = await fetchDatasourceForPollutant(pollutantID)
-        if (flat === null) {
-          return h.redirect('/problem-with-service')
-        }
-        datasourceGroups = groupDatasources(flat)
-
-        request.yar.set('datasourceGroups', datasourceGroups)
-      } else {
-        logger.warn(
-          'No selectedPollutantID in session — cannot fetch data sources'
-        )
-      }
-    }
-
-    const { enrichedGroups, otherGroups } =
-      enrichGroupsAndBuildOther(datasourceGroups)
-
-    return h.view('datasource/index', {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      displayBacklink: true,
-      hrefq: backUrl,
-      datasourceGroups: enrichedGroups,
-      otherGroups
-    })
+    return handleDatasourceGet(request, h)
   }
 }
 

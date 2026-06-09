@@ -74,6 +74,148 @@ async function invokeEmailRequest(emailRequestParameters) {
     ? invokeEmailRequestDev(emailRequestParameters)
     : invokeEmailRequestProd(emailRequestParameters)
 }
+const REQUIRED_PARAMS = [
+  'pollutantName',
+  'Region',
+  'regiontype',
+  'Year',
+  'email'
+]
+
+// Basic email validation
+const isValidEmail = (emailAddress) => {
+  if (!emailAddress || typeof emailAddress !== 'string') {
+    return false
+  }
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  return emailRegex.test(emailAddress.trim())
+}
+
+// Render the email request form, optionally with an error/preserved value.
+const renderEmailForm = (h, backUrl, extra = {}) =>
+  h.view(EMAIL_REQUEST_VIEW, {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    displayBacklink: true,
+    hrefq: backUrl,
+    ...extra
+  })
+
+// Determine back URL: JS download page if arriving from it, else the no-JS page.
+const computeBackUrl = (dataSourceParam, referrer) => {
+  const isFromJsPage =
+    dataSourceParam ||
+    (referrer.includes('/download_dataselector') && !referrer.includes('nojs'))
+  return isFromJsPage ? '/download_dataselector' : '/download_dataselectornojs'
+}
+
+// Persist the dataSource path param (and derived network id) so it survives POST.
+const storePendingDataSource = (request, dataSourceParam) => {
+  if (
+    dataSourceParam &&
+    (dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN')
+  ) {
+    request.yar.set('pendingDataSource', dataSourceParam)
+  }
+
+  if (dataSourceParam === 'NON-AURN') {
+    const datasourceGroups = request.yar.get('datasourceGroups') || []
+    const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+    if (derivedNetworkId) {
+      request.yar.set('pendingNetworkId', derivedNetworkId)
+    }
+  }
+}
+
+// Build the station count parameters from session, applying any pending dataSource.
+const buildStationCountParameters = (request) => {
+  const dataSourceFromQuery = request.yar.get('pendingDataSource')
+  if (dataSourceFromQuery) {
+    request.yar.set('selectedDatasourceType', dataSourceFromQuery)
+    request.yar.clear('pendingDataSource')
+  }
+
+  const selectedDataSource = request.yar.get('selectedDatasourceType') || 'AURN'
+  const pendingNetworkId = (request.yar.get('pendingNetworkId') || '')
+    .toString()
+    .trim()
+  const regionType = request.yar.get('Location')
+
+  const params = {
+    pollutantName: request.yar.get('selectedPollutantID'),
+    dataSource: selectedDataSource,
+    networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
+    Region:
+      regionType === 'Country'
+        ? request.yar.get('selectedlocation').join(',')
+        : request.yar.get('selectedLAIDs'),
+    regiontype: regionType,
+    Year: request.yar.get('finalyear1'),
+    dataselectorfiltertype: 'dataSelectorHourly',
+    dataselectordownloadtype: 'dataSelectorMultiple',
+    email: request.yar.get('email')
+  }
+  request.yar.clear('pendingNetworkId')
+  return params
+}
+
+const hasMissingRequiredParams = (params) =>
+  REQUIRED_PARAMS.some((param) => {
+    const value = params[param]
+    return value === null || value === undefined || value === ''
+  })
+
+const isEmailApiError = (result) =>
+  !result ||
+  result.error === true ||
+  (typeof result === 'string' && result.includes('<?xml'))
+
+// Handle the POST /confirm flow: validate email, build params, call the API.
+const handleConfirm = async (request, h, backUrl) => {
+  const email = request.payload?.email
+  request.yar.set('email', email)
+
+  if (!email) {
+    return renderEmailForm(h, backUrl, {
+      error: 'Enter an email address',
+      email
+    })
+  }
+
+  if (!isValidEmail(email)) {
+    return renderEmailForm(h, backUrl, {
+      error: 'Enter a valid email address',
+      email
+    })
+  }
+
+  const stationcountparameters = buildStationCountParameters(request)
+
+  if (hasMissingRequiredParams(stationcountparameters)) {
+    logger.error('Email request failed - missing required parameters')
+    return h.redirect(PROBLEM_WITH_SERVICE)
+  }
+
+  const result = await invokeEmailRequest(stationcountparameters)
+
+  if (isEmailApiError(result)) {
+    logger.error('Email request failed - redirecting to problem-with-service')
+    return h.redirect(PROBLEM_WITH_SERVICE)
+  }
+
+  if (result === 'Success') {
+    return h.view('emailrequest/requestconfirm.njk', {
+      pageTitle: englishNew.custom.pageTitle,
+      heading: englishNew.custom.heading,
+      texts: englishNew.custom.texts
+    })
+  }
+
+  // Redirect to existing problem with service page when API call fails
+  return h.redirect(PROBLEM_WITH_SERVICE)
+}
+
 export const emailrequestController = {
   handler: async (request, h) => {
     // If accessed directly (no valid referer), return 404 page not found
@@ -81,159 +223,17 @@ export const emailrequestController = {
       return renderNotFound(h)
     }
 
-    // Determine back URL based on referrer or path parameter
-    // If coming from JS version (has dataSource in path), use /download_dataselector
-    // Otherwise use /download_dataselectornojs for no-JS users
     const dataSourceParam = request.params?.dataSource
     const referrer = request.info?.referrer || ''
-    const isFromJsPage =
-      dataSourceParam ||
-      (referrer.includes('/download_dataselector') &&
-        !referrer.includes('nojs'))
+    const backUrl = computeBackUrl(dataSourceParam, referrer)
 
-    const backUrl = isFromJsPage
-      ? '/download_dataselector'
-      : '/download_dataselectornojs'
-
-    // Store dataSource from path param so it survives the POST
-    if (
-      dataSourceParam &&
-      (dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN')
-    ) {
-      request.yar.set('pendingDataSource', dataSourceParam)
-    }
-
-    if (dataSourceParam === 'NON-AURN') {
-      const datasourceGroups = request.yar.get('datasourceGroups') || []
-      const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
-      if (derivedNetworkId) {
-        request.yar.set('pendingNetworkId', derivedNetworkId)
-      }
-    }
+    storePendingDataSource(request, dataSourceParam)
 
     if (request.path?.includes('/confirm')) {
-      // Get email from form payload
-      const email = request.payload?.email
-      request.yar.set('email', email)
-
-      // Email validation function
-      const isValidEmail = (emailAddress) => {
-        if (!emailAddress || typeof emailAddress !== 'string') {
-          return false
-        }
-
-        // Basic email regex pattern
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-        return emailRegex.test(emailAddress.trim())
-      }
-
-      // Check if email is provided and valid
-      if (!email) {
-        return h.view(EMAIL_REQUEST_VIEW, {
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          displayBacklink: true,
-          hrefq: backUrl,
-          error: 'Enter an email address',
-          email // Preserve the entered value
-        })
-      }
-
-      if (!isValidEmail(email)) {
-        return h.view(EMAIL_REQUEST_VIEW, {
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          displayBacklink: true,
-          hrefq: backUrl,
-          error: 'Enter a valid email address',
-          email // Preserve the entered value
-        })
-      }
-
-      // If dataSource was passed as a query param (from download page tab), update session
-      const dataSourceFromQuery = request.yar.get('pendingDataSource')
-      if (dataSourceFromQuery) {
-        request.yar.set('selectedDatasourceType', dataSourceFromQuery)
-        request.yar.clear('pendingDataSource')
-      }
-
-      const selectedDataSource =
-        request.yar.get('selectedDatasourceType') || 'AURN'
-      const pendingNetworkId = (request.yar.get('pendingNetworkId') || '')
-        .toString()
-        .trim()
-
-      // Build parameters based on region type
-      const regionType = request.yar.get('Location')
-      const stationcountparameters = {
-        pollutantName: request.yar.get('selectedPollutantID'),
-        dataSource: selectedDataSource,
-        networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
-        Region:
-          regionType === 'Country'
-            ? request.yar.get('selectedlocation').join(',')
-            : request.yar.get('selectedLAIDs'),
-        regiontype: regionType,
-        Year: request.yar.get('finalyear1'),
-        dataselectorfiltertype: 'dataSelectorHourly',
-        dataselectordownloadtype: 'dataSelectorMultiple',
-        email: request.yar.get('email') // Use the validated email instead of hardcoded value
-      }
-      request.yar.clear('pendingNetworkId')
-
-      // Validate required parameters - redirect to problem-with-service if any are null or blank
-      const requiredParams = [
-        'pollutantName',
-        'Region',
-        'regiontype',
-        'Year',
-        'email'
-      ]
-      const hasInvalidParams = requiredParams.some((param) => {
-        const value = stationcountparameters[param]
-        return value === null || value === undefined || value === ''
-      })
-
-      if (hasInvalidParams) {
-        logger.error('Email request failed - missing required parameters')
-        return h.redirect(PROBLEM_WITH_SERVICE)
-      }
-
-      const result = await invokeEmailRequest(stationcountparameters)
-
-      // Check for API errors - redirect to problem-with-service page
-      if (
-        !result ||
-        result.error === true ||
-        (typeof result === 'string' && result.includes('<?xml'))
-      ) {
-        logger.error(
-          'Email request failed - redirecting to problem-with-service'
-        )
-        return h.redirect(PROBLEM_WITH_SERVICE)
-      }
-
-      if (result === 'Success') {
-        return h.view('emailrequest/requestconfirm.njk', {
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts
-        })
-      } else {
-        // Redirect to existing problem with service page when API call fails
-        return h.redirect(PROBLEM_WITH_SERVICE)
-      }
-    } else {
-      return h.view(EMAIL_REQUEST_VIEW, {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        displayBacklink: true,
-        hrefq: backUrl
-      })
+      return handleConfirm(request, h, backUrl)
     }
+
+    return renderEmailForm(h, backUrl)
   }
 }
 

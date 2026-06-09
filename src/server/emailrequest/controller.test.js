@@ -1274,4 +1274,117 @@ describe('emailrequestController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })
+
+  // ─── Direct access guard (referer check) ──────────────────────────────────────
+
+  describe('Direct access guard', () => {
+    it('returns the 404 page when there is no internal navigation', async () => {
+      mockRequest.path = '/emailrequest'
+      mockRequest.headers = {} // no referer
+      mockRequest.info = { host: 'localhost:3001' }
+
+      const codeMock = jest.fn().mockReturnValue('404-response')
+      const guardH = {
+        view: jest.fn().mockReturnValue({ code: codeMock }),
+        redirect: jest.fn()
+      }
+
+      const result = await emailrequestController.handler(mockRequest, guardH)
+
+      expect(guardH.view).toHaveBeenCalledWith(
+        'error/index',
+        expect.objectContaining({ statusCode: '404' })
+      )
+      expect(codeMock).toHaveBeenCalledWith(404)
+      expect(result).toBe('404-response')
+    })
+  })
+
+  // ─── NON-AURN pendingNetworkId derivation ─────────────────────────────────────
+
+  describe('NON-AURN pendingNetworkId', () => {
+    it('stores derived network ids when dataSource is NON-AURN', async () => {
+      mockRequest.path = '/emailrequest'
+      mockRequest.params = { dataSource: 'NON-AURN' }
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'datasourceGroups') {
+          return [
+            {
+              category: 'Other data from Defra',
+              networks: [{ id: 'NET1' }, { id: 'NET2' }]
+            }
+          ]
+        }
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'pendingNetworkId',
+        'NET1,NET2'
+      )
+    })
+
+    it('does not store pendingNetworkId when no network ids are derived', async () => {
+      mockRequest.path = '/emailrequest'
+      mockRequest.params = { dataSource: 'NON-AURN' }
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'datasourceGroups') return []
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'pendingNetworkId',
+        expect.anything()
+      )
+    })
+  })
+
+  // ─── Development mode invalid response ─────────────────────────────────────────
+
+  describe('Development mode invalid response', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockRequest.yar.get.mockImplementation((key) => {
+        const data = {
+          selectedPollutantID: 'pollutant-id-123',
+          selectedlocation: ['London'],
+          selectedLAIDs: 'London',
+          Location: 'LocalAuthority',
+          finalyear1: '2023',
+          email: 'test@example.com',
+          selectedDatasourceType: 'AURN'
+        }
+        return data[key]
+      })
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        if (key === 'emailDevUrl') return 'https://dev.example.com/email'
+        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        return undefined
+      })
+    })
+
+    it('redirects to problem-with-service when dev API returns empty payload', async () => {
+      mockWreck.mockResolvedValue({ payload: null })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
+    it('redirects to problem-with-service when dev API returns XML payload', async () => {
+      mockWreck.mockResolvedValue({
+        payload: '<?xml version="1.0"?><error>boom</error>'
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+  })
 })
