@@ -8,7 +8,10 @@ import axios from 'axios'
 import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { english } from '~/src/server/data/en/homecontent.js'
-import { HTTP_INTERNAL_SERVER_ERROR } from '~/src/server/common/constants/magic-numbers.js'
+import {
+  HTTP_INTERNAL_SERVER_ERROR,
+  HTTP_NOT_FOUND
+} from '~/src/server/common/constants/magic-numbers.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { config } from '~/src/config/config.js'
@@ -517,29 +520,81 @@ export async function invokeStationCount(stationcountparameters) {
   }
 }
 
+// Check if the request is coming from within the application
+function isInternalNavigation(request) {
+  const referer = request.headers.referer || request.headers.referrer || ''
+  const host = request.info.host || ''
+  return Boolean(
+    referer && (referer.includes(host) || referer.includes('localhost'))
+  )
+}
+
+// If accessed directly (no valid referer), return 404 page not found
+function renderNotFound(h) {
+  return h
+    .view('error/index', {
+      pageTitle: 'Page not found',
+      heading: 'Page not found',
+      statusCode: '404',
+      content: english.errorpages,
+      message:
+        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+    })
+    .code(HTTP_NOT_FOUND)
+}
+
+function hasAllRequiredData(request) {
+  return Boolean(
+    request.yar.get('selectedlocation') &&
+      request.yar.get('selectedyear') &&
+      request.yar.get('selectedpollutant')
+  )
+}
+
+function renderBothZeroView(request, h, backUrl) {
+  return h.view('customdataset/index', {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: 0,
+    datasourceGroups: request.yar.get('datasourceGroups') || [],
+    displayBacklink: true,
+    hrefq: backUrl,
+    error: true,
+    errormsg:
+      'No monitoring stations are available for your selection. Please try:',
+    errorref1: 'Change the year',
+    errorhref1: '/year-aurn/change',
+    errorref2: 'Change the location',
+    errorhref2: '/location-aurn/change'
+  })
+}
+
+function renderCustomDatasetView(request, h, backUrl) {
+  return h.view('customdataset/index', {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: request.yar.get('nooflocation'),
+    datasourceGroups: request.yar.get('datasourceGroups') || [],
+    displayBacklink: true,
+    hrefq: backUrl
+  })
+}
+
 export const customdatasetController = {
   handler: async (request, h) => {
     const backUrl = '/hubpage'
 
-    // Check if the request is coming from within the application
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
-    // If accessed directly (no valid referer), return 404 page not found
     // Allow /customdataset/clear path to work for clearing session
-    if (!isInternalNavigation && !request.path?.includes('/clear')) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(404)
+    if (!isInternalNavigation(request) && !request.path?.includes('/clear')) {
+      return renderNotFound(h)
     }
 
     if (request.path?.includes('/clear')) {
@@ -556,51 +611,17 @@ export const customdatasetController = {
     handleLocationSelection(request)
 
     // Calculate station count if all required data is present
-    const hasAllRequiredData =
-      request.yar.get('selectedlocation') &&
-      request.yar.get('selectedyear') &&
-      request.yar.get('selectedpollutant')
-
-    if (hasAllRequiredData) {
+    if (hasAllRequiredData(request)) {
       const errorResponse = await handleStationCountCalculation(request)
       if (errorResponse?.bothZero) {
-        return h.view('customdataset/index', {
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          selectedpollutant: request.yar.get('selectedpollutant'),
-          selectedyear: request.yar.get('selectedyear'),
-          selectedlocation: request.yar.get('selectedlocation'),
-          stationcount: 0,
-          datasourceGroups: request.yar.get('datasourceGroups') || [],
-          displayBacklink: true,
-          hrefq: backUrl,
-          error: true,
-          errormsg:
-            'No monitoring stations are available for your selection. Please try:',
-          errorref1: 'Change the year',
-          errorhref1: '/year-aurn/change',
-          errorref2: 'Change the location',
-          errorhref2: '/location-aurn/change'
-        })
+        return renderBothZeroView(request, h, backUrl)
       }
       if (errorResponse) {
         return errorResponse
       }
     }
 
-    return h.view('customdataset/index', {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      selectedpollutant: request.yar.get('selectedpollutant'),
-      selectedyear: request.yar.get('selectedyear'),
-      selectedlocation: request.yar.get('selectedlocation'),
-      stationcount: request.yar.get('nooflocation'),
-      datasourceGroups: request.yar.get('datasourceGroups') || [],
-      displayBacklink: true,
-      hrefq: backUrl
-    })
+    return renderCustomDatasetView(request, h, backUrl)
   }
 }
 

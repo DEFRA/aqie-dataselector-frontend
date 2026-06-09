@@ -61,9 +61,7 @@ function enrichGroupsAndBuildOther(rawGroups) {
       if (meta && typeof network === 'object' && network) {
         return { ...meta, ...network }
       }
-      return (
-        meta || { ...(network || {}), name: networkName, fullName: networkName }
-      )
+      return meta || { ...network, name: networkName, fullName: networkName }
     })
   }))
 
@@ -177,8 +175,8 @@ export const datasourceController = {
       const isCountry = request.yar.get('Location') === 'Country'
 
       if (finalyear && pollutantID && selectedlocation) {
-        const datasourceGroups = request.yar.get('datasourceGroups') || []
-        const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+        const postDatasourceGroups = request.yar.get('datasourceGroups') || []
+        const nonAurnNetworkId = getNonAurnNetworkIdCsv(postDatasourceGroups)
         const baseParams = {
           pollutantName: pollutantID,
           Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,

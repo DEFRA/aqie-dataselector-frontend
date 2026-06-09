@@ -9,88 +9,80 @@ import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
   HTTP_REQUEST_TIMEOUT_MS,
-  TWO_DAYS_MS
+  TWO_DAYS_MS,
+  HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
 const logger = createLogger()
 
+// Normalise the API response: empty -> error, object with resultUrl -> the URL,
+// otherwise the raw value (string URL)
+function extractDownloadUrl(data) {
+  if (!data) {
+    logger.error('Download email API returned empty response')
+    return { error: true }
+  }
+  return typeof data === 'object' && data.resultUrl ? data.resultUrl : data
+}
+
+async function invokeDownloadEmailDev(emailParams) {
+  try {
+    const url = config.get('downloadEmailDevUrl')
+    const { payload } = await Wreck.post(url, {
+      payload: JSON.stringify(emailParams),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.get('osNamesDevApiKey')
+      },
+      json: true
+    })
+    logger.info('Download email API call completed successfully (local)')
+    return extractDownloadUrl(payload)
+  } catch (error) {
+    logger.error(
+      `Download email API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
+    )
+    return { error: true }
+  }
+}
+
+function logDownloadEmailError(error) {
+  logger.error(`Error invoking download email API: ${error.message}`)
+  logger.error(`Error stack: ${error.stack}`)
+  logger.error(`Error name: ${error.name}`)
+  if (error.code) {
+    logger.error(`Error code: ${error.code}`)
+  }
+  if (error.response) {
+    logger.error(`Response status: ${error.response.status}`)
+    logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
+  }
+}
+
+async function invokeDownloadEmailProd(emailParams) {
+  try {
+    const url = config.get('downloadEmailUrl')
+    logger.info(`About to call axios.post to: ${url}`)
+    logger.info(`Request payload: ${JSON.stringify(emailParams)}`)
+    const response = await axios.post(url, emailParams, {
+      timeout: HTTP_REQUEST_TIMEOUT_MS,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    logger.info('Axios call completed successfully')
+    logger.info(`Response data: ${JSON.stringify(response.data)}`)
+    return extractDownloadUrl(response.data)
+  } catch (error) {
+    logDownloadEmailError(error)
+    return { error: true }
+  }
+}
+
 async function invokeDownloadEmail(apiparams) {
   const emailParams = { jobID: apiparams.id }
-
-  if (config.get('isDevelopment')) {
-    try {
-      const url = config.get('downloadEmailDevUrl')
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(emailParams),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      logger.info('Download email API call completed successfully (local)')
-
-      // Check if response data is valid
-      if (!payload) {
-        logger.error('Download email API returned empty response')
-        return { error: true }
-      }
-
-      // Handle both object response (with resultUrl) and string response
-      const emaildownloadUrl =
-        typeof payload === 'object' && payload.resultUrl
-          ? payload.resultUrl
-          : payload
-
-      return emaildownloadUrl
-    } catch (error) {
-      logger.error(
-        `Download email API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return { error: true }
-    }
-  } else {
-    try {
-      const url = config.get('downloadEmailUrl')
-      logger.info(`About to call axios.post to: ${url}`)
-      logger.info(`Request payload: ${JSON.stringify(emailParams)}`)
-      const response = await axios.post(url, emailParams, {
-        timeout: HTTP_REQUEST_TIMEOUT_MS,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      logger.info('Axios call completed successfully')
-      logger.info(`Response data: ${JSON.stringify(response.data)}`)
-
-      const responseData = response.data
-
-      // Check if response data is valid
-      if (!responseData) {
-        logger.error('Download email API returned empty response')
-        return { error: true }
-      }
-
-      // Handle both object response (with resultUrl) and string response
-      const emaildownloadUrl =
-        typeof responseData === 'object' && responseData.resultUrl
-          ? responseData.resultUrl
-          : responseData
-
-      return emaildownloadUrl
-    } catch (error) {
-      logger.error(`Error invoking download email API: ${error.message}`)
-      logger.error(`Error stack: ${error.stack}`)
-      logger.error(`Error name: ${error.name}`)
-      if (error.code) {
-        logger.error(`Error code: ${error.code}`)
-      }
-      if (error.response) {
-        logger.error(`Response status: ${error.response.status}`)
-        logger.error(`Response data: ${JSON.stringify(error.response.data)}`)
-      }
-      return { error: true }
-    }
-  }
+  return config.get('isDevelopment')
+    ? invokeDownloadEmailDev(emailParams)
+    : invokeDownloadEmailProd(emailParams)
 }
 
 export const verifyController = {
@@ -158,7 +150,8 @@ export const verifyController = {
         if (error.code === 'ERR_FR_MAX_BODY_LENGTH_EXCEEDED') {
           logger.info('S3 URL is valid (maxContentLength reached)')
         } else {
-          const statusCode = error.response?.status || 500
+          const statusCode =
+            error.response?.status || HTTP_INTERNAL_SERVER_ERROR
           logger.error(
             `S3 URL validation failed, status: ${statusCode}, error: ${error.message}`
           )

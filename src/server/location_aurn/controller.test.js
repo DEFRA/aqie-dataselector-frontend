@@ -39,6 +39,7 @@ const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 
 describe('locationaurnController', () => {
   let locationaurnController
+  let locationaurnChangeController
   let mockRequest
   let mockH
   let mockConfigGet
@@ -66,7 +67,9 @@ describe('locationaurnController', () => {
   })
 
   async function loadController() {
-    ;({ locationaurnController } = await import('./controller.js'))
+    ;({ locationaurnController, locationaurnChangeController } = await import(
+      './controller.js'
+    ))
     ;({
       config: { get: mockConfigGet }
     } = await import('~/src/config/config.js'))
@@ -524,6 +527,285 @@ describe('locationaurnController', () => {
         ['City of London']
       )
       expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+  })
+
+  describe('GET requests - session prepopulation via selectedlocation', () => {
+    it('prepopulates countries from selectedlocation array', async () => {
+      await loadController()
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === SESSION_SELECTED_LOCATION_LOWER) {
+          return ['England', 'Scotland']
+        }
+        return null
+      })
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          formData: {
+            location: 'countries',
+            country: ['England', 'Scotland']
+          }
+        })
+      )
+    })
+
+    it('prepopulates local authorities from selectedlocation array', async () => {
+      await loadController()
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === SESSION_SELECTED_LOCATION_LOWER) {
+          return ['City of London', 'Westminster']
+        }
+        return null
+      })
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          formData: {
+            location: 'la',
+            'selected-locations': ['City of London', 'Westminster']
+          }
+        })
+      )
+    })
+  })
+
+  describe('GET requests - LAQM availability', () => {
+    it('returns cached result on the second call without re-fetching', async () => {
+      await loadController()
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(catchProxyFetchError).toHaveBeenCalledTimes(1)
+
+      await locationaurnController.handler(mockRequest, mockH)
+      // Second call is served from the module-level cache
+      expect(catchProxyFetchError).toHaveBeenCalledTimes(1)
+    })
+
+    it('flags timeout when the LAQM request is aborted', async () => {
+      await loadController()
+      catchProxyFetchError.mockResolvedValueOnce([new Error('Request aborted')])
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          laqmUnavailable: true,
+          laqmUnavailableReason: 'timeout'
+        })
+      )
+    })
+
+    it('flags a generic error when LAQM returns an error-like object', async () => {
+      await loadController()
+      catchProxyFetchError.mockResolvedValueOnce([
+        { message: 'something broke' },
+        null
+      ])
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          laqmUnavailable: true,
+          laqmUnavailableReason: 'error'
+        })
+      )
+    })
+
+    it('returns empty data when LAQM credentials are missing', async () => {
+      await loadController()
+      mockConfigGet.mockReturnValue(undefined)
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(catchProxyFetchError).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          laResult: { data: [] },
+          localAuthorityNames: [],
+          formData: {}
+        })
+      )
+    })
+
+    // Helper: prime the cache with a good response, expire it, then make the
+    // next fetch fail in the supplied way. The controller should fall back to
+    // the cached value rather than report unavailable.
+    async function expectCacheFallbackAfter(failureResult) {
+      await loadController()
+      let now = 1_000_000
+      const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => now)
+
+      await locationaurnController.handler(mockRequest, mockH) // primes cache
+      now += 1_000_000_000_000 // advance well past the cache TTL
+
+      catchProxyFetchError.mockResolvedValueOnce(failureResult)
+      await locationaurnController.handler(mockRequest, mockH)
+
+      const lastCall = mockH.view.mock.calls.at(-1)
+      expect(lastCall[1].laqmUnavailable).toBe(false)
+      expect(lastCall[1].localAuthorityNames).toEqual([
+        'City of London',
+        'Westminster',
+        'Tower Hamlets'
+      ])
+      nowSpy.mockRestore()
+    }
+
+    it('falls back to cached data after a later request error', async () => {
+      await expectCacheFallbackAfter([new Error('Request aborted')])
+    })
+
+    it('falls back to cached data after a later non-200 status', async () => {
+      await expectCacheFallbackAfter([500, null])
+    })
+
+    it('falls back to cached data after a later bad payload', async () => {
+      await expectCacheFallbackAfter([200, 'not-an-object'])
+    })
+  })
+
+  describe('Fallback for non-GET/POST methods', () => {
+    it('renders the view for an unsupported method', async () => {
+      await loadController()
+      mockRequest.method = 'put'
+      const result = await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({ pageTitle: 'Test Location Page' })
+      )
+      expect(result).toBe('location-aurn-view-response')
+    })
+  })
+
+  describe('POST requests - additional branches', () => {
+    beforeEach(() => {
+      mockRequest.method = 'post'
+    })
+
+    it('returns error when no location type is selected', async () => {
+      await loadController()
+      mockRequest.payload = { country: ['England'] }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Select an option before continuing',
+                href: '#location-2'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error for an unknown location type', async () => {
+      await loadController()
+      mockRequest.payload = { location: 'unknown-type' }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Select a valid location type'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('returns error when local authorities are unavailable', async () => {
+      await loadController()
+      mockConfigGet.mockReturnValue(undefined) // no credentials -> empty LA list
+      mockRequest.payload = {
+        location: 'la',
+        'selected-locations': ['City of London']
+      }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            list: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Local authorities are currently unavailable. Try again later.'
+              })
+            ])
+          })
+        })
+      )
+    })
+
+    it('accepts a single selected-locations string and redirects', async () => {
+      await loadController()
+      mockRequest.payload = {
+        location: 'la',
+        'selected-locations': 'City of London'
+      }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATIONS,
+        ['City of London']
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('accepts a local authority from the autocomplete field and redirects', async () => {
+      await loadController()
+      mockRequest.payload = {
+        location: 'la',
+        'local-authority-autocomplete': 'Westminster'
+      }
+      await locationaurnController.handler(mockRequest, mockH)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATIONS,
+        ['Westminster']
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+  })
+
+  describe('locationaurnChangeController', () => {
+    let codeMock
+    let changeMockH
+
+    beforeEach(() => {
+      codeMock = jest.fn().mockReturnValue('404-response')
+      changeMockH = {
+        view: jest.fn().mockReturnValue({ code: codeMock }),
+        redirect: jest.fn().mockReturnValue('redirect-response')
+      }
+      mockRequest.info = { host: 'example.com' }
+    })
+
+    it('returns a 404 page when accessed directly without a referer', async () => {
+      await loadController()
+      const result = await locationaurnChangeController.handler(
+        mockRequest,
+        changeMockH
+      )
+      expect(changeMockH.view).toHaveBeenCalledWith(
+        'error/index',
+        expect.objectContaining({ statusCode: '404' })
+      )
+      expect(codeMock).toHaveBeenCalledWith(404)
+      expect(result).toBe('404-response')
+    })
+
+    it('delegates to the main controller for internal navigation', async () => {
+      await loadController()
+      mockRequest.headers.referer = 'https://example.com/location-aurn'
+      await locationaurnChangeController.handler(mockRequest, changeMockH)
+      expect(changeMockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({ pageTitle: 'Test Location Page' })
+      )
+      expect(codeMock).not.toHaveBeenCalled()
     })
   })
 

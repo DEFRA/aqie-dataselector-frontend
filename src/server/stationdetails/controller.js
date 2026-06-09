@@ -8,32 +8,57 @@ import {
   buildYearsArray,
   formatCurrentDate
 } from '~/src/server/common/helpers/station-helpers.js'
+import {
+  HTTP_BAD_REQUEST,
+  HTTP_NOT_FOUND,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
+
+const logger = createLogger()
+
+// Check if the request is coming from within the application
+function isInternalNavigation(request) {
+  const referer = request.headers.referer || request.headers.referrer || ''
+  const host = request.info.host || ''
+  return Boolean(
+    referer && (referer.includes(host) || referer.includes('localhost'))
+  )
+}
+
+function renderNotFound(h) {
+  return h
+    .view('error/index', {
+      pageTitle: 'Page not found',
+      heading: 'Page not found',
+      statusCode: '404',
+      content: english.errorpages,
+      message:
+        'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
+    })
+    .code(HTTP_NOT_FOUND)
+}
+
+// Get station ID from POST payload or session
+function resolveStationId(request) {
+  if (request.method === 'post' && request.payload?.stationId) {
+    const stationId = request.payload.stationId
+    request.yar.set('SiteId', stationId)
+    return stationId
+  }
+  return request.yar.get('SiteId')
+}
+
+function resolveStationHrefq(request) {
+  return request.yar.get('nooflocation') === 'single'
+    ? `/multiplelocations`
+    : `/location`
+}
 
 const stationDetailsController = {
   handler: async (request, h) => {
-    const HTTP_BAD_REQUEST = 400
-    const HTTP_NOT_FOUND = 404
-    const HTTP_INTERNAL_SERVER_ERROR = 500
-    const logger = createLogger()
-
-    // Check if the request is coming from within the application
-    const referer = request.headers.referer || request.headers.referrer || ''
-    const host = request.info.host || ''
-    const isInternalNavigation =
-      referer && (referer.includes(host) || referer.includes('localhost'))
-
     // If accessed directly (no valid referer), return 404 page not found
-    if (!isInternalNavigation) {
-      return h
-        .view('error/index', {
-          pageTitle: 'Page not found',
-          heading: 'Page not found',
-          statusCode: '404',
-          content: english.errorpages,
-          message:
-            'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
-        })
-        .code(404)
+    if (!isInternalNavigation(request)) {
+      return renderNotFound(h)
     }
 
     if (!request) {
@@ -47,13 +72,7 @@ const stationDetailsController = {
     const stationDetailsView = 'stationdetails/index'
 
     // Get station ID from POST payload or session
-    let stationId
-    if (request.method === 'post' && request.payload?.stationId) {
-      stationId = request.payload.stationId
-      request.yar.set('SiteId', stationId)
-    } else {
-      stationId = request.yar.get('SiteId')
-    }
+    const stationId = resolveStationId(request)
 
     // Handle download parameters
     if (request.params.download) {
@@ -99,7 +118,7 @@ const stationDetailsController = {
     const lon = stationDetails.location.coordinates[1]
     const mapLocation = buildMapLocation(lat, lon)
 
-    const fullSearchQuery = request?.yar?.get('fullSearchQuery')?.value
+    const fullSearchQuery = request.yar.get('fullSearchQuery')?.value
 
     // Prepare API parameters
     const apiParams = {
@@ -143,10 +162,7 @@ const stationDetailsController = {
       maptoggletips: getToggletip(stationDetails.siteType),
       selectedYear: request.yar.get('selectedYear'),
       downloadresult: request.yar.get('downloadresult'),
-      hrefq:
-        request.yar.get('nooflocation') === 'single'
-          ? `/multiplelocations`
-          : `/location`
+      hrefq: resolveStationHrefq(request)
     }
 
     return h.view(stationDetailsView, viewData)

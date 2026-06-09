@@ -10,7 +10,8 @@ import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
 import {
   LAQM_TIMEOUT_MS,
-  MONTHS_PER_YEAR
+  MONTHS_PER_YEAR,
+  HTTP_NOT_FOUND
 } from '~/src/server/common/constants/magic-numbers.js'
 
 import { catchProxyFetchError } from '~/src/server/common/helpers/catch-proxy-fetch-error.js'
@@ -745,7 +746,7 @@ export const locationaurnChangeController = {
           message:
             'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
         })
-        .code(404)
+        .code(HTTP_NOT_FOUND)
     }
 
     // Otherwise, delegate to the main location-aurn controller logic

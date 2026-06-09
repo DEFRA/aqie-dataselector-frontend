@@ -62,7 +62,7 @@ async function invokeDownloadS3(downloadstatusapiparams) {
         return {
           error: true,
           statusCode: error.response.status,
-          redirectUrl: '/problem-with-service'
+          redirectUrl: PROBLEM_SERVICE_500_URL
         }
       }
       return createServerErrorResponse()
@@ -97,7 +97,7 @@ const downloadAurnstatusController = {
           .response({
             error: true,
             statusCode: statusData.statusCode,
-            redirectUrl: statusData.redirectUrl || '/problem-with-service',
+            redirectUrl: statusData.redirectUrl || PROBLEM_SERVICE_500_URL,
             message: 'Status check failed'
           })
           .type('application/json')

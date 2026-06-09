@@ -10,8 +10,11 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { HTTP_NOT_FOUND } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
+
+const PROBLEM_WITH_SERVICE = '/problem-with-service'
 
 function getNonAurnNetworkIdCsv(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
@@ -35,61 +38,58 @@ function getNonAurnNetworkIdCsv(datasourceGroups) {
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
 
-async function invokeEmailRequest(emailRequestParameters) {
-  if (config.get('isDevelopment')) {
-    // dev
-    try {
-      const url = config.get('emailDevUrl')
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(emailRequestParameters),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      // Check if payload is valid and not an error response
-      if (
-        !payload ||
-        (typeof payload === 'string' && payload.includes('<?xml'))
-      ) {
-        logger.error(
-          'Email request API returned invalid response (XML or empty)'
-        )
-        return { error: true }
-      }
-      return payload
-    } catch (error) {
-      logger.error(
-        `Email request API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
-      )
+// A response is invalid if it is empty or an XML error document
+function isInvalidEmailResponse(data) {
+  return !data || (typeof data === 'string' && data.includes('<?xml'))
+}
+
+async function invokeEmailRequestDev(emailRequestParameters) {
+  try {
+    const url = config.get('emailDevUrl')
+    const { payload } = await Wreck.post(url, {
+      payload: JSON.stringify(emailRequestParameters),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.get('osNamesDevApiKey')
+      },
+      json: true
+    })
+    if (isInvalidEmailResponse(payload)) {
+      logger.error('Email request API returned invalid response (XML or empty)')
       return { error: true }
     }
-  } else {
-    // prod
-    try {
-      const response = await axios.post(
-        config.get('email_URL'),
-        emailRequestParameters
-      )
-      // Check if response data is valid and not an error response
-      if (
-        !response.data ||
-        (typeof response.data === 'string' && response.data.includes('<?xml'))
-      ) {
-        logger.error(
-          'Email request API returned invalid response (XML or empty)'
-        )
-        return { error: true }
-      }
-      return response.data
-    } catch (error) {
-      logger.error(
-        `Email request API error: ${error instanceof Error ? error.message : 'unknown error'}`
-      )
-      return { error: true }
-    }
+    return payload
+  } catch (error) {
+    logger.error(
+      `Email request API error (local): ${error instanceof Error ? error.message : 'unknown error'}`
+    )
+    return { error: true }
   }
+}
+
+async function invokeEmailRequestProd(emailRequestParameters) {
+  try {
+    const response = await axios.post(
+      config.get('email_URL'),
+      emailRequestParameters
+    )
+    if (isInvalidEmailResponse(response.data)) {
+      logger.error('Email request API returned invalid response (XML or empty)')
+      return { error: true }
+    }
+    return response.data
+  } catch (error) {
+    logger.error(
+      `Email request API error: ${error instanceof Error ? error.message : 'unknown error'}`
+    )
+    return { error: true }
+  }
+}
+
+async function invokeEmailRequest(emailRequestParameters) {
+  return config.get('isDevelopment')
+    ? invokeEmailRequestDev(emailRequestParameters)
+    : invokeEmailRequestProd(emailRequestParameters)
 }
 export const emailrequestController = {
   handler: async (request, h) => {
@@ -110,7 +110,7 @@ export const emailrequestController = {
           message:
             'If you typed the web address, check it is correct. If you pasted the web address, check you copied the entire address.'
         })
-        .code(404)
+        .code(HTTP_NOT_FOUND)
     }
 
     // Determine back URL based on referrer or path parameter
@@ -230,7 +230,7 @@ export const emailrequestController = {
 
       if (hasInvalidParams) {
         logger.error('Email request failed - missing required parameters')
-        return h.redirect('/problem-with-service')
+        return h.redirect(PROBLEM_WITH_SERVICE)
       }
 
       const result = await invokeEmailRequest(stationcountparameters)
@@ -244,7 +244,7 @@ export const emailrequestController = {
         logger.error(
           'Email request failed - redirecting to problem-with-service'
         )
-        return h.redirect('/problem-with-service')
+        return h.redirect(PROBLEM_WITH_SERVICE)
       }
 
       if (result === 'Success') {
@@ -255,7 +255,7 @@ export const emailrequestController = {
         })
       } else {
         // Redirect to existing problem with service page when API call fails
-        return h.redirect('/problem-with-service')
+        return h.redirect(PROBLEM_WITH_SERVICE)
       }
     } else {
       return h.view(EMAIL_REQUEST_VIEW, {
