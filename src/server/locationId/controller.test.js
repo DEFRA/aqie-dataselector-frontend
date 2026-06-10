@@ -173,6 +173,40 @@ describe('getLocationDetailsController.handler', () => {
     )
     expect(result).toBe(h.view.mock.results[0].value)
   })
+
+  it('returns a 404 page when accessed without internal navigation', async () => {
+    request.headers = {}
+    request.info = { host: 'localhost:3001' }
+
+    await getLocationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({ statusCode: '404' })
+    )
+    expect(h.code).toHaveBeenCalledWith(404)
+  })
+
+  it('returns a server error when the monitoring stations API returns null', async () => {
+    const mockLocation = {
+      GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'TestLocation' }
+    }
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: { getOSPlaces: [mockLocation] },
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 5
+      }
+      return session[key]
+    })
+    axios.post.mockResolvedValue({ data: null })
+
+    await getLocationDetailsController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith(
+      'Error retrieving monitoring stations'
+    )
+  })
 })
 
 describe('findUserLocation', () => {
