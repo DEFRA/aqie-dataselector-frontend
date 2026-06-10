@@ -1291,6 +1291,145 @@ describe('customdatasetController', () => {
       )
     })
   })
+
+  // ─── Direct access guard ──────────────────────────────────────────────────────
+
+  describe('direct access guard', () => {
+    it('returns the 404 page when not internal navigation and not /clear', async () => {
+      mockRequest.headers = {} // no referer
+      mockRequest.info = { host: 'localhost:3001' }
+      mockRequest.path = '/customdataset'
+
+      const codeMock = jest.fn().mockReturnValue('404-response')
+      const h404 = {
+        view: jest.fn().mockReturnValue({ code: codeMock }),
+        redirect: jest.fn()
+      }
+
+      const result = await customdatasetController.handler(mockRequest, h404)
+
+      expect(h404.view).toHaveBeenCalledWith(
+        'error/index',
+        expect.objectContaining({ statusCode: '404' })
+      )
+      expect(codeMock).toHaveBeenCalledWith(404)
+      expect(result).toBe('404-response')
+    })
+  })
+
+  // ─── Pollutant param passthrough ────────────────────────────────────────────────
+
+  describe('pollutant param passthrough', () => {
+    it('passes a non-string, non-array pollutant param through unchanged', async () => {
+      mockRequest.params = { pollutants: 123 }
+      mockRequest.yar.get.mockImplementation((key) =>
+        key === 'selectedPollutants' ? null : undefined
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedpollutant', 123)
+    })
+  })
+
+  // ─── Station count normalisation branches ───────────────────────────────────────
+
+  describe('station count normalisation', () => {
+    const baseSession = (overrides = {}) => ({
+      selectedpollutant: ['Ozone (O3)'],
+      selectedyear: '1 January to 31 December 2024',
+      selectedlocation: ['England'],
+      Location: 'Country',
+      selectedPollutantID: 'ozone-id',
+      selectedPollutants: null,
+      selectedTimePeriod: null,
+      datasourceGroups: [],
+      ...overrides
+    })
+
+    it('reduces an array AURN count to a single number', async () => {
+      const session = baseSession()
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      axios.post.mockImplementation((url, body) =>
+        body.dataSource === 'AURN'
+          ? Promise.resolve({ data: [{ Count: '3' }, { Count: '2' }] })
+          : Promise.resolve({ data: [] })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('stationCountAURN', 5)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', 5)
+    })
+
+    it('skips "Unknown" network types and includes API-only networks', async () => {
+      const session = baseSession({
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ name: 'NetA', id: 'a' }]
+          }
+        ]
+      })
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      axios.post.mockImplementation((url, body) =>
+        body.dataSource === 'AURN'
+          ? Promise.resolve({ data: 4 })
+          : Promise.resolve({
+              data: [
+                { networkType: 'NetA', count: 2 },
+                { networkType: 'NetB', count: 3 },
+                { networkType: 'Unknown', count: 0 }
+              ]
+            })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'nooflocationukeap',
+        expect.arrayContaining([
+          expect.objectContaining({ networkType: 'NetA', id: 'a', count: 2 }),
+          expect.objectContaining({ networkType: 'NetB', id: null, count: 3 })
+        ])
+      )
+    })
+
+    it('treats a Boom-like AURN result as an error', async () => {
+      config.get.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        return 'https://dev.api/station-count'
+      })
+      const session = baseSession()
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      Wreck.post.mockRejectedValue({ isBoom: true })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'stationCountError',
+        true
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocation', null)
+    })
+
+    it('treats an object-with-message AURN result as an error', async () => {
+      config.get.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        return 'https://dev.api/station-count'
+      })
+      const session = baseSession()
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      Wreck.post.mockRejectedValue({ message: 'boom' })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'stationCountError',
+        true
+      )
+    })
+  })
 })
 
 // ─── invokeStationCount unit tests ─────────────────────────────────────────────
