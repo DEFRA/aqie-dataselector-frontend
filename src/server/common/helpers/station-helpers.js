@@ -5,7 +5,10 @@ import {
   YEAR_2017,
   YEAR_2018
 } from '~/src/server/common/constants/magic-numbers.js'
+import Wreck from '@hapi/wreck'
+import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
+const logger = createLogger()
 const FORMAT_HOURS = 12
 
 /**
@@ -50,12 +53,35 @@ export function getToggletip(siteType) {
  * @returns {Promise<any>}
  */
 export async function invokeDownload(apiParameters, logger) {
-  try {
-    const response = await axios.post(config.get('Download_URL'), apiParameters)
-    return response.data
-  } catch (error) {
-    logger.error('Download API failed:', error)
-    return error
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url = config.get('downloadDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(apiParameters),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      logger.error(`Monitoring station API error (local): ${error.message}`)
+      return null
+    }
+  } else {
+    // dev / test / prod environments: use axios with config URL
+    try {
+      const response = await axios.post(
+        config.get('Download_URL'),
+        apiParameters
+      )
+      return response.data
+    } catch (error) {
+      logger.error('Download API failed:', error)
+      return error
+    }
   }
 }
 
@@ -65,11 +91,31 @@ export async function invokeDownload(apiParameters, logger) {
  * @returns {Promise<any>}
  */
 export async function invokeTable(params) {
-  try {
-    const response = await axios.post(config.get('Table_URL'), params)
-    return response.data
-  } catch (error) {
-    return error
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url = config.get('tableDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(params),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      logger.error(`Monitoring station API error (local): ${error.message}`)
+      return null
+    }
+  } else {
+    // dev / test / prod environments: use axios with config URL
+    try {
+      const response = await axios.post(config.get('Table_URL'), params)
+      return response.data
+    } catch (error) {
+      return error
+    }
   }
 }
 

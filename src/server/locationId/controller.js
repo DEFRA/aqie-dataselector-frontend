@@ -75,14 +75,23 @@ const getLocationDetailsController = {
 // 🔍 Helper Functions
 
 // For POST request, get locationID from form payload and store in session.
-// For GET request, get locationID from session.
+// For GET request, retrieve locationID from session.
+
 function resolveLocationID(request) {
   if (request.method === 'post' && request.payload?.locationId) {
     const locationID = request.payload.locationId
     request.yar.set('locationID', locationID)
     return locationID
+  } else if (request.method === 'get' && request.params?.id === undefined) {
+    const locationID = request.yar.get('locationID')
+    return locationID
   }
-  return request.yar.get('locationID')
+  const locationID = request.params?.id
+  request.yar.set('locationID', locationID)
+  return locationID
+  // return request.params.id
+  // return request.yar.get('fullSearchQuery')?.value
+  // return request.yar.get('locationID')
 }
 
 function findUserLocation(locations, locationID) {
