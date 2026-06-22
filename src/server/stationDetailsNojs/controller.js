@@ -91,7 +91,7 @@ function buildViewData(request, stationDetails, mapLocation, dateContext) {
     hrefq:
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location`
+        : `/location/${request?.yar?.get('locationID')}`
   }
 }
 
@@ -105,6 +105,8 @@ const stationDetailsNojsController = {
     // Get station ID from POST payload or session
     if (request.method === 'post' && request.payload?.stationId) {
       request.yar.set('SiteId', request.payload.stationId)
+    } else if (request.method === 'get' && request.params?.id) {
+      request.yar.set('SiteId', request.params.id)
     }
 
     const logger = createLogger()
