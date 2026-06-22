@@ -32,7 +32,7 @@
           <th class="govuk-table__cell"> 
         
           <strong>
-  <a id="station-link-{{ item.id }}" href="/stationDetailsNojs" class="station-link" data-station-id="{{ item.id }}">{{ item.name }}</a>
+  <a id="station-link-{{ item.id }}" href="{{ ['/stationDetailsNojs/', item.id] | join }}" class="station-link" data-station-id="{{ item.id }}">{{ item.name }}</a>
 </strong>
 
 <script>

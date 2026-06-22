@@ -13,9 +13,9 @@
         <h1 class="govuk-heading-l govuk-!-margin-top-6">{{title}} '{{searchLocation}}'</h1>
         <p class="govuk-body">{{params.a}} </p>
         <ul class="govuk-list odd-page">
-      {% for item in results %}
+ {% for item in results %}
         <li>
-          <a href="/location" class="location-link" data-location-id="{{ item.GAZETTEER_ENTRY.ID }}">
+          <a href=  {{['/location/',item.GAZETTEER_ENTRY.ID] | join}} class="location-link" data-location-id="{{ item.GAZETTEER_ENTRY.ID }}">
        
           {% if item.name2 %}  
           <span class="govuk-!-font-weight-bold">{{ item.name2 }}</span>, 
@@ -38,9 +38,7 @@
        
         </div>
         </div>
-        
-
-<form id="location-form" action="/location" method="POST" style="display: none;">
+ <form id="location-form" action="/location" method="POST" style="display: none;">
   <input type="hidden" name="locationId" id="location-id-input">
 </form>
 
@@ -59,5 +57,4 @@
     });
   });
 </script>
- 
 {% endblock %}

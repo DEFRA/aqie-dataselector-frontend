@@ -2,16 +2,37 @@ import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import axios from 'axios'
 import { HTTP_OK } from '~/src/server/common/constants/magic-numbers.js'
+import Wreck from '@hapi/wreck'
 
 const logger = createLogger()
 
 async function invokeDownload(apiparams) {
-  try {
-    const response = await axios.post(config.get('Download_URL'), apiparams)
-    return response.data
-  } catch (error) {
-    logger.error(`Download API error: ${error.message}`)
-    return null
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url = config.get('downloadDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(apiparams),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      logger.error(`Download API error (local): ${error.message}`)
+      return null
+    }
+  } else {
+    // dev / test / prod environments: use axios with config URL
+    try {
+      const response = await axios.post(config.get('Download_URL'), apiparams)
+      return response.data
+    } catch (error) {
+      logger.error(`Download API error: ${error.message}`)
+      return null
+    }
   }
 }
 
