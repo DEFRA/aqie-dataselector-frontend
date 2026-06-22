@@ -45,8 +45,7 @@ async function invokeOsNameAPI(searchv) {
   if (config.get('isDevelopment')) {
     // localhost: use Wreck with dev API URL and key
     try {
-      const url =
-        'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces'
+      const url = config.get('osLocationDevUrl')
       const { payload } = await Wreck.post(url, {
         payload: JSON.stringify(nameApiparams),
         headers: {
@@ -79,16 +78,34 @@ async function invokeMonitoringStationAPI(sValue, lMiles) {
     userLocation: sValue,
     usermiles: lMiles
   }
-  try {
-    const response = await axios.post(
-      config.get('OS_NAMES_API_URL_1'),
-      locationvalues
-    )
+  if (config.get('isDevelopment')) {
+    // localhost: use Wreck with dev API URL and key
+    try {
+      const url = config.get('osMonitoringStationDevUrl')
+      const { payload } = await Wreck.post(url, {
+        payload: JSON.stringify(locationvalues),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': config.get('osNamesDevApiKey')
+        },
+        json: true
+      })
+      return payload
+    } catch (error) {
+      return error
+    }
+  } else {
+    try {
+      const response = await axios.post(
+        config.get('OS_NAMES_API_URL_1'),
+        locationvalues
+      )
 
-    return response.data
-  } catch (error) {
-    logger.error(`Monitoring Station API error: ${error.message}`)
-    throw error
+      return response.data
+    } catch (error) {
+      logger.error(`Monitoring Station API error: ${error.message}`)
+      throw error
+    }
   }
 }
 

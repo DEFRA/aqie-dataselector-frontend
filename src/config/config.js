@@ -335,9 +335,16 @@ export const config = convict({
   osNamesDevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: '3ZC2yeFpSp6ijV3INw5PsfBb0chUkNjJ',
+    default: '',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEY'
+  },
+  osLocationDevUrl: {
+    doc: 'Location API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces',
+    env: 'OS_LOCATION_DEV_URL'
   },
   localstackEndpoint: {
     doc: 'Localstack endpoint',
@@ -357,6 +364,12 @@ export const config = convict({
     default:
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryexceedence/',
     env: 'TABLE_DEV_URL'
+  },
+  downloadDevUrl: {
+    doc: 'Download API URL for localhost development',
+    format: String,
+    default: `https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomHistoryHourlydata/`,
+    env: 'DOWNLOAD_DEV_URL'
   },
   pollutantMasterDevUrl: {
     doc: 'Pollutant master API URL for localhost development',
@@ -428,13 +441,13 @@ export const config = convict({
   laqmAPIkey: {
     doc: 'laqmAPIkey',
     format: String,
-    default: '5444af89cc52380a81111d5623ea74d5',
+    default: '',
     env: 'AQIE_PASSWORD'
   },
   laqmAPIPartnerId: {
     doc: 'laqmAPIPartnerId',
     format: String,
-    default: '1035',
+    default: '',
     env: 'AQIE_PASSWORD'
   },
 

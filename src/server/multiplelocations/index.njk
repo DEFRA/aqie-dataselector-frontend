@@ -15,7 +15,7 @@
         <ul class="govuk-list odd-page">
       {% for item in results %}
         <li>
-          <a href="/location" class="location-link" data-location-id="{{ item.GAZETTEER_ENTRY.ID }}">
+          <a href={{['/location/',item.GAZETTEER_ENTRY.ID] | join}} data-location-id="{{ item.GAZETTEER_ENTRY.ID }}">
        
           {% if item.name2 %}  
           <span class="govuk-!-font-weight-bold">{{ item.name2 }}</span>, 
