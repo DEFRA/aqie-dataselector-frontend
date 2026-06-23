@@ -8,7 +8,7 @@ import {
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
-const logger = createLogger()
+const loggers = createLogger()
 const FORMAT_HOURS = 12
 
 /**
@@ -67,7 +67,7 @@ export async function invokeDownload(apiParameters, logger) {
       })
       return payload
     } catch (error) {
-      logger.error(`Monitoring station API error (local): ${error.message}`)
+      logger.error(`Download API error (local): ${error.message}`)
       return null
     }
   } else {
@@ -104,7 +104,7 @@ export async function invokeTable(params) {
       })
       return payload
     } catch (error) {
-      logger.error(`InvokeTable API error (local): ${error.message}`)
+      loggers.error(`InvokeTable API error (local): ${error.message}`)
       return null
     }
   } else {

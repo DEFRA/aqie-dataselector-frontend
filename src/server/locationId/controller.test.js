@@ -273,7 +273,7 @@ describe('getLocationDetailsController.handler', () => {
     )
   })
 
-  it('should resolve locationID from session when payload locationId is absent', async () => {
+  it('should resolve locationID from session on GET when params.id is undefined', async () => {
     const mockLocation = {
       GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'TestLocation' }
     }
@@ -281,7 +281,9 @@ describe('getLocationDetailsController.handler', () => {
       getmonitoringstation: [{ name: 'Station A', pollutants: { NO2: {} } }]
     }
 
-    request.payload = {}
+    request.method = 'get'
+    request.payload = undefined
+    request.params = {}
 
     request.yar.get.mockImplementation((key) => {
       const session = {
@@ -297,12 +299,102 @@ describe('getLocationDetailsController.handler', () => {
 
     await getLocationDetailsController.handler(request, h)
 
+    expect(request.yar.get).toHaveBeenCalledWith('locationID')
     expect(h.view).toHaveBeenCalledWith(
       'monitoring-station/index',
       expect.objectContaining({
         searchLocation: 'TestLocation'
       })
     )
+  })
+
+  it('should resolve locationID from params.id on GET and store it in session', async () => {
+    const mockLocation = {
+      GAZETTEER_ENTRY: { ID: 'loc789', NAME1: 'Bristol' }
+    }
+    const mockMonitoringData = {
+      getmonitoringstation: [{ name: 'Station A', pollutants: { NO2: {} } }]
+    }
+
+    request.method = 'get'
+    request.payload = undefined
+    request.params = { id: 'loc789' }
+
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: { getOSPlaces: [mockLocation] },
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 10
+      }
+      return session[key]
+    })
+
+    axios.post.mockResolvedValue({ data: mockMonitoringData })
+
+    await getLocationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('locationID', 'loc789')
+    expect(h.view).toHaveBeenCalledWith(
+      'monitoring-station/index',
+      expect.objectContaining({
+        searchLocation: 'Bristol'
+      })
+    )
+  })
+
+  it('should fall back to params.id on POST when payload.locationId is absent', async () => {
+    const mockLocation = {
+      GAZETTEER_ENTRY: { ID: 'loc123', NAME1: 'TestLocation' }
+    }
+    const mockMonitoringData = {
+      getmonitoringstation: [{ name: 'Station A', pollutants: { NO2: {} } }]
+    }
+
+    request.method = 'post'
+    request.payload = {}
+    request.params = { id: 'loc123' }
+
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: { getOSPlaces: [mockLocation] },
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 10
+      }
+      return session[key]
+    })
+
+    axios.post.mockResolvedValue({ data: mockMonitoringData })
+
+    await getLocationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('locationID', 'loc123')
+    expect(h.view).toHaveBeenCalledWith(
+      'monitoring-station/index',
+      expect.objectContaining({
+        searchLocation: 'TestLocation'
+      })
+    )
+  })
+
+  it('should return Invalid request on GET when neither params.id nor session locationID exist', async () => {
+    request.method = 'get'
+    request.payload = undefined
+    request.params = {}
+
+    request.yar.get.mockImplementation((key) => {
+      const session = {
+        osnameapiresult: { getOSPlaces: [] },
+        fullSearchQuery: { value: 'query' },
+        locationMiles: 5,
+        locationID: undefined
+      }
+      return session[key]
+    })
+
+    await getLocationDetailsController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Invalid request')
+    expect(h.view).not.toHaveBeenCalled()
   })
 
   it('should handle multiple locations in osnameapiresult and find correct one', async () => {
