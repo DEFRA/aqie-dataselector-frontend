@@ -441,14 +441,14 @@ export const config = convict({
   laqmAPIkey: {
     doc: 'laqmAPIkey',
     format: String,
-    default: '',
-    env: 'AQIE_PASSWORD'
+    default: 'LAQMAPIKEY',
+    env: 'LAQMAPIKEY'
   },
   laqmAPIPartnerId: {
     doc: 'laqmAPIPartnerId',
     format: String,
-    default: '',
-    env: 'AQIE_PASSWORD'
+    default: 'LAQMAPIPARTNERID',
+    env: 'LAQMAPIPARTNERID'
   },
 
   // laqmAPIkey: {
