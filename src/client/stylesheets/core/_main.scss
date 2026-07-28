@@ -1,5 +1,15 @@
 @use "govuk-frontend" as *;
 
+.related-content-border {
+  border-top: 2px solid #1d70b8;
+  margin-bottom: 10px;
+  margin-top: 1em;
+}
+
+.related-content-aside {
+  margin-top: 1em;
+}
+
 .govuk-frontend-supported .govuk-tabs .govuk-tabs__panel {
   border: none;
   padding: 25px 15px 15px 15px;

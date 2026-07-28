@@ -27,7 +27,8 @@ export const homeController = {
       heading: home.heading,
       text: home.texts,
       buttontxt: home.buttonText,
-      subheading: home.subheading
+      subheading: home.subheading,
+      links: home.links
     })
   }
 }
