@@ -9,7 +9,14 @@ jest.mock('~/src/server/data/en/homecontent.js', () => ({
       heading: 'Test Heading',
       texts: ['Test text 1', 'Test text 2'],
       buttonText: 'Test Button',
-      subheading: 'Test Subheading'
+      subheading: 'Test Subheading',
+      links: {
+        a: 'Check air quality',
+        b: 'Health effects of air pollution',
+        c: 'Air pollutants we measure',
+        d: 'Why we monitor air pollution',
+        e: 'Air quality alerts'
+      }
     }
   }
 }))
@@ -58,7 +65,8 @@ describe('homeController', () => {
       heading: english.home.heading,
       text: english.home.texts,
       buttontxt: english.home.buttonText,
-      subheading: english.home.subheading
+      subheading: english.home.subheading,
+      links: english.home.links
     })
     expect(result).toBe('home-view-response')
   })
@@ -137,9 +145,10 @@ describe('homeController', () => {
     expect(mockH.view).toHaveBeenCalledWith('home/index', {
       pageTitle: expect.any(String),
       heading: expect.any(String),
-      text: expect.any(Object), // texts is an array
+      text: expect.any(Object),
       buttontxt: expect.any(String),
-      subheading: expect.any(String)
+      subheading: expect.any(String),
+      links: expect.any(Object)
     })
   })
 
@@ -151,7 +160,14 @@ describe('homeController', () => {
       heading: 'Test Heading',
       text: ['Test text 1', 'Test text 2'],
       buttontxt: 'Test Button',
-      subheading: 'Test Subheading'
+      subheading: 'Test Subheading',
+      links: {
+        a: 'Check air quality',
+        b: 'Health effects of air pollution',
+        c: 'Air pollutants we measure',
+        d: 'Why we monitor air pollution',
+        e: 'Air quality alerts'
+      }
     })
   })
 
@@ -282,6 +298,13 @@ describe('homeController', () => {
       expect(viewCall).toHaveProperty('text', ['Test text 1', 'Test text 2'])
       expect(viewCall).toHaveProperty('buttontxt', 'Test Button')
       expect(viewCall).toHaveProperty('subheading', 'Test Subheading')
+      expect(viewCall).toHaveProperty('links', {
+        a: 'Check air quality',
+        b: 'Health effects of air pollution',
+        c: 'Air pollutants we measure',
+        d: 'Why we monitor air pollution',
+        e: 'Air quality alerts'
+      })
     })
 
     it('should use correct template path', () => {

@@ -1,33 +1,20 @@
 {% extends 'layouts/page.njk' %}
 
 {% block content %}
-  
-
-
-
 
  <div class="govuk-grid-row">
-  <div class="govuk-grid-column-two-thirds-from-desktop">
+  
 
     <h1 class="govuk-heading-xl">{{pageTitle}}</h1>
+    <div class="govuk-grid-column-two-thirds">
 <p class="govuk-body">{{text.a}}</p>
 <p class="govuk-body">{{text.k}}</p>
     <ul class="govuk-list govuk-list--bullet">
       <li>{{text.b}}</li>
       <li>{{text.c}}</li>
     </ul> 
-
-
-
-
-
-
-
   
  <script type="application/javascript" src="src/client/javascripts/toggletip.js"></script>
-{# <div class="defra-toggletip" data-toggletip="" data-toggletip-label="More information about what verified means" data-toggletip-content="Data is verified when it has been checked for anomalies.">
-            verified
-             </div> #}
 
 
   {% from "govuk/components/button/macro.njk" import govukButton %}
@@ -38,21 +25,28 @@
             isStartButton: true
         }) 
         }}
-         {# {{ 
-          govukButton({
-            text: buttontxt,
-            href: "/search-location",
-            isStartButton: true
-        }) 
-        }} #}
+       
+    
 <p class="govuk-heading-m">Other ways to get this information</p>
 <p class="govuk-body">Email: <a href="mailto:getairpollutiondata@defra.gov.uk" class="govuk-link">getairpollutiondata@defra.gov.uk</a></p>
- 
-    </div>
+  </div>
+    
 
-    
-    
-</div> 
+  <div class="govuk-grid-column-one-third">
+    <aside class="govuk-!-padding-top-0 related-content-aside" role="complementary">
+      <div class="related-content-border"></div>
+      <h2 class="govuk-heading-s">Related content</h2>
+      <nav role="navigation" aria-label="Related content">
+        <ul class="govuk-list govuk-list--spaced">
+          <li><a class="govuk-link" href="https://check-air-quality.service.gov.uk/" target="_blank" rel="noopener noreferrer">{{links.a}}</a></li>
+          <li><a class="govuk-link" href="https://www.gov.uk/government/collections/air-pollution-in-the-uk-sources-of-monitoring-data" target="_blank" rel="noopener noreferrer">{{links.f}}</a></li>
+          </ul>
+      </nav>
+    </aside>
+  </div>
+
+</div>
+</div>
 
 {% endblock %}
 

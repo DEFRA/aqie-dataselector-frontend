@@ -10,7 +10,7 @@ export const english = {
     subheading: ' Related content',
     buttonText: 'Start now',
     texts: {
-      a: 'Use this service to view and download air pollution data from the Automatic Urban and Rural Network (AURN).',
+      a: 'Use this service to view and download air pollution data from monitoring networks acrossthe UK.',
       b: 'find monitoring stations by location',
       c: 'create a custom dataset',
       d: 'This service uses data from the Automatic Urban and Rural Network (AURN).',
@@ -32,7 +32,8 @@ export const english = {
       b: 'Health effects of air pollution',
       c: 'Air pollutants we measure',
       d: 'Why we monitor air pollution',
-      e: 'Air quality alerts'
+      e: 'Air quality alerts',
+      f: 'Sources of air pollution data'
     }
   },
   login: {
