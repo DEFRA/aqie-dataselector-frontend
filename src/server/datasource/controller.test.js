@@ -5,7 +5,7 @@ import {
   fetchDatasourceForPollutant,
   groupDatasources
 } from './controller.js'
-
+// import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
 import { config } from '~/src/config/config.js'
 import { invokeStationCount } from '~/src/server/customdataset/controller.js'
 
@@ -52,7 +52,9 @@ jest.mock('~/src/server/data/en/networks.js', () => ({
     }
   }
 }))
-
+jest.mock('~/src/server/common/helpers/network-helpers.js', () => ({
+  getNonAurnNetworkIdCsv: jest.fn(() => '101,102')
+}))
 jest.mock('~/src/server/customdataset/controller.js', () => ({
   invokeStationCount: jest.fn()
 }))

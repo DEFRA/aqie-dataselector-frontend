@@ -106,6 +106,42 @@ async function invokeDownloadS3(downloadstatusapiparams) {
     : pollDownloadStatusProd(downloadstatusapiparams)
 }
 
+/**
+ * Resolves the correct pollutantID for the network that triggered the download.
+ *
+ * - For AURN (no networkId): finds the first network without an `id` field in
+ * the "Near real-time data from Defra" category and returns its pollutantID.
+ * - For NON-AURN: matches by numeric network `id` and returns its pollutantID.
+ * - Falls back to null so callers can use selectedPollutantID instead.
+ * @param {Array} datasourceGroups  - raw groups stored in session
+ * @param {string} dataSource       - 'AURN' | 'NON-AURN'
+ * @param {string} networkId        - the networkId from the query string (may be '')
+ * @returns {string|null}
+ */
+function getPollutantIDForNetwork(datasourceGroups, dataSource, networkId) {
+  if (!Array.isArray(datasourceGroups) || datasourceGroups.length === 0) {
+    return null
+  }
+
+  for (const group of datasourceGroups) {
+    for (const network of group.networks || []) {
+      if (dataSource === 'NON-AURN') {
+        // NON-AURN networks have a numeric `id` — match by it
+        if (networkId && String(network.id) === String(networkId)) {
+          return network.pollutantID || null
+        }
+      } else if (dataSource === 'AURN') {
+        // AURN networks have no `id` field — take the first one found
+        if (!network.id && network.pollutantID) {
+          return network.pollutantID
+        }
+      }
+    }
+  }
+
+  return null
+}
+
 const downloadAurnController = {
   handler: async (request, h) => {
     try {
@@ -115,12 +151,23 @@ const downloadAurnController = {
       const requestedNetworkId = (request.query?.networkId || '')
         .toString()
         .trim()
-      const nonAurnNetworkId = getNonAurnNetworkIdCsv(
-        request.yar.get('datasourceGroups') || []
+      const datasourceGroups = request.yar.get('datasourceGroups') || []
+      const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+
+      // Use the pollutantID specific to the network that triggered the download.
+      // Fall back to the globally selected pollutant ID if not found.
+      const resolvedNetworkId =
+        dataSource === 'NON-AURN' ? requestedNetworkId || nonAurnNetworkId : ''
+      const networkPollutantID = getPollutantIDForNetwork(
+        datasourceGroups,
+        dataSource,
+        resolvedNetworkId
       )
+      const pollutantName =
+        networkPollutantID || request.yar.get('selectedPollutantID')
 
       const apiparams = {
-        pollutantName: request.yar.get('selectedPollutantID'),
+        pollutantName,
         dataSource,
         networkId:
           dataSource === 'NON-AURN'

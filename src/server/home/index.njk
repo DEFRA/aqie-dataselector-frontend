@@ -3,10 +3,15 @@
 {% block content %}
 
  <div class="govuk-grid-row">
-  
+  <div class="govuk-grid-column-two-thirds-from-desktop">
 
     <h1 class="govuk-heading-xl">{{pageTitle}}</h1>
-    <div class="govuk-grid-column-two-thirds">
+    </div>
+    </div>
+
+
+    <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
 <p class="govuk-body">{{text.a}}</p>
 <p class="govuk-body">{{text.k}}</p>
     <ul class="govuk-list govuk-list--bullet">
@@ -32,10 +37,10 @@
   </div>
     
 
-  <div class="govuk-grid-column-one-third">
+  <div class="govuk-grid-column-one-third-from-desktop">
     <aside class="govuk-!-padding-top-0 related-content-aside" role="complementary">
-      <div class="related-content-border"></div>
-      <h2 class="govuk-heading-s">Related content</h2>
+    <div class="related-content-border"></div> 
+      <h2 class="govuk-heading-m ">Related content</h2>
       <nav role="navigation" aria-label="Related content">
         <ul class="govuk-list govuk-list--spaced">
           <li><a class="govuk-link" href="https://check-air-quality.service.gov.uk/" target="_blank" rel="noopener noreferrer">{{links.a}}</a></li>
@@ -46,7 +51,7 @@
   </div>
 
 </div>
-</div>
+
 
 {% endblock %}
 

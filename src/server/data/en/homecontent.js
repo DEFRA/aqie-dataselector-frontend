@@ -11,7 +11,7 @@ export const english = {
     buttonText: 'Start now',
     texts: {
       a: 'Use this service to view and download air pollution data from monitoring networks acrossthe UK.',
-      b: 'find monitoring stations by location',
+      b: 'search by town or postcode',
       c: 'create a custom dataset',
       d: 'This service uses data from the Automatic Urban and Rural Network (AURN).',
       e: 'This service shows you data for:',
