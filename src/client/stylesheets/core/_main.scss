@@ -3,7 +3,7 @@
 .related-content-border {
   border-top: 2px solid #1d70b8;
   margin-bottom: 10px;
-  margin-top: -9em;
+  margin-top: -1em;
 }
 
 .related-content-aside {
@@ -606,7 +606,12 @@ width: 100%;
     }
 
     @include mq ($until: tablet) {
-      width: 30%;
+      width: 40%;
+      min-width: 0;
+      padding-right: 12px;
+      box-sizing: border-box;
+      overflow-wrap: normal;
+      word-break: normal;
       text-align: left;
     }
   }
@@ -622,7 +627,12 @@ width: 100%;
     word-break: break-word;
 
     @include mq ($until: tablet) {
-      width: 35%;
+      width: 30%;
+      min-width: 0;
+      padding-right: 12px;
+      box-sizing: border-box;
+      overflow-wrap: normal;
+      word-break: normal;
     }
   }
 
@@ -635,6 +645,16 @@ width: 100%;
     white-space: normal;
     overflow-wrap: anywhere;
     word-break: break-word;
+
+    @include mq ($until: tablet) {
+      width: 30%;
+      min-width: 0;
+      padding-right: 12px;
+      box-sizing: border-box;
+      overflow-wrap: normal;
+      word-break: normal;
+      text-align: left;
+    }
   }
 
   &__cell--average,
@@ -697,38 +717,52 @@ width: 100%;
 }
 
 .table-scroll-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
   width: 100%;
 
   .defra-aq-levels-table {
-    display: table !important;
-    min-width: 650px;
+    min-width: 0;
     width: 100%;
+  }
 
-    &__head {
+  // Keep desktop/tablet as a classic table layout.
+  @include mq ($from: tablet) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .defra-aq-levels-table {
+      display: table !important;
+      min-width: 650px;
+      width: 100%;
+    }
+
+    .defra-aq-levels-table th {
+      white-space: nowrap;
+    }
+
+    .defra-aq-levels-table__head {
       display: table-header-group !important;
     }
 
-    &__head tr {
+    .defra-aq-levels-table__head tr {
       display: table-row !important;
     }
 
-    &__body {
+    .defra-aq-levels-table__body {
       display: table-row-group !important;
     }
 
-    &__row {
+    .defra-aq-levels-table__row {
       display: table-row !important;
     }
 
-    &__cell {
+    .defra-aq-levels-table__cell {
       display: table-cell !important;
       padding-top: 20px !important;
       padding-bottom: 20px !important;
     }
 
-    &__cell--pollutant-title {
+    .defra-aq-levels-table__cell--pollutant-title {
       position: static !important;
       width: auto !important;
       height: auto !important;
@@ -737,10 +771,6 @@ width: 100%;
       clip: auto !important;
       clip-path: none !important;
       white-space: nowrap !important;
-    }
-
-    th {
-      white-space: nowrap;
     }
   }
 }

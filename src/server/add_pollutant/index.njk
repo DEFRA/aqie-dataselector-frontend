@@ -414,6 +414,25 @@ document.addEventListener('DOMContentLoaded', () => {
     addButton.textContent = hasRows ? 'Add another pollutant' : 'Add pollutant';
   }
 
+  // Ensure caption is present when pollutants exist (client-side additions)
+  function syncTableCaption() {
+    if (!table || !tableBody) return;
+
+    const hasRows = tableBody.children && tableBody.children.length > 0;
+    const existingCaption = table.querySelector('caption');
+
+    if (hasRows && !existingCaption) {
+      const caption = document.createElement('caption');
+      caption.className = 'govuk-table__caption govuk-table__caption--m';
+      caption.textContent = 'Added pollutants';
+      table.insertBefore(caption, table.firstChild);
+    }
+
+    if (!hasRows && existingCaption) {
+      existingCaption.remove();
+    }
+  }
+
   // Helper to update row numbers after removal
   function updateRowNumbers() {
     if (!tableBody) return;
@@ -507,6 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addedPollutants.delete(lowerValue);
         updateRowNumbers();
         persistSpecificFromTable();
+        syncTableCaption();
         if (tableBody?.children.length === 0) table.hidden = true;
         updateAddButtonText();
       });
@@ -520,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (input) input.value = '';
       setPersistedAutocompleteValue('');
       persistSpecificFromTable();
+      syncTableCaption();
       updateAddButtonText();
     }
   }
@@ -613,6 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addedPollutants.delete(pollutantName.toLowerCase());
         updateRowNumbers();
         persistSpecificFromTable();
+        syncTableCaption();
 
         if (tableBody?.children.length === 0) {
           table.hidden = true;
@@ -630,6 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (table) {
       table.hidden = !(isSpecific && hasRows)
     }
+    syncTableCaption();
   }
 
   // Initialize state from server-rendered pollutants
