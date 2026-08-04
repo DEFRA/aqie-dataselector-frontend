@@ -151,6 +151,7 @@ function loadGoogleAnalytics() {
 
   gtag('js', new Date())
   gtag('config', tagID, { page_path: globalThis.location.pathname })
+  gtag('config', 'G-0XFNL3PD99', { page_path: globalThis.location.pathname })
 }
 
 /**
