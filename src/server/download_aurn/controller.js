@@ -107,6 +107,23 @@ async function invokeDownloadS3(downloadstatusapiparams) {
 }
 
 /**
+ * Decides whether a single network is the one the download was triggered for.
+ * @param {object} network          - a network entry from a datasource group
+ * @param {string} dataSource       - 'AURN' | 'NON-AURN'
+ * @param {string} networkId        - the resolved networkId (may be '')
+ * @returns {boolean}
+ */
+function isMatchingNetwork(network, dataSource, networkId) {
+  if (dataSource === 'NON-AURN') {
+    // NON-AURN networks have a numeric `id` — match by it
+    return Boolean(networkId) && String(network.id) === String(networkId)
+  }
+
+  // AURN networks have no `id` field — take the first one found
+  return dataSource === 'AURN' && !network.id && Boolean(network.pollutantID)
+}
+
+/**
  * Resolves the correct pollutantID for the network that triggered the download.
  *
  * - For AURN (no networkId): finds the first network without an `id` field in
@@ -125,16 +142,8 @@ function getPollutantIDForNetwork(datasourceGroups, dataSource, networkId) {
 
   for (const group of datasourceGroups) {
     for (const network of group.networks || []) {
-      if (dataSource === 'NON-AURN') {
-        // NON-AURN networks have a numeric `id` — match by it
-        if (networkId && String(network.id) === String(networkId)) {
-          return network.pollutantID || null
-        }
-      } else if (dataSource === 'AURN') {
-        // AURN networks have no `id` field — take the first one found
-        if (!network.id && network.pollutantID) {
-          return network.pollutantID
-        }
+      if (isMatchingNetwork(network, dataSource, networkId)) {
+        return network.pollutantID || null
       }
     }
   }
@@ -142,45 +151,101 @@ function getPollutantIDForNetwork(datasourceGroups, dataSource, networkId) {
   return null
 }
 
+/**
+ * The networkId sent to the API — only NON-AURN downloads are network-scoped.
+ * Prefers the id from the query string, falling back to the session CSV.
+ * @param {string} dataSource         - 'AURN' | 'NON-AURN'
+ * @param {string} requestedNetworkId - networkId from the query string
+ * @param {string} nonAurnNetworkId   - CSV of NON-AURN ids from session
+ * @returns {string}
+ */
+function resolveNetworkId(dataSource, requestedNetworkId, nonAurnNetworkId) {
+  if (dataSource !== 'NON-AURN') {
+    return ''
+  }
+  return requestedNetworkId || nonAurnNetworkId
+}
+
+/**
+ * Country downloads are keyed by location names, everything else by LA ids.
+ * @param {object} request - the Hapi request
+ * @returns {string}
+ */
+function resolveRegion(request) {
+  if (request.yar.get('Location') === 'Country') {
+    return request.yar.get('selectedlocation').join(',')
+  }
+  return request.yar.get('selectedLAIDs')
+}
+
+/**
+ * Builds the download API request body from the route params and session.
+ * @param {object} request      - the Hapi request
+ * @param {string} dataSource   - 'AURN' | 'NON-AURN'
+ * @param {string} selectedyear - the year from the route params
+ * @returns {object}
+ */
+function buildApiParams(request, dataSource, selectedyear) {
+  const requestedNetworkId = (request.query?.networkId || '').toString().trim()
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+  const networkId = resolveNetworkId(
+    dataSource,
+    requestedNetworkId,
+    nonAurnNetworkId
+  )
+
+  // Use the pollutantID specific to the network that triggered the download.
+  // Fall back to the globally selected pollutant ID if not found.
+  const networkPollutantID = getPollutantIDForNetwork(
+    datasourceGroups,
+    dataSource,
+    networkId
+  )
+
+  return {
+    pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),
+    dataSource,
+    networkId,
+    Region: resolveRegion(request),
+    regiontype: request.yar.get('Location'),
+    Year: selectedyear,
+    dataselectorfiltertype: 'dataSelectorHourly',
+    dataselectordownloadtype: 'dataSelectorSingle'
+  }
+}
+
+/**
+ * No-JS route: polls for the download to finish, then renders the result page.
+ * @param {object} request                 - the Hapi request
+ * @param {object} h                       - the Hapi response toolkit
+ * @param {object} downloadstatusapiparams - the job details from invokeDownload
+ * @returns {Promise<object>}
+ */
+async function renderNoJsDownload(request, h, downloadstatusapiparams) {
+  const downloadResultaurn = await invokeDownloadS3(downloadstatusapiparams)
+
+  // Check for error from polling
+  if (downloadResultaurn?.error) {
+    return h.redirect(PROBLEM_WITH_SERVICE)
+  }
+
+  const viewData = {
+    ...request.yar.get('viewDatanojs'),
+    downloadresultnojs: downloadResultaurn
+  }
+  request.yar.set('downloadaurnresult', downloadResultaurn)
+  return h.view('download_dataselector_nojs/index', viewData)
+}
+
 const downloadAurnController = {
   handler: async (request, h) => {
     try {
-      const selectedyear = request.params.year
-      const dataSource = request.params.dataSource
-      const isCountry = request.yar.get('Location') === 'Country'
-      const requestedNetworkId = (request.query?.networkId || '')
-        .toString()
-        .trim()
-      const datasourceGroups = request.yar.get('datasourceGroups') || []
-      const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
-
-      // Use the pollutantID specific to the network that triggered the download.
-      // Fall back to the globally selected pollutant ID if not found.
-      const resolvedNetworkId =
-        dataSource === 'NON-AURN' ? requestedNetworkId || nonAurnNetworkId : ''
-      const networkPollutantID = getPollutantIDForNetwork(
-        datasourceGroups,
-        dataSource,
-        resolvedNetworkId
+      const apiparams = buildApiParams(
+        request,
+        request.params.dataSource,
+        request.params.year
       )
-      const pollutantName =
-        networkPollutantID || request.yar.get('selectedPollutantID')
-
-      const apiparams = {
-        pollutantName,
-        dataSource,
-        networkId:
-          dataSource === 'NON-AURN'
-            ? requestedNetworkId || nonAurnNetworkId
-            : '',
-        Region: isCountry
-          ? request.yar.get('selectedlocation').join(',')
-          : request.yar.get('selectedLAIDs'),
-        regiontype: request.yar.get('Location'),
-        Year: selectedyear,
-        dataselectorfiltertype: 'dataSelectorHourly',
-        dataselectordownloadtype: 'dataSelectorSingle'
-      }
 
       const downloadstatusapiparams = await invokeDownload(apiparams)
 
@@ -189,21 +254,8 @@ const downloadAurnController = {
       }
 
       if (request.url.pathname.includes('/download_aurn_nojs/')) {
-        const downloadResultaurn = await invokeDownloadS3(
-          downloadstatusapiparams
-        )
-
-        // Check for error from polling
-        if (downloadResultaurn?.error) {
-          return h.redirect(PROBLEM_WITH_SERVICE)
-        }
-
-        const viewData = {
-          ...request.yar.get('viewDatanojs'),
-          downloadresultnojs: downloadResultaurn
-        }
-        request.yar.set('downloadaurnresult', downloadResultaurn)
-        return h.view('download_dataselector_nojs/index', viewData)
+        // Awaited (not just returned) so polling failures hit the catch below.
+        return await renderNoJsDownload(request, h, downloadstatusapiparams)
       }
 
       return h

@@ -1107,4 +1107,194 @@ describe('downloadAurnController', () => {
       TEST_TIMEOUT_MS
     )
   })
+
+  describe('pollutantID resolution from datasource groups', () => {
+    // AURN networks are identified by the *absence* of an `id`, so these cases
+    // pin down which network the resolver picks and when it falls back to the
+    // globally selected pollutant.
+    const useDatasourceGroups = (datasourceGroups) => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedPollutantID: '44',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          datasourceGroups
+        }
+        return values[key]
+      })
+    }
+
+    it(
+      'uses the pollutantID of an AURN network that has no id',
+      async () => {
+        useDatasourceGroups([
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'AURN', pollutantID: '99' }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-aurn-pollutant' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ pollutantName: '99' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'skips AURN networks that have an id and falls back to the selected pollutant',
+      async () => {
+        useDatasourceGroups([
+          {
+            category: 'Other data from Defra',
+            networks: [{ name: 'UKEAP', id: 5, pollutantID: '77' }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-aurn-skip-id' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ pollutantName: '44' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'skips AURN networks that have no pollutantID',
+      async () => {
+        useDatasourceGroups([
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'AURN with no pollutant' }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-aurn-no-pollutant' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ pollutantName: '44' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'ignores groups that have no networks array',
+      async () => {
+        useDatasourceGroups([
+          { category: 'Group with no networks key' },
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'AURN', pollutantID: '66' }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-aurn-empty-group' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ pollutantName: '66' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'falls back to the selected pollutant for an unrecognised dataSource',
+      async () => {
+        mockRequest.params = { year: '2024', dataSource: 'UNKNOWN' }
+        useDatasourceGroups([
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'AURN', pollutantID: '88' }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-unknown-source' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({
+            pollutantName: '44',
+            dataSource: 'UNKNOWN',
+            networkId: ''
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'returns no pollutantID when a matched NON-AURN network has none',
+      async () => {
+        mockRequest.params = { year: '2024', dataSource: 'NON-AURN' }
+        mockRequest.query = { networkId: '2' }
+        useDatasourceGroups([
+          {
+            category: 'Other data from Defra',
+            networks: [{ name: 'UKEAP - Acid Gas & Aerosol Network', id: 2 }]
+          }
+        ])
+        axios.post.mockResolvedValueOnce({ data: 'job-non-aurn-no-pollutant' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ pollutantName: '44', networkId: '2' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+  })
+
+  describe('additional failure modes', () => {
+    it(
+      'redirects when polling completes with an error result instead of a URL',
+      async () => {
+        mockRequest.url.pathname = '/download_aurn_nojs/2024'
+
+        axios.post
+          .mockResolvedValueOnce({ data: 'job-error-result' })
+          .mockResolvedValueOnce({
+            data: { status: 'Completed', resultUrl: { error: true } }
+          })
+
+        const promise = downloadAurnController.handler(mockRequest, mockH)
+        await jest.runAllTimersAsync()
+        const result = await promise
+
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+        expect(result).toBe('redirected')
+        expect(mockH.view).not.toHaveBeenCalled()
+        expect(mockRequest.yar.set).not.toHaveBeenCalled()
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'handles a rejection that is not an Error instance',
+      async () => {
+        // errMsg falls back to 'unknown error' for thrown non-Error values.
+        axios.post.mockRejectedValueOnce('download blew up')
+
+        const result = await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+        expect(result).toBe('redirected')
+      },
+      TEST_TIMEOUT_MS
+    )
+  })
 })
