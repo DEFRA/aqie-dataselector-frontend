@@ -296,6 +296,87 @@ function isStationCountError(val) {
   return typeof val === 'object' && !Array.isArray(val) && Boolean(val?.message)
 }
 
+/**
+ * The NON-AURN networks the user selected, from session, normalised to
+ * {name, id}. Entries may be plain strings or objects; blanks are dropped.
+ * @param {Array} datasourceGroups - raw groups stored in session
+ * @returns {Array<{name: string, id: (string|number|null)}>}
+ */
+function getExpectedNetworks(datasourceGroups) {
+  const otherDataGroup = datasourceGroups.find(
+    (g) => g.category === 'Other data from Defra'
+  )
+
+  return (
+    Array.isArray(otherDataGroup?.networks) ? otherDataGroup.networks : []
+  )
+    .map((network) =>
+      typeof network === 'string'
+        ? { name: network, id: null }
+        : {
+            name: network?.name || '',
+            id: network?.id ?? null
+          }
+    )
+    .map((network) => ({
+      ...network,
+      name: String(network.name).trim()
+    }))
+    .filter((network) => Boolean(network.name))
+}
+
+/**
+ * Normalise the NON-AURN result: the API returns networkType:"Unknown" when a
+ * count is 0. Replace those with the actual network names stored in
+ * datasourceGroups so the download page always shows real network headings,
+ * never "Unknown".
+ * @param {*} nonAurnCount         - raw NON-AURN station count API result
+ * @param {Array} datasourceGroups - raw groups stored in session
+ * @returns {Array<{networkType: string, id: *, count: number}>}
+ */
+function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
+  const rawNonAurn = Array.isArray(nonAurnCount) ? nonAurnCount : []
+  // Lookup of API-returned counts (excluding "Unknown" entries)
+  const apiCountMap = aggregateNetworkCounts(rawNonAurn)
+  const expectedNetworks = getExpectedNetworks(datasourceGroups)
+
+  if (expectedNetworks.length === 0) {
+    // No datasourceGroups info — use raw API result, filtering out Unknown
+    return Array.from(apiCountMap.entries()).map(([networkType, count]) => ({
+      networkType,
+      id: null,
+      count
+    }))
+  }
+
+  // Map each expected network to its count (0 if API didn't return it or returned "Unknown")
+  const matchedNetworks = expectedNetworks.map((network) => ({
+    networkType: network.name,
+    id: network.id,
+    count: apiCountMap.has(network.name) ? apiCountMap.get(network.name) : 0
+  }))
+
+  // Include any additional network types returned by API but not present in datasourceGroups
+  const expectedSet = new Set(expectedNetworks.map((network) => network.name))
+  const additionalNetworks = Array.from(apiCountMap.entries())
+    .filter(([name]) => !expectedSet.has(name))
+    .map(([networkType, count]) => ({ networkType, id: null, count }))
+
+  return matchedNetworks.concat(additionalNetworks)
+}
+
+/**
+ * AURN count as a plain number, in case it came back as a single-entry array.
+ * @param {*} aurnCount - raw AURN station count API result
+ * @returns {number}
+ */
+function toAurnNumeric(aurnCount) {
+  if (Array.isArray(aurnCount)) {
+    return aurnCount.reduce((sum, n) => sum + (Number(n.Count) || 0), 0)
+  }
+  return Number(aurnCount)
+}
+
 async function handleStationCountCalculation(request) {
   const selectedyear = request.yar.get('selectedyear')
   const finalyear = parseYearRange(selectedyear, request)
@@ -334,70 +415,17 @@ async function handleStationCountCalculation(request) {
     return null
   }
 
-  // Normalise AURN to a plain number (in case it came back as a single-entry array)
-  const aurnNumeric = Array.isArray(aurnCount)
-    ? aurnCount.reduce((sum, n) => sum + (Number(n.Count) || 0), 0)
-    : Number(aurnCount)
+  const aurnNumeric = toAurnNumeric(aurnCount)
 
   request.yar.set('stationCountError', false)
   request.yar.set('Region', request.yar.get('selectedlocation').join(','))
   request.yar.set('stationCountAURN', aurnNumeric)
   request.yar.set('stationCountNONAURN', nonAurnCount)
 
-  // Normalise NON-AURN result: the API returns networkType:"Unknown" when count is 0.
-  // Replace those with the actual network names stored in datasourceGroups so the
-  // download page always shows real network headings, never "Unknown".
-  const rawNonAurn = Array.isArray(nonAurnCount) ? nonAurnCount : []
-  const datasourceGroups = request.yar.get('datasourceGroups') || []
-  const otherDataGroup = datasourceGroups.find(
-    (g) => g.category === 'Other data from Defra'
+  const ukeapNetworks = buildUkeapNetworks(
+    nonAurnCount,
+    request.yar.get('datasourceGroups') || []
   )
-  const expectedNetworks = (
-    Array.isArray(otherDataGroup?.networks) ? otherDataGroup.networks : []
-  )
-    .map((network) =>
-      typeof network === 'string'
-        ? { name: network, id: null }
-        : {
-            name: network?.name || '',
-            id: network?.id ?? null
-          }
-    )
-    .map((network) => ({
-      ...network,
-      name: String(network.name).trim()
-    }))
-    .filter((network) => Boolean(network.name))
-
-  const expectedNames = expectedNetworks
-    .map((network) => network.name)
-    .filter(Boolean)
-
-  let ukeapNetworks
-  if (expectedNames.length > 0) {
-    // Build a lookup of API-returned counts (excluding "Unknown" entries)
-    const apiCountMap = aggregateNetworkCounts(rawNonAurn)
-
-    // Map each expected network to its count (0 if API didn't return it or returned "Unknown")
-    ukeapNetworks = expectedNetworks.map((network) => ({
-      networkType: network.name,
-      id: network.id,
-      count: apiCountMap.has(network.name) ? apiCountMap.get(network.name) : 0
-    }))
-
-    // Include any additional network types returned by API but not present in datasourceGroups
-    const expectedSet = new Set(expectedNames)
-    const additionalNetworks = Array.from(apiCountMap.entries())
-      .filter(([name]) => !expectedSet.has(name))
-      .map(([networkType, count]) => ({ networkType, id: null, count }))
-
-    ukeapNetworks = ukeapNetworks.concat(additionalNetworks)
-  } else {
-    // No datasourceGroups info — use raw API result, filtering out Unknown
-    ukeapNetworks = Array.from(
-      aggregateNetworkCounts(rawNonAurn).entries()
-    ).map(([networkType, count]) => ({ networkType, id: null, count }))
-  }
 
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
   request.yar.set('nooflocationukeap', ukeapNetworks)
