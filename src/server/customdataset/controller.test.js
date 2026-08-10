@@ -1395,6 +1395,69 @@ describe('customdatasetController', () => {
       )
     })
 
+    it('treats a non-numeric Count in an array AURN result as zero', async () => {
+      const session = baseSession()
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      axios.post.mockImplementation((url, body) =>
+        body.dataSource === 'AURN'
+          ? Promise.resolve({
+              data: [{ Count: '3' }, { Count: 'not-a-number' }]
+            })
+          : Promise.resolve({ data: [] })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('stationCountAURN', 3)
+    })
+
+    it('reports zero for an expected network the API did not return', async () => {
+      const session = baseSession({
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ name: 'NetA', id: 'a' }]
+          }
+        ]
+      })
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      axios.post.mockImplementation((url, body) =>
+        body.dataSource === 'AURN'
+          ? Promise.resolve({ data: 4 })
+          : Promise.resolve({ data: [] })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [
+        { networkType: 'NetA', id: 'a', count: 0 }
+      ])
+    })
+
+    it('drops expected networks that have no name', async () => {
+      const session = baseSession({
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            // A network object with neither name nor id must not become a heading
+            networks: [{}, { name: '   ' }, { name: 'NetA', id: 'a' }]
+          }
+        ]
+      })
+      mockRequest.yar.get.mockImplementation((k) => session[k])
+      axios.post.mockImplementation((url, body) =>
+        body.dataSource === 'AURN'
+          ? Promise.resolve({ data: 4 })
+          : Promise.resolve({ data: [{ networkType: 'NetA', count: 2 }] })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [
+        { networkType: 'NetA', id: 'a', count: 2 }
+      ])
+    })
+
     it('treats a Boom-like AURN result as an error', async () => {
       config.get.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
