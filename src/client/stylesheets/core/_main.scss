@@ -649,11 +649,13 @@ width: 100%;
     @include mq ($until: tablet) {
       width: 30%;
       min-width: 0;
-      padding-right: 12px;
+      padding-right: 0;
       box-sizing: border-box;
       overflow-wrap: normal;
       word-break: normal;
-      text-align: left;
+      // Last column: keep it right aligned so values sit flush with the
+      // table edge instead of drifting into the middle of the row.
+      text-align: right;
     }
   }
 
@@ -723,6 +725,19 @@ width: 100%;
   .defra-aq-levels-table {
     min-width: 0;
     width: 100%;
+  }
+
+  // Mobile: the trailing column stays hard against the right edge. The row is a
+  // flex container below tablet, so margin-left keeps the cell at the end of the
+  // line even if width rounding drops it onto a line of its own.
+  @include mq ($until: tablet) {
+    .defra-aq-levels-table__cell--hourly,
+    .defra-aq-levels-table__cell--hourly-title,
+    .defra-aq-levels-table__row > :last-child {
+      margin-left: auto;
+      padding-right: 0;
+      text-align: right;
+    }
   }
 
   // Keep desktop/tablet as a classic table layout.
