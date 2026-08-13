@@ -1430,7 +1430,7 @@ describe('customdatasetController', () => {
       await customdatasetController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [
-        { networkType: 'NetA', id: 'a', count: 0 }
+        { networkType: 'NetA', id: 'a', pollutantID: null, count: 0 }
       ])
     })
 
@@ -1454,7 +1454,7 @@ describe('customdatasetController', () => {
       await customdatasetController.handler(mockRequest, mockH)
 
       expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [
-        { networkType: 'NetA', id: 'a', count: 2 }
+        { networkType: 'NetA', id: 'a', pollutantID: null, count: 2 }
       ])
     })
 

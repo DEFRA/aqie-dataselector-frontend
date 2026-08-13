@@ -6,6 +6,22 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
+function getAurnPollutantID(datasourceGroups) {
+  if (!Array.isArray(datasourceGroups)) {
+    return ''
+  }
+
+  for (const group of datasourceGroups) {
+    for (const network of group.networks || []) {
+      if (network && typeof network === 'object' && !network.id) {
+        return network.pollutantID || ''
+      }
+    }
+  }
+
+  return ''
+}
+
 const getStationCount = (request) => {
   const raw =
     request.yar.get('nooflocation') ?? request.yar.get('stationcount') ?? 0
@@ -18,6 +34,7 @@ const buildViewData = (request, backUrl) => {
   const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
 
   const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const aurnPollutantID = getAurnPollutantID(datasourceGroups)
   const hasOtherDataSource = datasourceGroups.some(
     (g) =>
       g.category === 'Other data from Defra' &&
@@ -35,6 +52,7 @@ const buildViewData = (request, backUrl) => {
     stationcount: getStationCount(request),
     ukeapNetworks,
     ukeapUnavailable,
+    aurnPollutantID,
     yearrange: request.yar.get('yearrange'),
     hrefq: backUrl,
     finalyear:

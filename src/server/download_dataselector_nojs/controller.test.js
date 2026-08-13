@@ -57,6 +57,7 @@ describe('downloadDataselectornojsController', () => {
         stationcount: 4,
         ukeapNetworks: [],
         ukeapUnavailable: true,
+        aurnPollutantID: '',
         yearrange: 'Single',
         hrefq: '/customdataset',
         finalyear: ['2019', '2020']
@@ -229,6 +230,7 @@ describe('downloadDataselectornojsController', () => {
         stationcount: 4,
         ukeapNetworks: [],
         ukeapUnavailable: true,
+        aurnPollutantID: '',
         yearrange: 'Multiple',
         hrefq: '/customdataset',
         finalyear: ['2020', '2022']

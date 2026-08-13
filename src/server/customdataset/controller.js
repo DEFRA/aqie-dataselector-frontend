@@ -298,9 +298,9 @@ function isStationCountError(val) {
 
 /**
  * The NON-AURN networks the user selected, from session, normalised to
- * {name, id}. Entries may be plain strings or objects; blanks are dropped.
+ * {name, id, pollutantID}. Entries may be plain strings or objects; blanks are dropped.
  * @param {Array} datasourceGroups - raw groups stored in session
- * @returns {Array<{name: string, id: (string|number|null)}>}
+ * @returns {Array<{name: string, id: (string|number|null), pollutantID: (string|null)}>}
  */
 function getExpectedNetworks(datasourceGroups) {
   const otherDataGroup = datasourceGroups.find(
@@ -312,10 +312,11 @@ function getExpectedNetworks(datasourceGroups) {
   )
     .map((network) =>
       typeof network === 'string'
-        ? { name: network, id: null }
+        ? { name: network, id: null, pollutantID: null }
         : {
             name: network?.name || '',
-            id: network?.id ?? null
+            id: network?.id ?? null,
+            pollutantID: network?.pollutantID ?? null
           }
     )
     .map((network) => ({
@@ -332,7 +333,7 @@ function getExpectedNetworks(datasourceGroups) {
  * never "Unknown".
  * @param {*} nonAurnCount         - raw NON-AURN station count API result
  * @param {Array} datasourceGroups - raw groups stored in session
- * @returns {Array<{networkType: string, id: *, count: number}>}
+ * @returns {Array<{networkType: string, id: *, pollutantID: *, count: number}>}
  */
 function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   const rawNonAurn = Array.isArray(nonAurnCount) ? nonAurnCount : []
@@ -345,6 +346,7 @@ function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
     return Array.from(apiCountMap.entries()).map(([networkType, count]) => ({
       networkType,
       id: null,
+      pollutantID: null,
       count
     }))
   }
@@ -353,6 +355,7 @@ function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   const matchedNetworks = expectedNetworks.map((network) => ({
     networkType: network.name,
     id: network.id,
+    pollutantID: network.pollutantID,
     count: apiCountMap.has(network.name) ? apiCountMap.get(network.name) : 0
   }))
 
@@ -360,7 +363,12 @@ function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   const expectedSet = new Set(expectedNetworks.map((network) => network.name))
   const additionalNetworks = Array.from(apiCountMap.entries())
     .filter(([name]) => !expectedSet.has(name))
-    .map(([networkType, count]) => ({ networkType, id: null, count }))
+    .map(([networkType, count]) => ({
+      networkType,
+      id: null,
+      pollutantID: null,
+      count
+    }))
 
   return matchedNetworks.concat(additionalNetworks)
 }

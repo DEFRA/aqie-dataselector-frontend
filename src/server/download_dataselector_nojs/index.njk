@@ -95,7 +95,7 @@
             <tr class="govuk-table__row">
               <th scope="row" class="govuk-table__header">Download all years</th>
               <td class="govuk-table__cell">
-                <a href="/emailrequest" class="govuk-link">Request Data</a>
+                <a href="/emailrequest/AURN?pollutantID={{ aurnPollutantID if aurnPollutantID is not none else '' }}" class="govuk-link">Request Data</a>
               </td>
             </tr>
             {% for year in finalyear %}
@@ -176,7 +176,7 @@
                   <tr class="govuk-table__row">
                     <th scope="row" class="govuk-table__header">Download all years</th>
                     <td class="govuk-table__cell">
-                      <a href="/emailrequest/NON-AURN" class="govuk-link">Request Data</a>
+                      <a href="/emailrequest/NON-AURN?networkId={{ network.id if network.id is not none else '' }}&pollutantID={{ network.pollutantID if network.pollutantID is not none else '' }}" class="govuk-link">Request Data</a>
                     </td>
                   </tr>
                   {% for year in finalyear %}

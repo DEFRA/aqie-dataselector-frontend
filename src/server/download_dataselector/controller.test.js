@@ -452,6 +452,7 @@ describe('downloadDataselectorController', () => {
         ukeapNetworks: [],
         ukeapUnavailable: true,
         aurnUnavailable: true,
+        aurnPollutantID: '',
         yearrange: 'Multiple',
         displayBacklink: true,
         hrefq: '/customdataset',

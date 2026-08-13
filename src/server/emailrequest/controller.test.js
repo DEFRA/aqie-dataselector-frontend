@@ -1001,7 +1001,7 @@ describe('emailrequestController', () => {
       )
     })
 
-    it('does not call yar.clear when pendingDataSource is null', async () => {
+    it('does not clear pendingDataSource when it is null', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         const data = {
           selectedPollutantID: 'pollutant-id-123',
@@ -1018,8 +1018,49 @@ describe('emailrequestController', () => {
 
       await emailrequestController.handler(mockRequest, mockH)
 
-      expect(mockRequest.yar.clear).toHaveBeenCalledTimes(1)
+      expect(mockRequest.yar.clear).toHaveBeenCalledTimes(2)
       expect(mockRequest.yar.clear).toHaveBeenCalledWith('pendingNetworkId')
+      expect(mockRequest.yar.clear).toHaveBeenCalledWith('pendingPollutantID')
+      expect(mockRequest.yar.clear).not.toHaveBeenCalledWith(
+        'pendingDataSource'
+      )
+    })
+
+    it('uses pendingPollutantID over derived network pollutantID for NON-AURN', async () => {
+      mockRequest.params = { dataSource: 'NON-AURN' }
+      mockRequest.query = { networkId: 'NET1', pollutantID: 'ONLY1' }
+
+      const session = {
+        selectedPollutantID: 'ALL1,ALL2,ALL3',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'NON-AURN',
+        pendingDataSource: null,
+        pendingNetworkId: 'NET1',
+        pendingPollutantID: 'ONLY1',
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ id: 'NET1', pollutantID: 'ALL1,ALL2,ALL3' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          dataSource: 'NON-AURN',
+          networkId: 'NET1',
+          pollutantName: 'ONLY1'
+        })
+      )
     })
   })
 
@@ -1303,6 +1344,19 @@ describe('emailrequestController', () => {
   // ─── NON-AURN pendingNetworkId derivation ─────────────────────────────────────
 
   describe('NON-AURN pendingNetworkId', () => {
+    it('stores query networkId when provided for NON-AURN', async () => {
+      mockRequest.path = '/emailrequest'
+      mockRequest.params = { dataSource: 'NON-AURN' }
+      mockRequest.query = { networkId: 'NET9' }
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'pendingNetworkId',
+        'NET9'
+      )
+    })
+
     it('stores derived network ids when dataSource is NON-AURN', async () => {
       mockRequest.path = '/emailrequest'
       mockRequest.params = { dataSource: 'NON-AURN' }
