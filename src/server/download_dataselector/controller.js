@@ -57,6 +57,22 @@ function getMissingSelectionError(request) {
   return null
 }
 
+function getAurnPollutantID(datasourceGroups) {
+  if (!Array.isArray(datasourceGroups)) {
+    return ''
+  }
+
+  for (const group of datasourceGroups) {
+    for (const network of group.networks || []) {
+      if (network && typeof network === 'object' && !network.id) {
+        return network.pollutantID || ''
+      }
+    }
+  }
+
+  return ''
+}
+
 export const downloadDataselectorController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -120,6 +136,7 @@ export const downloadDataselectorController = {
       'Near real-time data from Defra'
     )
     const aurnUnavailable = !hasNearRealTimeDataSource
+    const aurnPollutantID = getAurnPollutantID(datasourceGroups)
 
     // NON-AURN networks — array of {networkType, count} objects
     const rawUkeap = request.yar.get('nooflocationukeap')
@@ -140,6 +157,7 @@ export const downloadDataselectorController = {
       ukeapNetworks,
       ukeapUnavailable,
       aurnUnavailable,
+      aurnPollutantID,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,

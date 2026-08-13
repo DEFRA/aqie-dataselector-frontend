@@ -119,13 +119,68 @@ const storePendingDataSource = (request, dataSourceParam) => {
     request.yar.set('pendingDataSource', dataSourceParam)
   }
 
+  const requestedPollutantID = (request.query?.pollutantID || '')
+    .toString()
+    .trim()
+  if (requestedPollutantID) {
+    request.yar.set('pendingPollutantID', requestedPollutantID)
+  }
+
   if (dataSourceParam === 'NON-AURN') {
-    const datasourceGroups = request.yar.get('datasourceGroups') || []
-    const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
-    if (derivedNetworkId) {
-      request.yar.set('pendingNetworkId', derivedNetworkId)
+    const requestedNetworkId = (request.query?.networkId || '')
+      .toString()
+      .trim()
+
+    if (requestedNetworkId) {
+      request.yar.set('pendingNetworkId', requestedNetworkId)
+    } else {
+      const datasourceGroups = request.yar.get('datasourceGroups') || []
+      const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+      if (derivedNetworkId) {
+        request.yar.set('pendingNetworkId', derivedNetworkId)
+      }
     }
   }
+}
+
+const toSinglePollutantID = (selectedPollutantID) => {
+  if (selectedPollutantID == null) {
+    return selectedPollutantID
+  }
+
+  const value = String(selectedPollutantID)
+  const first = value
+    .split(',')
+    .map((id) => id.trim())
+    .find(Boolean)
+
+  return first || ''
+}
+
+// Decides whether a network entry matches the current request context.
+const isMatchingNetwork = (network, dataSource, networkId) => {
+  if (dataSource === 'NON-AURN') {
+    return Boolean(networkId) && String(network.id) === String(networkId)
+  }
+
+  return dataSource === 'AURN' && !network.id && Boolean(network.pollutantID)
+}
+
+// Resolve a pollutant id specific to the selected network/data source.
+const getPollutantIDForNetwork = (datasourceGroups, dataSource, networkId) => {
+  if (!Array.isArray(datasourceGroups) || datasourceGroups.length === 0) {
+    return null
+  }
+
+  for (const group of datasourceGroups) {
+    for (const network of group.networks || []) {
+      if (isMatchingNetwork(network, dataSource, networkId)) {
+        return network.pollutantID || null
+      }
+    }
+  }
+
+  return null
 }
 
 // Build the station count parameters from session, applying any pending dataSource.
@@ -140,10 +195,23 @@ const buildStationCountParameters = (request) => {
   const pendingNetworkId = (request.yar.get('pendingNetworkId') || '')
     .toString()
     .trim()
+  const pendingPollutantID = (request.yar.get('pendingPollutantID') || '')
+    .toString()
+    .trim()
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const networkPollutantID = getPollutantIDForNetwork(
+    datasourceGroups,
+    selectedDataSource,
+    pendingNetworkId
+  )
+  const selectedPollutantID = request.yar.get('selectedPollutantID')
   const regionType = request.yar.get('Location')
 
   const params = {
-    pollutantName: request.yar.get('selectedPollutantID'),
+    pollutantName:
+      pendingPollutantID ||
+      networkPollutantID ||
+      toSinglePollutantID(selectedPollutantID),
     dataSource: selectedDataSource,
     networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
     Region:
@@ -156,6 +224,7 @@ const buildStationCountParameters = (request) => {
     dataselectordownloadtype: 'dataSelectorMultiple',
     email: request.yar.get('email')
   }
+  request.yar.clear('pendingPollutantID')
   request.yar.clear('pendingNetworkId')
   return params
 }
