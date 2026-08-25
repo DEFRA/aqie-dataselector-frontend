@@ -63,7 +63,7 @@ const DEFAULT_COOKIE_CONSENT = {
  * @param {{ days?: number }} [options] - Cookie options
  * @returns {string | null | undefined} - Returns value when setting or deleting
  */
-export function cookie(name, value = undefined, options) {
+function cookie(name, value = undefined, options) {
   if (value === undefined) {
     return getCookie(name)
   }
@@ -83,7 +83,7 @@ export function cookie(name, value = undefined, options) {
  * returns null.
  * @returns {ConsentPreferences | null} Consent preferences
  */
-export function getConsentCookie() {
+function getConsentCookie() {
   const consentCookie = getCookie(CONSENT_COOKIE_NAME)
   let consentCookieObj
 
@@ -109,7 +109,7 @@ export function getConsentCookie() {
  * @param {ConsentPreferences | null} options - Consent preferences
  * @returns {boolean} True if consent cookie is valid
  */
-export function isValidConsentCookie(options) {
+function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
   return options && options.version >= globalThis.AQIE_CONSENT_COOKIE_VERSION
 }
@@ -118,7 +118,7 @@ export function isValidConsentCookie(options) {
  * Update the user's cookie preferences.
  * @param {ConsentPreferences} options - Consent options to parse
  */
-export function setConsentCookie(options) {
+function setConsentCookie(options) {
   const cookieConsent =
     getConsentCookie() ||
     // If no preferences or old version use the default
@@ -142,7 +142,14 @@ export function setConsentCookie(options) {
   resetCookies()
 }
 
+/**
+ * Loads Google Analytics via GTM if the user has accepted analytics cookies.
+ * Validates the GTM key format before injection to prevent script injection.
+ */
 function loadGoogleAnalytics() {
+  if (!/^GTM-[A-Z0-9]+$/.test(tagID)) {
+    return
+  }
   const script = document.createElement('script')
   script.src = ganalytics
   script.async = true
@@ -159,7 +166,7 @@ function loadGoogleAnalytics() {
  *
  * Deletes any cookies the user has not consented to.
  */
-export function resetCookies() {
+function resetCookies() {
   const options =
     getConsentCookie() ||
     // If no preferences or old version use the default
@@ -207,7 +214,7 @@ export function resetCookies() {
  * Additionally, our UA properties are scheduled for deletion but until they are
  * entirely deleted, GTM is still setting UA cookies.
  */
-export function removeUACookies() {
+function removeUACookies() {
   for (const UACookie of ['_gid', '_ga']) {
     cookie(UACookie, null)
   }
@@ -335,3 +342,12 @@ function deleteCookie(name) {
  * @property {boolean} [essential] - Accept essential cookies
  *  @property {string} [version] - Content cookie version
  */
+
+export {
+  cookie,
+  getConsentCookie,
+  isValidConsentCookie,
+  removeUACookies,
+  resetCookies,
+  setConsentCookie
+}
