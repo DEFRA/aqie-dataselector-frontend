@@ -1,5 +1,6 @@
 import path from 'node:path'
 import hapi from '@hapi/hapi'
+import crumb from '@hapi/crumb'
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
@@ -57,6 +58,8 @@ export async function createServer() {
     pulse,
     sessionCache,
     nunjucksConfig,
+    // Only enforce CSRF on /cookies — all other routes are unaffected
+    { plugin: crumb, options: { skip: (request) => request.path !== '/cookies', cookieOptions: { isSecure: config.get('isProduction') } } },
     router
   ])
 
