@@ -375,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tableBody = table?.querySelector('tbody');
 
   // State for specific mode
+  const MAX_POLLUTANTS = 10;
   const addedPollutants = new Set(); // Track unique values (lowercased)
 
   // Helper to show client-side errors (single shared summary + inline inside pollutant-form-group)
@@ -490,6 +491,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (addedPollutants.has(lowerValue)) {
       showClientError('This pollutant has already been added');
+      return;
+    }
+
+    const currentCount = tableBody ? tableBody.children.length : 0;
+    if (currentCount >= MAX_POLLUTANTS) {
+      showClientError('You can add up to 10 pollutants');
       return;
     }
 
