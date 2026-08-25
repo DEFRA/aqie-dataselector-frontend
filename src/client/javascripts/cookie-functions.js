@@ -13,7 +13,7 @@
  */
 
 /* Name of the cookie to save users cookie preferences to. */
-const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+const CONSENT_COOKIE_NAME = 'cookies_policy'
 
 const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
 const tagID = 'GTM-5ZWS27T3'
@@ -33,7 +33,7 @@ const COOKIE_CATEGORIES = {
    * only allow adding cookies that are documented in this object, so they need
    * to be added here.
    */
-  essential: ['airaqie_cookies_analytics']
+  essential: ['cookies_policy']
 }
 
 /*

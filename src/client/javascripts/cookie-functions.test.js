@@ -11,7 +11,7 @@ import {
   setConsentCookie
 } from './cookie-functions.js'
 
-const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+const CONSENT_COOKIE_NAME = 'cookies_policy'
 const TRACKING_ID = 'GTM-5ZWS27T3'
 
 function setConsentInDom(analytics, version = 1) {
