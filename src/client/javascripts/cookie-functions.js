@@ -188,12 +188,11 @@ export function resetCookies() {
       globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
     }
 
-    if (options[cookieType]) {
-      // Fetch the cookies in that category
+    if (!options[cookieType]) {
+      // Delete cookies for categories the user has not consented to
       const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
 
       cookiesInCategory.forEach((cookieName) => {
-        // Delete cookie
         cookie(cookieName, null)
       })
     }

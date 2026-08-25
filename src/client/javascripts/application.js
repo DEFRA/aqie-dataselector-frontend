@@ -10,11 +10,7 @@ import {
 import CookieBanner from './cookie-banner.js'
 import accessibleAutocomplete from 'accessible-autocomplete'
 import AccessibleAutoComplete from './accessible-autocomplete.js'
-import {
-  getConsentCookie,
-  isValidConsentCookie,
-  removeUACookies
-} from './cookie-functions.js'
+import { resetCookies } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
 
 createAll(Button)
@@ -41,15 +37,8 @@ if ($cookieBanner) {
   new CookieBanner($cookieBanner)
 }
 
-// Initialise analytics if consent is given
-const userConsent = getConsentCookie()
-if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
-  // Analytics()
-
-  // Remove UA cookies if the user previously had them set or Google attempts
-  // to set them
-  removeUACookies()
-}
+// Initialise analytics state based on saved consent cookie
+resetCookies()
 
 // Initialise cookie page
 const $cookiesPage = document.querySelector('[data-module="app-cookies-page"]')
