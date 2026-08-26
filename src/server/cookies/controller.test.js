@@ -6,7 +6,7 @@ import { english } from '~/src/server/data/en/homecontent.js'
 
 describe('cookiesController', () => {
   it('should render the cookies/index view with correct data', () => {
-    const request = {}
+    const request = { state: {} }
     const viewMock = jest.fn()
     const h = { view: viewMock }
 
@@ -25,7 +25,8 @@ describe('cookiesController', () => {
       heading,
       table1,
       table2,
-      paragraphs
+      paragraphs,
+      analyticsConsented: false
     })
   })
 })

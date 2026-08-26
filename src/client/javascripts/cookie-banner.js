@@ -70,8 +70,14 @@ class CookieBanner {
   }
 
   bindEvents() {
-    this.$acceptButton.addEventListener('click', () => this.acceptCookies())
-    this.$rejectButton.addEventListener('click', () => this.rejectCookies())
+    this.$acceptButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      this.acceptCookies()
+    })
+    this.$rejectButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      this.rejectCookies()
+    })
     this.$cookieBannerHideButtons.forEach((btn) =>
       btn.addEventListener('click', () => this.hideBanner())
     )

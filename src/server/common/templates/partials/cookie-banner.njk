@@ -13,6 +13,11 @@
   <p class="govuk-body">You’ve rejected analytics cookies. You can <a class="govuk-link" href="/cookies">change your cookie settings</a>  at any time.</p>
 {% endset %}
 
+<form action="/cookies" method="post" novalidate>
+  <input type="hidden" name="crumb" value="{{ crumb }}">
+  <input type="hidden" name="async" value="false">
+  <input type="hidden" name="returnUrl" value="{{ currentPath }}">
+
 {{ govukCookieBanner({
   ariaLabel: "Cookies on Get air pollution data",
   hidden: true,
@@ -27,12 +32,16 @@
       actions: [
         {
           text: "Accept analytics cookies",
-          type: "button",
+          type: "submit",
+          name: "analytics",
+          value: "true",
           classes: "js-cookie-banner-accept"
         },
         {
           text: "Reject analytics cookies",
-          type: "button",
+          type: "submit",
+          name: "analytics",
+          value: "false",
           classes: "js-cookie-banner-reject"
         },
         {
@@ -70,6 +79,7 @@
     }
   ]
 }) }}
+</form>
 
 {# Inline script to show the cookie banner as soon as possible,
 to avoid a high cumulative layout shift (CLS) score https://web.dev/cls/ #}

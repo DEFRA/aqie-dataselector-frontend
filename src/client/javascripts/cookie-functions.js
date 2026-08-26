@@ -63,7 +63,7 @@ const DEFAULT_COOKIE_CONSENT = {
  * @param {{ days?: number }} [options] - Cookie options
  * @returns {string | null | undefined} - Returns value when setting or deleting
  */
-function cookie(name, value = undefined, options) {
+function cookie(name, value = undefined, options = undefined) {
   if (value === undefined) {
     return getCookie(name)
   }
@@ -340,7 +340,7 @@ function deleteCookie(name) {
  * @typedef {object} ConsentPreferences
  * @property {boolean} [analytics] - Accept analytics cookies
  * @property {boolean} [essential] - Accept essential cookies
- *  @property {string} [version] - Content cookie version
+ *  @property {number} [version] - Content cookie version
  */
 
 export {

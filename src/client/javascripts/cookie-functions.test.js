@@ -169,20 +169,20 @@ describe('setConsentCookie', () => {
   it('persists analytics: true to the consent cookie', () => {
     setConsentCookie({ analytics: true })
     const stored = getConsentCookie()
-    expect(stored.analytics).toBe(true)
-    expect(stored.version).toBe(1)
+    expect(stored?.analytics).toBe(true)
+    expect(stored?.version).toBe(1)
   })
 
   it('persists analytics: false to the consent cookie', () => {
     setConsentCookie({ analytics: false })
     const stored = getConsentCookie()
-    expect(stored.analytics).toBe(false)
+    expect(stored?.analytics).toBe(false)
   })
 
   it('merges with the existing consent cookie', () => {
     setConsentInDom(true)
     setConsentCookie({ analytics: false })
-    expect(getConsentCookie().analytics).toBe(false)
+    expect(getConsentCookie()?.analytics).toBe(false)
   })
 
   it('does not include the essential key in the stored cookie', () => {

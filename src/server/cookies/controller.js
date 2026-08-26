@@ -7,7 +7,7 @@ const CONSENT_COOKIE_NAME = 'cookies_policy'
 const CONSENT_COOKIE_VERSION = 1
 
 const cookiesController = {
-  handler: (_request, h) => {
+  handler: (request, h) => {
     const {
       footer: {
         cookies: {
@@ -22,6 +22,16 @@ const cookiesController = {
       }
     } = english
 
+    let analyticsConsented = false
+    try {
+      const raw = request.state[CONSENT_COOKIE_NAME]
+      if (raw) {
+        analyticsConsented = JSON.parse(raw).analytics === true
+      }
+    } catch {
+      // malformed cookie — default to false
+    }
+
     return h.view('cookies/index', {
       pageTitle,
       title,
@@ -29,7 +39,8 @@ const cookiesController = {
       heading,
       table1,
       table2,
-      paragraphs
+      paragraphs,
+      analyticsConsented
     })
   }
 }

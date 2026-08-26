@@ -31,7 +31,7 @@
 <p class="govuk-body">{{ paragraphs.e }} <a href="https://ico.org.uk/for-the-public/online/cookies" class="govuk-link">{{ paragraphs.f }}</a> {{ paragraphs.g }}</p>
 
 <!-- Form -->
-<form class="js-cookies-page-form">
+<form class="js-cookies-page-form" action="/cookies" method="post">
   <input type="hidden" name="crumb" value="{{ crumb }}">
   <h2 class="govuk-heading-m">{{ headings.a }}</h2>
   <p class="govuk-body">{{ paragraphs.h }}</p>
@@ -92,7 +92,7 @@
 
 {{ govukRadios({
    
-     name: "cookies[analytics]",
+     name: "analytics",
           idPrefix: "cookies-analytics",
           fieldset: {
             legend: {
@@ -107,13 +107,14 @@
           },
   items: [
     {
-      value: "Yes",
-      text: paragraphs.r
+      value: "true",
+      text: paragraphs.r,
+      checked: analyticsConsented
     },
     {
-      value: "No",
+      value: "false",
       text: paragraphs.s,
-       checked:true
+      checked: not analyticsConsented
     }
   ]
 }) }}
@@ -126,10 +127,7 @@
   <!-- Button -->
   {{ govukButton({
     text: paragraphs.buttonText,
-    classes: "js-cookies-form-button",
-    attributes: {
-      hidden: ""
-    }
+    classes: "js-cookies-form-button"
   }) }}
 </form>
 </div>
