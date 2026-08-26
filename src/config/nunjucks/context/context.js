@@ -14,6 +14,19 @@ const manifestPath = path.join(
 
 let webpackManifest
 
+const CONSENT_COOKIE_VERSION = 1
+
+function hasValidConsent(request) {
+  try {
+    const raw = request.state?.['cookies_policy']
+    if (!raw) return false
+    const policy = JSON.parse(raw)
+    return !!(policy?.version >= CONSENT_COOKIE_VERSION)
+  } catch {
+    return false
+  }
+}
+
 export function context(request) {
   if (!webpackManifest) {
     try {
@@ -29,6 +42,8 @@ export function context(request) {
     serviceUrl: '/',
     breadcrumbs: [],
     currentPath: request.url.pathname,
+    // Server-side banner visibility — covers no-JS users where the inline script can't run
+    showCookieBanner: !hasValidConsent(request) && request.path !== '/cookies',
     navigation: buildNavigation(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
