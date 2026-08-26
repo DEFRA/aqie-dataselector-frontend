@@ -78,6 +78,26 @@ export async function createServer() {
     if (response.isBoom) {
       return h.continue
     }
+
+    // Server-side GA cookie removal — expires GA cookies for users who have not
+    // consented (covers no-JS users where client-side deletion never runs)
+    const GA_COOKIE_REGEX = /^_ga$|^_ga_.*$|^_gid$|^_gat_.*$|^_dc_gtm_.*$/
+    try {
+      const raw = request.state?.['cookies_policy']
+      if (raw) {
+        const policy = JSON.parse(raw)
+        if (policy?.analytics !== true && policy?.version >= 1) {
+          for (const cookieName of Object.keys(request.state)) {
+            if (GA_COOKIE_REGEX.test(cookieName)) {
+              h.unstate(cookieName)
+            }
+          }
+        }
+      }
+    } catch {
+      // malformed consent cookie — skip
+    }
+
     response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
     response.header(
       'Content-Security-Policy',

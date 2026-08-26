@@ -4,9 +4,9 @@
 
 import {
   cookie,
+  deleteGoogleAnalyticsCookies,
   getConsentCookie,
   isValidConsentCookie,
-  removeUACookies,
   resetCookies,
   setConsentCookie
 } from './cookie-functions.js'
@@ -87,15 +87,29 @@ describe('cookie()', () => {
   })
 })
 
-describe('removeUACookies', () => {
-  it('deletes _ga and _gid', () => {
+describe('deleteGoogleAnalyticsCookies', () => {
+  it('deletes _ga cookies', () => {
     document.cookie = '_ga=GA1.1.testvalue'
-    document.cookie = '_gid=GA1.1.testvalue2'
-
-    removeUACookies()
-
+    deleteGoogleAnalyticsCookies()
     expect(document.cookie).not.toContain('_ga=')
+  })
+
+  it('deletes _gid cookies', () => {
+    document.cookie = '_gid=GA1.1.testvalue'
+    deleteGoogleAnalyticsCookies()
     expect(document.cookie).not.toContain('_gid=')
+  })
+
+  it('deletes _ga_* stream cookies', () => {
+    document.cookie = '_ga_KBRX8BS5=GS2.1.testvalue'
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).not.toContain('_ga_KBRX8BS5=')
+  })
+
+  it('does not delete unrelated cookies', () => {
+    document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ analytics: false, version: 1 })}`
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).toContain(CONSENT_COOKIE_NAME)
   })
 })
 
@@ -117,10 +131,12 @@ describe('resetCookies', () => {
       setConsentInDom(false)
     })
 
-    it('deletes existing analytics cookies', () => {
+    it('deletes existing analytics cookies including _ga_* stream cookies', () => {
       document.cookie = '_ga=GA1.1.todelete'
+      document.cookie = '_ga_KBRX8BS5=GS2.1.todelete'
       resetCookies()
       expect(cookie('_ga')).toBeNull()
+      expect(document.cookie).not.toContain('_ga_KBRX8BS5=')
     })
 
     it('deletes _gid when consent is false', () => {

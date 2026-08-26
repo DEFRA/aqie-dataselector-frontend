@@ -148,27 +148,44 @@ function resetCookies() {
     if (cookieType === 'version' || cookieType === 'essential') {
       continue
     }
-    if (!options[cookieType]) {
-      // Delete cookies for categories the user has not consented to
-      const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-      cookiesInCategory.forEach((cookieName) => {
-        cookie(cookieName, null)
-      })
+    if (!options[cookieType] && cookieType === 'analytics') {
+      deleteGoogleAnalyticsCookies()
     }
   }
 }
 
 /**
- * Remove UA cookies for user and prevent Google setting them.
- *
- * We've migrated our analytics from UA (Universal Analytics) to GA4, however
- * users may still have the UA cookie set from our previous implementation.
- * Additionally, our UA properties are scheduled for deletion but until they are
- * entirely deleted, GTM is still setting UA cookies.
+ * Builds the set of domains to attempt cookie deletion against.
+ * Includes the exact hostname, .hostname, and all parent domains.
+ * @param {string} hostname
+ * @returns {Set<string>}
  */
-function removeUACookies() {
-  for (const UACookie of ['_gid', '_ga']) {
-    cookie(UACookie, null)
+function buildDeletableDomains(hostname) {
+  const domains = new Set()
+  domains.add(hostname)
+  domains.add('.' + hostname)
+  const parts = hostname.split('.')
+  for (let i = 1; i < parts.length - 1; i++) {
+    domains.add('.' + parts.slice(i).join('.'))
+  }
+  return domains
+}
+
+/**
+ * Deletes all GA and GTM cookies across all domain variants.
+ * Covers _ga, _ga_* (GA4 stream), _gid, _gat_*, _dc_gtm_* patterns.
+ */
+function deleteGoogleAnalyticsCookies() {
+  const prefixes = ['_ga', '_gid', '_gat', '_dc_gtm_']
+  const domains = buildDeletableDomains(globalThis.location.hostname)
+  for (const cookieStr of document.cookie.split(';')) {
+    const name = cookieStr.split('=')[0].trim()
+    if (prefixes.some((prefix) => name.startsWith(prefix))) {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+      for (const domain of domains) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${domain};path=/`
+      }
+    }
   }
 }
 
@@ -297,9 +314,9 @@ function deleteCookie(name) {
 
 export {
   cookie,
+  deleteGoogleAnalyticsCookies,
   getConsentCookie,
   isValidConsentCookie,
-  removeUACookies,
   resetCookies,
   setConsentCookie
 }
