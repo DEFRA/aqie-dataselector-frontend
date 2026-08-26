@@ -87,6 +87,28 @@ describe('downloadDataselectornojsController', () => {
       )
       expect(res).toBe('view-response')
     })
+
+    it('sets aurnPollutantID and marks UKEAP available when datasource groups and networks exist', () => {
+      request.yar.set('datasourceGroups', [
+        {
+          category: 'Other data from Defra',
+          networks: [{ id: 'aurn-network' }, { pollutantID: 'NO2' }]
+        }
+      ])
+      request.yar.set('nooflocationukeap', ['UKA1'])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({
+          aurnPollutantID: 'NO2',
+          ukeapNetworks: ['UKA1'],
+          ukeapUnavailable: false
+        })
+      )
+      expect(res).toBe('view-response')
+    })
   })
 
   describe('POST validation', () => {

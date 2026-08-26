@@ -1062,6 +1062,68 @@ describe('emailrequestController', () => {
         })
       )
     })
+
+    it('uses AURN network pollutantID when selected datasource is AURN', async () => {
+      const session = {
+        selectedPollutantID: 'FALLBACK1,FALLBACK2',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'AURN',
+        pendingDataSource: null,
+        pendingNetworkId: '',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ pollutantID: 'AURN-ONLY' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          dataSource: 'AURN',
+          networkId: '',
+          pollutantName: 'AURN-ONLY'
+        })
+      )
+    })
+
+    it('redirects when NON-AURN network does not match and pollutant fallback is missing', async () => {
+      const session = {
+        selectedPollutantID: null,
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'NON-AURN',
+        pendingDataSource: null,
+        pendingNetworkId: 'NET-NOT-FOUND',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ id: 'NET-1', pollutantID: 'PM10' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
   })
 
   // ─── Development mode API handling ────────────────────────────────────────────
