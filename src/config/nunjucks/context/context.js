@@ -15,16 +15,25 @@ const manifestPath = path.join(
 let webpackManifest
 
 const CONSENT_COOKIE_VERSION = 1
+const GTM_KEY_PATTERN = /^GTM-[A-Z0-9]+$/
 
-function hasValidConsent(request) {
+function getConsentPolicy(request) {
   try {
     const raw = request.state?.['cookies_policy']
-    if (!raw) return false
-    const policy = JSON.parse(raw)
-    return policy?.version >= CONSENT_COOKIE_VERSION
+    return raw ? JSON.parse(raw) : null
   } catch {
-    return false
+    return null
   }
+}
+
+function hasValidConsent(request) {
+  const policy = getConsentPolicy(request)
+  return policy?.version >= CONSENT_COOKIE_VERSION
+}
+
+function analyticsAccepted(request) {
+  const policy = getConsentPolicy(request)
+  return policy?.analytics === true && policy?.version >= CONSENT_COOKIE_VERSION
 }
 
 export function context(request) {
@@ -44,6 +53,13 @@ export function context(request) {
     currentPath: request.url.pathname,
     // Server-side banner visibility — covers no-JS users where the inline script can't run
     showCookieBanner: !hasValidConsent(request) && request.path !== '/cookies',
+    // Only render GTM when analytics consent has been given
+    showGtm: analyticsAccepted(request),
+    googleTagManagerKeys: config
+      .get('googleAnalytics.googleTagManagerKeys')
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => GTM_KEY_PATTERN.test(k)),
     navigation: buildNavigation(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]

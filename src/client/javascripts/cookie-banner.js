@@ -91,6 +91,7 @@ class CookieBanner {
     CookieFunctions.setConsentCookie({ analytics: true })
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+    this.loadGtm(this.$cookieBanner.dataset.gtmKey)
     this.submitPreference(true)
   }
 
@@ -99,6 +100,23 @@ class CookieBanner {
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationReject)
     this.submitPreference(false)
+  }
+
+  /**
+   * Loads a GTM container immediately on accept — avoids losing the current
+   * page view. The key is read from data-gtm-key set server-side from config.
+   * @param {string} gtmKey
+   */
+  loadGtm(gtmKey) {
+    if (!gtmKey || !/^GTM-[A-Z0-9]+$/.test(gtmKey)) {
+      return
+    }
+    globalThis.dataLayer = globalThis.dataLayer || []
+    globalThis.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' })
+    const script = document.createElement('script')
+    script.async = true
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${gtmKey}`
+    document.head.appendChild(script)
   }
 
   /**

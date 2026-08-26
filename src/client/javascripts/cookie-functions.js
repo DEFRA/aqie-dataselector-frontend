@@ -15,18 +15,9 @@
 /* Name of the cookie to save users cookie preferences to. */
 const CONSENT_COOKIE_NAME = 'cookies_policy'
 
-const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
-/* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
-function gtag() {
-  globalThis.dataLayer.push(arguments)
-}
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
+  analytics: ['_ga', '_gid'],
   /* Essential cookies
    *
    * Essential cookies cannot be deselected, but we want our cookie code to
@@ -143,25 +134,6 @@ function setConsentCookie(options) {
 }
 
 /**
- * Loads Google Analytics via GTM if the user has accepted analytics cookies.
- * Validates the GTM key format before injection to prevent script injection.
- */
-function loadGoogleAnalytics() {
-  if (!/^GTM-[A-Z0-9]+$/.test(tagID)) {
-    return
-  }
-  const script = document.createElement('script')
-  script.src = ganalytics
-  script.async = true
-  document.head.appendChild(script)
-  globalThis.dataLayer = globalThis.dataLayer || []
-
-  gtag('js', new Date())
-  gtag('config', tagID, { page_path: globalThis.location.pathname })
-  gtag('config', 'G-1Y8D0NGQWY', { page_path: globalThis.location.pathname })
-}
-
-/**
  * Apply the user's cookie preferences
  *
  * Deletes any cookies the user has not consented to.
@@ -176,29 +148,9 @@ function resetCookies() {
     if (cookieType === 'version' || cookieType === 'essential') {
       continue
     }
-
-    // Initialise analytics if allowed
-    if (cookieType === 'analytics' && options[cookieType]) {
-      // Enable GA if allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
-
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
-      }
-    } else {
-      // Disable GA if not allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    }
-
     if (!options[cookieType]) {
       // Delete cookies for categories the user has not consented to
       const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-
       cookiesInCategory.forEach((cookieName) => {
         cookie(cookieName, null)
       })

@@ -42,6 +42,14 @@ export const config = convict({
     format: String,
     default: 'Get air pollution data'
   },
+  googleAnalytics: {
+    googleTagManagerKeys: {
+      doc: 'Comma-separated Google Tag Manager container IDs',
+      format: String,
+      default: 'GTM-KBRX8BS5',
+      env: 'GOOGLE_TAG_MANAGER_KEYS'
+    }
+  },
   root: {
     doc: 'Project root',
     format: String,

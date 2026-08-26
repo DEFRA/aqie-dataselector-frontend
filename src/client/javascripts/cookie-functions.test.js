@@ -12,7 +12,6 @@ import {
 } from './cookie-functions.js'
 
 const CONSENT_COOKIE_NAME = 'cookies_policy'
-const TRACKING_ID = 'GTM-5ZWS27T3'
 
 function setConsentInDom(analytics, version = 1) {
   document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ analytics, version })}`
@@ -35,7 +34,6 @@ beforeEach(() => {
   clearCookies()
   document.head.innerHTML = ''
   delete globalThis.dataLayer
-  delete globalThis[`ga-disable-UA-${TRACKING_ID}`]
 })
 
 afterEach(() => {
@@ -107,18 +105,6 @@ describe('resetCookies', () => {
       setConsentInDom(true)
     })
 
-    it('sets the GA disable flag to false', () => {
-      resetCookies()
-      expect(globalThis[`ga-disable-UA-${TRACKING_ID}`]).toBe(false)
-    })
-
-    it('appends the GA loader script to document.head', () => {
-      resetCookies()
-      expect(
-        document.head.querySelector('script[src*="googletagmanager"]')
-      ).not.toBeNull()
-    })
-
     it('does not delete analytics cookies', () => {
       document.cookie = '_ga=GA1.1.keepme'
       resetCookies()
@@ -131,36 +117,22 @@ describe('resetCookies', () => {
       setConsentInDom(false)
     })
 
-    it('sets the GA disable flag to true', () => {
-      resetCookies()
-      expect(globalThis[`ga-disable-UA-${TRACKING_ID}`]).toBe(true)
-    })
-
-    it('does not append a GA script', () => {
-      resetCookies()
-      expect(
-        document.head.querySelector('script[src*="googletagmanager"]')
-      ).toBeNull()
-    })
-
     it('deletes existing analytics cookies', () => {
       document.cookie = '_ga=GA1.1.todelete'
       resetCookies()
       expect(cookie('_ga')).toBeNull()
     })
+
+    it('deletes _gid when consent is false', () => {
+      document.cookie = '_gid=GA1.1.todelete'
+      resetCookies()
+      expect(cookie('_gid')).toBeNull()
+    })
   })
 
   describe('when no consent cookie exists', () => {
-    it('defaults to analytics: false and disables GA', () => {
-      resetCookies()
-      expect(globalThis[`ga-disable-UA-${TRACKING_ID}`]).toBe(true)
-    })
-
-    it('does not append a GA script', () => {
-      resetCookies()
-      expect(
-        document.head.querySelector('script[src*="googletagmanager"]')
-      ).toBeNull()
+    it('does not throw', () => {
+      expect(() => resetCookies()).not.toThrow()
     })
   })
 })
