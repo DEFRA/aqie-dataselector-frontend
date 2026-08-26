@@ -14,7 +14,15 @@ describe('cookiesController', () => {
 
     const {
       footer: {
-        cookies: { pageTitle, title, headings, heading, table1, table2, paragraphs }
+        cookies: {
+          pageTitle,
+          title,
+          headings,
+          heading,
+          table1,
+          table2,
+          paragraphs
+        }
       }
     } = english
 
@@ -60,7 +68,9 @@ describe('cookiesPostController', () => {
   })
 
   it('redirects to returnUrl when it is a safe relative path', () => {
-    const request = { payload: { analytics: 'true', returnUrl: '/data-selector' } }
+    const request = {
+      payload: { analytics: 'true', returnUrl: '/data-selector' }
+    }
     const result = cookiesPostController.handler(request, h)
     expect(h.redirect).toHaveBeenCalledWith('/data-selector')
     expect(result).toBe('redirect-response')
@@ -73,7 +83,9 @@ describe('cookiesPostController', () => {
   })
 
   it('redirects to /cookies?updated=true when returnUrl is an absolute URL', () => {
-    const request = { payload: { analytics: 'true', returnUrl: 'https://evil.com' } }
+    const request = {
+      payload: { analytics: 'true', returnUrl: 'https://evil.com' }
+    }
     cookiesPostController.handler(request, h)
     expect(h.redirect).toHaveBeenCalledWith('/cookies?updated=true')
   })

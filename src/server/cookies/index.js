@@ -1,4 +1,7 @@
-import { cookiesController, cookiesPostController } from '~/src/server/cookies/controller.js'
+import {
+  cookiesController,
+  cookiesPostController
+} from '~/src/server/cookies/controller.js'
 import { config } from '~/src/config/config.js'
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000

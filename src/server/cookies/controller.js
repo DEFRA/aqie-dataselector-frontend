@@ -53,7 +53,10 @@ const cookiesPostController = {
 
     h.state(
       CONSENT_COOKIE_NAME,
-      JSON.stringify({ analytics: analyticsAllowed, version: CONSENT_COOKIE_VERSION })
+      JSON.stringify({
+        analytics: analyticsAllowed,
+        version: CONSENT_COOKIE_VERSION
+      })
     )
 
     if (isSafeRedirect(returnUrl)) {

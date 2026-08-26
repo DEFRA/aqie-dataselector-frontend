@@ -59,7 +59,13 @@ export async function createServer() {
     sessionCache,
     nunjucksConfig,
     // Only enforce CSRF on /cookies — all other routes are unaffected
-    { plugin: crumb, options: { skip: (request) => request.path !== '/cookies', cookieOptions: { isSecure: config.get('isProduction') } } },
+    {
+      plugin: crumb,
+      options: {
+        skip: (request) => request.path !== '/cookies',
+        cookieOptions: { isSecure: config.get('isProduction') }
+      }
+    },
     router
   ])
 
