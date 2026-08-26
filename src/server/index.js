@@ -57,15 +57,19 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
-    nunjucksConfig,
-    // Only enforce CSRF on /cookies — all other routes are unaffected
+    // crumb must be registered before nunjucksConfig so its onPreResponse injects
+    // the token into the view context before Vision renders the template.
+    // skip only applies to POST validation — GET requests always generate a token
+    // so {{ crumb }} is available in the cookie banner on every page.
     {
       plugin: crumb,
       options: {
-        skip: (request) => request.path !== '/cookies',
+        skip: (request) =>
+          request.method === 'post' && request.path !== '/cookies',
         cookieOptions: { isSecure: config.get('isProduction') }
       }
     },
+    nunjucksConfig,
     router
   ])
 
