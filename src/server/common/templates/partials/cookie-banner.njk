@@ -20,7 +20,7 @@
 
 {{ govukCookieBanner({
   ariaLabel: "Cookies on Get air pollution data",
-  hidden: true,
+  hidden: not showCookieBanner,
   attributes: {
     "data-module": "govuk-cookie-banner",
     "data-crumb": crumb
@@ -81,46 +81,34 @@
 }) }}
 </form>
 
-{# Inline script to show the cookie banner as soon as possible,
-to avoid a high cumulative layout shift (CLS) score https://web.dev/cls/ #}
+{# Inline script hides the banner early (before full JS loads) when the user
+   has already given a valid response — avoids a layout shift on return visits.
+   Without JS the banner remains visible so no-JS users can still consent. #}
 <script>
-
-  /**
-   * If cookie policy changes and/or the user preferences object format needs to
-   * change, bump this version up afterwards. The user should then be shown the
-   * banner again to consent to the new policy.
-   *
-   * Note that because isValidCookieConsent checks that the version in the user's
-   * cookie is equal to or greater than this number, you should be careful to
-   * check backwards compatibility when changing the object format.
-  */
   window.AQIE_CONSENT_COOKIE_VERSION = 1;
 
   (function () {
-    // Skip early setup when cookie banner component is not supported
     if (!('noModule' in HTMLScriptElement.prototype)) {
       return
     }
 
-    /**
-     * Check the cookie preferences object.
-     *
-     * If the consent object is not present, malformed, or incorrect version,
-     * returns false, otherwise returns true.
-     *
-     * This is also duplicated in cookie-functions.js - the two need to be kept in sync
-     */
+    // Hide on the cookies page — the preference form is shown there instead
+    if (window.location.pathname === '/cookies' || window.location.pathname === '/cookies/') {
+      var banner = document.querySelector("[data-module='govuk-cookie-banner']")
+      if (banner) { banner.setAttribute('hidden', 'true') }
+      return
+    }
 
-    // Don't show the banner on the cookies page
-    if (window.location.pathname !== "/cookies/") {
-      // Show the banner if there is no consent cookie or if it is outdated
-
-     var currentConsentCookie = document.cookie.match(new RegExp('(^| )cookies_policy=([^;]+)'))
-
-      if (!currentConsentCookie) {
-        var cookieBanner = document.querySelector("[data-module='govuk-cookie-banner']")
-        cookieBanner.removeAttribute('hidden')
-      } 
+    // Hide when valid consent already recorded
+    var match = document.cookie.match(new RegExp('(^| )cookies_policy=([^;]+)'))
+    if (match) {
+      try {
+        var policy = JSON.parse(decodeURIComponent(match[2]))
+        if (policy && policy.version >= window.AQIE_CONSENT_COOKIE_VERSION) {
+          var banner = document.querySelector("[data-module='govuk-cookie-banner']")
+          if (banner) { banner.setAttribute('hidden', 'true') }
+        }
+      } catch (e) {}
     }
   })()
 </script>
