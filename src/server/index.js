@@ -103,6 +103,7 @@ export async function createServer() {
       'Content-Security-Policy',
       "style-src 'self'; img-src 'self'; frame-ancestors 'none'"
     )
+    response.header('Cache-Control', 'no-store')
     return h.continue
   })
 
