@@ -91,24 +91,36 @@ class CookieBanner {
     CookieFunctions.setConsentCookie({ analytics: true })
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+    this.submitPreference(true)
   }
 
   rejectCookies() {
     CookieFunctions.setConsentCookie({ analytics: false })
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationReject)
+    this.submitPreference(false)
   }
 
-  rejectCookiesCookiepage() {
-    CookieFunctions.setConsentCookie({ analytics: false })
-    this.$cookieMessage.setAttribute('hidden', 'true')
-    // this.revealConfirmationMessage(this.$cookieConfirmationReject)
-  }
-
-  acceptCookiesCookiepage() {
-    CookieFunctions.setConsentCookie({ analytics: true })
-    this.$cookieMessage.setAttribute('hidden', 'true')
-    // this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+  /**
+   * Persists the consent choice server-side via XHR so the server cookie is
+   * set without a page reload. Falls back to a native form POST on failure.
+   * @param {boolean} analytics
+   */
+  submitPreference(analytics) {
+    const crumb = this.$cookieBanner.dataset.crumb
+    const form = this.$cookieBanner.closest('form')
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/cookies', true)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.onload = () => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        form?.submit()
+      }
+    }
+    xhr.onerror = () => {
+      form?.submit()
+    }
+    xhr.send(JSON.stringify({ analytics, async: true, crumb }))
   }
 
   revealConfirmationMessage(confirmationMessage) {

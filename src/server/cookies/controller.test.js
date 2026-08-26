@@ -100,4 +100,21 @@ describe('cookiesPostController', () => {
     const request = { payload: null }
     expect(() => cookiesPostController.handler(request, h)).not.toThrow()
   })
+
+  it('returns JSON success when async is true (XHR path)', () => {
+    h.response = jest.fn().mockReturnValue('json-response')
+    const request = { payload: { analytics: 'true', async: true } }
+    const result = cookiesPostController.handler(request, h)
+    expect(h.response).toHaveBeenCalledWith({ message: 'success' })
+    expect(h.redirect).not.toHaveBeenCalled()
+    expect(result).toBe('json-response')
+  })
+
+  it('returns JSON success when async is the string "true" (XHR path)', () => {
+    h.response = jest.fn().mockReturnValue('json-response')
+    const request = { payload: { analytics: 'false', async: 'true' } }
+    const result = cookiesPostController.handler(request, h)
+    expect(h.response).toHaveBeenCalledWith({ message: 'success' })
+    expect(result).toBe('json-response')
+  })
 })

@@ -21,7 +21,7 @@ function hasValidConsent(request) {
     const raw = request.state?.['cookies_policy']
     if (!raw) return false
     const policy = JSON.parse(raw)
-    return !!(policy?.version >= CONSENT_COOKIE_VERSION)
+    return policy?.version >= CONSENT_COOKIE_VERSION
   } catch {
     return false
   }

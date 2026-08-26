@@ -47,7 +47,7 @@ const cookiesController = {
 
 const cookiesPostController = {
   handler: (request, h) => {
-    const { analytics, returnUrl } = request.payload ?? {}
+    const { analytics, returnUrl, async: isAsync } = request.payload ?? {}
 
     const analyticsAllowed = analytics === true || analytics === 'true'
 
@@ -58,6 +58,11 @@ const cookiesPostController = {
         version: CONSENT_COOKIE_VERSION
       })
     )
+
+    // XHR path — return JSON so the page does not reload
+    if (isAsync === true || isAsync === 'true') {
+      return h.response({ message: 'success' })
+    }
 
     if (isSafeRedirect(returnUrl)) {
       return h.redirect(returnUrl)
