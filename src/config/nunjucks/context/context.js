@@ -19,7 +19,7 @@ const GTM_KEY_PATTERN = /^GTM-[A-Z0-9]+$/
 
 function getConsentPolicy(request) {
   try {
-    const raw = request.state?.['cookies_policy']
+    const raw = request.state?.cookies_policy
     return raw ? JSON.parse(raw) : null
   } catch {
     return null

@@ -1,4 +1,3 @@
-import path from 'node:path'
 import hapi from '@hapi/hapi'
 import crumb from '@hapi/crumb'
 import { config } from '~/src/config/config.js'

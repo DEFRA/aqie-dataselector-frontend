@@ -125,7 +125,7 @@ class CookieBanner {
     xhr.open('POST', '/cookies', true)
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.onload = () => {
-      if (xhr.status < P_SUCCESS_MIN || xhr.status >= HTTP_SUCCESS_MAX) {
+      if (xhr.status < HTTP_SUCCESS_MIN || xhr.status >= HTTP_SUCCESS_MAX) {
         form?.submit()
       }
     }
