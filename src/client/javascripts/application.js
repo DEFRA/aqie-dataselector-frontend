@@ -10,7 +10,7 @@ import {
 import CookieBanner from './cookie-banner.js'
 import accessibleAutocomplete from 'accessible-autocomplete'
 import AccessibleAutoComplete from './accessible-autocomplete.js'
-import { resetCookies } from './cookie-functions.js'
+import { deleteGoogleAnalyticsCookies, resetCookies } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
 
 createAll(Button)
@@ -39,6 +39,23 @@ if ($cookieBanner) {
 
 // Initialise analytics state based on saved consent cookie
 resetCookies()
+
+// Stale cookie cleanup: if GTM is not loaded but GA cookies exist they are
+// orphaned (consent expired or was withdrawn) — delete them on page load
+const gtmScript = document.querySelector(
+  'script[src*="googletagmanager.com/gtm.js"]'
+)
+if (!gtmScript) {
+  deleteGoogleAnalyticsCookies()
+}
+
+// bfcache guard: reload on back/forward cache restore so stale GTM scripts can't persist after consent withdrawal
+globalThis.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    deleteGoogleAnalyticsCookies()
+    globalThis.location.reload()
+  }
+})
 
 // Initialise cookie page
 const $cookiesPage = document.querySelector('[data-module="app-cookies-page"]')
