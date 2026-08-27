@@ -10,9 +10,7 @@ import {
 import CookieBanner from './cookie-banner.js'
 import accessibleAutocomplete from 'accessible-autocomplete'
 import AccessibleAutoComplete from './accessible-autocomplete.js'
-import {
-  deleteGoogleAnalyticsCookies,
-} from './cookie-functions.js'
+import { deleteGoogleAnalyticsCookies } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
 
 createAll(Button)

@@ -88,7 +88,8 @@ function isValidConsentCookie(options) {
  * @param {ConsentPreferences} options
  */
 function setConsentCookie(options) {
-  const cookieConsent = getConsentCookie() || structuredClone(DEFAULT_COOKIE_CONSENT)
+  const cookieConsent =
+    getConsentCookie() || structuredClone(DEFAULT_COOKIE_CONSENT)
 
   for (const option in options) {
     cookieConsent[option] = options[option]
