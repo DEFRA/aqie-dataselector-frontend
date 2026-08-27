@@ -98,16 +98,16 @@ width: 100%;
     padding-right: 30px;
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
   }
-
-&__link {
-        @include govuk-font($size: 19);
-        @media (max-width: 640px) {
-            font-size: 16px;
-        }
-        }
 }
+
+  .defra-aq-features__link {
+    @include govuk-font($size: 19);
+    @media (max-width: 640px) {
+      font-size: 16px;
+    }
+  }
 
 
 
@@ -259,7 +259,7 @@ width: 100%;
 
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
     max-width: 240px;
   }
 
@@ -274,7 +274,7 @@ width: 100%;
 
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
 
     span {
       color: white;
@@ -598,7 +598,7 @@ width: 100%;
     padding-right: 30px;
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
 
     .defra-toggletip__container {
       top: -16px;
@@ -624,7 +624,7 @@ width: 100%;
     padding-right: 30px;
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
 
     @include mq ($until: tablet) {
       width: 30%;
@@ -644,7 +644,7 @@ width: 100%;
     padding-right: 30px;
     white-space: normal;
     overflow-wrap: anywhere;
-    word-break: break-word;
+    word-break: normal;
 
     @include mq ($until: tablet) {
       width: 30%;
