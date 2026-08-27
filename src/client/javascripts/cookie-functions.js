@@ -37,10 +37,10 @@ function cookie(name, value = undefined, options = undefined) {
   }
 
   if (value === false || value === null) {
-    deleteCookie(name)
+    return deleteCookie(name)
   } else {
     const cookieOptions = options ?? { days: 30 }
-    setCookie(name, value, cookieOptions)
+    return setCookie(name, value, cookieOptions)
   }
 }
 
