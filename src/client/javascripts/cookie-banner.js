@@ -23,7 +23,6 @@ class CookieBanner {
     }
 
     this.initialized = true
-    this.initializeBanner()
     this.bindEvents()
   }
 
@@ -59,14 +58,6 @@ class CookieBanner {
       this.$cookieConfirmationReject instanceof HTMLElement &&
       this.$cookieBannerHideButtons.length > 0
     )
-  }
-
-  initializeBanner() {
-    const currentConsentCookie = CookieFunctions.getConsentCookie()
-    if (!currentConsentCookie) {
-      CookieFunctions.resetCookies()
-      this.$cookieBanner.removeAttribute('hidden')
-    }
   }
 
   bindEvents() {

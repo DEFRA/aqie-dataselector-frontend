@@ -7,7 +7,6 @@ import {
   deleteGoogleAnalyticsCookies,
   getConsentCookie,
   isValidConsentCookie,
-  resetCookies,
   setConsentCookie
 } from './cookie-functions.js'
 
@@ -113,46 +112,6 @@ describe('deleteGoogleAnalyticsCookies', () => {
   })
 })
 
-describe('resetCookies', () => {
-  describe('when analytics consent is true', () => {
-    beforeEach(() => {
-      setConsentInDom(true)
-    })
-
-    it('does not delete analytics cookies', () => {
-      document.cookie = '_ga=GA1.1.keepme'
-      resetCookies()
-      expect(document.cookie).toContain('_ga=')
-    })
-  })
-
-  describe('when analytics consent is false', () => {
-    beforeEach(() => {
-      setConsentInDom(false)
-    })
-
-    it('deletes existing analytics cookies including _ga_* stream cookies', () => {
-      document.cookie = '_ga=GA1.1.todelete'
-      document.cookie = '_ga_KBRX8BS5=GS2.1.todelete'
-      resetCookies()
-      expect(cookie('_ga')).toBeNull()
-      expect(document.cookie).not.toContain('_ga_KBRX8BS5=')
-    })
-
-    it('deletes _gid when consent is false', () => {
-      document.cookie = '_gid=GA1.1.todelete'
-      resetCookies()
-      expect(cookie('_gid')).toBeNull()
-    })
-  })
-
-  describe('when no consent cookie exists', () => {
-    it('does not throw', () => {
-      expect(() => resetCookies()).not.toThrow()
-    })
-  })
-})
-
 describe('setConsentCookie', () => {
   it('persists analytics: true to the consent cookie', () => {
     setConsentCookie({ analytics: true })
@@ -176,5 +135,17 @@ describe('setConsentCookie', () => {
   it('does not include the essential key in the stored cookie', () => {
     setConsentCookie({ analytics: true, essential: true })
     expect(getConsentCookie()).not.toHaveProperty('essential')
+  })
+
+  it('deletes GA cookies when analytics is rejected', () => {
+    document.cookie = '_ga=GA1.1.todelete'
+    setConsentCookie({ analytics: false })
+    expect(cookie('_ga')).toBeNull()
+  })
+
+  it('does not delete GA cookies when analytics is accepted', () => {
+    document.cookie = '_ga=GA1.1.keepme'
+    setConsentCookie({ analytics: true })
+    expect(document.cookie).toContain('_ga=')
   })
 })

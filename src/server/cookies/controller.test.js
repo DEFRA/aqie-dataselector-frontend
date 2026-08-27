@@ -37,6 +37,16 @@ describe('cookiesController', () => {
       analyticsConsented: false
     })
   })
+
+  it('defaults analyticsConsented to false when the consent cookie is malformed', () => {
+    const request = { state: { cookies_policy: 'not-valid-json' } }
+    const viewMock = jest.fn()
+    cookiesController.handler(request, { view: viewMock })
+    expect(viewMock).toHaveBeenCalledWith(
+      'cookies/index',
+      expect.objectContaining({ analyticsConsented: false })
+    )
+  })
 })
 
 describe('cookiesPostController', () => {

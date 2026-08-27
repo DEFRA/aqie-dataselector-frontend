@@ -1,39 +1,16 @@
 /**
- * Cookie functions
- * ================
- *
- * Used by the cookie banner component and cookies page pattern.
- *
- * Includes function `Cookie()` for getting, setting, and deleting cookies, and
- * functions to manage the users' consent to cookies.
- *
- * Note: there is an inline script in cookie-banner.njk to show the banner
- * as soon as possible, to avoid a high Cumulative Layout Shift (CLS) score.
- * The consent cookie version is defined in cookie-banner.njk
+ * Cookie functions used by the cookie banner and cookies page.
+ * The consent cookie version set here must match the one in cookie-banner.njk.
  */
 
-/* Name of the cookie to save users cookie preferences to. */
 const CONSENT_COOKIE_NAME = 'cookies_policy'
 
-/* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
   analytics: ['_ga', '_gid'],
-  /* Essential cookies
-   *
-   * Essential cookies cannot be deselected, but we want our cookie code to
-   * only allow adding cookies that are documented in this object, so they need
-   * to be added here.
-   */
+  // essential cookies are listed so userAllowsCookie() can identify them, not to gate deletion
   essential: ['cookies_policy']
 }
 
-/*
- * Default cookie preferences if user has no cookie preferences.
- *
- * Note that this doesn't include a key for essential cookies, essential
- * cookies cannot be disallowed. If the object contains { essential: false }
- * this will be ignored.
- */
 const DEFAULT_COOKIE_CONSENT = {
   analytics: false
 }
@@ -106,51 +83,25 @@ function isValidConsentCookie(options) {
 }
 
 /**
- * Update the user's cookie preferences.
- * @param {ConsentPreferences} options - Consent options to parse
+ * Saves the user's consent preferences, strips non-saveable fields, and
+ * deletes GA cookies immediately if analytics has been rejected.
+ * @param {ConsentPreferences} options
  */
 function setConsentCookie(options) {
-  const cookieConsent =
-    getConsentCookie() ||
-    // If no preferences or old version use the default
-    structuredClone(DEFAULT_COOKIE_CONSENT)
+  const cookieConsent = getConsentCookie() || structuredClone(DEFAULT_COOKIE_CONSENT)
 
-  // Merge current cookie preferences and new preferences
   for (const option in options) {
     cookieConsent[option] = options[option]
   }
 
-  // Essential cookies cannot be deselected, ignore this cookie type
   delete cookieConsent.essential
-
   // @ts-expect-error Property does not exist on window
   cookieConsent.version = globalThis.AQIE_CONSENT_COOKIE_VERSION
 
-  // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
 
-  // Update the other cookies
-  resetCookies()
-}
-
-/**
- * Apply the user's cookie preferences
- *
- * Deletes any cookies the user has not consented to.
- */
-function resetCookies() {
-  const options =
-    getConsentCookie() ||
-    // If no preferences or old version use the default
-    structuredClone(DEFAULT_COOKIE_CONSENT)
-
-  for (const cookieType in options) {
-    if (cookieType === 'version' || cookieType === 'essential') {
-      continue
-    }
-    if (!options[cookieType] && cookieType === 'analytics') {
-      deleteGoogleAnalyticsCookies()
-    }
+  if (!cookieConsent.analytics) {
+    deleteGoogleAnalyticsCookies()
   }
 }
 
@@ -190,18 +141,17 @@ function deleteGoogleAnalyticsCookies() {
 }
 
 /**
- * Check if user allows cookie category
- * @param {string} cookieCategory - Cookie type
- * @param {ConsentPreferences} cookiePreferences - Consent preferences
- * @returns {string | boolean} Cookie type value
+ * Returns true if the named cookie category is permitted.
+ * Always returns true for essential cookies.
+ * @param {string} cookieCategory
+ * @param {ConsentPreferences} cookiePreferences
+ * @returns {string | boolean}
  */
 function userAllowsCookieCategory(cookieCategory, cookiePreferences) {
-  // Essential cookies are always allowed
   if (cookieCategory === 'essential') {
     return true
   }
 
-  // Sometimes cookiePreferences is malformed in some of the tests, so we need to handle these
   try {
     return cookiePreferences[cookieCategory]
   } catch (error) {
@@ -212,20 +162,18 @@ function userAllowsCookieCategory(cookieCategory, cookiePreferences) {
 }
 
 /**
- * Check if user allows cookie
- * @param {string} cookieName - Cookie name
- * @returns {string | boolean} Cookie type value
+ * Returns true if the named cookie is permitted to be set or read.
+ * The consent cookie itself is always allowed.
+ * @param {string} cookieName
+ * @returns {string | boolean}
  */
 function userAllowsCookie(cookieName) {
-  // Always allow setting the consent cookie
   if (cookieName === CONSENT_COOKIE_NAME) {
     return true
   }
 
-  // Get the current cookie preferences
   let cookiePreferences = getConsentCookie()
 
-  // If no preferences or old version use the default
   if (!isValidConsentCookie(cookiePreferences)) {
     cookiePreferences = DEFAULT_COOKIE_CONSENT
   }
@@ -240,7 +188,6 @@ function userAllowsCookie(cookieName) {
     }
   }
 
-  // Deny the cookie if it is not known to us
   return false
 }
 
@@ -289,16 +236,12 @@ function setCookie(name, value, options) {
 }
 
 /**
- * Delete cookie by name
- * @param {string} name - Cookie name
+ * Deletes a cookie across three domain variants (no domain, exact, and .domain)
+ * because the original Set-Cookie domain attribute is not readable by JS.
+ * @param {string} name
  */
 function deleteCookie(name) {
   if (cookie(name)) {
-    // Cookies need to be deleted in the same level of specificity in which they were set
-    // If a cookie was set with a specified domain, it needs to be specified when deleted
-    // If a cookie wasn't set with the domain attribute, it shouldn't be there when deleted
-    // You can't tell if a cookie was set with a domain attribute or not, so try both options
-
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${globalThis.location.hostname};path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${globalThis.location.hostname};path=/`
@@ -317,6 +260,5 @@ export {
   deleteGoogleAnalyticsCookies,
   getConsentCookie,
   isValidConsentCookie,
-  resetCookies,
   setConsentCookie
 }

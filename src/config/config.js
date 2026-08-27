@@ -46,7 +46,7 @@ export const config = convict({
     googleTagManagerKeys: {
       doc: 'Comma-separated Google Tag Manager container IDs',
       format: String,
-      default: 'GTM-KBRX8BS5',
+      default: 'GTM-5ZWS27T3',
       env: 'GOOGLE_TAG_MANAGER_KEYS'
     }
   },

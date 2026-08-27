@@ -40,9 +40,6 @@ if ($cookieBanner) {
   new CookieBanner($cookieBanner)
 }
 
-// Initialise analytics state based on saved consent cookie
-resetCookies()
-
 // Stale cookie cleanup: if GTM is not loaded but GA cookies exist they are
 // orphaned (consent expired or was withdrawn) — delete them on page load
 const gtmScript = document.querySelector(

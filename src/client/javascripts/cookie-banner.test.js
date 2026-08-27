@@ -7,8 +7,7 @@ import * as CookieFunctions from './cookie-functions.js'
 
 jest.mock('./cookie-functions.js', () => ({
   getConsentCookie: jest.fn(),
-  setConsentCookie: jest.fn(),
-  resetCookies: jest.fn()
+  setConsentCookie: jest.fn()
 }))
 
 describe('CookieBanner', () => {
@@ -44,12 +43,11 @@ describe('CookieBanner', () => {
     expect(banner.$cookieBanner).toBeUndefined()
   })
 
-  it('should show banner and reset cookies if no consent cookie', () => {
+  it('should show banner when no consent cookie exists', () => {
     CookieFunctions.getConsentCookie.mockReturnValue(null)
 
     const banner = new CookieBanner($module)
 
-    expect(CookieFunctions.resetCookies).toHaveBeenCalled()
     expect(banner.$cookieBanner.hasAttribute('hidden')).toBe(false)
   })
 
