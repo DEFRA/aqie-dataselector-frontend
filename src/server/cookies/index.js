@@ -3,8 +3,7 @@ import {
   cookiesPostController
 } from '~/src/server/cookies/controller.js'
 import { config } from '~/src/config/config.js'
-
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000
+import { ONE_YEAR_MS } from '~/src/server/common/constants/magic-numbers.js'
 
 /**
  * Sets up the routes used in the home page.

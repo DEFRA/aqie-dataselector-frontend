@@ -1,5 +1,8 @@
 import * as CookieFunctions from './cookie-functions.js'
 
+const HTTP_SUCCESS_MIN = 200
+const HTTP_SUCCESS_MAX = 300
+
 const cookieBannerAcceptSelector = '.js-cookie-banner-accept'
 const cookieBannerRejectSelector = '.js-cookie-banner-reject'
 const cookieBannerHideButtonSelector = '.js-cookie-banner-hide'
@@ -122,7 +125,7 @@ class CookieBanner {
     xhr.open('POST', '/cookies', true)
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.onload = () => {
-      if (xhr.status < 200 || xhr.status >= 300) {
+      if (xhr.status < HTTP_SUCCESS_MIN || xhr.status >= HTTP_SUCCESS_MAX) {
         form?.submit()
       }
     }
