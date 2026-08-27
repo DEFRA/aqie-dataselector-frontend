@@ -4,6 +4,29 @@ const CONSENT_COOKIE_VERSION = 1
 const GA_COOKIE_REGEX = /^_ga$|^_ga_.*$|^_gid$|^_gat_.*$|^_dc_gtm_.*$/
 
 /**
+ * Expires GA cookies server-side when the user has not consented.
+ * @param {import('@hapi/hapi').Request} request
+ * @param {import('@hapi/hapi').ResponseToolkit} h
+ */
+function removeGaCookiesIfRejected(request, h) {
+  try {
+    const raw = request.state?.[CONSENT_COOKIE_NAME]
+    if (!raw) return
+
+    const policy = JSON.parse(raw)
+    if (policy?.analytics === true || policy?.version < CONSENT_COOKIE_VERSION) return
+
+    for (const cookieName of Object.keys(request.state)) {
+      if (GA_COOKIE_REGEX.test(cookieName)) {
+        h.unstate(cookieName)
+      }
+    }
+  } catch {
+    // malformed consent cookie — skip
+  }
+}
+
+/**
  * Hapi onPreResponse handler that applies security headers and expires GA cookies
  * server-side when a user has not consented — covers no-JS users where
  * client-side deletion never runs.
@@ -16,24 +39,7 @@ function onPreResponse(request, h) {
     return h.continue
   }
 
-  try {
-    const raw = request.state?.[CONSENT_COOKIE_NAME]
-    if (raw) {
-      const policy = JSON.parse(raw)
-      if (
-        policy?.analytics !== true &&
-        policy?.version >= CONSENT_COOKIE_VERSION
-      ) {
-        for (const cookieName of Object.keys(request.state)) {
-          if (GA_COOKIE_REGEX.test(cookieName)) {
-            h.unstate(cookieName)
-          }
-        }
-      }
-    }
-  } catch {
-    // malformed consent cookie — skip
-  }
+  removeGaCookiesIfRejected(request, h)
 
   response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.header(
