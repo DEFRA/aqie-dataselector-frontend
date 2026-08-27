@@ -11,10 +11,17 @@ const GA_COOKIE_REGEX = /^_ga$|^_ga_.*$|^_gid$|^_gat_.*$|^_dc_gtm_.*$/
 function removeGaCookiesIfRejected(request, h) {
   try {
     const raw = request.state?.[CONSENT_COOKIE_NAME]
-    if (!raw) return
+    if (!raw) {
+      return
+    }
 
     const policy = JSON.parse(raw)
-    if (policy?.analytics === true || policy?.version < CONSENT_COOKIE_VERSION) return
+    if (
+      policy?.analytics === true ||
+      policy?.version < CONSENT_COOKIE_VERSION
+    ) {
+      return
+    }
 
     for (const cookieName of Object.keys(request.state)) {
       if (GA_COOKIE_REGEX.test(cookieName)) {
