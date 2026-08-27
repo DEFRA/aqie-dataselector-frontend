@@ -206,6 +206,7 @@ const buildStationCountParameters = (request) => {
   )
   const selectedPollutantID = request.yar.get('selectedPollutantID')
   const regionType = request.yar.get('Location')
+  const selectedLocations = request.yar.get('selectedlocation')
 
   const params = {
     pollutantName:
@@ -216,7 +217,9 @@ const buildStationCountParameters = (request) => {
     networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
     Region:
       regionType === 'Country'
-        ? request.yar.get('selectedlocation').join(',')
+        ? Array.isArray(selectedLocations)
+          ? selectedLocations.join(',')
+          : ''
         : request.yar.get('selectedLAIDs'),
     regiontype: regionType,
     Year: request.yar.get('finalyear1'),

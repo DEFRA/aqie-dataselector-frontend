@@ -8,6 +8,10 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 // True when the datasource groups contain the given category with networks.
 function hasCategoryWithNetworks(datasourceGroups, category) {
+  if (!Array.isArray(datasourceGroups)) {
+    return false
+  }
+
   return datasourceGroups.some(
     (g) =>
       g.category === category &&
@@ -76,6 +80,10 @@ function getAurnPollutantID(datasourceGroups) {
 export const downloadDataselectorController = {
   handler(request, h) {
     const backUrl = '/customdataset'
+    const rawDatasourceGroups = request.yar.get('datasourceGroups')
+    const datasourceGroups = Array.isArray(rawDatasourceGroups)
+      ? rawDatasourceGroups
+      : []
 
     // Helper function to render error state
     const renderErrorState = (
@@ -100,7 +108,7 @@ export const downloadDataselectorController = {
         selectedlocation: request.yar.get('selectedlocation'),
         stationcount: request.yar.get('nooflocation'),
         stationcountukeap: request.yar.get('nooflocationukeap'),
-        datasourceGroups: request.yar.get('datasourceGroups') || [],
+        datasourceGroups,
         displayBacklink: true,
         hrefq: backUrl
       }
@@ -126,7 +134,6 @@ export const downloadDataselectorController = {
 
     // Only show each tab if the pollutant's datasource includes that category
     // (determined at pollutant-selection time).
-    const datasourceGroups = request.yar.get('datasourceGroups') || []
     const hasOtherDataSource = hasCategoryWithNetworks(
       datasourceGroups,
       'Other data from Defra'

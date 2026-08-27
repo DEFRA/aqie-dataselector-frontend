@@ -121,7 +121,7 @@ describe('downloadDataselectorController', () => {
       )
     })
 
-    it('preserves datasourceGroups value in error view when session value is non-array', () => {
+    it('defaults datasourceGroups to [] in error view when session value is non-array', () => {
       const request = makeRequest({
         ...validSession,
         selectedpollutant: null,
@@ -131,9 +131,7 @@ describe('downloadDataselectorController', () => {
       downloadDataselectorController.handler(request, h)
       expect(h.view).toHaveBeenCalledWith(
         'customdataset/index',
-        expect.objectContaining({
-          datasourceGroups: { category: 'Other data from Defra' }
-        })
+        expect.objectContaining({ datasourceGroups: [] })
       )
     })
   })
@@ -457,15 +455,22 @@ describe('downloadDataselectorController', () => {
       )
     })
 
-    it('throws when datasourceGroups is non-array on success path', () => {
+    it('handles non-array datasourceGroups without throwing on success path', () => {
       const request = makeRequest({
         ...validSession,
         datasourceGroups: {}
       })
       const h = makeH()
 
-      expect(() => downloadDataselectorController.handler(request, h)).toThrow(
-        TypeError
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnPollutantID: '',
+          aurnUnavailable: true,
+          ukeapUnavailable: true
+        })
       )
     })
 
