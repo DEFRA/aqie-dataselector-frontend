@@ -532,6 +532,23 @@ describe('emailrequestController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
+    it('redirects to problem-with-service when selectedlocation is null for Country type', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
+        if (key === 'selectedlocation') return null
+        if (key === 'Location') return 'Country'
+        if (key === 'finalyear1') return '2023'
+        if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
     it('handles single location', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedPollutantID') return 'pollutant-id-123'
