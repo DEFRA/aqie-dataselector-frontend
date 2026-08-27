@@ -12,7 +12,6 @@ import accessibleAutocomplete from 'accessible-autocomplete'
 import AccessibleAutoComplete from './accessible-autocomplete.js'
 import {
   deleteGoogleAnalyticsCookies,
-  resetCookies
 } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
 
