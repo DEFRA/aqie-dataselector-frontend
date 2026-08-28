@@ -242,8 +242,7 @@ const handleValidationErrors = (
   errors,
   isNoJS,
   selectedMode,
-  finalPollutantsGr,
-  finalPollutantsSp,
+  modePollutants,
   selectedGroup,
   pollutants,
   h
@@ -253,7 +252,7 @@ const handleValidationErrors = (
     : 'add_pollutant/index'
 
   const selectedForView =
-    selectedMode === 'group' ? finalPollutantsGr : finalPollutantsSp
+    selectedMode === 'group' ? modePollutants.gr : modePollutants.sp
 
   return h.view(templatePath, {
     pageTitle: englishNew.custom.pageTitle,
@@ -371,24 +370,7 @@ const applyDatasourceGroups = async (request, allIDs, h) => {
   return null
 }
 
-// Helper function to handle POST request
-const handlePostRequest = async (request, h) => {
-  const isNoJS = checkIsNoJS(request)
-
-  const {
-    'pollutant-mode': selectedMode,
-    'pollutant-group': selectedGroup,
-    selectedPollutants: pollutantsData
-  } = request.payload || {}
-
-  // Use pollutant master list from session (fetched on GET)
-  const pollutantMasterList = request.yar.get('pollutantMasterList') || []
-  const pollutants = pollutantMasterList
-
-  if (selectedMode === 'specific') {
-    request.yar.set('selectedPollutantGroup', '')
-  }
-
+const collectInitialPostErrors = (selectedMode, pollutantMasterList) => {
   const errors = []
 
   if (!selectedMode) {
@@ -398,48 +380,25 @@ const handlePostRequest = async (request, h) => {
     })
   }
 
-  // Pollutant list unavailable — cannot use specific mode
   if (selectedMode === 'specific' && pollutantMasterList.length === 0) {
     errors.push({
       text: 'Add pollutant(s) is currently unavailable. Add a group of pollutants or try again later.',
       href: '#mode-group'
     })
-    return handleValidationErrors(
-      errors,
-      isNoJS,
-      selectedMode,
-      [],
-      [],
-      selectedGroup,
-      pollutants,
-      h
-    )
   }
 
-  const { gr: finalPollutantsGr, sp: finalPollutantsSp } =
-    computeModePollutants(
-      selectedMode,
-      selectedGroup,
-      isNoJS,
-      request,
-      pollutantsData,
-      errors,
-      pollutantMasterList
-    )
+  return errors
+}
 
-  if (errors.length > 0) {
-    return handleValidationErrors(
-      errors,
-      isNoJS,
-      selectedMode,
-      finalPollutantsGr,
-      finalPollutantsSp,
-      selectedGroup,
-      pollutants,
-      h
-    )
-  }
-
+const finalizePostSelection = async (
+  request,
+  h,
+  selectedMode,
+  selectedGroup,
+  finalPollutantsGr,
+  finalPollutantsSp,
+  pollutantMasterList
+) => {
   const previousMode = request.yar.get('selectedPollutantMode')
   const finalPollutants =
     selectedMode === 'group' ? finalPollutantsGr : finalPollutantsSp
@@ -467,6 +426,73 @@ const handlePostRequest = async (request, h) => {
   }
 
   return h.redirect(CUSTOMDATASET_URL)
+}
+
+// Helper function to handle POST request
+const handlePostRequest = async (request, h) => {
+  const isNoJS = checkIsNoJS(request)
+
+  const {
+    'pollutant-mode': selectedMode,
+    'pollutant-group': selectedGroup,
+    selectedPollutants: pollutantsData
+  } = request.payload || {}
+
+  // Use pollutant master list from session (fetched on GET)
+  const pollutantMasterList = request.yar.get('pollutantMasterList') || []
+  const pollutants = pollutantMasterList
+
+  if (selectedMode === 'specific') {
+    request.yar.set('selectedPollutantGroup', '')
+  }
+
+  const errors = collectInitialPostErrors(selectedMode, pollutantMasterList)
+
+  // Pollutant list unavailable — cannot use specific mode
+  if (selectedMode === 'specific' && pollutantMasterList.length === 0) {
+    return handleValidationErrors(
+      errors,
+      isNoJS,
+      selectedMode,
+      { gr: [], sp: [] },
+      selectedGroup,
+      pollutants,
+      h
+    )
+  }
+
+  const { gr: finalPollutantsGr, sp: finalPollutantsSp } =
+    computeModePollutants(
+      selectedMode,
+      selectedGroup,
+      isNoJS,
+      request,
+      pollutantsData,
+      errors,
+      pollutantMasterList
+    )
+
+  if (errors.length > 0) {
+    return handleValidationErrors(
+      errors,
+      isNoJS,
+      selectedMode,
+      { gr: finalPollutantsGr, sp: finalPollutantsSp },
+      selectedGroup,
+      pollutants,
+      h
+    )
+  }
+
+  return finalizePostSelection(
+    request,
+    h,
+    selectedMode,
+    selectedGroup,
+    finalPollutantsGr,
+    finalPollutantsSp,
+    pollutantMasterList
+  )
 }
 
 // Helper function to handle GET request

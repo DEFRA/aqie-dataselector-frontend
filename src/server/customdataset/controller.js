@@ -487,7 +487,7 @@ function extractNetworkPairs(str) {
 function parseStationCountString(str) {
   // Pure number: "15"
   const asNum = Number(str)
-  if (str !== '' && !isNaN(asNum)) {
+  if (str !== '' && !Number.isNaN(asNum)) {
     return asNum
   }
 
