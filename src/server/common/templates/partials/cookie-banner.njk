@@ -105,7 +105,7 @@
     if (match) {
       try {
         var policy = JSON.parse(decodeURIComponent(match[2]))
-        if (policy && policy.version >= window.AQIE_CONSENT_COOKIE_VERSION) {
+        if (policy && policy.confirmed === true) {
           var banner = document.querySelector("[data-module='govuk-cookie-banner']")
           if (banner) { banner.setAttribute('hidden', 'true') }
         }

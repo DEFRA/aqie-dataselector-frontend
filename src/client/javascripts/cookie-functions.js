@@ -96,6 +96,7 @@ function setConsentCookie(options) {
   }
 
   delete cookieConsent.essential
+  cookieConsent.confirmed = true
   // @ts-expect-error Property does not exist on window
   cookieConsent.version = globalThis.AQIE_CONSENT_COOKIE_VERSION
 
@@ -251,6 +252,7 @@ function deleteCookie(name) {
 
 /**
  * @typedef {object} ConsentPreferences
+ * @property {boolean} [confirmed] - True once the user has actively made a choice
  * @property {boolean} [analytics] - Accept analytics cookies
  * @property {boolean} [essential] - Accept essential cookies
  *  @property {number} [version] - Content cookie version

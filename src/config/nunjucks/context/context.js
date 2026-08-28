@@ -14,7 +14,6 @@ const manifestPath = path.join(
 
 let webpackManifest
 
-const CONSENT_COOKIE_VERSION = 1
 const GTM_KEY_PATTERN = /^GTM-[A-Z0-9]+$/
 
 function getConsentPolicy(request) {
@@ -28,12 +27,12 @@ function getConsentPolicy(request) {
 
 function hasValidConsent(request) {
   const policy = getConsentPolicy(request)
-  return policy?.version >= CONSENT_COOKIE_VERSION
+  return policy?.confirmed === true
 }
 
 function analyticsAccepted(request) {
   const policy = getConsentPolicy(request)
-  return policy?.analytics === true && policy?.version >= CONSENT_COOKIE_VERSION
+  return policy?.confirmed === true && policy?.analytics === true
 }
 
 export function context(request) {

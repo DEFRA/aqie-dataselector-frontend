@@ -54,6 +54,7 @@ const cookiesPostController = {
     h.state(
       CONSENT_COOKIE_NAME,
       JSON.stringify({
+        confirmed: true,
         analytics: analyticsAllowed,
         version: CONSENT_COOKIE_VERSION
       })

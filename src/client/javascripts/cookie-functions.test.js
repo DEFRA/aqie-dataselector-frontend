@@ -13,7 +13,7 @@ import {
 const CONSENT_COOKIE_NAME = 'cookies_policy'
 
 function setConsentInDom(analytics, version = 1) {
-  document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ analytics, version })}`
+  document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ confirmed: true, analytics, version })}`
 }
 
 function clearCookies() {
@@ -46,7 +46,11 @@ describe('getConsentCookie', () => {
 
   it('returns the parsed preferences when the cookie is valid', () => {
     setConsentInDom(true)
-    expect(getConsentCookie()).toEqual({ analytics: true, version: 1 })
+    expect(getConsentCookie()).toEqual({
+      confirmed: true,
+      analytics: true,
+      version: 1
+    })
   })
 
   it('returns null when the consent cookie contains malformed JSON', () => {
@@ -116,6 +120,7 @@ describe('setConsentCookie', () => {
   it('persists analytics: true to the consent cookie', () => {
     setConsentCookie({ analytics: true })
     const stored = getConsentCookie()
+    expect(stored?.confirmed).toBe(true)
     expect(stored?.analytics).toBe(true)
     expect(stored?.version).toBe(1)
   })
@@ -123,6 +128,7 @@ describe('setConsentCookie', () => {
   it('persists analytics: false to the consent cookie', () => {
     setConsentCookie({ analytics: false })
     const stored = getConsentCookie()
+    expect(stored?.confirmed).toBe(true)
     expect(stored?.analytics).toBe(false)
   })
 

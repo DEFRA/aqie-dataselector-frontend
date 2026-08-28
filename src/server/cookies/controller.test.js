@@ -64,7 +64,7 @@ describe('cookiesPostController', () => {
     cookiesPostController.handler(request, h)
     expect(h.state).toHaveBeenCalledWith(
       'cookies_policy',
-      JSON.stringify({ analytics: true, version: 1 })
+      JSON.stringify({ confirmed: true, analytics: true, version: 1 })
     )
   })
 
@@ -73,7 +73,7 @@ describe('cookiesPostController', () => {
     cookiesPostController.handler(request, h)
     expect(h.state).toHaveBeenCalledWith(
       'cookies_policy',
-      JSON.stringify({ analytics: false, version: 1 })
+      JSON.stringify({ confirmed: true, analytics: false, version: 1 })
     )
   })
 
