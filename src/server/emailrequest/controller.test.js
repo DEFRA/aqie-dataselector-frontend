@@ -532,6 +532,23 @@ describe('emailrequestController', () => {
       expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
 
+    it('redirects to problem-with-service when selectedlocation is null for Country type', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
+        if (key === 'selectedlocation') return null
+        if (key === 'Location') return 'Country'
+        if (key === 'finalyear1') return '2023'
+        if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
     it('handles single location', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedPollutantID') return 'pollutant-id-123'
@@ -1062,6 +1079,160 @@ describe('emailrequestController', () => {
         })
       )
     })
+
+    it('uses AURN network pollutantID when selected datasource is AURN', async () => {
+      const session = {
+        selectedPollutantID: 'FALLBACK1,FALLBACK2',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'AURN',
+        pendingDataSource: null,
+        pendingNetworkId: '',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ pollutantID: 'AURN-ONLY' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          dataSource: 'AURN',
+          networkId: '',
+          pollutantName: 'AURN-ONLY'
+        })
+      )
+    })
+
+    it('redirects when NON-AURN network does not match and pollutant fallback is missing', async () => {
+      const session = {
+        selectedPollutantID: null,
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'NON-AURN',
+        pendingDataSource: null,
+        pendingNetworkId: 'NET-NOT-FOUND',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ id: 'NET-1', pollutantID: 'PM10' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
+    it('falls back to selectedPollutantID when NON-AURN matched network has no pollutantID', async () => {
+      const session = {
+        selectedPollutantID: 'FALLBACK-NO2',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'NON-AURN',
+        pendingDataSource: null,
+        pendingNetworkId: 'NET-42',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          {
+            category: 'Other data from Defra',
+            networks: [{ id: 'NET-42' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          dataSource: 'NON-AURN',
+          networkId: 'NET-42',
+          pollutantName: 'FALLBACK-NO2'
+        })
+      )
+    })
+
+    it('skips datasource groups without networks before finding a NON-AURN network match', async () => {
+      const session = {
+        selectedPollutantID: 'FALLBACK-NO2',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'NON-AURN',
+        pendingDataSource: null,
+        pendingNetworkId: 'NET-99',
+        pendingPollutantID: '',
+        datasourceGroups: [
+          { category: 'Other data from Defra' },
+          {
+            category: 'Other data from Defra',
+            networks: [{ id: 'NET-99', pollutantID: 'PM10' }]
+          }
+        ]
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          dataSource: 'NON-AURN',
+          networkId: 'NET-99',
+          pollutantName: 'PM10'
+        })
+      )
+    })
+
+    it('redirects when first selectedPollutantID token is empty and no other pollutant source exists', async () => {
+      const session = {
+        selectedPollutantID: ' , , ',
+        selectedlocation: ['London'],
+        selectedLAIDs: 'London',
+        Location: 'LocalAuthority',
+        finalyear1: '2023',
+        email: 'test@example.com',
+        selectedDatasourceType: 'AURN',
+        pendingDataSource: null,
+        pendingNetworkId: '',
+        pendingPollutantID: '',
+        datasourceGroups: []
+      }
+
+      mockRequest.yar.get.mockImplementation((key) => session[key])
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
   })
 
   // ─── Development mode API handling ────────────────────────────────────────────
@@ -1312,6 +1483,41 @@ describe('emailrequestController', () => {
       await emailrequestController.handler(mockRequest, mockH)
 
       expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
+    it('redirects to problem-with-service when Wreck throws a non-Error value', async () => {
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return true
+        if (key === 'emailDevUrl') return 'https://dev.example.com/email'
+        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        return undefined
+      })
+      mockWreck.mockRejectedValue('boom')
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+  })
+
+  describe('Production mode non-Error throw handling', () => {
+    beforeEach(() => {
+      mockRequest.path = '/emailrequest/confirm'
+      mockRequest.payload = { email: 'test@example.com' }
+      mockConfig.mockImplementation((key) => {
+        if (key === 'isDevelopment') return false
+        if (key === 'email_URL') return 'https://api.example.com/email'
+        return undefined
+      })
+    })
+
+    it('redirects to problem-with-service when axios throws a non-Error value', async () => {
+      mockAxios.mockRejectedValue('boom')
+
+      await emailrequestController.handler(mockRequest, mockH)
+
       expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
     })
   })

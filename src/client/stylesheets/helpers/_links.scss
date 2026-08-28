@@ -1,6 +1,6 @@
 // Example SASS helpers
 
-@mixin app-link-style {
+%app-link-style {
   text-decoration: none;
 
   &:hover {
@@ -10,4 +10,8 @@
   &:focus {
     text-decoration: none;
   }
+}
+
+@mixin app-link-style {
+  @extend %app-link-style;
 }

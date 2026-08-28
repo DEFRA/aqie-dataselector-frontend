@@ -120,6 +120,20 @@ describe('downloadDataselectorController', () => {
         expect.objectContaining({ datasourceGroups: [] })
       )
     })
+
+    it('defaults datasourceGroups to [] in error view when session value is non-array', () => {
+      const request = makeRequest({
+        ...validSession,
+        selectedpollutant: null,
+        datasourceGroups: { category: 'Other data from Defra' }
+      })
+      const h = makeH()
+      downloadDataselectorController.handler(request, h)
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({ datasourceGroups: [] })
+      )
+    })
   })
 
   describe('year validation', () => {
@@ -423,6 +437,110 @@ describe('downloadDataselectorController', () => {
       expect(h.view).toHaveBeenCalledWith(
         'download_dataselector/index',
         expect.objectContaining({ aurnUnavailable: false })
+      )
+    })
+
+    it('defaults aurnPollutantID to empty string when datasourceGroups is missing', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: null
+      })
+      const h = makeH()
+
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({ aurnPollutantID: '' })
+      )
+    })
+
+    it('handles non-array datasourceGroups without throwing on success path', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: {}
+      })
+      const h = makeH()
+
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnPollutantID: '',
+          aurnUnavailable: true,
+          ukeapUnavailable: true
+        })
+      )
+    })
+
+    it('extracts aurnPollutantID from a matching AURN network object', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ pollutantID: 'NO2-ONLY' }]
+          }
+        ]
+      })
+      const h = makeH()
+
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnUnavailable: false,
+          aurnPollutantID: 'NO2-ONLY'
+        })
+      )
+    })
+
+    it('skips groups without networks and finds AURN pollutant in a later group', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          { category: 'Near real-time data from Defra' },
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ pollutantID: 'O3-ONLY' }]
+          }
+        ]
+      })
+      const h = makeH()
+
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnUnavailable: false,
+          aurnPollutantID: 'O3-ONLY'
+        })
+      )
+    })
+
+    it('returns empty aurnPollutantID when matching network has no pollutantID', () => {
+      const request = makeRequest({
+        ...validSession,
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{}]
+          }
+        ]
+      })
+      const h = makeH()
+
+      downloadDataselectorController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnUnavailable: false,
+          aurnPollutantID: ''
+        })
       )
     })
   })
