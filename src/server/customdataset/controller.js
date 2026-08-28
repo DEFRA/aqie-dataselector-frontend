@@ -399,9 +399,6 @@ export const customdatasetController = {
       if (errorResponse?.bothZero) {
         return renderBothZeroView(request, h, backUrl)
       }
-      if (errorResponse) {
-        return errorResponse
-      }
     }
 
     return renderCustomDatasetView(request, h, backUrl)
