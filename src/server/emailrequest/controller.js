@@ -110,36 +110,39 @@ const computeBackUrl = (dataSourceParam, referrer) => {
   return isFromJsPage ? '/download_dataselector' : '/download_dataselectornojs'
 }
 
+const getTrimmedQueryValue = (request, key) =>
+  (request.query?.[key] || '').toString().trim()
+
+const isSupportedDataSource = (dataSourceParam) =>
+  dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN'
+
+const persistPendingNetworkId = (request) => {
+  const requestedNetworkId = getTrimmedQueryValue(request, 'networkId')
+  if (requestedNetworkId) {
+    request.yar.set('pendingNetworkId', requestedNetworkId)
+    return
+  }
+
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+  if (derivedNetworkId) {
+    request.yar.set('pendingNetworkId', derivedNetworkId)
+  }
+}
+
 // Persist the dataSource path param (and derived network id) so it survives POST.
 const storePendingDataSource = (request, dataSourceParam) => {
-  if (
-    dataSourceParam &&
-    (dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN')
-  ) {
+  if (isSupportedDataSource(dataSourceParam)) {
     request.yar.set('pendingDataSource', dataSourceParam)
   }
 
-  const requestedPollutantID = (request.query?.pollutantID || '')
-    .toString()
-    .trim()
+  const requestedPollutantID = getTrimmedQueryValue(request, 'pollutantID')
   if (requestedPollutantID) {
     request.yar.set('pendingPollutantID', requestedPollutantID)
   }
 
   if (dataSourceParam === 'NON-AURN') {
-    const requestedNetworkId = (request.query?.networkId || '')
-      .toString()
-      .trim()
-
-    if (requestedNetworkId) {
-      request.yar.set('pendingNetworkId', requestedNetworkId)
-    } else {
-      const datasourceGroups = request.yar.get('datasourceGroups') || []
-      const derivedNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
-      if (derivedNetworkId) {
-        request.yar.set('pendingNetworkId', derivedNetworkId)
-      }
-    }
+    persistPendingNetworkId(request)
   }
 }
 
@@ -207,6 +210,12 @@ const buildStationCountParameters = (request) => {
   const selectedPollutantID = request.yar.get('selectedPollutantID')
   const regionType = request.yar.get('Location')
   const selectedLocations = request.yar.get('selectedlocation')
+  let regionValue = request.yar.get('selectedLAIDs')
+  if (regionType === 'Country') {
+    regionValue = Array.isArray(selectedLocations)
+      ? selectedLocations.join(',')
+      : ''
+  }
 
   const params = {
     pollutantName:
@@ -215,12 +224,7 @@ const buildStationCountParameters = (request) => {
       toSinglePollutantID(selectedPollutantID),
     dataSource: selectedDataSource,
     networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
-    Region:
-      regionType === 'Country'
-        ? Array.isArray(selectedLocations)
-          ? selectedLocations.join(',')
-          : ''
-        : request.yar.get('selectedLAIDs'),
+    Region: regionValue,
     regiontype: regionType,
     Year: request.yar.get('finalyear1'),
     dataselectorfiltertype: 'dataSelectorHourly',
