@@ -1677,10 +1677,7 @@ describe('buildUkeapNetworks', () => {
 
   it('uses NetworkType/Count fallback keys and defaults missing count to zero', () => {
     const result = buildUkeapNetworks(
-      [
-        { NetworkType: 'NET-B', Count: '4' },
-        { NetworkType: 'NET-B' }
-      ],
+      [{ NetworkType: 'NET-B', Count: '4' }, { NetworkType: 'NET-B' }],
       []
     )
 
