@@ -1,4 +1,5 @@
 import { customdatasetController, invokeStationCount } from './controller.js'
+import { buildUkeapNetworks } from './station-count.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
@@ -1656,5 +1657,44 @@ describe('invokeStationCount', () => {
     const result = await invokeStationCount({ pollutantName: 'NO2' })
 
     expect(result).toBe(7)
+  })
+})
+
+describe('buildUkeapNetworks', () => {
+  it('uses lowercase networkType/count keys and aggregates counts', () => {
+    const result = buildUkeapNetworks(
+      [
+        { networkType: 'NET-A', count: '2' },
+        { networkType: 'NET-A', count: '3' }
+      ],
+      []
+    )
+
+    expect(result).toEqual([
+      { networkType: 'NET-A', id: null, pollutantID: null, count: 5 }
+    ])
+  })
+
+  it('uses NetworkType/Count fallback keys and defaults missing count to zero', () => {
+    const result = buildUkeapNetworks(
+      [{ NetworkType: 'NET-B', Count: '4' }, { NetworkType: 'NET-B' }],
+      []
+    )
+
+    expect(result).toEqual([
+      { networkType: 'NET-B', id: null, pollutantID: null, count: 4 }
+    ])
+  })
+
+  it('ignores entries without a network type', () => {
+    const result = buildUkeapNetworks([{ Count: '5' }], [])
+
+    expect(result).toEqual([])
+  })
+
+  it('returns empty list when nonAurnCount is not an array', () => {
+    const result = buildUkeapNetworks(null, [])
+
+    expect(result).toEqual([])
   })
 })
