@@ -10,6 +10,7 @@ This service is to find air quality monitoring stations for the location provide
   - [Node.js](#nodejs)
 - [Server-side Caching](#server-side-caching)
 - [Redis](#redis)
+- [Google Analytics](#google-analytics)
 - [Local Development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
@@ -59,6 +60,23 @@ matches the service name. e.g. `my-service` will have access to everything in Re
 
 If your service does not require a session cache to be shared between instances or if you don't require Redis, you can
 disable setting `SESSION_CACHE_ENGINE=false` or changing the default value in `~/src/config/config.js`.
+
+## Google Analytics
+
+Google Analytics is loaded via Google Tag Manager (GTM). The GTM container ID is configured through an environment variable — no code change is needed to update it.
+
+Copy `.env.example` to `.env` and set your container ID:
+
+```bash
+cp .env.example .env
+```
+
+```bash
+# .env
+GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
+```
+
+The application only injects the GTM script when a user has accepted analytics cookies. GA4 measurement IDs are configured as tags inside the GTM container, not in this application.
 
 ## Proxy
 

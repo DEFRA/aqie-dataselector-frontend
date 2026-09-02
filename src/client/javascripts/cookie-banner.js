@@ -1,5 +1,8 @@
 import * as CookieFunctions from './cookie-functions.js'
 
+const HTTP_SUCCESS_MIN = 200
+const HTTP_SUCCESS_MAX = 300
+
 const cookieBannerAcceptSelector = '.js-cookie-banner-accept'
 const cookieBannerRejectSelector = '.js-cookie-banner-reject'
 const cookieBannerHideButtonSelector = '.js-cookie-banner-hide'
@@ -23,7 +26,6 @@ class CookieBanner {
     }
 
     this.initialized = true
-    this.initializeBanner()
     this.bindEvents()
   }
 
@@ -61,17 +63,15 @@ class CookieBanner {
     )
   }
 
-  initializeBanner() {
-    const currentConsentCookie = CookieFunctions.getConsentCookie()
-    if (!currentConsentCookie) {
-      CookieFunctions.resetCookies()
-      this.$cookieBanner.removeAttribute('hidden')
-    }
-  }
-
   bindEvents() {
-    this.$acceptButton.addEventListener('click', () => this.acceptCookies())
-    this.$rejectButton.addEventListener('click', () => this.rejectCookies())
+    this.$acceptButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      this.acceptCookies()
+    })
+    this.$rejectButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      this.rejectCookies()
+    })
     this.$cookieBannerHideButtons.forEach((btn) =>
       btn.addEventListener('click', () => this.hideBanner())
     )
@@ -85,24 +85,54 @@ class CookieBanner {
     CookieFunctions.setConsentCookie({ analytics: true })
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+    this.loadGtm(this.$cookieBanner.dataset.gtmKey)
+    this.submitPreference(true)
   }
 
   rejectCookies() {
     CookieFunctions.setConsentCookie({ analytics: false })
     this.$cookieMessage.setAttribute('hidden', 'true')
     this.revealConfirmationMessage(this.$cookieConfirmationReject)
+    this.submitPreference(false)
   }
 
-  rejectCookiesCookiepage() {
-    CookieFunctions.setConsentCookie({ analytics: false })
-    this.$cookieMessage.setAttribute('hidden', 'true')
-    // this.revealConfirmationMessage(this.$cookieConfirmationReject)
+  /**
+   * Loads a GTM container immediately on accept — avoids losing the current
+   * page view. The key is read from data-gtm-key set server-side from config.
+   * @param {string} gtmKey
+   */
+  loadGtm(gtmKey) {
+    if (!gtmKey || !/^GTM-[A-Z0-9]+$/.test(gtmKey)) {
+      return
+    }
+    globalThis.dataLayer = globalThis.dataLayer || []
+    globalThis.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' })
+    const script = document.createElement('script')
+    script.async = true
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${gtmKey}`
+    document.head.appendChild(script)
   }
 
-  acceptCookiesCookiepage() {
-    CookieFunctions.setConsentCookie({ analytics: true })
-    this.$cookieMessage.setAttribute('hidden', 'true')
-    // this.revealConfirmationMessage(this.$cookieConfirmationAccept)
+  /**
+   * Persists the consent choice server-side via XHR so the server cookie is
+   * set without a page reload. Falls back to a native form POST on failure.
+   * @param {boolean} analytics
+   */
+  submitPreference(analytics) {
+    const crumb = this.$cookieBanner.dataset.crumb
+    const form = this.$cookieBanner.closest('form')
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/cookies', true)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.onload = () => {
+      if (xhr.status < HTTP_SUCCESS_MIN || xhr.status >= HTTP_SUCCESS_MAX) {
+        form?.submit()
+      }
+    }
+    xhr.onerror = () => {
+      form?.submit()
+    }
+    xhr.send(JSON.stringify({ analytics, async: true, crumb }))
   }
 
   revealConfirmationMessage(confirmationMessage) {

@@ -563,7 +563,7 @@ export const english = {
         text1: 'Name',
         text2: 'Purpose',
         text3: 'Expires',
-        text4: 'airaqie_cookies_analytics',
+        text4: 'cookies_policy',
         text5: 'Saves your cookie consent settings',
         text6: '1 year'
       },

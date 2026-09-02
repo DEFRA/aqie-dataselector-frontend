@@ -1,48 +1,16 @@
 /**
- * Cookie functions
- * ================
- *
- * Used by the cookie banner component and cookies page pattern.
- *
- * Includes function `Cookie()` for getting, setting, and deleting cookies, and
- * functions to manage the users' consent to cookies.
- *
- * Note: there is an inline script in cookie-banner.njk to show the banner
- * as soon as possible, to avoid a high Cumulative Layout Shift (CLS) score.
- * The consent cookie version is defined in cookie-banner.njk
+ * Cookie functions used by the cookie banner and cookies page.
+ * The consent cookie version set here must match the one in cookie-banner.njk.
  */
 
-/* Name of the cookie to save users cookie preferences to. */
-const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+const CONSENT_COOKIE_NAME = 'cookies_policy'
 
-const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
-/* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
-function gtag() {
-  globalThis.dataLayer.push(arguments)
-}
-/* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
-  /* Essential cookies
-   *
-   * Essential cookies cannot be deselected, but we want our cookie code to
-   * only allow adding cookies that are documented in this object, so they need
-   * to be added here.
-   */
-  essential: ['airaqie_cookies_analytics']
+  analytics: ['_ga', '_gid'],
+  // essential cookies are listed so userAllowsCookie() can identify them, not to gate deletion
+  essential: ['cookies_policy']
 }
 
-/*
- * Default cookie preferences if user has no cookie preferences.
- *
- * Note that this doesn't include a key for essential cookies, essential
- * cookies cannot be disallowed. If the object contains { essential: false }
- * this will be ignored.
- */
 const DEFAULT_COOKIE_CONSENT = {
   analytics: false
 }
@@ -63,16 +31,16 @@ const DEFAULT_COOKIE_CONSENT = {
  * @param {{ days?: number }} [options] - Cookie options
  * @returns {string | null | undefined} - Returns value when setting or deleting
  */
-export function cookie(name, value = undefined, options) {
+function cookie(name, value = undefined, options = undefined) {
   if (value === undefined) {
     return getCookie(name)
   }
 
   if (value === false || value === null) {
-    deleteCookie(name)
+    return deleteCookie(name)
   } else {
     const cookieOptions = options ?? { days: 30 }
-    setCookie(name, value, cookieOptions)
+    return setCookie(name, value, cookieOptions)
   }
 }
 
@@ -83,7 +51,7 @@ export function cookie(name, value = undefined, options) {
  * returns null.
  * @returns {ConsentPreferences | null} Consent preferences
  */
-export function getConsentCookie() {
+function getConsentCookie() {
   const consentCookie = getCookie(CONSENT_COOKIE_NAME)
   let consentCookieObj
 
@@ -109,124 +77,83 @@ export function getConsentCookie() {
  * @param {ConsentPreferences | null} options - Consent preferences
  * @returns {boolean} True if consent cookie is valid
  */
-export function isValidConsentCookie(options) {
+function isValidConsentCookie(options) {
   // @ts-expect-error Property does not exist on window
   return options && options.version >= globalThis.AQIE_CONSENT_COOKIE_VERSION
 }
 
 /**
- * Update the user's cookie preferences.
- * @param {ConsentPreferences} options - Consent options to parse
+ * Saves the user's consent preferences, strips non-saveable fields, and
+ * deletes GA cookies immediately if analytics has been rejected.
+ * @param {ConsentPreferences} options
  */
-export function setConsentCookie(options) {
+function setConsentCookie(options) {
   const cookieConsent =
-    getConsentCookie() ||
-    // If no preferences or old version use the default
-    structuredClone(DEFAULT_COOKIE_CONSENT)
+    getConsentCookie() || structuredClone(DEFAULT_COOKIE_CONSENT)
 
-  // Merge current cookie preferences and new preferences
   for (const option in options) {
     cookieConsent[option] = options[option]
   }
 
-  // Essential cookies cannot be deselected, ignore this cookie type
   delete cookieConsent.essential
-
+  cookieConsent.confirmed = true
   // @ts-expect-error Property does not exist on window
   cookieConsent.version = globalThis.AQIE_CONSENT_COOKIE_VERSION
 
-  // Set the consent cookie
   setCookie(CONSENT_COOKIE_NAME, JSON.stringify(cookieConsent), { days: 365 })
 
-  // Update the other cookies
-  resetCookies()
-}
-
-function loadGoogleAnalytics() {
-  const script = document.createElement('script')
-  script.src = ganalytics
-  script.async = true
-  document.head.appendChild(script)
-  globalThis.dataLayer = globalThis.dataLayer || []
-
-  gtag('js', new Date())
-  gtag('config', tagID, { page_path: globalThis.location.pathname })
-  gtag('config', 'G-1Y8D0NGQWY', { page_path: globalThis.location.pathname })
+  if (!cookieConsent.analytics) {
+    deleteGoogleAnalyticsCookies()
+  }
 }
 
 /**
- * Apply the user's cookie preferences
- *
- * Deletes any cookies the user has not consented to.
+ * Builds the set of domains to attempt cookie deletion against.
+ * Includes the exact hostname, .hostname, and all parent domains.
+ * @param {string} hostname
+ * @returns {Set<string>}
  */
-export function resetCookies() {
-  const options =
-    getConsentCookie() ||
-    // If no preferences or old version use the default
-    structuredClone(DEFAULT_COOKIE_CONSENT)
+function buildDeletableDomains(hostname) {
+  const domains = new Set()
+  domains.add(hostname)
+  domains.add('.' + hostname)
+  const parts = hostname.split('.')
+  for (let i = 1; i < parts.length - 1; i++) {
+    domains.add('.' + parts.slice(i).join('.'))
+  }
+  return domains
+}
 
-  for (const cookieType in options) {
-    if (cookieType === 'version' || cookieType === 'essential') {
-      continue
-    }
-
-    // Initialise analytics if allowed
-    if (cookieType === 'analytics' && options[cookieType]) {
-      // Enable GA if allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
-
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
+/**
+ * Deletes all GA and GTM cookies across all domain variants.
+ * Covers _ga, _ga_* (GA4 stream), _gid, _gat_*, _dc_gtm_* patterns.
+ */
+function deleteGoogleAnalyticsCookies() {
+  const prefixes = ['_ga', '_gid', '_gat', '_dc_gtm_']
+  const domains = buildDeletableDomains(globalThis.location.hostname)
+  for (const cookieStr of document.cookie.split(';')) {
+    const name = cookieStr.split('=')[0].trim()
+    if (prefixes.some((prefix) => name.startsWith(prefix))) {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+      for (const domain of domains) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${domain};path=/`
       }
-    } else {
-      // Disable GA if not allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    }
-
-    if (options[cookieType]) {
-      // Fetch the cookies in that category
-      const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-
-      cookiesInCategory.forEach((cookieName) => {
-        // Delete cookie
-        cookie(cookieName, null)
-      })
     }
   }
 }
 
 /**
- * Remove UA cookies for user and prevent Google setting them.
- *
- * We've migrated our analytics from UA (Universal Analytics) to GA4, however
- * users may still have the UA cookie set from our previous implementation.
- * Additionally, our UA properties are scheduled for deletion but until they are
- * entirely deleted, GTM is still setting UA cookies.
- */
-export function removeUACookies() {
-  for (const UACookie of ['_gid', '_ga']) {
-    cookie(UACookie, null)
-  }
-}
-
-/**
- * Check if user allows cookie category
- * @param {string} cookieCategory - Cookie type
- * @param {ConsentPreferences} cookiePreferences - Consent preferences
- * @returns {string | boolean} Cookie type value
+ * Returns true if the named cookie category is permitted.
+ * Always returns true for essential cookies.
+ * @param {string} cookieCategory
+ * @param {ConsentPreferences} cookiePreferences
+ * @returns {string | boolean}
  */
 function userAllowsCookieCategory(cookieCategory, cookiePreferences) {
-  // Essential cookies are always allowed
   if (cookieCategory === 'essential') {
     return true
   }
 
-  // Sometimes cookiePreferences is malformed in some of the tests, so we need to handle these
   try {
     return cookiePreferences[cookieCategory]
   } catch (error) {
@@ -237,20 +164,18 @@ function userAllowsCookieCategory(cookieCategory, cookiePreferences) {
 }
 
 /**
- * Check if user allows cookie
- * @param {string} cookieName - Cookie name
- * @returns {string | boolean} Cookie type value
+ * Returns true if the named cookie is permitted to be set or read.
+ * The consent cookie itself is always allowed.
+ * @param {string} cookieName
+ * @returns {string | boolean}
  */
 function userAllowsCookie(cookieName) {
-  // Always allow setting the consent cookie
   if (cookieName === CONSENT_COOKIE_NAME) {
     return true
   }
 
-  // Get the current cookie preferences
   let cookiePreferences = getConsentCookie()
 
-  // If no preferences or old version use the default
   if (!isValidConsentCookie(cookiePreferences)) {
     cookiePreferences = DEFAULT_COOKIE_CONSENT
   }
@@ -265,7 +190,6 @@ function userAllowsCookie(cookieName) {
     }
   }
 
-  // Deny the cookie if it is not known to us
   return false
 }
 
@@ -314,16 +238,12 @@ function setCookie(name, value, options) {
 }
 
 /**
- * Delete cookie by name
- * @param {string} name - Cookie name
+ * Deletes a cookie across three domain variants (no domain, exact, and .domain)
+ * because the original Set-Cookie domain attribute is not readable by JS.
+ * @param {string} name
  */
 function deleteCookie(name) {
   if (cookie(name)) {
-    // Cookies need to be deleted in the same level of specificity in which they were set
-    // If a cookie was set with a specified domain, it needs to be specified when deleted
-    // If a cookie wasn't set with the domain attribute, it shouldn't be there when deleted
-    // You can't tell if a cookie was set with a domain attribute or not, so try both options
-
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${globalThis.location.hostname};path=/`
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${globalThis.location.hostname};path=/`
@@ -332,7 +252,16 @@ function deleteCookie(name) {
 
 /**
  * @typedef {object} ConsentPreferences
+ * @property {boolean} [confirmed] - True once the user has actively made a choice
  * @property {boolean} [analytics] - Accept analytics cookies
  * @property {boolean} [essential] - Accept essential cookies
- *  @property {string} [version] - Content cookie version
+ *  @property {number} [version] - Content cookie version
  */
+
+export {
+  cookie,
+  deleteGoogleAnalyticsCookies,
+  getConsentCookie,
+  isValidConsentCookie,
+  setConsentCookie
+}

@@ -1,5 +1,4 @@
 import { getConsentCookie } from './cookie-functions.js'
-
 import * as CookieFunctions from './cookie-functions.js'
 /**
  * Website cookies page
@@ -77,7 +76,6 @@ class CookiesPage {
   savePreferences(event) {
     // Stop default form submission behaviour
     event.preventDefault()
-    const preferences = {}
 
     this.$cookieFormFieldsets.forEach(($cookieFormFieldset) => {
       const cookieType = this.getCookieType($cookieFormFieldset)
@@ -86,22 +84,14 @@ class CookiesPage {
       }
 
       const $selectedItem = $cookieFormFieldset.querySelector(
-        `input[name="cookies[${cookieType}]"]:checked`
+        `input[name="${cookieType}"]:checked`
       )
 
       if ($selectedItem instanceof HTMLInputElement) {
-        preferences[cookieType] = $selectedItem.value === 'yes'
-
-        if ($selectedItem.value === 'Yes') {
-          CookieFunctions.setConsentCookie({ analytics: true })
-        } else {
-          CookieFunctions.setConsentCookie({ analytics: false })
-        }
+        const analyticsAllowed = $selectedItem.value === 'true'
+        CookieFunctions.setConsentCookie({ [cookieType]: analyticsAllowed })
       }
     })
-
-    // Save preferences to cookie and show success notification
-    // setConsentCookie(preferences)
 
     this.showSuccessNotification()
     const cookieBanner = document.querySelector(
@@ -122,11 +112,11 @@ class CookiesPage {
         ? preferences[cookieType]
         : false
 
-    const radioValue = preference ? 'yes' : 'no'
+    const radioValue = preference ? 'true' : 'false'
 
     /** @satisfies {HTMLInputElement | null} */
     const $radio = $cookieFormFieldset.querySelector(
-      `input[name="cookies[${cookieType}]"][value=${radioValue}]`
+      `input[name="${cookieType}"][value=${radioValue}]`
     )
     if (!$radio) {
       return
