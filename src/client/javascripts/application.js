@@ -14,6 +14,7 @@ import {
   getConsentCookie,
   isValidConsentCookie,
   loadGoogleAnalytics,
+  removeGoogleAnalytics,
   removeUACookies
 } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
@@ -42,7 +43,9 @@ if ($cookieBanner) {
   new CookieBanner($cookieBanner)
 }
 
-// Initialise analytics if consent is given
+// Initialise analytics only if consent has been given. Google Tag Manager is
+// no longer in the page template, so this is the only thing that loads it - if
+// the user has not accepted (or has rejected), the tag is torn down instead.
 const userConsent = getConsentCookie()
 if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
   loadGoogleAnalytics()
@@ -50,6 +53,8 @@ if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
   // Remove UA cookies if the user previously had them set or Google attempts
   // to set them
   removeUACookies()
+} else {
+  removeGoogleAnalytics()
 }
 
 // Initialise cookie page

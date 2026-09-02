@@ -91,17 +91,13 @@ class CookiesPage {
 
       if ($selectedItem instanceof HTMLInputElement) {
         preferences[cookieType] = $selectedItem.value === 'yes'
-
-        if ($selectedItem.value === 'Yes') {
-          CookieFunctions.setConsentCookie({ analytics: true })
-        } else {
-          CookieFunctions.setConsentCookie({ analytics: false })
-        }
       }
     })
 
-    // Save preferences to cookie and show success notification
-    // setConsentCookie(preferences)
+    // Save preferences to cookie. setConsentCookie() calls resetCookies(),
+    // which loads Google Tag Manager when analytics is accepted and removes
+    // the tag and its cookies when it is rejected.
+    CookieFunctions.setConsentCookie(preferences)
 
     this.showSuccessNotification()
     const cookieBanner = document.querySelector(

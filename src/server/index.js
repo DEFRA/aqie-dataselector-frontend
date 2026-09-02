@@ -12,24 +12,55 @@ import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 
 /*
- * Content Security Policy.
+ * Google Tag Manager / Google Analytics hosts.
  *
- * `script-src` and `style-src` need 'unsafe-inline' because a number of
- * templates still use inline <script> blocks, inline `onclick=` handlers and
- * inline `style=` attributes. Nonces cannot cover inline event handlers, so
- * those need moving into application.js before this can be tightened.
+ * The analytics tag itself is only injected once the user has consented (see
+ * cookie-functions.js), but the CSP has to allow these origins up front or the
+ * browser blocks the tag at the moment consent is given.
  */
+const GTM_HOSTS = [
+  'https://www.googletagmanager.com',
+  'https://*.googletagmanager.com'
+]
+const GA_HOSTS = [
+  'https://www.google-analytics.com',
+  'https://*.google-analytics.com',
+  'https://ssl.google-analytics.com'
+]
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://code.jquery.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://www.googletagmanager.com https://*.google-analytics.com",
-  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
-  'frame-src https://www.googletagmanager.com',
+  // 'unsafe-inline' is still required: page templates contain inline <script>
+  // blocks. Replacing these with nonces would remove the need for it.
+  [
+    "script-src 'self' 'unsafe-inline'",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://tagmanager.google.com',
+    'https://code.jquery.com'
+  ].join(' '),
+  // GTM injects inline styles, and templates use inline style attributes
+  "style-src 'self' 'unsafe-inline' https://tagmanager.google.com",
+  [
+    "img-src 'self' data:",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://ssl.gstatic.com',
+    'https://www.gstatic.com'
+  ].join(' '),
+  [
+    "connect-src 'self'",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://analytics.google.com',
+    'https://*.analytics.google.com'
+  ].join(' '),
   "font-src 'self' data:",
-  "form-action 'self'",
-  "base-uri 'self'",
+  // GTM's <noscript> fallback iframe
+  ["frame-src 'self'", ...GTM_HOSTS].join(' '),
   "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
   "frame-ancestors 'none'"
 ].join('; ')
 
