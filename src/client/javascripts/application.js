@@ -13,6 +13,7 @@ import AccessibleAutoComplete from './accessible-autocomplete.js'
 import {
   getConsentCookie,
   isValidConsentCookie,
+  loadGoogleAnalytics,
   removeUACookies
 } from './cookie-functions.js'
 import CookiesPage from './cookies-page.js'
@@ -44,7 +45,7 @@ if ($cookieBanner) {
 // Initialise analytics if consent is given
 const userConsent = getConsentCookie()
 if (userConsent && isValidConsentCookie(userConsent) && userConsent.analytics) {
-  // Analytics()
+  loadGoogleAnalytics()
 
   // Remove UA cookies if the user previously had them set or Google attempts
   // to set them

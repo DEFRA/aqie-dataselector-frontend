@@ -15,18 +15,21 @@
 /* Name of the cookie to save users cookie preferences to. */
 const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
 
-const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
-/* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
-function gtag() {
-  globalThis.dataLayer.push(arguments)
-}
+/* GTM container holding our analytics tags. */
+const GTM_CONTAINER_ID = 'GTM-5ZWS27T3'
+const GTM_SCRIPT_URL = `https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`
+
+/*
+ * Prefixes of the cookies GA4 and GTM set.
+ *
+ * The suffix on `_ga_` is derived from the GA4 measurement ID (`G-...`), not
+ * the container ID, so we match on prefix rather than listing exact names.
+ */
+const ANALYTICS_COOKIE_PREFIXES = ['_ga', '_gid', '_gat']
+
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
+  analytics: ANALYTICS_COOKIE_PREFIXES,
   /* Essential cookies
    *
    * Essential cookies cannot be deselected, but we want our cookie code to
@@ -142,15 +145,53 @@ export function setConsentCookie(options) {
   resetCookies()
 }
 
-function loadGoogleAnalytics() {
+/**
+ * Inject Google Tag Manager.
+ *
+ * Only call this once the user has consented to analytics cookies — GTM starts
+ * firing tags as soon as it loads. Safe to call more than once; the container
+ * is only ever injected on the first call.
+ */
+export function loadGoogleAnalytics() {
+  if (globalThis.AQIE_GTM_LOADED) {
+    return
+  }
+  globalThis.AQIE_GTM_LOADED = true
+
+  globalThis.dataLayer = globalThis.dataLayer || []
+  globalThis.dataLayer.push({
+    'gtm.start': new Date().getTime(),
+    event: 'gtm.js'
+  })
+
   const script = document.createElement('script')
-  script.src = ganalytics
+  script.src = GTM_SCRIPT_URL
   script.async = true
   document.head.appendChild(script)
-  globalThis.dataLayer = globalThis.dataLayer || []
+}
 
-  gtag('js', new Date())
-  gtag('config', tagID, { page_path: globalThis.location.pathname })
+/**
+ * Delete every analytics cookie currently set, whatever its exact name.
+ */
+function deleteAnalyticsCookies() {
+  for (const cookieString of document.cookie.split(';')) {
+    const cookieName = cookieString.split('=')[0].trim()
+
+    if (isAnalyticsCookie(cookieName)) {
+      deleteCookie(cookieName)
+    }
+  }
+}
+
+/**
+ * Check whether a cookie name belongs to the analytics category
+ * @param {string} cookieName - Cookie name
+ * @returns {boolean} True if the cookie was set by GA4 or GTM
+ */
+function isAnalyticsCookie(cookieName) {
+  return ANALYTICS_COOKIE_PREFIXES.some(
+    (prefix) => cookieName === prefix || cookieName.startsWith(`${prefix}_`)
+  )
 }
 
 /**
@@ -164,38 +205,15 @@ export function resetCookies() {
     // If no preferences or old version use the default
     structuredClone(DEFAULT_COOKIE_CONSENT)
 
-  for (const cookieType in options) {
-    if (cookieType === 'version' || cookieType === 'essential') {
-      continue
-    }
+  if (options.analytics) {
+    loadGoogleAnalytics()
 
-    // Initialise analytics if allowed
-    if (cookieType === 'analytics' && options[cookieType]) {
-      // Enable GA if allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
-
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
-      }
-    } else {
-      // Disable GA if not allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    }
-
-    if (options[cookieType]) {
-      // Fetch the cookies in that category
-      const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-
-      cookiesInCategory.forEach((cookieName) => {
-        // Delete cookie
-        cookie(cookieName, null)
-      })
-    }
+    // Unset UA cookies if they've been set by GTM
+    removeUACookies()
+  } else {
+    // Consent has been refused or withdrawn, so clear up anything Google has
+    // already set. GTM is never loaded in this case.
+    deleteAnalyticsCookies()
   }
 }
 
@@ -206,9 +224,12 @@ export function resetCookies() {
  * users may still have the UA cookie set from our previous implementation.
  * Additionally, our UA properties are scheduled for deletion but until they are
  * entirely deleted, GTM is still setting UA cookies.
+ *
+ * Note `_ga` is deliberately not in this list: UA and GA4 share it, so deleting
+ * it would reset the GA4 client ID on every page load.
  */
 export function removeUACookies() {
-  for (const UACookie of ['_gid', '_ga']) {
+  for (const UACookie of ['_gid', '_gat']) {
     cookie(UACookie, null)
   }
 }
@@ -258,7 +279,13 @@ function userAllowsCookie(cookieName) {
     if (Object.hasOwn(COOKIE_CATEGORIES, category)) {
       const cookiesInCategory = COOKIE_CATEGORIES[category]
 
-      if (cookiesInCategory.includes(cookieName)) {
+      // Analytics cookies carry a generated suffix (e.g. `_ga_G-XXXX`), so
+      // match on prefix as well as exact name
+      const isInCategory = cookiesInCategory.some(
+        (name) => cookieName === name || cookieName.startsWith(`${name}_`)
+      )
+
+      if (isInCategory) {
         return userAllowsCookieCategory(category, cookiePreferences)
       }
     }
