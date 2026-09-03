@@ -14,6 +14,36 @@ const manifestPath = path.join(
 
 let webpackManifest
 
+/* Keep in sync with CONSENT_COOKIE_NAME in cookie-functions.js */
+const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+
+/**
+ * Read the analytics consent decision from the request cookie.
+ *
+ * Used to decide whether to render the GTM <noscript> fallback, which is the
+ * only analytics tag we cannot gate client side. Defaults to false so nothing
+ * is rendered until the user has actively accepted.
+ * @param {import('@hapi/hapi').Request | null} [request] - Current request
+ * @returns {boolean} True if the user has accepted analytics cookies
+ */
+function hasAnalyticsConsent(request) {
+  const consentCookie = request?.state?.[CONSENT_COOKIE_NAME]
+
+  if (!consentCookie) {
+    return false
+  }
+
+  try {
+    const consent =
+      typeof consentCookie === 'string'
+        ? JSON.parse(consentCookie)
+        : consentCookie
+    return consent?.analytics === true
+  } catch {
+    return false
+  }
+}
+
 export function context(request) {
   if (!webpackManifest) {
     try {
@@ -29,6 +59,7 @@ export function context(request) {
     serviceUrl: '/',
     breadcrumbs: [],
     navigation: buildNavigation(request),
+    analyticsConsent: hasAnalyticsConsent(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       const normalizedAssetPath =

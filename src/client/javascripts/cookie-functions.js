@@ -15,18 +15,32 @@
 /* Name of the cookie to save users cookie preferences to. */
 const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
 
-const ganalytics = 'https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3'
-const tagID = 'GTM-5ZWS27T3'
-const previewID = 'GTM-5ZWS27T3'
-/* Google Analytics tracking IDs for preview and live environments. */
-const TRACKING_PREVIEW_ID = previewID
-const TRACKING_LIVE_ID = previewID
+/* Google Tag Manager containers loaded once the user accepts analytics. */
+const GTM_CONTAINER_IDS = ['GTM-5ZWS27T3', 'GTM-KBRX8BS5']
+
+/* GA4 measurement IDs configured through the containers above. */
+const GA_MEASUREMENT_IDS = ['G-1Y8D0NGQWY']
+
+/* Marks the <script> tags we inject, so we can find and remove them again. */
+const GTM_SCRIPT_ATTRIBUTE = 'data-gtm-container'
+
+/*
+ * GA and GTM set cookies whose full names we cannot know up front, e.g.
+ * `_ga_<measurement id>`, `_gat_UA-<property id>` and `_dc_gtm_<property id>`,
+ * so on rejection we match them by prefix as well as by exact name.
+ */
+const ANALYTICS_COOKIE_PREFIXES = ['_ga', '_gid', '_gat', '_dc_gtm_']
+
 function gtag() {
   globalThis.dataLayer.push(arguments)
 }
 /* Users can (dis)allow different groups of cookies. */
 const COOKIE_CATEGORIES = {
-  analytics: ['_ga', `_ga_${TRACKING_PREVIEW_ID}`, `_ga_${TRACKING_LIVE_ID}`],
+  analytics: [
+    '_ga',
+    '_gid',
+    ...GA_MEASUREMENT_IDS.map((id) => `_ga_${id.replace(/^G-/, '')}`)
+  ],
   /* Essential cookies
    *
    * Essential cookies cannot be deselected, but we want our cookie code to
@@ -142,22 +156,98 @@ export function setConsentCookie(options) {
   resetCookies()
 }
 
-function loadGoogleAnalytics() {
-  const script = document.createElement('script')
-  script.src = ganalytics
-  script.async = true
-  document.head.appendChild(script)
+/**
+ * Inject Google Tag Manager.
+ *
+ * Only ever called once the user has accepted analytics cookies. Safe to call
+ * more than once - containers that are already on the page are skipped.
+ */
+export function loadGoogleAnalytics() {
   globalThis.dataLayer = globalThis.dataLayer || []
 
+  // Clear any opt-out flags left behind by a previous rejection
+  GA_MEASUREMENT_IDS.forEach((id) => {
+    globalThis[`ga-disable-${id}`] = false
+  })
+
+  GTM_CONTAINER_IDS.forEach((containerId) => {
+    const alreadyLoaded = document.querySelector(
+      `script[${GTM_SCRIPT_ATTRIBUTE}="${containerId}"]`
+    )
+    if (alreadyLoaded) {
+      return
+    }
+
+    globalThis.dataLayer.push({
+      'gtm.start': new Date().getTime(),
+      event: 'gtm.js'
+    })
+
+    const script = document.createElement('script')
+    script.async = true
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${containerId}`
+    script.setAttribute(GTM_SCRIPT_ATTRIBUTE, containerId)
+    document.head.appendChild(script)
+  })
+
   gtag('js', new Date())
-  gtag('config', tagID, { page_path: globalThis.location.pathname })
-  gtag('config', 'G-1Y8D0NGQWY', { page_path: globalThis.location.pathname })
+  GA_MEASUREMENT_IDS.forEach((id) => {
+    gtag('config', id, { page_path: globalThis.location.pathname })
+  })
 }
 
 /**
- * Apply the user's cookie preferences
+ * Remove Google Tag Manager and every analytics cookie it has set.
  *
- * Deletes any cookies the user has not consented to.
+ * Called when the user rejects analytics cookies, including when they change a
+ * previous acceptance to a rejection on the cookies page. The tag may already
+ * be executing in this page, so as well as removing the injected script we set
+ * GA's documented opt-out flags to stop any further hits.
+ */
+export function removeGoogleAnalytics() {
+  GA_MEASUREMENT_IDS.forEach((id) => {
+    globalThis[`ga-disable-${id}`] = true
+  })
+
+  document
+    .querySelectorAll(`script[${GTM_SCRIPT_ATTRIBUTE}]`)
+    .forEach(($script) => $script.remove())
+
+  // Drop the queue and internal state GTM reads from, so it does not pick up
+  // where it left off
+  delete globalThis.dataLayer
+  delete globalThis.google_tag_manager
+  delete globalThis.google_tag_data
+
+  deleteAnalyticsCookies()
+}
+
+/**
+ * Delete the analytics cookies set by GA/GTM.
+ */
+function deleteAnalyticsCookies() {
+  COOKIE_CATEGORIES.analytics.forEach((cookieName) => {
+    cookie(cookieName, null)
+  })
+
+  document.cookie.split(';').forEach((cookieString) => {
+    const cookieName = cookieString.split('=')[0].trim()
+    const isAnalyticsCookie = ANALYTICS_COOKIE_PREFIXES.some((prefix) =>
+      cookieName.startsWith(prefix)
+    )
+
+    if (cookieName && isAnalyticsCookie) {
+      cookie(cookieName, null)
+    }
+  })
+}
+
+/**
+ * Apply the user's cookie preferences.
+ *
+ * Loads analytics only when the user has actively accepted it, and tears it
+ * down - script and cookies - in every other case, including when no decision
+ * has been made yet.
  */
 export function resetCookies() {
   const options =
@@ -165,38 +255,10 @@ export function resetCookies() {
     // If no preferences or old version use the default
     structuredClone(DEFAULT_COOKIE_CONSENT)
 
-  for (const cookieType in options) {
-    if (cookieType === 'version' || cookieType === 'essential') {
-      continue
-    }
-
-    // Initialise analytics if allowed
-    if (cookieType === 'analytics' && options[cookieType]) {
-      // Enable GA if allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = false
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = false
-
-      if (options[cookieType] === true) {
-        loadGoogleAnalytics()
-      } else {
-        // Unset UA cookies if they've been set by GTM
-        removeUACookies()
-      }
-    } else {
-      // Disable GA if not allowed
-      globalThis[`ga-disable-UA-${TRACKING_PREVIEW_ID}`] = true
-      globalThis[`ga-disable-UA-${TRACKING_LIVE_ID}`] = true
-    }
-
-    if (options[cookieType]) {
-      // Fetch the cookies in that category
-      const cookiesInCategory = COOKIE_CATEGORIES[cookieType]
-
-      cookiesInCategory.forEach((cookieName) => {
-        // Delete cookie
-        cookie(cookieName, null)
-      })
-    }
+  if (options.analytics === true) {
+    loadGoogleAnalytics()
+  } else {
+    removeGoogleAnalytics()
   }
 }
 

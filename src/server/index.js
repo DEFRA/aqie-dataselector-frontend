@@ -11,6 +11,59 @@ import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
 
+/*
+ * Google Tag Manager / Google Analytics hosts.
+ *
+ * The analytics tag itself is only injected once the user has consented (see
+ * cookie-functions.js), but the CSP has to allow these origins up front or the
+ * browser blocks the tag at the moment consent is given.
+ */
+const GTM_HOSTS = [
+  'https://www.googletagmanager.com',
+  'https://*.googletagmanager.com'
+]
+const GA_HOSTS = [
+  'https://www.google-analytics.com',
+  'https://*.google-analytics.com',
+  'https://ssl.google-analytics.com'
+]
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  // 'unsafe-inline' is still required: page templates contain inline <script>
+  // blocks. Replacing these with nonces would remove the need for it.
+  [
+    "script-src 'self' 'unsafe-inline'",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://tagmanager.google.com',
+    'https://code.jquery.com'
+  ].join(' '),
+  // GTM injects inline styles, and templates use inline style attributes
+  "style-src 'self' 'unsafe-inline' https://tagmanager.google.com",
+  [
+    "img-src 'self' data:",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://ssl.gstatic.com',
+    'https://www.gstatic.com'
+  ].join(' '),
+  [
+    "connect-src 'self'",
+    ...GTM_HOSTS,
+    ...GA_HOSTS,
+    'https://analytics.google.com',
+    'https://*.analytics.google.com'
+  ].join(' '),
+  "font-src 'self' data:",
+  // GTM's <noscript> fallback iframe
+  ["frame-src 'self'", ...GTM_HOSTS].join(' '),
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'"
+].join('; ')
+
 export async function createServer() {
   const server = hapi.server({
     port: config.get('port'),
@@ -66,10 +119,7 @@ export async function createServer() {
       return h.continue
     }
     response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.header(
-      'Content-Security-Policy',
-      "style-src 'self'; img-src 'self'; frame-ancestors 'none'"
-    )
+    response.header('Content-Security-Policy', contentSecurityPolicy)
     return h.continue
   })
 
