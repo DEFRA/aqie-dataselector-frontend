@@ -25,6 +25,14 @@ const GA_MEASUREMENT_IDS = ['G-1Y8D0NGQWY']
 const GTM_SCRIPT_ATTRIBUTE = 'data-gtm-container'
 
 /*
+ * Hosts that serve analytics tags. Once the GTM loader runs it injects further
+ * tags of its own (the GA4 `gtag/js` script, tracking iframes and pixels) that
+ * do not carry our marker attribute, so on rejection we match by host too -
+ * otherwise those tags stay in the page until the next full page load.
+ */
+const ANALYTICS_TAG_HOSTS = ['googletagmanager.com', 'google-analytics.com']
+
+/*
  * GA and GTM set cookies whose full names we cannot know up front, e.g.
  * `_ga_<measurement id>`, `_gat_UA-<property id>` and `_dc_gtm_<property id>`,
  * so on rejection we match them by prefix as well as by exact name.
@@ -201,17 +209,15 @@ export function loadGoogleAnalytics() {
  *
  * Called when the user rejects analytics cookies, including when they change a
  * previous acceptance to a rejection on the cookies page. The tag may already
- * be executing in this page, so as well as removing the injected script we set
- * GA's documented opt-out flags to stop any further hits.
+ * be executing in this page, so as well as removing every analytics tag it has
+ * put in the DOM we set GA's documented opt-out flags to stop any further hits.
  */
 export function removeGoogleAnalytics() {
   GA_MEASUREMENT_IDS.forEach((id) => {
     globalThis[`ga-disable-${id}`] = true
   })
 
-  document
-    .querySelectorAll(`script[${GTM_SCRIPT_ATTRIBUTE}]`)
-    .forEach(($script) => $script.remove())
+  removeAnalyticsTags()
 
   // Drop the queue and internal state GTM reads from, so it does not pick up
   // where it left off
@@ -220,6 +226,44 @@ export function removeGoogleAnalytics() {
   delete globalThis.google_tag_data
 
   deleteAnalyticsCookies()
+}
+
+/**
+ * Remove every analytics tag from the page.
+ *
+ * Covers the GTM loader we injected, the tags GTM went on to inject itself,
+ * and the server rendered <noscript> fallback iframes - the request that
+ * rendered the current page may still have carried an accepted consent cookie.
+ */
+function removeAnalyticsTags() {
+  const selectors = [`script[${GTM_SCRIPT_ATTRIBUTE}]`]
+
+  ANALYTICS_TAG_HOSTS.forEach((host) => {
+    selectors.push(
+      `script[src*="${host}"]`,
+      `iframe[src*="${host}"]`,
+      `img[src*="${host}"]`
+    )
+  })
+
+  document
+    .querySelectorAll(selectors.join(','))
+    .forEach(($tag) => $tag.remove())
+
+  /*
+   * While scripting is enabled the contents of a <noscript> element are parsed
+   * as text rather than as elements, so the fallback iframes inside it are not
+   * matched by the selectors above. Reading innerHTML finds them either way.
+   */
+  document.querySelectorAll('noscript').forEach(($noscript) => {
+    const holdsAnalyticsTag = ANALYTICS_TAG_HOSTS.some((host) =>
+      $noscript.innerHTML.includes(host)
+    )
+
+    if (holdsAnalyticsTag) {
+      $noscript.remove()
+    }
+  })
 }
 
 /**
