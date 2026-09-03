@@ -420,6 +420,39 @@ function setCookie(name, value, options) {
 }
 
 /**
+ * Every domain a cookie readable on this page could have been set with.
+ *
+ * Google Analytics writes its cookies on the broadest domain it can rather
+ * than on the current host, so on `service.dev.example.cloud` the `_ga`
+ * cookie ends up scoped to `.example.cloud`. Deleting a cookie requires
+ * writing it back with the same domain attribute, and the attribute is not
+ * readable from JavaScript, so we walk up the parent domains and try each one.
+ *
+ * This is why rejection clears the analytics cookies on a single label host
+ * such as `localhost`, where they can only ever be host-only, but not in a
+ * deployed environment.
+ *
+ * Attempts a browser rejects - a public suffix such as `co.uk`, or a domain
+ * that is not a suffix of the current host - are ignored, and an already
+ * expired cookie is never stored, so the surplus attempts are harmless.
+ * @returns {string[]} Candidate cookie domains, most specific first
+ */
+function getCookieDomains() {
+  const labels = globalThis.location.hostname.split('.')
+  const domains = []
+
+  // Stop at two labels: a single label domain attribute is always rejected
+  const parentCount = Math.max(labels.length - 1, 1)
+
+  for (let i = 0; i < parentCount; i++) {
+    const domain = labels.slice(i).join('.')
+    domains.push(domain, `.${domain}`)
+  }
+
+  return domains
+}
+
+/**
  * Delete cookie by name
  * @param {string} name - Cookie name
  */
@@ -428,11 +461,14 @@ function deleteCookie(name) {
     // Cookies need to be deleted in the same level of specificity in which they were set
     // If a cookie was set with a specified domain, it needs to be specified when deleted
     // If a cookie wasn't set with the domain attribute, it shouldn't be there when deleted
-    // You can't tell if a cookie was set with a domain attribute or not, so try both options
+    // You can't tell if a cookie was set with a domain attribute or not, so try every option
 
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${globalThis.location.hostname};path=/`
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=.${globalThis.location.hostname};path=/`
+    const expired = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+
+    document.cookie = expired
+    getCookieDomains().forEach((domain) => {
+      document.cookie = `${expired};domain=${domain}`
+    })
   }
 }
 

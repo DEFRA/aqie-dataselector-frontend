@@ -1,5 +1,9 @@
-/**
+/*
  * @jest-environment jsdom
+ * @jest-environment-options {"url": "https://service.dev.cdp-int.defra.cloud/"}
+ *
+ * A multi label host, as in the deployed environments: analytics cookies there
+ * are scoped to a parent domain, which `localhost` cannot reproduce.
  */
 
 import {
@@ -131,6 +135,18 @@ describe('cookie-functions', () => {
       expect(document.cookie).not.toContain('_ga')
       expect(document.cookie).not.toContain('_dc_gtm_')
       expect(document.cookie).toContain('session=keep-me')
+    })
+
+    it('deletes analytics cookies scoped to a parent domain', () => {
+      // How GA actually scopes its cookies in a deployed environment - the
+      // page host is service.dev.cdp-int.defra.cloud
+      document.cookie = '_ga=GA1.1.123.456;domain=.defra.cloud;path=/'
+      document.cookie = `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789;domain=.cdp-int.defra.cloud;path=/`
+      expect(document.cookie).toContain('_ga')
+
+      removeGoogleAnalytics()
+
+      expect(document.cookie).not.toContain('_ga')
     })
   })
 
