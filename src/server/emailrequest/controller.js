@@ -116,6 +116,22 @@ const getTrimmedQueryValue = (request, key) =>
 const isSupportedDataSource = (dataSourceParam) =>
   dataSourceParam === 'AURN' || dataSourceParam === 'NON-AURN'
 
+const persistPendingDataSourceType = (request, dataSourceParam) => {
+  if (isSupportedDataSource(dataSourceParam)) {
+    request.yar.set('pendingDataSource', dataSourceParam)
+  }
+}
+
+const persistPendingPollutantId = (request) => {
+  const requestedPollutantID = getTrimmedQueryValue(request, 'pollutantID')
+  if (requestedPollutantID) {
+    request.yar.set('pendingPollutantID', requestedPollutantID)
+  }
+}
+
+const shouldPersistNonAurnNetworkId = (dataSourceParam) =>
+  dataSourceParam === 'NON-AURN'
+
 const persistPendingNetworkId = (request) => {
   const requestedNetworkId = getTrimmedQueryValue(request, 'networkId')
   if (requestedNetworkId) {
@@ -132,16 +148,10 @@ const persistPendingNetworkId = (request) => {
 
 // Persist the dataSource path param (and derived network id) so it survives POST.
 const storePendingDataSource = (request, dataSourceParam) => {
-  if (isSupportedDataSource(dataSourceParam)) {
-    request.yar.set('pendingDataSource', dataSourceParam)
-  }
+  persistPendingDataSourceType(request, dataSourceParam)
+  persistPendingPollutantId(request)
 
-  const requestedPollutantID = getTrimmedQueryValue(request, 'pollutantID')
-  if (requestedPollutantID) {
-    request.yar.set('pendingPollutantID', requestedPollutantID)
-  }
-
-  if (dataSourceParam === 'NON-AURN') {
+  if (shouldPersistNonAurnNetworkId(dataSourceParam)) {
     persistPendingNetworkId(request)
   }
 }
