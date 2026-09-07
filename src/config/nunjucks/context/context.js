@@ -60,7 +60,7 @@ export function context(request) {
       .map((k) => k.trim())
       .filter((k) => GTM_KEY_PATTERN.test(k)),
     navigation: buildNavigation(request),
-    analyticsConsent: hasAnalyticsConsent(request),
+    analyticsConsent: analyticsAccepted(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       const normalizedAssetPath =

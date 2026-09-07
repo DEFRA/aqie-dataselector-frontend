@@ -247,33 +247,10 @@ function setCookie(name, value, options) {
  * readable from JavaScript, so we walk up the parent domains and try each one.
  *
  * This is why rejection clears the analytics cookies on a single label host
- * such as `localhost`, where they can only ever be host-only, but not in a
- * deployed environment.
- *
- * Attempts a browser rejects - a public suffix such as `co.uk`, or a domain
- * that is not a suffix of the current host - are ignored, and an already
- * expired cookie is never stored, so the surplus attempts are harmless.
- * @returns {string[]} Candidate cookie domains, most specific first
- */
-function getCookieDomains() {
-  const labels = globalThis.location.hostname.split('.')
-  const domains = []
-
-  // Stop at two labels: a single label domain attribute is always rejected
-  const parentCount = Math.max(labels.length - 1, 1)
-
-  for (let i = 0; i < parentCount; i++) {
-    const domain = labels.slice(i).join('.')
-    domains.push(domain, `.${domain}`)
-  }
-
-  return domains
-}
-
 /**
  * Deletes a cookie across three domain variants (no domain, exact, and .domain)
  * because the original Set-Cookie domain attribute is not readable by JS.
- * @param {string} name
+ * @param {string} name - Cookie name
  */
 function deleteCookie(name) {
   if (cookie(name)) {
