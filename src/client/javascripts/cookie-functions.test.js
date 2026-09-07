@@ -9,6 +9,7 @@
 import {
   loadGoogleAnalytics,
   removeGoogleAnalytics,
+  removeUACookies,
   resetCookies,
   setConsentCookie
 } from '~/src/client/javascripts/cookie-functions.js'
@@ -147,6 +148,37 @@ describe('cookie-functions', () => {
       removeGoogleAnalytics()
 
       expect(document.cookie).not.toContain('_ga')
+    })
+  })
+
+  describe('removeUACookies', () => {
+    it('keeps the _ga client id so it survives a consented page load', () => {
+      // GA4 stores the client id in _ga - the identity tying a visitor's page
+      // views into one session. Deleting it here made GA4 mint a new one on
+      // every navigation, counting each page view as a new user.
+      document.cookie = '_ga=GA1.1.123.456;path=/'
+
+      removeUACookies()
+
+      expect(document.cookie).toContain('_ga=GA1.1.123.456')
+    })
+
+    it('keeps the GA4 session cookie', () => {
+      document.cookie = `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789;path=/`
+
+      removeUACookies()
+
+      expect(document.cookie).toContain(
+        `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789`
+      )
+    })
+
+    it('still clears the legacy UA _gid cookie', () => {
+      document.cookie = '_gid=GA1.1.999.888;path=/'
+
+      removeUACookies()
+
+      expect(document.cookie).not.toContain('_gid')
     })
   })
 
