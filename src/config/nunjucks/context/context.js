@@ -14,34 +14,25 @@ const manifestPath = path.join(
 
 let webpackManifest
 
-/* Keep in sync with CONSENT_COOKIE_NAME in cookie-functions.js */
-const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
+const GTM_KEY_PATTERN = /^GTM-[A-Z0-9]+$/
 
-/**
- * Read the analytics consent decision from the request cookie.
- *
- * Used to decide whether to render the GTM <noscript> fallback, which is the
- * only analytics tag we cannot gate client side. Defaults to false so nothing
- * is rendered until the user has actively accepted.
- * @param {import('@hapi/hapi').Request | null} [request] - Current request
- * @returns {boolean} True if the user has accepted analytics cookies
- */
-function hasAnalyticsConsent(request) {
-  const consentCookie = request?.state?.[CONSENT_COOKIE_NAME]
-
-  if (!consentCookie) {
-    return false
-  }
-
+function getConsentPolicy(request) {
   try {
-    const consent =
-      typeof consentCookie === 'string'
-        ? JSON.parse(consentCookie)
-        : consentCookie
-    return consent?.analytics === true
+    const raw = request.state?.cookies_policy
+    return raw ? JSON.parse(raw) : null
   } catch {
-    return false
+    return null
   }
+}
+
+function hasValidConsent(request) {
+  const policy = getConsentPolicy(request)
+  return policy?.confirmed === true
+}
+
+function analyticsAccepted(request) {
+  const policy = getConsentPolicy(request)
+  return policy?.confirmed === true && policy?.analytics === true
 }
 
 export function context(request) {
@@ -58,8 +49,18 @@ export function context(request) {
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
+    currentPath: request.url.pathname,
+    // Server-side banner visibility — covers no-JS users where the inline script can't run
+    showCookieBanner: !hasValidConsent(request) && request.path !== '/cookies',
+    // Only render GTM when analytics consent has been given
+    showGtm: analyticsAccepted(request),
+    googleTagManagerKeys: config
+      .get('googleAnalytics.googleTagManagerKeys')
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => GTM_KEY_PATTERN.test(k)),
     navigation: buildNavigation(request),
-    analyticsConsent: hasAnalyticsConsent(request),
+    analyticsConsent: analyticsAccepted(request),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       const normalizedAssetPath =
