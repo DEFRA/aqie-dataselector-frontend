@@ -39,6 +39,13 @@ const ANALYTICS_TAG_HOSTS = ['googletagmanager.com', 'google-analytics.com']
  */
 const ANALYTICS_COOKIE_PREFIXES = ['_ga', '_gid', '_gat', '_dc_gtm_']
 
+/*
+ * Cookies only ever set by Universal Analytics, cleared on every page load
+ * while analytics is accepted. `_ga` is deliberately absent - see
+ * removeUACookies().
+ */
+const UA_ONLY_COOKIES = ['_gid']
+
 function gtag() {
   globalThis.dataLayer.push(arguments)
 }
@@ -313,9 +320,16 @@ export function resetCookies() {
  * users may still have the UA cookie set from our previous implementation.
  * Additionally, our UA properties are scheduled for deletion but until they are
  * entirely deleted, GTM is still setting UA cookies.
+ *
+ * `_ga` must NOT be listed here. It looks like a UA cookie but GA4 uses it too,
+ * to hold the client id - the identity that ties a visitor's page views into
+ * one session and one user. This runs on every page load once analytics is
+ * accepted, so deleting `_ga` here made GA4 mint a fresh client id on each
+ * navigation, counting every page view as a new user. `_ga` is still cleared
+ * when the user rejects analytics, by deleteAnalyticsCookies().
  */
 export function removeUACookies() {
-  for (const UACookie of ['_gid', '_ga']) {
+  for (const UACookie of UA_ONLY_COOKIES) {
     cookie(UACookie, null)
   }
 }
