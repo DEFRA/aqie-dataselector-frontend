@@ -299,9 +299,9 @@ export const config = convict({
   DevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: 'TCqRNv3a8mBsiaepXP4F3W4g4dMLwMgS',
+    default: '',
     sensitive: true,
-    env: 'OS_NAMES_DEV_API_KEY'
+    env: 'OS_NAMES_DEV_API_KEYS'
   },
   osLocationDevUrl: {
     doc: 'Location API URL for localhost development',
