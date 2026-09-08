@@ -7,7 +7,11 @@ export const contentSecurityPolicy = {
   plugin: Blankie,
   options: {
     fontSrc: ['self'],
-    imgSrc: ['self', 'https://*.googletagmanager.com', 'https://*.google-analytics.com'],
+    imgSrc: [
+      'self',
+      'https://*.googletagmanager.com',
+      'https://*.google-analytics.com'
+    ],
     scriptSrc: [
       'self',
       'https://*.googletagmanager.com',
