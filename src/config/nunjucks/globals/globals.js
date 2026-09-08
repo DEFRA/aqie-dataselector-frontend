@@ -1,4 +1,4 @@
-import {
+export {
   pollutantToggletips,
   dataCaptureToggletip,
   lowDataCaptureThreshold
@@ -6,9 +6,4 @@ import {
 
 const govukRebrand = true
 
-export {
-  govukRebrand,
-  pollutantToggletips,
-  dataCaptureToggletip,
-  lowDataCaptureThreshold
-}
+export { govukRebrand }

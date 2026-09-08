@@ -296,7 +296,6 @@ export const config = convict({
     env: 'DOWNLOAD_EMAIL_URL'
   },
 
-  
   DevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,

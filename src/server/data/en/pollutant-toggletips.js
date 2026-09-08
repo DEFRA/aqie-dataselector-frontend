@@ -15,20 +15,34 @@
 const UNITS = 'micrograms per cubic metre (µg/m³)'
 const ROUNDING = 'in a calendar year (when rounded to a whole number).'
 
+const DAILY = 'daily'
+const HOURLY = 'hourly'
+
+// How each pollutant reads inside the toggletip sentences: particulates keep
+// their uppercase form, gases read as prose.
+const PM25 = 'PM2.5'
+const PM10 = 'PM10'
+const NITROGEN_DIOXIDE = 'nitrogen dioxide'
+const SULPHUR_DIOXIDE = 'sulphur dioxide'
+const OZONE = 'ozone'
+
 /** Data capture below this percentage is treated as too low to average. */
 const lowDataCaptureThreshold = 75
 
+const annualLabel = (name) =>
+  `More information about the UK annual average limit value for ${name}`
+
 /** An annual average that has a UK limit value. */
-const annualLimit = (name, limit) => ({
+const annualLimit = ({ name, limit }) => ({
   limit,
-  label: `More information about the UK annual average limit value for ${name}`,
+  label: annualLabel(name),
   text: `Annual average ${name} levels at any site must not go above ${limit} ${UNITS} ${ROUNDING}`
 })
 
 /** An annual average with no UK limit value: no limit, so no "Above limit" tag. */
 const noAnnualLimit = (name) => ({
   limit: null,
-  label: `More information about the UK annual average limit value for ${name}`,
+  label: annualLabel(name),
   text: `There is no annual average limit value for ${name}.`
 })
 
@@ -39,48 +53,48 @@ const noAnnualLimit = (name) => ({
 const exceedanceLimit = ({ period, name, concentration, allowance }) => ({
   limit: allowance,
   label: `More information about ${period} exceedances for ${name}`,
-  text: `${period === 'daily' ? 'Daily average' : 'Hourly'} ${name} levels must not go above ${concentration} ${UNITS} more than ${allowance} times ${ROUNDING}`
+  text: `${period === DAILY ? 'Daily average' : 'Hourly'} ${name} levels must not go above ${concentration} ${UNITS} more than ${allowance} times ${ROUNDING}`
 })
 
 const pollutantToggletips = {
-  'PM2.5': {
-    annual: annualLimit('PM2.5', 20)
+  [PM25]: {
+    annual: annualLimit({ name: PM25, limit: 20 })
   },
-  PM10: {
-    annual: annualLimit('PM10', 40),
+  [PM10]: {
+    annual: annualLimit({ name: PM10, limit: 40 }),
     daily: exceedanceLimit({
-      period: 'daily',
-      name: 'PM10',
+      period: DAILY,
+      name: PM10,
       concentration: 50,
       allowance: 35
     })
   },
   'Nitrogen dioxide': {
-    annual: annualLimit('nitrogen dioxide', 40),
+    annual: annualLimit({ name: NITROGEN_DIOXIDE, limit: 40 }),
     hourly: exceedanceLimit({
-      period: 'hourly',
-      name: 'nitrogen dioxide',
+      period: HOURLY,
+      name: NITROGEN_DIOXIDE,
       concentration: 200,
       allowance: 18
     })
   },
   'Sulphur dioxide': {
-    annual: noAnnualLimit('sulphur dioxide'),
+    annual: noAnnualLimit(SULPHUR_DIOXIDE),
     daily: exceedanceLimit({
-      period: 'daily',
-      name: 'sulphur dioxide',
+      period: DAILY,
+      name: SULPHUR_DIOXIDE,
       concentration: 125,
       allowance: 3
     }),
     hourly: exceedanceLimit({
-      period: 'hourly',
-      name: 'sulphur dioxide',
+      period: HOURLY,
+      name: SULPHUR_DIOXIDE,
       concentration: 350,
       allowance: 24
     })
   },
   Ozone: {
-    annual: noAnnualLimit('ozone')
+    annual: noAnnualLimit(OZONE)
   }
 }
 
