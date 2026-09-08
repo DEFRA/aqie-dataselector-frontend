@@ -56,7 +56,13 @@ jest.mock('~/src/server/data/en/homecontent.js', () => ({
   }
 }))
 jest.mock('~/src/server/common/helpers/errors_message.js', () => ({
-  setErrorMessage: jest.fn()
+  setErrorMessage: jest.fn(),
+  // Kept behavioural: the controller relies on it emptying the session values
+  // that then get passed to the view.
+  clearErrors: jest.fn((request) => {
+    request.yar.set('errors', '')
+    request.yar.set('errorMessage', '')
+  })
 }))
 jest.mock('~/src/config/config.js', () => ({
   config: {
@@ -311,9 +317,11 @@ describe('multipleLocationsController', () => {
   })
 
   it('should handle pollutant name mapping for GR25, GE10, GR10', async () => {
+    // One location, so the station view renders - that is the only view the
+    // pollutant map is passed to.
     axios.post
       .mockResolvedValueOnce({
-        data: { getOSPlaces: [{ name: 'Loc1' }, { name: 'Loc2' }] }
+        data: { getOSPlaces: [{ name: 'Loc1' }] }
       })
       .mockResolvedValueOnce({
         data: {
@@ -350,11 +358,11 @@ describe('multipleLocationsController', () => {
 
     await multipleLocationsController.handler(request, h)
 
-    // Verify pollutant mapping was done correctly
-    expect(h.view).toHaveBeenCalledWith(
-      'multiplelocations/index',
-      expect.any(Object)
-    )
+    // Verify pollutant mapping was done correctly: GR25 -> PM2.5,
+    // GE10 and GR10 both -> PM10 (de-duplicated), NO2 passed through.
+    const [template, context] = h.view.mock.calls[0]
+    expect(template).toBe('monitoring-station/index')
+    expect(context.pollmap.get('Station1')).toEqual(['PM2.5', 'PM10', 'NO2'])
   })
 
   it('should handle cached location data when osnameapiresult exists', async () => {

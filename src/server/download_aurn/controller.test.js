@@ -919,7 +919,7 @@ describe('downloadAurnController', () => {
         const values = {
           isDevelopment: true,
           downloadAurnDevUrl: devDownloadUrl,
-          osNamesDevApiKey: devApiKey
+          DevApiKey: devApiKey
         }
         return values[key]
       })
@@ -1004,7 +1004,7 @@ describe('downloadAurnController', () => {
           isDevelopment: true,
           downloadAurnDevUrl: devDownloadUrl,
           pollingDevUrl: devPollingUrl,
-          osNamesDevApiKey: devApiKey
+          DevApiKey: devApiKey
         }
         return values[key]
       })

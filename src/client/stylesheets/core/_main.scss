@@ -242,17 +242,24 @@ width: 100%;
   }
 
   &__info {
+    // Exposed as custom properties because the script that pins table
+    // toggletips to the viewport needs the same two numbers - see
+    // partials/yearlytable.njk. Declaring them here keeps this file the only
+    // place the width and offset are defined.
+    --toggletip-info-width: 200px;
+    --toggletip-info-offset: 85px;
+
     @include govuk-font($size: 16);
     cursor: auto;
     position: absolute;
-    width: 200px;
+    width: var(--toggletip-info-width);
     overflow: visible;
     box-sizing: border-box;
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.2s ease, visibility 0.2s ease;
     bottom: 100%;
-    left: -85px;
+    left: calc(var(--toggletip-info-offset) * -1);
     padding-bottom: 10px;
     text-align: left;
     z-index: 99;
@@ -682,8 +689,32 @@ width: 100%;
   font-weight: 700;
 }
 
+// The data capture line sits 1px tighter than the tags above it.
+.defra-aq-levels-table__cell--data-capture {
+  margin-top: 4px;
+}
+
 .defra-toggletip--datacapture .defra-toggletip__container {
   top: -18px;
+}
+
+// Table toggletips are pinned to the viewport by JS (see
+// partials/yearlytable.njk) because the scroll container would otherwise clip
+// them. Only the computed coordinates are set inline; everything static lives
+// here. The class is doubled so this stays ahead of the more specific
+// .defra-aq-features__value-tip override below.
+.defra-toggletip__info.defra-toggletip__info--pinned {
+  position: fixed;
+  right: auto;
+  z-index: 999;
+}
+
+// Holds the <symbol> icon sprite injected by layouts/page.njk out of the flow.
+// Uses zero width/height rather than display:none, which stops <use>
+// resolving in some browsers.
+.aq-icon-sprite {
+  position: absolute;
+  overflow: hidden;
 }
 
 .defra-aq-value-with-tip {

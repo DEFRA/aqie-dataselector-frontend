@@ -446,7 +446,7 @@ describe('verifyController', () => {
         if (key === 'isDevelopment') return true
         if (key === 'downloadEmailDevUrl')
           return 'https://dev.api.example.com/download'
-        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        if (key === 'DevApiKey') return 'test-api-key'
         return null
       })
     })
