@@ -221,7 +221,7 @@ export async function invokeStationCount(stationcountparameters) {
         payload: JSON.stringify(stationcountparameters),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })

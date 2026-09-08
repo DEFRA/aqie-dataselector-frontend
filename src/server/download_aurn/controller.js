@@ -21,7 +21,7 @@ async function invokeDownloadDev(apiparams) {
       payload: JSON.stringify(apiparams),
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': config.get('osNamesDevApiKey')
+        'x-api-key': config.get('DevApiKey')
       },
       json: true
     })
@@ -69,7 +69,7 @@ async function pollDownloadStatusDev(downloadstatusapiparams) {
         payload: JSON.stringify(downloadstatusapiparams),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })

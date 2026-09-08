@@ -1,507 +1,281 @@
-<script type="module" src="/src/client/javascripts/application.js"></script>
 {% from "toggletip/macro.njk" import toggletip %}
 
- 
+{#
+  Yearly air pollution levels table + download links.
 
-{% set PM10_dailyToggletip %}
-  {{ toggletip(
-   '',
-    'More information about daily exceedances for PM10',
-    'Daily average PM10 levels must not go above 50 micrograms per cubic metre (µg/m³) more than 35 times in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set SO2_dailyToggletip %}
-  {{ toggletip(
-    '',
-    'More information about daily exceedances for sulphur dioxide',
-    'Daily average sulphur dioxide levels must not go above 125 micrograms per cubic metre (µg/m³) more than 3 times in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set NO2_hourlyToggletip %}
-  {{ toggletip(
-    '',
-   'More information about hourly exceedances for nitrogen dioxide',
-    'Hourly nitrogen dioxide levels must not go above 200 micrograms per cubic metre (µg/m³) more than 18 times in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set SO2_hourlyToggletip %}
-  {{ toggletip(
-    '',
-    'More information about hourly exceedances for sulphur dioxide',
-    'Hourly sulphur dioxide levels must not go above 350 micrograms per cubic metre (µg/m³) more than 24 times in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
+  Rendered two ways:
+   - included by partials/Yearlytab.njk on the initial page render
+   - rendered standalone by /rendertable/{year} and injected into
+     #yearlytable-container with innerHTML when the year tab changes
 
-{% set PM10_annualToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'Annual average PM10 levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set NO2_annualToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the trend',
-    'Annual average nitrogen dioxide levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
+  Scripts inserted via innerHTML never execute, so the behaviour below is
+  bound once (on the initial render) and must keep working against markup
+  that is replaced later - hence the delegated listeners and the global
+  getAPIstn_details1 used by the download links' onclick attributes.
 
+  Limit values and toggletip copy come from the pollutantToggletips,
+  dataCaptureToggletip and lowDataCaptureThreshold nunjucks globals
+  (src/server/data/en/pollutant-toggletips.js).
+#}
 
-{% set PM25_annualAvg %}
-  {{ toggletip(
-    '',
-    'More information about the UK annual average limit value for PM2.5',
-    'Annual average PM2.5 levels at any site must not go above 20 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).
-    ',
-    'Trend'
-  )}}
-{% endset %}
-{% set PM10_annualAvg %}
-  {{ toggletip(
-    '',
-    'More information about the UK annual average limit value for PM10',
-    'Annual average PM10 levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number). ',
-    'Trend'
-  )}}
-{% endset %}
-{% set NO2_annualAvg %}
-  {{ toggletip(
-    '',
-    'More information about the UK annual average limit value for nitrogen dioxide',
-    'Annual average nitrogen dioxide levels at any site must not go above 40 micrograms per cubic metre (µg/m³) in a calendar year (when rounded to a whole number).',
-    'Trend'
-  )}}
-{% endset %}
-{% set O2_annualAvg %}
-  {{ toggletip(
-    '',
-   'More information about the UK annual average limit value for ozone',
-    'There is no annual average limit value for ozone.',
-    'Trend'
-  )}}
-{% endset %}
-{% set SO2_annualAvg %}
-  {{ toggletip(
-    '',
-   'More information about the UK annual average limit value for sulphur dioxide',
-    'There is no annual average limit value for sulphur dioxide.',
-    'Trend'
-  )}}
-{% endset %}
-{% set DatacaptureToggletip %}
-  {{ toggletip(
-    '',
-    'More information about the Data capture percentage',
-    'Data capture under 75% is low. We do not calculate the average when data capture is low.
-    ',
-    'Trend'
-  )}}
-{% endset %}
+{#-------------------------------------------------------------------------
+  Reusable markup
+--------------------------------------------------------------------------#}
+{% macro limitToggletip(entry) %}
+  {{ toggletip('', entry.label, entry.text, 'Trend') }}
+{% endmacro %}
 
-  <span id="selectedYear" class="display-none" >{{finalyear}}</span>
-  
+{% macro aboveLimitTag() %}
+  <span class="defra-aq-levels-table__cell--data">
+    <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
+  </span>
+{% endmacro %}
+
+{#
+  An exceedance cell: the count, plus its toggletip and an "Above limit" tag
+  when the pollutant has an allowance and the count is over it.
+#}
+{% macro exceedanceCell(modifier, count, entry) %}
+  <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--{{ modifier }}">
+    {% if entry %}
+      <span class="defra-aq-value-with-tip">{{ count }}{{ limitToggletip(entry) }}</span>
+      {% if entry.limit and count > entry.limit %}{{ aboveLimitTag() }}{% endif %}
+    {% else %}
+      {{ count }}
+    {% endif %}
+  </td>
+{% endmacro %}
+
+{% macro downloadLink(pollutantKey, pollutantLabel, frequency, actionText) %}
+  <a href="#" role="button"
+     onclick="getAPIstn_details1('{{ pollutantKey }}', '{{ frequency }}'); return false;"
+     class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+     aria-label="{{ actionText }} for {{ pollutantLabel }}">
+    <span class="aq-button-secondary__icon">
+      {# Icon defined once as #aq-icon-download in layouts/page.njk #}
+      <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+        <use href="#aq-icon-download"/>
+      </svg>
+    </span>
+    <span class="aq-button-secondary__text">{{ actionText }}</span>
+  </a>
+{% endmacro %}
+
+{% macro downloadLinksFor(pollutantKey, pollutantLabel) %}
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Hourly', 'Download hourly data') }}
+  <br>
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Daily', 'Download daily average data') }}
+  <br>
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Annual', 'Download annual average data') }}
+{% endmacro %}
+
+<span id="selectedYear" class="display-none">{{ finalyear }}</span>
+
+{# /rendertable sets tabledata to null when the API returns nothing. On the
+   initial page render tabledata is undefined and the shell is drawn until
+   updateYear() swaps in the real table, so `!== null` is deliberate here. #}
 {% if tabledata !== null %}
 
   <div id="yeartabble">
-  <p class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
-   
-  </p>
-             
-<div class="table-scroll-container">
-<table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+    <p class="govuk-heading-s">{{ tabledata[0].dataVerifiedTag }}</p>
 
-{# <h1 class="govuk-heading-s" >{{url}} </h1> #}
-              <thead class="defra-aq-levels-table__head">
-<tr class="defra-aq-levels-table__row">
-  <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
-                
-          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Annual average</th>
-                
-         <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">Daily exceedances</th>
+    <div class="table-scroll-container">
+      <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+        <thead class="defra-aq-levels-table__head">
+          <tr class="defra-aq-levels-table__row">
+            <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
+            <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Annual average</th>
+            <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">Daily exceedances</th>
+            <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
+          </tr>
+        </thead>
 
-             <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
-                 
-                
-                
-                </tr>
-              </thead>
-              
-             
-      {% for data in tabledata %}
         <tbody class="defra-aq-levels-table__body">
-                    <tr class="defra-aq-levels-table__row">
-                       
-        <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">{{ data.pollutantName }}
-           {% if data.dataCapturePercentage < 75 %}
-           <span class="defra-aq-levels-table__cell--data"><strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                          Low data capture
-                        </strong></span>
-             {% endif %}
-          <span class="defra-aq-levels-table__cell--data" style="margin-top: 4px;">Data capture: {{ data.dataCapturePercentage }}%
-          {% if data.dataCapturePercentage < 75 %}
-            <span class="defra-toggletip--datacapture">
-              {{ DatacaptureToggletip | safe }}
-            </span>
-          {% endif %}
-          </span></td>
-      
-         <td  class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average"> 
-  {{ data.annualcount }} 
-   
-  {% if data.annualcount != '-' %}
-    {% if data.pollutantName == "PM2.5" %}
-      <span class="defra-aq-value-with-tip">
-        {% if data.annualcount != '-' %}µg/m3{% endif %}
-        {{PM25_annualAvg| safe }}
-      </span>
-      {% if data.annualcount > 20 and data.dataCapturePercentage >= 75 %}
-        <span class="defra-aq-levels-table__cell--data">
-          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
-        </span>
-      {% endif %}
-    {% elif data.pollutantName == "PM10" %}
-      <span class="defra-aq-value-with-tip">
-        {% if data.annualcount != '-' %}µg/m3{% endif %}
-        {{PM10_annualAvg| safe }}
-      </span>
-      {% if data.annualcount > 40 and data.dataCapturePercentage >= 75 %}
-        <span class="defra-aq-levels-table__cell--data">
-          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
-        </span>
-      {% endif %}
-    {% elif data.pollutantName == "Sulphur dioxide" %}
-      <span class="defra-aq-value-with-tip">
-        {% if data.annualcount != '-' %}µg/m3{% endif %}
-        {{SO2_annualAvg| safe }}
-      </span>
-    {% elif data.pollutantName == "Nitrogen dioxide" %}
-      <span class="defra-aq-value-with-tip">
-        {% if data.annualcount != '-' %}µg/m3{% endif %}
-        {{NO2_annualAvg| safe }}
-      </span>
-      {% if data.annualcount > 40 and data.dataCapturePercentage >= 75 %}
-        <span class="defra-aq-levels-table__cell--data">
-          <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
-        </span>
-      {% endif %}
-    {% elif data.pollutantName == "Ozone" %}
-      <span class="defra-aq-value-with-tip">
-        {% if data.annualcount != '-' %}µg/m3{% endif %}
-        {{O2_annualAvg| safe }}
-      </span>
-    {% endif %}
-  {% endif %}
-</td>
+          {% for data in tabledata %}
+            {% set limits = pollutantToggletips[data.pollutantName] %}
+            {% set lowDataCapture = data.dataCapturePercentage < lowDataCaptureThreshold %}
 
-{% if data.pollutantName == "PM10" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-        <span class="defra-aq-value-with-tip">{{ data.dailyCount }}{{ PM10_dailyToggletip | safe }}</span>
-        {% if data.dailyCount > 35 %}
-            <span class="defra-aq-levels-table__cell--data">
-                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                    Above limit
-                </strong>
-            </span>
-        {% endif %}
-    </td>
-{% endif %}
-
-{% if (data.pollutantName != "PM10") and (data.pollutantName != "Sulphur dioxide") %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-        {{ data.dailyCount }}
-    </td>
-{% endif %}
-
-{% if data.pollutantName == "Sulphur dioxide" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
-        <span class="defra-aq-value-with-tip">{{ data.dailyCount }}{{ SO2_dailyToggletip | safe }}</span>
-      
-        {% if data.dailyCount > 3 %}
-            <span class="defra-aq-levels-table__cell--data">
-                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                    Above limit
-                </strong>
-            </span>
-        {% endif %}
-    </td>
-{% endif %}
-
-{% if data.pollutantName == "Nitrogen dioxide" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        <span class="defra-aq-value-with-tip">{{ data.hourlyCount }}{{ NO2_hourlyToggletip | safe }}</span>
-      
-      
-        {% if (data.hourlyCount > 18) %}
-            <span class="defra-aq-levels-table__cell--data">
-                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                    Above limit
-                </strong>
-            </span>
-        {% endif %}
-    </td>
-{% endif %}
-{% if data.pollutantName == "Sulphur dioxide" %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        <span class="defra-aq-value-with-tip">{{ data.hourlyCount }}{{ SO2_hourlyToggletip | safe }}</span>
-        {% if (data.hourlyCount > 24) %}
-            <span class="defra-aq-levels-table__cell--data">
-                <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">
-                    Above limit
-                </strong>
-            </span>
-        {% endif %}
-    </td>
-{% endif %}
-
-{% if (data.pollutantName != "Nitrogen dioxide") and (data.pollutantName != "Sulphur dioxide") %}
-    <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
-        {{ data.hourlyCount }}
-    </td>
-{% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-            </table>
-            </div>
-            </div>
-              <span id="selectedYear"  class="display-none" >{{finalyear}}</span>
-          
- <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-6">Download data for {{finalyear}}</h2> 
- <details class="govuk-details">
-  <summary class="govuk-details__summary">
-    <span class="govuk-details__summary-text">
-      Approximate file sizes (CSV)
-    </span>
-  </summary>
-  <div class="govuk-details__text">
-   <p>File sizes for a year of data:</p>
-  <ul class="govuk-body govuk-list--bullet">
-      <li>hourly data - usually less than 1MB</li>
-      <li>daily average data - usually less than 500KB</li>
-      <li>annual average data - usually less than 100KB</li>
-    </ul>  </div>
-</details>
-              
-      {% set year_selected = finalyear %}
-    
-      
-                 <div class="govuk-grid-row">
-                  <div class="govuk-grid-column-full">
-                    <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
- 
-   <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Hourly')" role="button" 
-   class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-   aria-label="Download hourly data for All pollutants">
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
+            <tr class="defra-aq-levels-table__row">
+              {# Pollutant #}
+              <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
+                {{ data.pollutantName }}
+                {% if lowDataCapture %}
+                  <span class="defra-aq-levels-table__cell--data">
+                    <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
+                  </span>
+                {% endif %}
+                <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
+                  {% if lowDataCapture %}
+                    <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
+                  {% endif %}
                 </span>
-                <span class="aq-button-secondary__text">
-                    Download hourly data 
-                </span>
-</a>
+              </td>
 
-<br>
+              {# Annual average. A null limit means the pollutant has no UK limit value. #}
+              <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
+                {{ data.annualcount }}
+                {% if data.annualcount != '-' and limits.annual %}
+                  <span class="defra-aq-value-with-tip">µg/m3{{ limitToggletip(limits.annual) }}</span>
+                  {% if limits.annual.limit and data.annualcount > limits.annual.limit and not lowDataCapture %}
+                    {{ aboveLimitTag() }}
+                  {% endif %}
+                {% endif %}
+              </td>
 
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                      aria-label=" Download daily average data for All pollutants"
-                      >
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download daily average data 
-          
-                       
-                    </a>
-
-                    <br>
-
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                        aria-label="Download annual average data for All pollutants"
-                    >
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download annual average data 
-          
-                       
-                    </a>
-
-
- {% for pollutant in tabledata %}
-<h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
- 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                     aria-label="Download hourly data for {{pollutant.pollutantName}}"   
-                    >
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download hourly data 
-          
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
-                    </a>
-
-<br>
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                      
-                        aria-label=" Download daily average data for {{pollutant.pollutantName}}">
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download daily average data 
-          
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
-                    </a>
-                    <br>
-                    
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-                        aria-label="Download annual average data for {{pollutant.pollutantName}}"
-                    >
-                
-                <span class="aq-button-secondary__icon">
-                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-                        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-                    </svg>
-                </span>
-                <span class="aq-button-secondary__text">
-                    Download annual average data 
-          
-                        <span class="govuk-visually-hidden">
-                        (Visual only)
-                      </span>
-                    </a>
-                    
-
-
- {% endfor%}                       
+              {{ exceedanceCell('daily', data.dailyCount, limits.daily) }}
+              {{ exceedanceCell('hourly', data.hourlyCount, limits.hourly) }}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-                        </div>
-                </div>
-                {% else %}
-                <div class="govuk-inset-text">
-  There is no data available for this year.
-</div>
-               {% endif%}      
-              
-              
-              <script>
-(function () {
-  function initTableToggleips() {
-    var scrollContainer = document.querySelector('.table-scroll-container');
-    if (!scrollContainer) return;
 
-    scrollContainer.querySelectorAll('.defra-toggletip__button').forEach(function (button) {
-      var toggletip = button.closest('.defra-toggletip');
-      var info = toggletip && toggletip.querySelector('.defra-toggletip__info');
-      if (!info) return;
+  <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-6">Download data for {{ finalyear }}</h2>
 
-      function reposition() {
-        var rect = button.getBoundingClientRect();
-        if (!rect.width) return; // element not visible yet
-        var infoWidth = 200;
-        var leftPos = Math.max(8, rect.left - 85);
-        if (leftPos + infoWidth > window.innerWidth - 8) {
-          leftPos = window.innerWidth - infoWidth - 8;
-        }
-        info.style.position = 'fixed';
-        info.style.left = leftPos + 'px';
-        info.style.right = 'auto';
-        info.style.zIndex = '999';
-        if (rect.top >= 140) {
-          info.style.top = 'auto';
-          info.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
-        } else {
-          info.style.top = (rect.bottom + 4) + 'px';
-          info.style.bottom = 'auto';
-        }
+  <details class="govuk-details">
+    <summary class="govuk-details__summary">
+      <span class="govuk-details__summary-text">Approximate file sizes (CSV)</span>
+    </summary>
+    <div class="govuk-details__text">
+      <p>File sizes for a year of data:</p>
+      <ul class="govuk-body govuk-list--bullet">
+        <li>hourly data - usually less than 1MB</li>
+        <li>daily average data - usually less than 500KB</li>
+        <li>annual average data - usually less than 100KB</li>
+      </ul>
+    </div>
+  </details>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
+      {{ downloadLinksFor('AllPollutants', 'All pollutants') }}
+
+      {% for pollutant in tabledata %}
+        <h3 class="govuk-heading-m">{{ pollutant.pollutantName }}</h3>
+        {{ downloadLinksFor(pollutant.pollutantName, pollutant.pollutantName) }}
+      {% endfor %}
+    </div>
+  </div>
+
+{% else %}
+
+  <div class="govuk-inset-text">There is no data available for this year.</div>
+
+{% endif %}
+
+{# Only the full page render needs these. On the /rendertable partial route the
+   response is injected with innerHTML, where <script> tags never execute, so
+   sending them would be ~3KB of dead payload on every year change. The
+   handlers bound on the initial render keep working against the new markup. #}
+{% if not isPartial %}
+
+<script>
+  /*
+   * Keep table toggletips inside the viewport.
+   *
+   * Listeners are delegated from `document` so they survive
+   * #yearlytable-container being replaced with innerHTML on a year change.
+   */
+  (function () {
+    if (window.aqTableToggletipsBound) return
+    window.aqTableToggletipsBound = true
+
+    var PINNED_CLASS = 'defra-toggletip__info--pinned'
+    var EDGE_GAP = 8
+    var TIP_GAP = 4
+    var MIN_SPACE_ABOVE = 140
+
+    /* The tip's width and its offset from the button are defined in
+       _main.scss as custom properties on .defra-toggletip__info. Reading them
+       back means restyling the toggletip cannot silently mispostion it. */
+    function cssNumber(element, property, fallback) {
+      var value = parseFloat(
+        getComputedStyle(element).getPropertyValue(property)
+      )
+      return isNaN(value) ? fallback : value
+    }
+
+    function tableToggletipFor(node) {
+      if (!node || !node.closest) return null
+      var button = node.closest('.defra-toggletip__button')
+      if (!button || !button.closest('.table-scroll-container')) return null
+      var toggletip = button.closest('.defra-toggletip')
+      var info = toggletip && toggletip.querySelector('.defra-toggletip__info')
+      return info ? { button: button, info: info } : null
+    }
+
+    function reposition(event) {
+      var parts = tableToggletipFor(event.target)
+      if (!parts) return
+
+      var rect = parts.button.getBoundingClientRect()
+      if (!rect.width) return // not visible yet
+
+      var infoWidth = cssNumber(parts.info, '--toggletip-info-width', 200)
+      var buttonOffset = cssNumber(parts.info, '--toggletip-info-offset', 85)
+
+      var leftPos = Math.max(EDGE_GAP, rect.left - buttonOffset)
+      if (leftPos + infoWidth > window.innerWidth - EDGE_GAP) {
+        leftPos = window.innerWidth - infoWidth - EDGE_GAP
       }
 
-      function reset() {
-        info.style.cssText = '';
+      // position/right/z-index come from PINNED_CLASS; only the coordinates,
+      // which depend on where the button ended up, have to be inline.
+      parts.info.classList.add(PINNED_CLASS)
+      var style = parts.info.style
+      style.left = leftPos + 'px'
+
+      if (rect.top >= MIN_SPACE_ABOVE) {
+        style.top = 'auto'
+        style.bottom = window.innerHeight - rect.top + TIP_GAP + 'px'
+      } else {
+        style.top = rect.bottom + TIP_GAP + 'px'
+        style.bottom = 'auto'
       }
+    }
 
-      button.addEventListener('mouseenter', reposition);
-      button.addEventListener('focus', reposition);
-      button.addEventListener('mouseleave', reset);
-      button.addEventListener('blur', reset);
-    });
-  }
+    function reset(event) {
+      var parts = tableToggletipFor(event.target)
+      if (!parts) return
+      // Ignore moves between the button and its own children.
+      if (event.relatedTarget && parts.button.contains(event.relatedTarget)) return
+      parts.info.classList.remove(PINNED_CLASS)
+      parts.info.style.cssText = ''
+    }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTableToggleips);
-  } else {
-    initTableToggleips();
-  }
-})();
+    document.addEventListener('mouseover', reposition)
+    document.addEventListener('focusin', reposition)
+    document.addEventListener('mouseout', reset)
+    document.addEventListener('focusout', reset)
+  })()
 </script>
 
-              <script>
+<script>
+  /*
+   * Called from the download links' onclick. Must stay global: the markup
+   * that references it is re-injected with innerHTML on a year change,
+   * while this script only ever runs on the initial page render.
+   */
+  function getAPIstn_details1(pollutants, freq) {
+    fetch('/downloaddata/' + encodeURIComponent(pollutants) + '/' + encodeURIComponent(freq))
+      .then(function (response) { return response.text() })
+      .then(function (url) {
+        if (url) {
+          window.location.href = url
+        }
+      })
+      .catch(function (error) {
+        console.error('Error fetching partial content:', error)
+      })
+  }
+</script>
 
-      async function getAPIstn_details1(pollutants,freq) {  
-      
-        
-const scrollY = window.scrollY;
-
-window.scrollTo(0, scrollY); 
-        
-      fetch(`/downloaddata/${pollutants}/${freq}`)
-        .then(response => response.text())
-        .then ( data => {       
-          
-           
-            window.location.href =data
-            window.scrollTo(0, scrollY); 
-        })
-        .catch(error => console.error('Error fetching partial content:', error));        
-}
-document.addEventListener('DOMContentLoaded', () => {
-    //document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-    
-   
-});
-          
-    </script>
-    {% if downloadresult %}
+{% if downloadresult %}
   <script>
-  
-    var downloadresult = "{{ downloadresult | safe }}";
-    var url = downloadresult;
-   window.location.href = url;
+    window.location.href = {{ downloadresult | dump | safe }}
   </script>
 {% endif %}
 
+{% endif %}

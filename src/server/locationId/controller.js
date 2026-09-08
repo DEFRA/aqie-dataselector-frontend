@@ -121,7 +121,7 @@ async function fetchMonitoringStations(location, miles) {
         payload: JSON.stringify(locationvalues),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })

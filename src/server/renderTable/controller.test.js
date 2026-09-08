@@ -37,7 +37,8 @@ describe('rendertablecontroller.handler', () => {
     expect(request.yar.set).toHaveBeenCalledWith('tabledata', { some: 'data' })
     expect(nunjucks.render).toHaveBeenCalledWith('partials/yearlytable.njk', {
       tabledata: { some: 'data' },
-      finalyear: 2024
+      finalyear: 2024,
+      isPartial: true
     })
     expect(h.response).toHaveBeenCalledWith('<table>content</table>')
     expect(h.code).toHaveBeenCalledWith(200)

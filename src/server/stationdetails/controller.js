@@ -6,7 +6,9 @@ import {
   invokeDownload,
   buildMapLocation,
   buildYearsArray,
-  formatCurrentDate
+  formatCurrentDate,
+  fetchYearTable,
+  getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
 import {
   HTTP_BAD_REQUEST,
@@ -127,6 +129,16 @@ const stationDetailsController = {
       request.yar.set('downloadresult', downloadResult)
     }
 
+    // Fetch the year table server side so the first paint shows real data.
+    // Without this Yearlytab has to fire a follow-up /rendertable request on
+    // load, costing an extra round trip and flashing an empty table.
+    const selectedYear = request.yar.get('selectedYear')
+    const tabledata = await fetchYearTable({
+      siteId: stationDetails.localSiteID,
+      year: selectedYear
+    })
+    request.yar.set('tabledata', tabledata)
+
     // Prepare view data
     const viewData = {
       pageTitle: english.stationdetails.pageTitle,
@@ -140,9 +152,12 @@ const stationDetailsController = {
       apiparams: apiParams,
       years,
       currentdate: currentDate,
+      currentYear: getCurrentYear(),
       pollutantKeys: stationDetails.pollutants,
       maptoggletips: getToggletip(stationDetails.siteType),
-      selectedYear: request.yar.get('selectedYear'),
+      selectedYear,
+      tabledata,
+      finalyear: selectedYear,
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request)
     }

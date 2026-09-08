@@ -1538,7 +1538,7 @@ describe('invokeStationCount', () => {
     config.get.mockImplementation((key) => {
       if (key === 'isDevelopment') return true
       if (key === 'stationCountDevUrl') return 'https://dev.api/station-count'
-      if (key === 'osNamesDevApiKey') return 'dev-api-key'
+      if (key === 'DevApiKey') return 'dev-api-key'
       return undefined
     })
     Wreck.post.mockResolvedValue({ payload: '8' })

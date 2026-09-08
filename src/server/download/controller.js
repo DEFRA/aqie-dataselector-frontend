@@ -14,7 +14,7 @@ async function invokeDownload(apiparams) {
         payload: JSON.stringify(apiparams),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })
