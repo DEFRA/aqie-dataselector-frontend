@@ -11,6 +11,7 @@ import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
 import { onPreResponse } from '~/src/server/common/helpers/on-pre-response.js'
 import { createServerOptions } from '~/src/server/common/helpers/server-options.js'
+import { contentSecurityPolicy } from '~/src/server/plugins/content-security-policy.js'
 
 export async function createServer() {
   const server = hapi.server(createServerOptions())
@@ -21,6 +22,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    contentSecurityPolicy,
     // crumb before nunjucksConfig ensures the token is in view context before Vision renders
     {
       plugin: crumb,
