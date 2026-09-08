@@ -1,5 +1,5 @@
-import path from 'node:path'
 import hapi from '@hapi/hapi'
+import crumb from '@hapi/crumb'
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
@@ -9,99 +9,11 @@ import { secureContext } from '~/src/server/common/helpers/secure-context/index.
 import { sessionCache } from '~/src/server/common/helpers/session-cache/session-cache.js'
 import { pulse } from '~/src/server/common/helpers/pulse.js'
 import { requestTracing } from '~/src/server/common/helpers/request-tracing.js'
-import { getCacheEngine } from '~/src/server/common/helpers/session-cache/cache-engine.js'
-
-/*
- * Google Tag Manager / Google Analytics hosts.
- *
- * The analytics tag itself is only injected once the user has consented (see
- * cookie-functions.js), but the CSP has to allow these origins up front or the
- * browser blocks the tag at the moment consent is given.
- */
-const GTM_HOSTS = [
-  'https://www.googletagmanager.com',
-  'https://*.googletagmanager.com'
-]
-const GA_HOSTS = [
-  'https://www.google-analytics.com',
-  'https://*.google-analytics.com',
-  'https://ssl.google-analytics.com'
-]
-
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  // 'unsafe-inline' is still required: page templates contain inline <script>
-  // blocks. Replacing these with nonces would remove the need for it.
-  [
-    "script-src 'self' 'unsafe-inline'",
-    ...GTM_HOSTS,
-    ...GA_HOSTS,
-    'https://tagmanager.google.com',
-    'https://code.jquery.com'
-  ].join(' '),
-  // GTM injects inline styles, and templates use inline style attributes
-  "style-src 'self' 'unsafe-inline' https://tagmanager.google.com",
-  [
-    "img-src 'self' data:",
-    ...GTM_HOSTS,
-    ...GA_HOSTS,
-    'https://ssl.gstatic.com',
-    'https://www.gstatic.com'
-  ].join(' '),
-  [
-    "connect-src 'self'",
-    ...GTM_HOSTS,
-    ...GA_HOSTS,
-    'https://analytics.google.com',
-    'https://*.analytics.google.com'
-  ].join(' '),
-  "font-src 'self' data:",
-  // GTM's <noscript> fallback iframe
-  ["frame-src 'self'", ...GTM_HOSTS].join(' '),
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'"
-].join('; ')
+import { onPreResponse } from '~/src/server/common/helpers/on-pre-response.js'
+import { createServerOptions } from '~/src/server/common/helpers/server-options.js'
 
 export async function createServer() {
-  const server = hapi.server({
-    port: config.get('port'),
-    routes: {
-      validate: {
-        options: {
-          abortEarly: false
-        }
-      },
-      files: {
-        relativeTo: path.resolve(config.get('root'), '.public')
-      },
-      security: {
-        hsts: {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: false
-        },
-        xss: 'enabled',
-        noSniff: true,
-        xframe: true
-      }
-    },
-    router: {
-      stripTrailingSlash: true
-    },
-    cache: [
-      {
-        name: config.get('session.cache.name'),
-        engine: getCacheEngine(
-          /** @type {Engine} */ (config.get('session.cache.engine'))
-        )
-      }
-    ],
-    state: {
-      strictHeader: false
-    }
-  })
+  const server = hapi.server(createServerOptions())
 
   await server.register([
     requestLogger,
@@ -109,25 +21,21 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    // crumb before nunjucksConfig ensures the token is in view context before Vision renders
+    {
+      plugin: crumb,
+      options: {
+        skip: (request) =>
+          request.method === 'post' && request.path !== '/cookies',
+        cookieOptions: { isSecure: config.get('isProduction') }
+      }
+    },
     nunjucksConfig,
     router
   ])
 
-  server.ext('onPreResponse', (request, h) => {
-    const response = request.response
-    if (response.isBoom) {
-      return h.continue
-    }
-    response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
-    response.header('Content-Security-Policy', contentSecurityPolicy)
-    return h.continue
-  })
-
+  server.ext('onPreResponse', onPreResponse)
   server.ext('onPreResponse', catchAll)
 
   return server
 }
-
-/**
- * @import {Engine} from '~/src/server/common/helpers/session-cache/cache-engine.js'
- */

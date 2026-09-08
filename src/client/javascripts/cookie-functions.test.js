@@ -1,227 +1,157 @@
-/*
+/**
  * @jest-environment jsdom
- * @jest-environment-options {"url": "https://service.dev.cdp-int.defra.cloud/"}
- *
- * A multi label host, as in the deployed environments: analytics cookies there
- * are scoped to a parent domain, which `localhost` cannot reproduce.
  */
 
 import {
-  loadGoogleAnalytics,
-  removeGoogleAnalytics,
-  removeUACookies,
-  resetCookies,
+  cookie,
+  deleteGoogleAnalyticsCookies,
+  getConsentCookie,
+  isValidConsentCookie,
   setConsentCookie
-} from '~/src/client/javascripts/cookie-functions.js'
+} from './cookie-functions.js'
 
-const CONSENT_COOKIE_NAME = 'airaqie_cookies_analytics'
-const MEASUREMENT_ID = 'G-1Y8D0NGQWY'
+const CONSENT_COOKIE_NAME = 'cookies_policy'
 
-/** Mimics the GA4 tag GTM injects for itself once the loader has run. */
-function addTagInjectedByGtm() {
-  const $script = document.createElement('script')
-  $script.src = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}&l=dataLayer&cx=c`
-  document.head.appendChild($script)
-  return $script
+function setConsentInDom(analytics, version = 1) {
+  document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ confirmed: true, analytics, version })}`
 }
 
-/** Mimics the <noscript> fallback rendered by page.njk. */
-function addNoscriptFallback() {
-  document.body.insertAdjacentHTML(
-    'afterbegin',
-    '<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5ZWS27T3" height="0" width="0"></iframe></noscript>'
-  )
+function clearCookies() {
+  document.cookie.split(';').forEach((c) => {
+    const name = c.split('=')[0].trim()
+    if (name) {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+    }
+  })
 }
 
-describe('cookie-functions', () => {
-  beforeAll(() => {
-    // This jsdom version predates structuredClone, which browsers all support
-    globalThis.structuredClone ??= (value) => JSON.parse(JSON.stringify(value))
+beforeEach(() => {
+  // jest-environment-jsdom does not expose structuredClone — polyfill for tests
+  globalThis.structuredClone =
+    globalThis.structuredClone ?? ((obj) => JSON.parse(JSON.stringify(obj)))
+  globalThis.AQIE_CONSENT_COOKIE_VERSION = 1
+  clearCookies()
+  document.head.innerHTML = ''
+  delete globalThis.dataLayer
+})
+
+afterEach(() => {
+  jest.restoreAllMocks()
+})
+
+describe('getConsentCookie', () => {
+  it('returns null when no consent cookie is set', () => {
+    expect(getConsentCookie()).toBeNull()
   })
 
-  beforeEach(() => {
-    globalThis.AQIE_CONSENT_COOKIE_VERSION = 1
-    document.head.innerHTML = ''
-    document.body.innerHTML = ''
-  })
-
-  afterEach(() => {
-    document.cookie.split(';').forEach((cookieString) => {
-      const name = cookieString.split('=')[0].trim()
-      if (name) {
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-      }
-    })
-
-    delete globalThis.dataLayer
-    delete globalThis[`ga-disable-${MEASUREMENT_ID}`]
-  })
-
-  describe('loadGoogleAnalytics', () => {
-    it('injects each GTM container once and clears any opt-out flag', () => {
-      globalThis[`ga-disable-${MEASUREMENT_ID}`] = true
-
-      loadGoogleAnalytics()
-      loadGoogleAnalytics()
-
-      const $scripts = document.querySelectorAll('script[data-gtm-container]')
-      expect(
-        Array.from($scripts).map(($script) =>
-          $script.getAttribute('data-gtm-container')
-        )
-      ).toEqual(['GTM-5ZWS27T3', 'GTM-KBRX8BS5'])
-      expect(globalThis[`ga-disable-${MEASUREMENT_ID}`]).toBe(false)
+  it('returns the parsed preferences when the cookie is valid', () => {
+    setConsentInDom(true)
+    expect(getConsentCookie()).toEqual({
+      confirmed: true,
+      analytics: true,
+      version: 1
     })
   })
 
-  describe('removeGoogleAnalytics', () => {
-    it('removes the GTM loader scripts it injected', () => {
-      loadGoogleAnalytics()
+  it('returns null when the consent cookie contains malformed JSON', () => {
+    document.cookie = `${CONSENT_COOKIE_NAME}=not-valid-json`
+    expect(getConsentCookie()).toBeNull()
+  })
+})
 
-      removeGoogleAnalytics()
-
-      expect(
-        document.querySelectorAll('script[data-gtm-container]')
-      ).toHaveLength(0)
-    })
-
-    it('removes analytics tags GTM injected itself', () => {
-      loadGoogleAnalytics()
-      addTagInjectedByGtm()
-
-      removeGoogleAnalytics()
-
-      expect(
-        document.querySelectorAll('script[src*="googletagmanager.com"]')
-      ).toHaveLength(0)
-    })
-
-    it('removes the noscript fallback rendered for the accepted consent', () => {
-      addNoscriptFallback()
-
-      removeGoogleAnalytics()
-
-      expect(document.querySelectorAll('noscript')).toHaveLength(0)
-    })
-
-    it('leaves unrelated noscript content alone', () => {
-      document.body.innerHTML = '<noscript><p>Enable JavaScript</p></noscript>'
-
-      removeGoogleAnalytics()
-
-      expect(document.querySelectorAll('noscript')).toHaveLength(1)
-    })
-
-    it('sets the GA opt-out flag and drops the GTM globals', () => {
-      loadGoogleAnalytics()
-      globalThis.google_tag_manager = {}
-      globalThis.google_tag_data = {}
-
-      removeGoogleAnalytics()
-
-      expect(globalThis[`ga-disable-${MEASUREMENT_ID}`]).toBe(true)
-      expect(globalThis.dataLayer).toBeUndefined()
-      expect(globalThis.google_tag_manager).toBeUndefined()
-      expect(globalThis.google_tag_data).toBeUndefined()
-    })
-
-    it('deletes analytics cookies, including ones matched by prefix', () => {
-      document.cookie = '_ga=GA1.1.123.456;path=/'
-      document.cookie = `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789;path=/`
-      document.cookie = '_dc_gtm_UA-12345=1;path=/'
-      document.cookie = 'session=keep-me;path=/'
-
-      removeGoogleAnalytics()
-
-      expect(document.cookie).not.toContain('_ga')
-      expect(document.cookie).not.toContain('_dc_gtm_')
-      expect(document.cookie).toContain('session=keep-me')
-    })
-
-    it('deletes analytics cookies scoped to a parent domain', () => {
-      // How GA actually scopes its cookies in a deployed environment - the
-      // page host is service.dev.cdp-int.defra.cloud
-      document.cookie = '_ga=GA1.1.123.456;domain=.defra.cloud;path=/'
-      document.cookie = `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789;domain=.cdp-int.defra.cloud;path=/`
-      expect(document.cookie).toContain('_ga')
-
-      removeGoogleAnalytics()
-
-      expect(document.cookie).not.toContain('_ga')
-    })
+describe('isValidConsentCookie', () => {
+  it('returns falsy for null', () => {
+    expect(isValidConsentCookie(null)).toBeFalsy()
   })
 
-  describe('removeUACookies', () => {
-    it('keeps the _ga client id so it survives a consented page load', () => {
-      // GA4 stores the client id in _ga - the identity tying a visitor's page
-      // views into one session. Deleting it here made GA4 mint a new one on
-      // every navigation, counting each page view as a new user.
-      document.cookie = '_ga=GA1.1.123.456;path=/'
-
-      removeUACookies()
-
-      expect(document.cookie).toContain('_ga=GA1.1.123.456')
-    })
-
-    it('keeps the GA4 session cookie', () => {
-      document.cookie = `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789;path=/`
-
-      removeUACookies()
-
-      expect(document.cookie).toContain(
-        `_ga_${MEASUREMENT_ID.replace('G-', '')}=GS1.1.789`
-      )
-    })
-
-    it('still clears the legacy UA _gid cookie', () => {
-      document.cookie = '_gid=GA1.1.999.888;path=/'
-
-      removeUACookies()
-
-      expect(document.cookie).not.toContain('_gid')
-    })
+  it('returns falsy when version is below the current version', () => {
+    expect(isValidConsentCookie({ analytics: true, version: 0 })).toBeFalsy()
   })
 
-  describe('resetCookies', () => {
-    it('tears analytics down when the preference is not accepted', () => {
-      loadGoogleAnalytics()
-      addTagInjectedByGtm()
-      addNoscriptFallback()
+  it('returns truthy when version matches the current version', () => {
+    expect(isValidConsentCookie({ analytics: true, version: 1 })).toBeTruthy()
+  })
+})
 
-      resetCookies()
-
-      expect(
-        document.querySelectorAll('script[src*="googletagmanager.com"]')
-      ).toHaveLength(0)
-      expect(document.querySelectorAll('noscript')).toHaveLength(0)
-      expect(globalThis[`ga-disable-${MEASUREMENT_ID}`]).toBe(true)
-    })
-
-    it('loads analytics when the preference is accepted', () => {
-      document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ analytics: true, version: 1 })};path=/`
-
-      resetCookies()
-
-      expect(
-        document.querySelectorAll('script[data-gtm-container]').length
-      ).toBeGreaterThan(0)
-    })
+describe('cookie()', () => {
+  it('returns null for a cookie that does not exist', () => {
+    expect(cookie(CONSENT_COOKIE_NAME)).toBeNull()
   })
 
-  describe('setConsentCookie', () => {
-    it('removes an already injected tag when analytics is rejected', () => {
-      setConsentCookie({ analytics: true })
-      addTagInjectedByGtm()
-      expect(
-        document.querySelectorAll('script[src*="googletagmanager.com"]').length
-      ).toBeGreaterThan(0)
+  it('reads back a value that was set', () => {
+    document.cookie = `${CONSENT_COOKIE_NAME}=hello`
+    expect(cookie(CONSENT_COOKIE_NAME)).toBe('hello')
+  })
 
-      setConsentCookie({ analytics: false })
+  it('deletes the consent cookie when called with null', () => {
+    document.cookie = `${CONSENT_COOKIE_NAME}=toDelete`
+    cookie(CONSENT_COOKIE_NAME, null)
+    expect(cookie(CONSENT_COOKIE_NAME)).toBeNull()
+  })
+})
 
-      expect(
-        document.querySelectorAll('script[src*="googletagmanager.com"]')
-      ).toHaveLength(0)
-      expect(globalThis[`ga-disable-${MEASUREMENT_ID}`]).toBe(true)
-    })
+describe('deleteGoogleAnalyticsCookies', () => {
+  it('deletes _ga cookies', () => {
+    document.cookie = '_ga=GA1.1.testvalue'
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).not.toContain('_ga=')
+  })
+
+  it('deletes _gid cookies', () => {
+    document.cookie = '_gid=GA1.1.testvalue'
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).not.toContain('_gid=')
+  })
+
+  it('deletes _ga_* stream cookies', () => {
+    document.cookie = '_ga_KBRX8BS5=GS2.1.testvalue'
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).not.toContain('_ga_KBRX8BS5=')
+  })
+
+  it('does not delete unrelated cookies', () => {
+    document.cookie = `${CONSENT_COOKIE_NAME}=${JSON.stringify({ analytics: false, version: 1 })}`
+    deleteGoogleAnalyticsCookies()
+    expect(document.cookie).toContain(CONSENT_COOKIE_NAME)
+  })
+})
+
+describe('setConsentCookie', () => {
+  it('persists analytics: true to the consent cookie', () => {
+    setConsentCookie({ analytics: true })
+    const stored = getConsentCookie()
+    expect(stored?.confirmed).toBe(true)
+    expect(stored?.analytics).toBe(true)
+    expect(stored?.version).toBe(1)
+  })
+
+  it('persists analytics: false to the consent cookie', () => {
+    setConsentCookie({ analytics: false })
+    const stored = getConsentCookie()
+    expect(stored?.confirmed).toBe(true)
+    expect(stored?.analytics).toBe(false)
+  })
+
+  it('merges with the existing consent cookie', () => {
+    setConsentInDom(true)
+    setConsentCookie({ analytics: false })
+    expect(getConsentCookie()?.analytics).toBe(false)
+  })
+
+  it('does not include the essential key in the stored cookie', () => {
+    setConsentCookie({ analytics: true, essential: true })
+    expect(getConsentCookie()).not.toHaveProperty('essential')
+  })
+
+  it('deletes GA cookies when analytics is rejected', () => {
+    document.cookie = '_ga=GA1.1.todelete'
+    setConsentCookie({ analytics: false })
+    expect(cookie('_ga')).toBeNull()
+  })
+
+  it('does not delete GA cookies when analytics is accepted', () => {
+    document.cookie = '_ga=GA1.1.keepme'
+    setConsentCookie({ analytics: true })
+    expect(document.cookie).toContain('_ga=')
   })
 })
