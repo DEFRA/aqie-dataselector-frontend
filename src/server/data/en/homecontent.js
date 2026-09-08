@@ -582,7 +582,10 @@ export const english = {
         text10: '1 minute',
         text11:
           "Application related data is managed in this cookie. It's required for the application to work",
-        text12: '30 minutes'
+        text12: '4 hours',
+        text13: 'session_cookie',
+        text14: '_ga_PQP5766L23',
+        text15: '_ga'
       },
       paragraphs: {
         w1: '',
@@ -605,7 +608,7 @@ export const english = {
         q: 'the device and browser you use',
         r: 'Yes',
         s: 'No',
-        u: 'The cookies _ga_ and _gat_UA-[G-V4MBMR0QPC] will only be active if you accept cookies. If you do not accept cookies, they may still appear in your cookie session, but they will not be active.',
+        u: 'The cookies _ga and _ga_PQP5766L23  will only be active if you accept cookies. If you do not accept cookies, they may still appear in your cookie session, but they will not be active.',
         v: "We use Google Analytics software to understand how people use the 'get air pollution data' service. We do this to: ",
         v1: 'help make sure the site is meeting the needs of its users',
         v2: 'help us make improvements',
