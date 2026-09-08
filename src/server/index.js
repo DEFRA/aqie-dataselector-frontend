@@ -1,5 +1,6 @@
 import hapi from '@hapi/hapi'
 import crumb from '@hapi/crumb'
+import Scooter from '@hapi/scooter'
 import { config } from '~/src/config/config.js'
 import { nunjucksConfig } from '~/src/config/nunjucks/nunjucks.js'
 import { router } from './router.js'
@@ -22,6 +23,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    Scooter,
     contentSecurityPolicy,
     // crumb before nunjucksConfig ensures the token is in view context before Vision renders
     {
