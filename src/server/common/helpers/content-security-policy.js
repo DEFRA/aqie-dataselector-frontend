@@ -2,29 +2,34 @@
 // Generates nonces for inline scripts (more secure than 'unsafe-inline').
 
 import Blankie from 'blankie'
+import { cspDirectives } from '~/src/server/common/constants/csp-directives.js'
 
 export const contentSecurityPolicy = {
   plugin: Blankie,
   options: {
-    fontSrc: ['self'],
-    imgSrc: ['self', 'https://*.googletagmanager.com', 'https://*.google-analytics.com'],
+    fontSrc: [cspDirectives.self],
+    imgSrc: [
+      cspDirectives.self,
+      cspDirectives.gaTagmanager,
+      cspDirectives.gaAnalytics
+    ],
     scriptSrc: [
-      'self',
-      'https://*.googletagmanager.com',
-      'https://*.google-analytics.com'
+      cspDirectives.self,
+      cspDirectives.gaTagmanager,
+      cspDirectives.gaAnalytics
     ],
-    styleSrc: ['self'],
+    styleSrc: [cspDirectives.self],
     connectSrc: [
-      'self',
-      'https://www.google.com',
-      'https://*.google-analytics.com',
-      'https://*.analytics.google.com',
-      'https://*.googletagmanager.com'
+      cspDirectives.self,
+      cspDirectives.googleDomain,
+      cspDirectives.gaAnalytics,
+      cspDirectives.gaAnalyticsAlt,
+      cspDirectives.gaTagmanager
     ],
-    frameSrc: ['https://www.googletagmanager.com'],
-    frameAncestors: ['self'],
-    formAction: ['self'],
-    manifestSrc: ['self'],
+    frameSrc: [cspDirectives.gaTagmanager],
+    frameAncestors: [cspDirectives.self],
+    formAction: [cspDirectives.self],
+    manifestSrc: [cspDirectives.self],
     generateNonces: true
   }
 }
