@@ -207,7 +207,7 @@
 </div>
 
 {# Restore AURN station count from sessionStorage if available #}
-<script>
+<script nonce="{{ nonce }}">
   (function () {
     var countEl = document.getElementById('station-count');
     if (!countEl) return;
@@ -228,7 +228,7 @@
 {# Auto-redirect after AURN download completes #}
 {% if downloadresultnojs %}
   <span id="auto-download" data-url="{{ downloadresultnojs | urlencode }}" hidden></span>
-  <script>
+  <script nonce="{{ nonce }}">
     (function () {
       var el = document.getElementById('station-count');
       if (el) {
@@ -257,7 +257,7 @@
 {# Auto-redirect after UKEAP download completes #}
 {% if downloadukeapresult %}
   <span id="auto-download-ukeap" data-url="{{ downloadukeapresult | urlencode }}" hidden></span>
-  <script>
+  <script nonce="{{ nonce }}">
     (function () {
       var holder = document.getElementById('auto-download-ukeap');
       if (!holder) return;

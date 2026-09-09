@@ -4,7 +4,7 @@
  {% from "govuk/components/tabs/macro.njk" import govukTabs %}
    {% from "govuk/components/details/macro.njk" import govukDetails %}
 <script src="/path/to/govuk-frontend/govuk/all.js"></script>
-<script>
+<script nonce="{{ nonce }}">
   // If JS is enabled, reload with ?js=1
   if (!window.location.search.includes('js=1')) {
     var newSearch = window.location.search

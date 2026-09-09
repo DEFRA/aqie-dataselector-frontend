@@ -5,7 +5,7 @@
    {% from "govuk/components/details/macro.njk" import govukDetails %}
 <script src="/path/to/govuk-frontend/govuk/all.js"></script>
 
-  <script>
+  <script nonce="{{ nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
       window.GOVUKFrontend.initAll();
       // Show the map toggletip only if JS is enabled
@@ -548,13 +548,13 @@
                {% endif%}      
               
               
-              <script>
+              <script nonce="{{ nonce }}">
 
       
           
     </script>
     {% if downloadresult %}
-  <script>
+  <script nonce="{{ nonce }}">
   
     var downloadresult = "{{ downloadresult | safe }}";
     var url = downloadresult;
@@ -576,7 +576,7 @@
   </noscript>
 </div>
       
-         <script> 
+         <script nonce="{{ nonce }}"> 
               
               let selyear;
        function updateYear(year) {

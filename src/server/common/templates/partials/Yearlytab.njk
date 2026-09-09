@@ -13,13 +13,14 @@
     
      
      
-{% if (selectedYear == '2026' or selectedYear == 2026) %}
+{# The current year is still running, so its data only goes up to today.
+   Every earlier year is complete. Loose == so a string or numeric year both
+   match currentYear. #}
+{% if selectedYear == currentYear %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
-{% endif %}       
-
-{# <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p> #}
+{% endif %}
  <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
@@ -28,9 +29,11 @@
  <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
  role="tab" aria-controls="panel-{{ year }}"
  name="year_selected" value="{{ year }}" 
- onclick="updateYear({{ year }})"  
+ onclick="updateYear({{ year }})"
  {% if year == selectedYear %}
- aria-current="page" 
+ aria-current="page" aria-selected="true"
+ {% else %}
+ aria-selected="false"
  {% endif %}>
  {{ year }}</a>
     </li>
@@ -48,24 +51,22 @@
   </noscript>
 </div>
       
-         <script> 
-              
-              let selyear;
+         <script nonce="{{ nonce }}">
+    /* Taken from the server rather than the browser clock, so a client with a
+       skewed clock or a different timezone still sees the same date range and
+       month name as the server-rendered markup. */
+    var CURRENT_YEAR = {{ currentYear | dump | safe }};
+    var CURRENT_DATE = {{ currentdate | dump | safe }};
+
        function updateYear(year) {
-    selyear = year;
-  // console.log( document.getElementById('link-'+selyear))
-    //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getDate()} ${currentDate.toLocaleString('default', { month: 'long' })}`;
-  
-    if( year === '2026' || year === 2026)
-    {
- document.getElementById('duration_current').textContent = '1 January to ' + formattedDate;
- }else
- {
-  document.getElementById('duration_current').textContent = '1 January to 31 December';
- }
+
+    // The current year is still running, so its data only goes up to today.
+    document.getElementById('duration_current').textContent =
+        Number(year) === Number(CURRENT_YEAR)
+            ? '1 January to ' + CURRENT_DATE
+            : '1 January to 31 December';
+
     var links = document.querySelectorAll('.moj-sub-navigation__link');
     links.forEach(function(link) {
         link.removeAttribute('aria-current');
@@ -77,38 +78,17 @@
     if (selectedLink) {
         selectedLink.setAttribute('aria-current', 'page');
         selectedLink.setAttribute('aria-selected', 'true');
-        //selectedLink.setAttribute(' tabindex', 0);
-    }else{
-      selectedLink.setAttribute('aria-selected', 'false');
     }
-const selectedy = year;
 
-    fetch(`/rendertable/${selectedy}`)
+    fetch(`/rendertable/${year}`)
         .then(response => response.text())
         .then(data => {
-            document.getElementById('yearlytable-container').innerHTML = data;             
-
+            document.getElementById('yearlytable-container').innerHTML = data;
         })
         .catch(error => console.error('Error fetching partial content:', error));
-    
-   
    }
 
-// Check if there is already a selected year and set aria-current
-document.addEventListener('DOMContentLoaded', () => {
-
-    const selectedYearElement = document.getElementById('selectedYear');
-    const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
-      document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
-     // console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
-    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
-
-    if (selectedYear) {
-        updateYear(selectedYear);
-    }
-   
-});
-
-
-
+/* No DOMContentLoaded work is needed: the selected year's table, headings and
+   aria-current/aria-selected state are all rendered server side by
+   stationdetails/controller.js. updateYear only runs on a tab click. */
        </script>

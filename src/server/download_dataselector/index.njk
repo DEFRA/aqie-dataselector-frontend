@@ -235,7 +235,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ nonce }}">
   document.addEventListener('DOMContentLoaded', function () {
     const tabs = document.querySelectorAll('.govuk-tabs__tab');
     const panels = document.querySelectorAll('.govuk-tabs__panel');
@@ -263,7 +263,7 @@
     </div>
   </div>
 </div>
-<script>
+<script nonce="{{ nonce }}">
 async function getAPIdownload(year, dataSource, networkId = '') {
    
     // Show loading indicator
@@ -607,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
  {% if downloadaurnresult %}
-  <script>
+  <script nonce="{{ nonce }}">
 
 
     var downloadaurnresult1 = "{{ downloadaurnresult | safe }}";
