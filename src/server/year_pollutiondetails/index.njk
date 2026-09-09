@@ -8,11 +8,13 @@
   <script nonce="{{ nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
       window.GOVUKFrontend.initAll();
+      
+      // Event listener for download button (replaces onclick handler for CSP compliance)
+      document.querySelector('.download-stn-details')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        getAPIstn_details();
+      });
     });
-    
-       
-        
-    
   </script>
 {% block content %}
 <div class="govuk-grid-row">
@@ -22,7 +24,7 @@
                   <div class="govuk-grid-column-full">
                     <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
  
-                    <a id="download-link" href="javascript:void(0)" onclick = "getAPIstn_details()" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a id="download-link" href="#" class="download-stn-details aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" role="button">
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
                         <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>

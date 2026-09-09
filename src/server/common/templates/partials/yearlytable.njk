@@ -302,7 +302,7 @@
                   <div class="govuk-grid-column-full">
                     <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
  
-   <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Hourly')" role="button" 
+   <a id="download-all-hourly" href="#" role="button" 
    class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
    aria-label="Download hourly data for All pollutants">
                 <span class="aq-button-secondary__icon">
@@ -317,7 +317,7 @@
 
 <br>
 
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      <a id="download-all-daily" href="#" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       aria-label=" Download daily average data for All pollutants"
                       >
                 
@@ -334,7 +334,7 @@
 
                     <br>
 
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('AllPollutants','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                    <a id="download-all-annual" href="#" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for All pollutants"
                     >
                 
@@ -353,7 +353,7 @@
  {% for pollutant in tabledata %}
 <h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
  
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                    <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Hourly" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                      aria-label="Download hourly data for {{pollutant.pollutantName}}"   
                     >
                 
@@ -371,7 +371,7 @@
                     </a>
 
 <br>
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Daily" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -389,7 +389,7 @@
                     </a>
                     <br>
                     
-                  <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant.pollutantName}}','Annual')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                  <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Annual" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
                         aria-label="Download annual average data for {{pollutant.pollutantName}}"
                     >
                 
@@ -419,7 +419,7 @@
                {% endif%}      
               
               
-              <script>
+              <script nonce="{{ nonce }}">
 (function () {
   function initTableToggleips() {
     var scrollContainer = document.querySelector('.table-scroll-container');
@@ -470,7 +470,7 @@
 })();
 </script>
 
-              <script>
+              <script nonce="{{ nonce }}">
 
       async function getAPIstn_details1(pollutants,freq) {  
       
@@ -496,8 +496,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
           
     </script>
+    <script nonce="{{ nonce }}">
+      // Event listeners for download buttons
+      document.getElementById('download-all-hourly')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        getAPIstn_details1('AllPollutants', 'Hourly');
+      });
+      
+      document.getElementById('download-all-daily')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        getAPIstn_details1('AllPollutants', 'Daily');
+      });
+      
+      document.getElementById('download-all-annual')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        getAPIstn_details1('AllPollutants', 'Annual');
+      });
+      
+      // Event listeners for pollutant-specific download buttons
+      document.querySelectorAll('.download-pollutant')?.forEach((button) => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const pollutant = button.getAttribute('data-pollutant');
+          const frequency = button.getAttribute('data-frequency');
+          getAPIstn_details1(pollutant, frequency);
+        });
+      });
+    </script>
     {% if downloadresult %}
-  <script>
+  <script nonce="{{ nonce }}">
   
     var downloadresult = "{{ downloadresult | safe }}";
     var url = downloadresult;

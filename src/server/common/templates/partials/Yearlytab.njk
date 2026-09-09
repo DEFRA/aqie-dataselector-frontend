@@ -25,10 +25,9 @@
   <ul class="moj-sub-navigation__list"  role="tablist">
   {% for year in years %}
     <li class="moj-sub-navigation__item">
- <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
+ <a class="moj-sub-navigation__link" id="link-{{ year }}" href="#" data-year="{{ year }}"
  role="tab" aria-controls="panel-{{ year }}"
  name="year_selected" value="{{ year }}" 
- onclick="updateYear({{ year }})"  
  {% if year == selectedYear %}
  aria-current="page" 
  {% endif %}>
@@ -48,7 +47,7 @@
   </noscript>
 </div>
       
-         <script> 
+         <script nonce="{{ nonce }}"> 
               
               let selyear;
        function updateYear(year) {
@@ -112,3 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
        </script>
+    <script nonce="{{ nonce }}">
+      // Event listener for year navigation links
+      document.querySelectorAll('.moj-sub-navigation__link[data-year]')?.forEach((link) => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const year = link.getAttribute('data-year');
+          updateYear(year);
+        });
+      });
+    </script>

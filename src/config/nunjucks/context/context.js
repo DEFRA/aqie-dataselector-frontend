@@ -44,12 +44,17 @@ export function context(request) {
       webpackManifest = {}
     }
   }
+  // Get nonce from Blankie plugin (set during onRequest lifecycle)
+  // Blankie generates this nonce and adds it to CSP headers
+  const nonce = request.plugins.blankie?.nonce || ''
+
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
     currentPath: request.url.pathname,
+    nonce,
     // Server-side banner visibility — covers no-JS users where the inline script can't run
     showCookieBanner: !hasValidConsent(request) && request.path !== '/cookies',
     // Only render GTM when analytics consent has been given

@@ -89,7 +89,7 @@
     </div>
 
     {% if yearrange == 'Single' and stationcount > 0 %}
-    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}/AURN" onclick="getAPIdownload('{{ finalyear }}', 'AURN'); return false;" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}/AURN" class="download-aurn-single aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" role="button" data-year="{{ finalyear }}" data-source="AURN"
       aria-label=" Download daily average data for {{pollutant.pollutantName}}">
       <span class="aq-button-secondary__icon">
         <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -115,14 +115,14 @@
         <tr class="govuk-table__row">
           <th scope="row" class="govuk-table__header">Download all years</th>
           <td class="govuk-table__cell">
-            <a href="/emailrequest" onclick="this.href='/emailrequest/AURN?pollutantID={{ aurnPollutantID if aurnPollutantID is not none else '' }}'; return true;" class="govuk-link">Request Data</a>
+            <a href="/emailrequest" class="email-request-aurn-all-years govuk-link" data-pollutant="{{ aurnPollutantID if aurnPollutantID is not none else '' }}">Request Data</a>
           </td>
         </tr>
         {% for year in finalyear %}
         <tr class="govuk-table__row">
           <th scope="row" class="govuk-table__header">{{ year }}</th>
           <td class="govuk-table__cell">
-            <a href="/emailrequest" onclick="getAPIdownload('{{ year }}', 'AURN'); return false;" class="govuk-link">Download hourly data</a>
+            <a href="/download_aurn_nojs/{{ year }}/AURN" class="download-aurn-multi govuk-link" data-year="{{ year }}" data-source="AURN">Download hourly data</a>
           </td>
         </tr>
         {% endfor %}
@@ -182,9 +182,9 @@
         {% else %}
           {% if yearrange == 'Single' %}
           <a href="/download_aurn_nojs/{{ finalyear }}/NON-AURN"
-             onclick="getAPIdownload('{{ finalyear }}', 'NON-AURN', '{{ network.id if network.id is not none else '' }}'); return false;"
+             class="download-nonaurn-single aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
              role="button"
-             class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-5"
+             data-year="{{ finalyear }}" data-source="NON-AURN" data-network="{{ network.id if network.id is not none else '' }}"
              aria-label="Download data for {{ network.networkType }}">
             <span class="aq-button-secondary__icon">
               <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -209,7 +209,7 @@
               <tr class="govuk-table__row">
                 <th scope="row" class="govuk-table__header">Download all years</th>
                 <td class="govuk-table__cell">
-                  <a href="/emailrequest" onclick="this.href='/emailrequest/NON-AURN?networkId={{ network.id if network.id is not none else '' }}&pollutantID={{ network.pollutantID if network.pollutantID is not none else '' }}'; return true;" class="govuk-link">Request Data</a>
+                  <a href="/emailrequest" class="email-request-nonaurn govuk-link" data-network="{{ network.id if network.id is not none else '' }}" data-pollutant="{{ network.pollutantID if network.pollutantID is not none else '' }}">Request Data</a>
                 </td>
               </tr>
               {% for year in finalyear %}
@@ -217,8 +217,7 @@
                 <th scope="row" class="govuk-table__header">{{ year }}</th>
                 <td class="govuk-table__cell">
                   <a href="/download_aurn_nojs/{{ year }}/NON-AURN"
-                     onclick="getAPIdownload('{{ year }}', 'NON-AURN', '{{ network.id if network.id is not none else '' }}'); return false;"
-                     class="govuk-link">Download monthly data</a>
+                     class="download-nonaurn-multi govuk-link" data-year="{{ year }}" data-source="NON-AURN" data-network="{{ network.id if network.id is not none else '' }}">Download monthly data</a>
                 </td>
               </tr>
               {% endfor %}
@@ -264,6 +263,70 @@
   </div>
 </div>
 <script nonce="{{ nonce }}">
+// Event listeners for download buttons (replaces onclick handlers for CSP compliance)
+document.addEventListener('DOMContentLoaded', function() {
+  // AURN single year download
+  document.querySelector('.download-aurn-single')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const year = e.target.closest('a')?.getAttribute('data-year');
+    const source = e.target.closest('a')?.getAttribute('data-source');
+    if (year && source) getAPIdownload(year, source);
+  });
+
+  // AURN email request for all years
+  document.querySelectorAll('.email-request-aurn-all-years').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pollutantID = e.target.closest('a')?.getAttribute('data-pollutant');
+      const url = `/emailrequest/AURN?pollutantID=${encodeURIComponent(pollutantID || '')}`;
+      window.location.href = url;
+    });
+  });
+
+  // AURN multiple years download
+  document.querySelectorAll('.download-aurn-multi').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const year = e.target.closest('a')?.getAttribute('data-year');
+      const source = e.target.closest('a')?.getAttribute('data-source');
+      if (year && source) getAPIdownload(year, source);
+    });
+  });
+
+  // NON-AURN single year download
+  document.querySelectorAll('.download-nonaurn-single').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const year = e.target.closest('a')?.getAttribute('data-year');
+      const source = e.target.closest('a')?.getAttribute('data-source');
+      const network = e.target.closest('a')?.getAttribute('data-network');
+      if (year && source) getAPIdownload(year, source, network || undefined);
+    });
+  });
+
+  // NON-AURN email request for all years
+  document.querySelectorAll('.email-request-nonaurn').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const network = e.target.closest('a')?.getAttribute('data-network');
+      const pollutant = e.target.closest('a')?.getAttribute('data-pollutant');
+      const url = `/emailrequest/NON-AURN?networkId=${encodeURIComponent(network || '')}&pollutantID=${encodeURIComponent(pollutant || '')}`;
+      window.location.href = url;
+    });
+  });
+
+  // NON-AURN multiple years download
+  document.querySelectorAll('.download-nonaurn-multi').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const year = e.target.closest('a')?.getAttribute('data-year');
+      const source = e.target.closest('a')?.getAttribute('data-source');
+      const network = e.target.closest('a')?.getAttribute('data-network');
+      if (year && source) getAPIdownload(year, source, network || undefined);
+    });
+  });
+});
+
 async function getAPIdownload(year, dataSource, networkId = '') {
    
     // Show loading indicator

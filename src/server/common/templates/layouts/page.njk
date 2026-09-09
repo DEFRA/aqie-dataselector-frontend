@@ -21,6 +21,7 @@
 {% endblock %}
 
 {% block head %}
+  <script nonce="{{ nonce }}">document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');</script>
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
   
 {% endblock %}

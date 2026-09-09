@@ -17,8 +17,9 @@ export const contentSecurityPolicy = {
       cspDirectives.self,
       cspDirectives.gaTagmanager,
       cspDirectives.gaAnalytics
+      // Note: unsafe-inline NOT needed - all inline handlers refactored to event listeners
     ],
-    styleSrc: [cspDirectives.self],
+    styleSrc: [cspDirectives.self, "'unsafe-inline'"],
     connectSrc: [
       cspDirectives.self,
       cspDirectives.googleDomain,

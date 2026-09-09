@@ -22,7 +22,7 @@
                   <div class="govuk-grid-column-full">
                     <h2 class="govuk-heading-m" id="all-p">All pollutants</h2>
  
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a id="download-all-hourly" href="#"  role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -39,7 +39,7 @@
 
 <br>
 
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('all','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                      <a id="download-all-daily" href="#"  role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -57,7 +57,7 @@
  {% for pollutant in pollutantKeys %}
 <h2 class="govuk-heading-m" id="all-p">{{pollutant}}</h2>
  
-                    <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant}}','Hourly')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                    <a class="download-pollutant-hourly" href="#" data-pollutant="{{pollutant}}" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -74,7 +74,7 @@
 
 <br>
 
-                      <a id="download-link" href="#"  onclick = "getAPIstn_details1('{{pollutant}}','Daily')" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
+                      <a class="download-pollutant-daily" href="#" data-pollutant="{{pollutant}}" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3">
                 
                 <span class="aq-button-secondary__icon">
                     <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
@@ -99,7 +99,7 @@
            
 
     
-              <script>
+              <script nonce="{{ nonce }}">
       
            async function getAPIstn_details1(pollutants,freq) {
             const selectedYearElement = document.getElementById('selectedYear');
@@ -154,7 +154,7 @@
 }); #}
     </script>
     {% if downloadresult %}
-  <script>
+  <script nonce="{{ nonce }}">
     // Your JavaScript code here
    
     var downloadresult = "{{ downloadresult | safe }}";
@@ -163,4 +163,32 @@
    
    window.location.href = url;
   </script>
+<script nonce="{{ nonce }}">
+  // Event listeners for download buttons (replaces onclick handlers for CSP compliance)
+  document.getElementById('download-all-hourly')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    getAPIstn_details1('all', 'Hourly');
+  });
+
+  document.getElementById('download-all-daily')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    getAPIstn_details1('all', 'Daily');
+  });
+
+  document.querySelectorAll('.download-pollutant-hourly').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pollutant = e.target.closest('a').getAttribute('data-pollutant');
+      getAPIstn_details1(pollutant, 'Hourly');
+    });
+  });
+
+  document.querySelectorAll('.download-pollutant-daily').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pollutant = e.target.closest('a').getAttribute('data-pollutant');
+      getAPIstn_details1(pollutant, 'Daily');
+    });
+  });
+</script>
 {% endif %} 
