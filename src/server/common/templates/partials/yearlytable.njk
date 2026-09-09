@@ -496,33 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
           
     </script>
-    <script nonce="{{ nonce }}">
-      // Event listeners for download buttons
-      document.getElementById('download-all-hourly')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        getAPIstn_details1('AllPollutants', 'Hourly');
-      });
-      
-      document.getElementById('download-all-daily')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        getAPIstn_details1('AllPollutants', 'Daily');
-      });
-      
-      document.getElementById('download-all-annual')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        getAPIstn_details1('AllPollutants', 'Annual');
-      });
-      
-      // Event listeners for pollutant-specific download buttons
-      document.querySelectorAll('.download-pollutant')?.forEach((button) => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          const pollutant = button.getAttribute('data-pollutant');
-          const frequency = button.getAttribute('data-frequency');
-          getAPIstn_details1(pollutant, frequency);
-        });
-      });
-    </script>
     {% if downloadresult %}
   <script nonce="{{ nonce }}">
   
