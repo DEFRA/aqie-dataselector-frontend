@@ -16,8 +16,11 @@ export const contentSecurityPolicy = {
     scriptSrc: [
       cspDirectives.self,
       cspDirectives.gaTagmanager,
-      cspDirectives.gaAnalytics
-      // Note: unsafe-inline NOT needed - all inline handlers refactored to event listeners
+      cspDirectives.gaAnalytics,
+      'https://code.jquery.com',
+      "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"
+      // sha256 hash for GOV.UK's inline script: document.body.className += ...
+      // This allows the GOV.UK template script to execute without nonce
     ],
     styleSrc: [cspDirectives.self, "'unsafe-inline'"],
     connectSrc: [
