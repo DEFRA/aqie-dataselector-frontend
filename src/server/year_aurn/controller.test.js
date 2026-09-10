@@ -149,6 +149,29 @@ describe('yearController', () => {
       mockRequest.method = 'post'
     })
 
+    it('Last 7 days sets a period ending today and redirects (no year input required)', () => {
+      // Date-aware formatter so both ends of the span are distinguishable
+      global.Intl = {
+        DateTimeFormat: jest.fn().mockImplementation(() => ({
+          format: (date) => date.toISOString().slice(0, 10)
+        }))
+      }
+      mockRequest.payload = { time: 'last7days' } // no year input required
+
+      yearController.handler(mockRequest, mockH)
+
+      // 7 days inclusive of today (2026-01-16)
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedTimePeriod',
+        '2026-01-10 to 2026-01-16'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'TimeSelectionMode',
+        'last7days'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
     it('YTD sets period with today and redirects (no start year in period)', () => {
       mockRequest.payload = { time: 'ytd' } // no start-year required
 

@@ -70,11 +70,24 @@ function enrichGroupsAndBuildOther(rawGroups) {
   return { enrichedGroups, otherGroups }
 }
 
+const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
+const CATEGORY_OTHER = 'Other data from Defra'
+
 // Known category headers returned by the API
-const KNOWN_CATEGORIES = new Set([
-  'Near real-time data from Defra',
-  'Other data from Defra'
-])
+const KNOWN_CATEGORIES = new Set([CATEGORY_NEAR_REALTIME, CATEGORY_OTHER])
+
+function getDatasourceCategoryType(groups) {
+  console.log('getDatasourceCategoryType: groups', groups)
+  const hasNearRealtime = groups.some(
+    (g) => g?.category === CATEGORY_NEAR_REALTIME
+  )
+  const hasOther = groups.some((g) => g?.category === CATEGORY_OTHER)
+
+  if (hasNearRealtime && hasOther) return 'both'
+  if (hasNearRealtime) return 'near-realtime-only'
+  if (hasOther) return 'other-only'
+  return 'unknown'
+}
 
 async function fetchDatasourceDev(body, pollutantID) {
   try {
@@ -92,6 +105,9 @@ async function fetchDatasourceDev(body, pollutantID) {
 
     logger.info(
       `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
+    )
+    console.log(
+      `Datasource API returned ${result} items for pollutantID ${pollutantID}`
     )
     return result
   } catch (error) {
@@ -157,7 +173,7 @@ export function groupDatasources(flat) {
       // Leading network with no preceding category header — ignore it
     }
   }
-
+  console.log(`Fetching data sources for pollutantID ${groups}`)
   return groups
 }
 
@@ -217,6 +233,10 @@ async function handleDatasourcePost(request, h) {
 async function resolveDatasourceGroups(request, h) {
   const datasourceGroups = request.yar.get('datasourceGroups') || []
   if (datasourceGroups.length > 0) {
+    request.yar.set(
+      'datasourceCategoryType',
+      getDatasourceCategoryType(datasourceGroups)
+    )
     return { groups: datasourceGroups }
   }
 
@@ -233,6 +253,10 @@ async function resolveDatasourceGroups(request, h) {
 
   const grouped = groupDatasources(flat)
   request.yar.set('datasourceGroups', grouped)
+  request.yar.set('datasourceCategoryType', getDatasourceCategoryType(grouped))
+  console.log(
+    `resolveDatasourceGroups:  request.yar.get('datasourceGroups') = ${request.yar.get('datasourceGroups')}`
+  )
   return { groups: grouped }
 }
 

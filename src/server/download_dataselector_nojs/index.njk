@@ -37,14 +37,22 @@
     </details>
 
     <!-- TABS UI -->
+    {% set selectedYearLower = (selectedyear or '') | lower %}
+    {% set timeSelectionModeLower = (TimeSelectionMode or '') | lower %}
+    {% set isLast7Days = ('last 7 days' in selectedYearLower) or ('last7days' in selectedYearLower) or (timeSelectionModeLower == 'last7days') %}
+    {% set forceNearRealtimeOnly = (downloadForceNearRealtimeOnly == true) or ((datasourceCategoryType == 'both') and isLast7Days) %}
+
     <div class="govuk-tabs" data-module="govuk-tabs">
       <h2 class="govuk-tabs__title">Contents</h2>
       <ul class="govuk-tabs__list">
+        {% if not aurnUnavailable %}
         <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
           <a class="govuk-tabs__tab" href="#tab-nearrealtime">Near real-time data from Defra</a>
         </li>
-        {% if not ukeapUnavailable %}
-        <li class="govuk-tabs__list-item">
+        {% endif %}
+
+        {% if not ukeapUnavailable and not forceNearRealtimeOnly %}
+        <li class="govuk-tabs__list-item{% if aurnUnavailable %} govuk-tabs__list-item--selected{% endif %}">
           <a class="govuk-tabs__tab" href="#tab-other">Other data from Defra</a>
         </li>
         {% endif %}
@@ -114,8 +122,8 @@
       </div>
 
       <!-- OTHER DATA TAB -->
-      {% if not ukeapUnavailable %}
-      <div class="govuk-tabs__panel" id="tab-other">
+      {% if not ukeapUnavailable and not forceNearRealtimeOnly %}
+      <div class="govuk-tabs__panel{% if not aurnUnavailable %} govuk-tabs__panel--hidden{% endif %}" id="tab-other">
         <div class="govuk-!-margin-top-3">
           <h2 class="govuk-heading-m">Other data from Defra</h2>
           <p class="govuk-body">Data is measured hourly, weekly or monthly depending on the network.</p>

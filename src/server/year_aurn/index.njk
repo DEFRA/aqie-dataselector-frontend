@@ -25,7 +25,7 @@
       <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
         <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-            <h1 class="govuk-heading-l">Add year(s)</h1>
+            <h1 class="govuk-heading-l">Add time period</h1>
           </legend>
 
           {% if errors.details.time %}
@@ -34,9 +34,22 @@
             </p>
           {% endif %}
 
-          <div id="time-hint" class="govuk-hint">Choose how you want to add years</div>
+          {# <div id="time-hint" class="govuk-hint">Choose how you want to add years</div> #}
 
           <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
+            {# Last 7 days #}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="time-last7days"
+                     name="time"
+                     type="radio"
+                     value="last7days"
+                     aria-describedby="time-last7days-hint"
+                     {% if formData.time == 'last7days' %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="time-last7days">Last 7 days</label>
+              <div id="time-last7days-hint" class="govuk-hint govuk-radios__hint">Only near real time data from Defra is available</div>
+            </div>
+
             {# Year to date #}
             <div class="govuk-radios__item">
               <input class="govuk-radios__input"

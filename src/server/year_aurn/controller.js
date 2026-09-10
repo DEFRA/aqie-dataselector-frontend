@@ -8,7 +8,8 @@ import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import {
   MIN_YEAR,
   EXAMPLE_YEAR,
-  MAX_YEARS_RANGE
+  MAX_YEARS_RANGE,
+  DAYS_IN_SEVEN_DAYS
 } from '~/src/server/common/constants/magic-numbers.js'
 import {
   isInternalNavigation,
@@ -47,7 +48,8 @@ const MSG_END_AFTER_START =
   'End year must be the same as or after the start year.'
 const MSG_MAX_FIVE_YEARS = 'Choose up to 5 whole years at a time'
 
-const HREF_TIME_YTD = '#time-ytd'
+// Error summary anchors link to the first radio in the group
+const HREF_TIME_FIRST_OPTION = '#time-last7days'
 const MSG_SELECT_OPTION = 'Select an option before continuing'
 const MSG_SELECT_VALID_OPTION = 'Select a valid option'
 
@@ -275,14 +277,14 @@ function validatePostPayload(payload, request, errors) {
     addError(
       errors,
       MSG_SELECT_OPTION,
-      HREF_TIME_YTD,
+      HREF_TIME_FIRST_OPTION,
       'time',
       MSG_SELECT_OPTION
     )
     return
   }
 
-  if (payload.time === 'ytd') {
+  if (payload.time === 'last7days' || payload.time === 'ytd') {
     return
   }
 
@@ -299,7 +301,7 @@ function validatePostPayload(payload, request, errors) {
   addError(
     errors,
     MSG_SELECT_VALID_OPTION,
-    HREF_TIME_YTD,
+    HREF_TIME_FIRST_OPTION,
     'time',
     MSG_SELECT_VALID_OPTION
   )
@@ -313,6 +315,17 @@ function buildTimePeriod(payload) {
     month: 'long',
     year: 'numeric'
   }).format(today)
+
+  if (payload.time === 'last7days') {
+    const startDate = new Date(today)
+    startDate.setDate(startDate.getDate() - (DAYS_IN_SEVEN_DAYS - 1))
+    const formattedStart = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(startDate)
+    return `${formattedStart} to ${formattedToday}`
+  }
 
   if (payload.time === 'ytd') {
     return `${JANUARY_FIRST} to ${formattedToday}`

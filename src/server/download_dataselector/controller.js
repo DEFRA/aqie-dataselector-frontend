@@ -84,7 +84,12 @@ export const downloadDataselectorController = {
     const datasourceGroups = Array.isArray(rawDatasourceGroups)
       ? rawDatasourceGroups
       : []
-
+    console.log(
+      'Datasourceavaialbility in do',
+      request.yar.get('Datasourceavailability')
+    )
+    console.log('TimeSelectionMode in do', request.yar.get('TimeSelectionMode'))
+    console.log('yearrange', request.yar.get('yearrange'))
     // Helper function to render error state
     const renderErrorState = (
       errormsg,
@@ -168,6 +173,8 @@ export const downloadDataselectorController = {
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,
+      datasourceavailability: request.yar.get('Datasourceavailability'),
+      timperiodselectionmode: request.yar.get('TimeSelectionMode'),
       finalyear:
         request.yar
           .get('finalyear')

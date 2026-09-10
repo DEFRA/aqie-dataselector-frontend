@@ -36,7 +36,7 @@ export const englishNew = {
       c: 'Add',
       d: 'View',
       e: ' Data sources',
-      f: 'Year',
+      f: 'Time period',
       g: 'None selected',
       h: 'time period',
       i: 'Location',
