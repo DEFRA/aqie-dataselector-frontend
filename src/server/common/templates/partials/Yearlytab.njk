@@ -121,3 +121,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
     </script>
+    <script nonce="{{ nonce }}">
+      // Delegated listener survives innerHTML swaps of #yearlytable-container
+      document.getElementById('yearlytable-container')?.addEventListener('click', (e) => {
+        const target = e.target.closest('#download-all-hourly, #download-all-daily, #download-all-annual, .download-pollutant');
+        if (!target) return;
+        e.preventDefault();
+
+        if (target.classList.contains('download-pollutant')) {
+          const pollutant = target.getAttribute('data-pollutant');
+          const frequency = target.getAttribute('data-frequency');
+          getAPIstn_details1(pollutant, frequency);
+          return;
+        }
+
+        const frequencyById = {
+          'download-all-hourly': 'Hourly',
+          'download-all-daily': 'Daily',
+          'download-all-annual': 'Annual'
+        };
+        getAPIstn_details1('AllPollutants', frequencyById[target.id]);
+      });
+    </script>
