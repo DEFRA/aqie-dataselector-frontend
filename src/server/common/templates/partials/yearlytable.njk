@@ -353,7 +353,7 @@
  {% for pollutant in tabledata %}
 <h3 class="govuk-heading-m" id="all-p">{{pollutant.pollutantName}}</h3>
  
-                    <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Hourly" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                    <a href="#" class="download-pollutant aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Hourly" role="button"
                      aria-label="Download hourly data for {{pollutant.pollutantName}}"   
                     >
                 
@@ -371,7 +371,7 @@
                     </a>
 
 <br>
-                      <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Daily" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                      <a href="#" class="download-pollutant aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Daily" role="button"
                       
                         aria-label=" Download daily average data for {{pollutant.pollutantName}}">
                 
@@ -389,7 +389,7 @@
                     </a>
                     <br>
                     
-                  <a href="#" class="download-pollutant" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Annual" role="button" class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                  <a href="#" class="download-pollutant aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" data-pollutant="{{pollutant.pollutantName}}" data-frequency="Annual" role="button"
                         aria-label="Download annual average data for {{pollutant.pollutantName}}"
                     >
                 
