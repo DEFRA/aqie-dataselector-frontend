@@ -17,7 +17,7 @@ describe('downloadDataselectornojsController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => {}) // silence controller debug log
+    jest.spyOn(console, 'log').mockImplementation(() => undefined) // silence controller debug log
 
     const session = {}
     request = {

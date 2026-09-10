@@ -77,7 +77,6 @@ const CATEGORY_OTHER = 'Other data from Defra'
 const KNOWN_CATEGORIES = new Set([CATEGORY_NEAR_REALTIME, CATEGORY_OTHER])
 
 function getDatasourceCategoryType(groups) {
-  console.log('getDatasourceCategoryType: groups', groups)
   const hasNearRealtime = groups.some(
     (g) => g?.category === CATEGORY_NEAR_REALTIME
   )
@@ -105,9 +104,6 @@ async function fetchDatasourceDev(body, pollutantID) {
 
     logger.info(
       `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
-    )
-    console.log(
-      `Datasource API returned ${result} items for pollutantID ${pollutantID}`
     )
     return result
   } catch (error) {
@@ -173,7 +169,10 @@ export function groupDatasources(flat) {
       // Leading network with no preceding category header — ignore it
     }
   }
-  console.log(`Fetching data sources for pollutantID ${groups}`)
+
+  logger.info(
+    `Fetching data sources: groupCount=${groups.length}, categories=${groups.map((g) => g.category).join(',')}`
+  )
   return groups
 }
 
@@ -254,8 +253,8 @@ async function resolveDatasourceGroups(request, h) {
   const grouped = groupDatasources(flat)
   request.yar.set('datasourceGroups', grouped)
   request.yar.set('datasourceCategoryType', getDatasourceCategoryType(grouped))
-  console.log(
-    `resolveDatasourceGroups:  request.yar.get('datasourceGroups') = ${request.yar.get('datasourceGroups')}`
+  logger.info(
+    `resolveDatasourceGroups: datasourceGroups count=${grouped.length}`
   )
   return { groups: grouped }
 }

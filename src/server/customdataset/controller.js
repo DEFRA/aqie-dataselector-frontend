@@ -22,6 +22,9 @@ import {
 const logger = createLogger()
 
 const CUSTOMDATASET_VIEW = 'customdataset/index'
+const DAYS_IN_WEEK_OFFSET = 6
+const LAST7DAYS_WARNING_TEXT =
+  'Only near real-time data from Defra is available for 7 days'
 
 export { invokeStationCount } from '~/src/server/customdataset/station-count.js'
 
@@ -75,8 +78,7 @@ function handleClearPath(request, h, backUrl) {
     datasourceGroups: request.yar.get('datasourceGroups') || [],
     datasourceCategoryType: getDatasourceCategoryType(request),
     showLast7DaysWarning: false,
-    last7DaysWarningText:
-      'Only near real-time data from Defra is available for 7 days',
+    last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl
   })
@@ -203,16 +205,16 @@ function parseYearRange(selectedyear, request) {
   if (isLast7DaysSelection(request)) {
     const today = new Date()
     const startDate = new Date(today)
-    startDate.setDate(today.getDate() - 6) // inclusive 7-day window
+    startDate.setDate(today.getDate() - DAYS_IN_WEEK_OFFSET) // inclusive 7-day window
 
     const startYear = startDate.getFullYear()
     const endYear = today.getFullYear()
 
     if (startYear === endYear) {
       request.yar.set('yearrange', 'Single')
-      const finalyear = String(endYear)
-      request.yar.set('finalyear', finalyear)
-      return finalyear
+      const finalYearValue = String(endYear)
+      request.yar.set('finalyear', finalYearValue)
+      return finalYearValue
     }
 
     request.yar.set('yearrange', 'Multiple')
@@ -220,9 +222,9 @@ function parseYearRange(selectedyear, request) {
     for (let y = startYear; y <= endYear; y++) {
       yearList.push(y)
     }
-    const finalyear = yearList.join(',')
-    request.yar.set('finalyear', finalyear)
-    return finalyear
+    const finalYearValue = yearList.join(',')
+    request.yar.set('finalyear', finalYearValue)
+    return finalYearValue
   }
 
   const years = selectedyear.match(/\d{4}/g)
@@ -378,18 +380,26 @@ function normalizeToken(value) {
 }
 
 function inferDatasourceCategoryTypeFromGroups(groups) {
-  const normalizedCategories = (Array.isArray(groups) ? groups : []).map((g) =>
-    String(g?.category || '')
-      .toLowerCase()
-      .trim()
+  const normalizedCategories = new Set(
+    (Array.isArray(groups) ? groups : []).map((g) =>
+      String(g?.category || '')
+        .toLowerCase()
+        .trim()
+    )
   )
 
-  const hasNearRealtime = normalizedCategories.includes(CATEGORY_NEAR_REALTIME)
-  const hasOther = normalizedCategories.includes(CATEGORY_OTHER)
+  const hasNearRealtime = normalizedCategories.has(CATEGORY_NEAR_REALTIME)
+  const hasOther = normalizedCategories.has(CATEGORY_OTHER)
 
-  if (hasNearRealtime && hasOther) return 'both'
-  if (hasNearRealtime) return 'near-realtime-only'
-  if (hasOther) return 'other-only'
+  if (hasNearRealtime && hasOther) {
+    return 'both'
+  }
+  if (hasNearRealtime) {
+    return 'near-realtime-only'
+  }
+  if (hasOther) {
+    return 'other-only'
+  }
   return 'unknown'
 }
 
@@ -456,8 +466,7 @@ function renderBothZeroView(request, h, backUrl) {
     datasourceGroups: request.yar.get('datasourceGroups') || [],
     datasourceCategoryType: getDatasourceCategoryType(request),
     showLast7DaysWarning: shouldShowLast7DaysDatasourceWarning(request),
-    last7DaysWarningText:
-      'Only near real-time data from Defra is available for 7 days',
+    last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
@@ -490,8 +499,7 @@ function renderCustomDatasetView(request, h, backUrl) {
     datasourceCategoryType: getDatasourceCategoryType(request),
     showLast7DaysWarning:
       !showOtherOnlyError && shouldShowLast7DaysDatasourceWarning(request),
-    last7DaysWarningText:
-      'Only near real-time data from Defra is available for 7 days',
+    last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     ...(showOtherOnlyError ? getOtherOnlyTimePeriodErrorViewModel() : {})
