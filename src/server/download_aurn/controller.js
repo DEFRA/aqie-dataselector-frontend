@@ -203,12 +203,20 @@ function buildApiParams(request, dataSource, selectedyear) {
     networkId
   )
 
+  const normalizedTimeSelectionMode = String(
+    request.yar.get('TimeSelectionMode') || ''
+  )
+    .toLowerCase()
+    .replace(/[\s_-]/g, '')
+  const days = normalizedTimeSelectionMode === 'last7days' ? '7days' : ''
+
   return {
     pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),
     dataSource,
     networkId,
     Region: resolveRegion(request),
     regiontype: request.yar.get('Location'),
+    Days: days,
     Year: selectedyear,
     dataselectorfiltertype: 'dataSelectorHourly',
     dataselectordownloadtype: 'dataSelectorSingle'

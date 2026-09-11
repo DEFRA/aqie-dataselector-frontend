@@ -70,11 +70,33 @@ function enrichGroupsAndBuildOther(rawGroups) {
   return { enrichedGroups, otherGroups }
 }
 
+const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
+const CATEGORY_OTHER = 'Other data from Defra'
+const DATASOURCE_COUNT_FILTER_TYPE = 'dataSelectorCount'
+const CUSTOMDATASET_REDIRECT = '/customdataset'
+const AURN = 'AURN'
+const NON_AURN = 'NON-AURN'
+
 // Known category headers returned by the API
-const KNOWN_CATEGORIES = new Set([
-  'Near real-time data from Defra',
-  'Other data from Defra'
-])
+const KNOWN_CATEGORIES = new Set([CATEGORY_NEAR_REALTIME, CATEGORY_OTHER])
+
+function getDatasourceCategoryType(groups) {
+  const hasNearRealtime = groups.some(
+    (g) => g?.category === CATEGORY_NEAR_REALTIME
+  )
+  const hasOther = groups.some((g) => g?.category === CATEGORY_OTHER)
+
+  if (hasNearRealtime && hasOther) {
+    return 'both'
+  }
+  if (hasNearRealtime) {
+    return 'near-realtime-only'
+  }
+  if (hasOther) {
+    return 'other-only'
+  }
+  return 'unknown'
+}
 
 async function fetchDatasourceDev(body, pollutantID) {
   try {
@@ -154,10 +176,13 @@ export function groupDatasources(flat) {
     } else if (currentGroup) {
       currentGroup.networks.push(item)
     } else {
-      // Leading network with no preceding category header — ignore it
+      // Leading network with no preceding category header — ignored
     }
   }
 
+  logger.info(
+    `Fetching data sources: groupCount=${groups.length}, categories=${groups.map((g) => g.category).join(',')}`
+  )
   return groups
 }
 
@@ -181,15 +206,15 @@ async function recalculateStationCount(request, datasourceType) {
     Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
     regiontype: isCountry ? 'Country' : 'LocalAuthority',
     Year: finalyear,
-    dataselectorfiltertype: 'dataSelectorCount',
+    dataselectorfiltertype: DATASOURCE_COUNT_FILTER_TYPE,
     dataselectordownloadtype: ''
   }
   try {
     const [aurnCount, nonAurnCount] = await Promise.all([
-      invokeStationCount({ ...baseParams, dataSource: 'AURN', networkId: '' }),
+      invokeStationCount({ ...baseParams, dataSource: AURN, networkId: '' }),
       invokeStationCount({
         ...baseParams,
-        dataSource: 'NON-AURN',
+        dataSource: NON_AURN,
         networkId: nonAurnNetworkId
       })
     ])
@@ -198,7 +223,7 @@ async function recalculateStationCount(request, datasourceType) {
     request.yar.set('nooflocationukeap', nonAurnCount)
     request.yar.set(
       'nooflocation',
-      datasourceType === 'NON-AURN' ? nonAurnCount : aurnCount
+      datasourceType === NON_AURN ? nonAurnCount : aurnCount
     )
   } catch (error) {
     logger.error(`Station count re-calculation failed: ${errMsg(error)}`)
@@ -206,10 +231,10 @@ async function recalculateStationCount(request, datasourceType) {
 }
 
 async function handleDatasourcePost(request, h) {
-  const datasourceType = request.payload?.['datasource-type'] || 'AURN'
+  const datasourceType = request.payload?.['datasource-type'] || AURN
   request.yar.set('selectedDatasourceType', datasourceType)
   await recalculateStationCount(request, datasourceType)
-  return h.redirect('/customdataset')
+  return h.redirect(CUSTOMDATASET_REDIRECT)
 }
 
 // Resolve datasource groups from session, fetching as a fallback when empty.
@@ -217,6 +242,10 @@ async function handleDatasourcePost(request, h) {
 async function resolveDatasourceGroups(request, h) {
   const datasourceGroups = request.yar.get('datasourceGroups') || []
   if (datasourceGroups.length > 0) {
+    request.yar.set(
+      'datasourceCategoryType',
+      getDatasourceCategoryType(datasourceGroups)
+    )
     return { groups: datasourceGroups }
   }
 
@@ -233,11 +262,15 @@ async function resolveDatasourceGroups(request, h) {
 
   const grouped = groupDatasources(flat)
   request.yar.set('datasourceGroups', grouped)
+  request.yar.set('datasourceCategoryType', getDatasourceCategoryType(grouped))
+  logger.info(
+    `resolveDatasourceGroups: datasourceGroups count=${grouped.length}`
+  )
   return { groups: grouped }
 }
 
 async function handleDatasourceGet(request, h) {
-  const backUrl = '/customdataset'
+  const backUrl = CUSTOMDATASET_REDIRECT
 
   const resolved = await resolveDatasourceGroups(request, h)
   if (resolved.redirect) {
