@@ -175,8 +175,9 @@ export function groupDatasources(flat) {
       groups.push(currentGroup)
     } else if (currentGroup) {
       currentGroup.networks.push(item)
+    } else {
+      // Leading network with no preceding category header — ignored
     }
-    // Leading network with no preceding category header — ignored
   }
 
   logger.info(
