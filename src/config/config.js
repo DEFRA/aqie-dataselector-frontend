@@ -299,7 +299,7 @@ export const config = convict({
   DevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: '4rnDvX87YBj85YO5ldzNHK8NcMn7PA7K',
+    default: '',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEYS'
   },
