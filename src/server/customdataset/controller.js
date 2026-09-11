@@ -212,19 +212,19 @@ function parseYearRange(selectedyear, request) {
 
     if (startYear === endYear) {
       request.yar.set('yearrange', 'Single')
-      const finalYearValue = String(endYear)
-      request.yar.set('finalyear', finalYearValue)
-      return finalYearValue
+      const singleYearResult = String(endYear)
+      request.yar.set('finalyear', singleYearResult)
+      return singleYearResult
     }
 
     request.yar.set('yearrange', 'Multiple')
-    const yearList = []
+    const yearListLast7 = []
     for (let y = startYear; y <= endYear; y++) {
-      yearList.push(y)
+      yearListLast7.push(y)
     }
-    const finalYearValue = yearList.join(',')
-    request.yar.set('finalyear', finalYearValue)
-    return finalYearValue
+    const multipleYearResult = yearListLast7.join(',')
+    request.yar.set('finalyear', multipleYearResult)
+    return multipleYearResult
   }
 
   const years = selectedyear.match(/\d{4}/g)
