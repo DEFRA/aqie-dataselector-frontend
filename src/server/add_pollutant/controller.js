@@ -32,7 +32,7 @@ async function fetchPollutantListDev() {
     const url = config.get('pollutantMasterDevUrl')
     const { payload } = await Wreck.get(url, {
       headers: {
-        'x-api-key': config.get('osNamesDevApiKey')
+        'x-api-key': config.get('DevApiKey')
       },
       json: true
     })

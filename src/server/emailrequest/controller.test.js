@@ -1260,7 +1260,7 @@ describe('emailrequestController', () => {
       mockConfig.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
         if (key === 'emailDevUrl') return 'https://dev.example.com/email'
-        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        if (key === 'DevApiKey') return 'test-api-key'
         return undefined
       })
       mockWreck.mockResolvedValue({ payload: 'Success' })
@@ -1309,7 +1309,7 @@ describe('emailrequestController', () => {
       mockConfig.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
         if (key === 'emailDevUrl') return 'https://dev.example.com/email'
-        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        if (key === 'DevApiKey') return 'test-api-key'
         return undefined
       })
       mockWreck.mockRejectedValue(new Error('Dev API Error'))
@@ -1490,7 +1490,7 @@ describe('emailrequestController', () => {
       mockConfig.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
         if (key === 'emailDevUrl') return 'https://dev.example.com/email'
-        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        if (key === 'DevApiKey') return 'test-api-key'
         return undefined
       })
       mockWreck.mockRejectedValue('boom')
@@ -1624,7 +1624,7 @@ describe('emailrequestController', () => {
       mockConfig.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
         if (key === 'emailDevUrl') return 'https://dev.example.com/email'
-        if (key === 'osNamesDevApiKey') return 'test-api-key'
+        if (key === 'DevApiKey') return 'test-api-key'
         return undefined
       })
     })

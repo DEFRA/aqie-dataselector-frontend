@@ -144,7 +144,7 @@ describe('fetchDatasourceForPollutant', () => {
       if (key === 'isDevelopment') return false
       if (key === 'datasourceApiUrl') return prodUrl
       if (key === 'datasourceDevUrl') return devUrl
-      if (key === 'osNamesDevApiKey') return devApiKey
+      if (key === 'DevApiKey') return devApiKey
       return null
     })
   })
@@ -191,7 +191,7 @@ describe('fetchDatasourceForPollutant', () => {
       config.get.mockImplementation((key) => {
         if (key === 'isDevelopment') return true
         if (key === 'datasourceDevUrl') return devUrl
-        if (key === 'osNamesDevApiKey') return devApiKey
+        if (key === 'DevApiKey') return devApiKey
         return null
       })
     })

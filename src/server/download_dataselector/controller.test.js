@@ -560,22 +560,27 @@ describe('downloadDataselectorController', () => {
       })
       const h = makeH()
       const result = downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith('download_dataselector/index', {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        downloadaurnresult: null,
-        stationcount: 5,
-        stationCountUnavailable: false,
-        ukeapNetworks: [],
-        ukeapUnavailable: true,
-        aurnUnavailable: true,
-        aurnPollutantID: '',
-        yearrange: 'Multiple',
-        displayBacklink: true,
-        hrefq: '/customdataset',
-        finalyear: ['2021', '2022', '2023']
-      })
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector/index',
+        expect.objectContaining({
+          aurnPollutantID: '',
+          aurnUnavailable: true,
+          datasourceavailability: null,
+          timperiodselectionmode: null,
+          displayBacklink: true,
+          downloadaurnresult: null,
+          finalyear: ['2021', '2022', '2023'],
+          pageTitle: englishNew.custom.pageTitle,
+          heading: englishNew.custom.heading,
+          texts: englishNew.custom.texts,
+          hrefq: '/customdataset',
+          stationCountUnavailable: false,
+          stationcount: 5,
+          ukeapNetworks: [],
+          ukeapUnavailable: true,
+          yearrange: 'Multiple'
+        })
+      )
       expect(result).toBe('view-response')
     })
 

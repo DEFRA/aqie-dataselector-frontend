@@ -31,7 +31,7 @@ async function invokeDownloadEmailDev(emailParams) {
       payload: JSON.stringify(emailParams),
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': config.get('osNamesDevApiKey')
+        'x-api-key': config.get('DevApiKey')
       },
       json: true
     })

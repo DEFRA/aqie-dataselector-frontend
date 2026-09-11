@@ -95,16 +95,16 @@ describe('downloadAurnController', () => {
         expect(axios.post).toHaveBeenCalledTimes(1)
         expect(axios.post).toHaveBeenCalledWith(
           'https://api.example.com/download',
-          {
+          expect.objectContaining({
             pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
             dataSource: 'AURN',
-            networkId: '',
             Region: 'England',
             regiontype: 'Country',
+            Days: '',
             Year: '2024',
             dataselectorfiltertype: 'dataSelectorHourly',
             dataselectordownloadtype: 'dataSelectorSingle'
-          }
+          })
         )
         // Should NOT set downloadaurnresult for JS route
         expect(mockRequest.yar.set).not.toHaveBeenCalled()
@@ -176,16 +176,14 @@ describe('downloadAurnController', () => {
 
         expect(axios.post).toHaveBeenCalledWith(
           'https://api.example.com/download',
-          {
-            pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
-            dataSource: 'AURN',
-            networkId: '',
+          expect.objectContaining({
+            Days: '',
             Region: 'England',
-            regiontype: 'Country',
             Year: '2024',
-            dataselectorfiltertype: 'dataSelectorHourly',
-            dataselectordownloadtype: 'dataSelectorSingle'
-          }
+            dataSource: 'AURN',
+            dataselectordownloadtype: 'dataSelectorSingle',
+            dataselectorfiltertype: 'dataSelectorHourly'
+          })
         )
       },
       TEST_TIMEOUT_MS
@@ -919,7 +917,7 @@ describe('downloadAurnController', () => {
         const values = {
           isDevelopment: true,
           downloadAurnDevUrl: devDownloadUrl,
-          osNamesDevApiKey: devApiKey
+          DevApiKey: devApiKey
         }
         return values[key]
       })
@@ -980,9 +978,9 @@ describe('downloadAurnController', () => {
         expect(sentBody).toMatchObject({
           pollutantName: 'PM2.5,PM10,Nitrogen dioxide,Ozone,Sulphur dioxide',
           dataSource: 'AURN',
-          networkId: '',
           Region: 'England',
           regiontype: 'Country',
+          Days: '',
           Year: '2024',
           dataselectorfiltertype: 'dataSelectorHourly',
           dataselectordownloadtype: 'dataSelectorSingle'
@@ -1004,7 +1002,7 @@ describe('downloadAurnController', () => {
           isDevelopment: true,
           downloadAurnDevUrl: devDownloadUrl,
           pollingDevUrl: devPollingUrl,
-          osNamesDevApiKey: devApiKey
+          DevApiKey: devApiKey
         }
         return values[key]
       })

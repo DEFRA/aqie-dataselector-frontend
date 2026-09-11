@@ -1,168 +1,104 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-import { config } from '~/src/config/config.js'
+import {
+  setErrorMessage,
+  clearErrors
+} from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import axios from 'axios'
-import Wreck from '@hapi/wreck'
+import { postJson } from '~/src/server/common/helpers/api-client.js'
 
 const logger = createLogger()
 
-// Helper function to build pollutant map for monitoring stations
+const SEARCH_LOCATION_URL = '/search-location'
+
+// Anything outside this set makes the search query invalid.
+const DISALLOWED_SEARCH_CHARACTERS = /[^a-zA-Z0-9 \-_.',]/
+
+// Pollutant keys the monitoring station API can use, mapped to the name the
+// rest of the service displays. Anything not listed is passed through as-is.
+const POLLUTANT_ALIASES = {
+  PM25: 'PM2.5',
+  GR25: 'PM2.5',
+  MP10: 'PM10',
+  GE10: 'PM10',
+  GR10: 'PM10'
+}
+
+/** Maps each station name to its de-duplicated list of pollutant names. */
 function buildPollutantMap(monitoringStations) {
-  const pollutantMap = new Map()
-
-  for (const station of monitoringStations) {
-    const pollutants = station.pollutants
-    const pollutantKeys = Object.keys(pollutants)
-    const normalizedPollutants = []
-
-    for (const p of pollutantKeys) {
-      let pollutantName
-      if (p === 'PM25' || p === 'GR25') {
-        pollutantName = 'PM2.5'
-      } else if (p === 'MP10' || p === 'GE10' || p === 'GR10') {
-        pollutantName = 'PM10'
-      } else {
-        pollutantName = p
-      }
-      normalizedPollutants.push(pollutantName)
-    }
-
-    // Remove duplicates
-    const uniquePollutants = normalizedPollutants.filter(
-      (item, index) => normalizedPollutants.indexOf(item) === index
-    )
-    pollutantMap.set(station.name, uniquePollutants)
-  }
-
-  return pollutantMap
-}
-async function invokeOsNameAPI(searchv) {
-  const nameApiparams = {
-    userLocation: searchv
-  }
-
-  if (config.get('isDevelopment')) {
-    // localhost: use Wreck with dev API URL and key
-    try {
-      const url = config.get('osLocationDevUrl')
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(nameApiparams),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      return payload
-    } catch (error) {
-      return error
-    }
-  } else {
-    // dev / test / prod environments: use axios with config URL
-    try {
-      const response = await axios.post(
-        config.get('OS_NAMES_API_URL'),
-        nameApiparams
-      )
-      return response.data
-    } catch (error) {
-      logger.error(`OS Names API error: ${error.message}`)
-      throw error
-    }
-  }
+  return new Map(
+    monitoringStations.map((station) => [
+      station.name,
+      [
+        ...new Set(
+          Object.keys(station.pollutants).map(
+            (key) => POLLUTANT_ALIASES[key] ?? key
+          )
+        )
+      ]
+    ])
+  )
 }
 
-async function invokeMonitoringStationAPI(sValue, lMiles) {
-  const locationvalues = {
-    userLocation: sValue,
-    usermiles: lMiles
-  }
-  if (config.get('isDevelopment')) {
-    // localhost: use Wreck with dev API URL and key
-    try {
-      const url = config.get('osMonitoringStationDevUrl')
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(locationvalues),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
-        },
-        json: true
-      })
-      return payload
-    } catch (error) {
-      return error
-    }
-  } else {
-    try {
-      const response = await axios.post(
-        config.get('OS_NAMES_API_URL_1'),
-        locationvalues
-      )
+const invokeOsNameAPI = (userLocation) =>
+  postJson({
+    devUrlKey: 'osLocationDevUrl',
+    urlKey: 'OS_NAMES_API_URL',
+    payload: { userLocation },
+    label: 'OS Names API'
+  })
 
-      return response.data
-    } catch (error) {
-      logger.error(`Monitoring Station API error: ${error.message}`)
-      throw error
-    }
-  }
+const invokeMonitoringStationAPI = (userLocation, usermiles) =>
+  postJson({
+    devUrlKey: 'osMonitoringStationDevUrl',
+    urlKey: 'OS_NAMES_API_URL_1',
+    payload: { userLocation, usermiles },
+    label: 'Monitoring Station API'
+  })
+
+/**
+ * Renders one of this journey's views. `ctx` carries the request-scoped values
+ * the renderers share, and the three properties every one of these views needs
+ * are filled in here so the call sites only list what differs.
+ */
+function renderView(ctx, template, viewData) {
+  return ctx.h.view(template, {
+    searchLocation: ctx.request.yar.get('searchLocation'),
+    displayBacklink: true,
+    hrefq: SEARCH_LOCATION_URL,
+    ...viewData
+  })
 }
 
-function renderNoLocationView(h, locations, searchlocationurl, request) {
-  return h.view('multiplelocations/nolocation', {
+function renderNoLocationView(ctx, locations) {
+  return renderView(ctx, 'multiplelocations/nolocation', {
     results: locations,
     serviceName: english.notFoundLocation.heading,
-    paragraph: english.notFoundLocation.paragraphs,
-    searchLocation: request.yar.get('searchLocation'),
-    displayBacklink: true,
-    hrefq: searchlocationurl
+    paragraph: english.notFoundLocation.paragraphs
   })
 }
 
-function renderNoStationView(h, locationMiles, searchlocationurl, request) {
-  return h.view('multiplelocations/nostation', {
-    locationMiles,
+function renderNoStationView(ctx) {
+  return renderView(ctx, 'multiplelocations/nostation', {
+    locationMiles: ctx.locationMiles,
     serviceName: english.noStation.heading,
-    paragraph: english.noStation.paragraphs,
-    searchLocation: request.yar.get('searchLocation'),
-    displayBacklink: true,
-    hrefq: searchlocationurl
+    paragraph: english.noStation.paragraphs
   })
 }
 
-function renderMonitoringStationView(
-  h,
-  MonitoringstResult,
-  map1,
-  locationMiles,
-  searchlocationurl,
-  request
-) {
-  return h.view('monitoring-station/index', {
+function renderMonitoringStationView(ctx, stations, pollutantMap) {
+  return renderView(ctx, 'monitoring-station/index', {
     pageTitle: english.monitoringStation.pageTitle,
     title: english.monitoringStation.title,
     serviceName: english.monitoringStation.serviceName,
     paragraphs: english.monitoringStation.paragraphs,
-    searchLocation: request.yar.get('searchLocation'),
-    locationMiles,
-    monitoring_station: MonitoringstResult.getmonitoringstation,
-    pollmap: map1,
-    displayBacklink: true,
-    hrefq: searchlocationurl
+    locationMiles: ctx.locationMiles,
+    monitoring_station: stations,
+    pollmap: pollutantMap
   })
 }
 
-function renderMultipleLocationsView(
-  h,
-  locations,
-  MonitoringstResult,
-  map1,
-  locationMiles,
-  searchlocationurl,
-  request
-) {
-  return h.view('multiplelocations/index', {
+function renderMultipleLocationsView(ctx, locations, stations) {
+  return renderView(ctx, 'multiplelocations/index', {
     results: locations,
     pageTitle: english.multipleLocations.pageTitle,
     heading: english.multipleLocations.heading,
@@ -171,81 +107,26 @@ function renderMultipleLocationsView(
     title: english.multipleLocations.title,
     params: english.multipleLocations.paragraphs,
     button: english.multipleLocations.button,
-    locationMiles,
-    searchLocation: request.yar.get('searchLocation'),
-    monitoring_station: MonitoringstResult.getmonitoringstation,
-    displayBacklink: true,
-    hrefq: searchlocationurl
+    locationMiles: ctx.locationMiles,
+    monitoring_station: stations
   })
 }
 
-function handleLocationsResult(
-  h,
-  locations,
-  MonitoringstResult,
-  map1,
-  locationMiles,
-  searchlocationurl,
-  request
-) {
-  if (locations?.length === 0) {
-    request.yar.set('errors', '')
-    request.yar.set('errorMessage', '')
-    request.yar.set('nooflocation', 'none')
-    return renderNoLocationView(h, locations, searchlocationurl, request)
-  }
-
-  if (locations?.length === 1) {
-    request.yar.set('errors', '')
-    request.yar.set('errorMessage', '')
-    request.yar.set('nooflocation', 'single')
-    if (MonitoringstResult.getmonitoringstation.length === 0) {
-      return renderNoStationView(h, locationMiles, searchlocationurl, request)
-    }
-    return renderMonitoringStationView(
-      h,
-      MonitoringstResult,
-      map1,
-      locationMiles,
-      searchlocationurl,
-      request
-    )
-  }
-
-  if (locations.length > 1) {
-    request.yar.set('errors', '')
-    request.yar.set('errorMessage', '')
-    request.yar.set('nooflocation', 'multiple')
-    return renderMultipleLocationsView(
-      h,
-      locations,
-      MonitoringstResult,
-      map1,
-      locationMiles,
-      searchlocationurl,
-      request
-    )
-  }
-
-  return null
-}
-
-function renderSearchErrorView(
-  h,
-  english,
-  fullSearchQuery,
-  request,
-  errorText
-) {
+/** Sends the user back to the search page with an error summary. */
+function renderSearchErrorView(ctx, fullSearchQuery, errorText) {
+  const { request } = ctx
   const errorSection = errorText?.fields
   setErrorMessage(request, errorSection?.title, errorSection?.text)
+
+  // Read the message setErrorMessage just stored, then clear it so it shows
+  // once rather than on every later render.
   const errors = request.yar?.get('errors')
   const errorMessage = request.yar?.get('errorMessage')
-  request.yar.set('errors', '')
-  request.yar.set('errorMessage', '')
+  clearErrors(request)
   request.yar.set('fullSearchQuery', '')
   request.yar.set('osnameapiresult', '')
-  return h.view('search-location/index', {
+
+  return ctx.h.view('search-location/index', {
     pageTitle: english.searchLocation.pageTitle,
     heading: english.searchLocation.heading,
     page: english.searchLocation.page,
@@ -260,11 +141,15 @@ function renderSearchErrorView(
   })
 }
 
-// Resolve the location list from the cached session result or the OS Names API.
+/** Resolves the location list from the cached session result or the OS Names API. */
 async function resolveLocations(request, searchValue) {
-  const locationdetails = request.yar.get('osnameapiresult')
-  if (Array.isArray(locationdetails) && locationdetails.length > 0) {
-    return locationdetails.getOSPlaces
+  const cached = request.yar.get('osnameapiresult')
+
+  // NOTE: the API returns an object, so Array.isArray is never true and this
+  // cache never hits - every request calls the OS Names API. Preserved
+  // deliberately; controller.test.js asserts both calls still happen.
+  if (Array.isArray(cached) && cached.length > 0) {
+    return cached.getOSPlaces
   }
 
   const result = await invokeOsNameAPI(searchValue)
@@ -274,7 +159,7 @@ async function resolveLocations(request, searchValue) {
   return result.getOSPlaces
 }
 
-// Resolve the monitoring station result, returning an empty result on failure.
+/** Resolves the monitoring station result, falling back to an empty result. */
 async function resolveMonitoringResult(request, searchValue, locationMiles) {
   try {
     const monitoringResult = await invokeMonitoringStationAPI(
@@ -293,133 +178,98 @@ async function resolveMonitoringResult(request, searchValue, locationMiles) {
   return { getmonitoringstation: [] }
 }
 
-async function processLocationsSearch(
-  h,
-  request,
-  searchValue,
-  locationMiles,
-  searchlocationurl
-) {
+/**
+ * Runs the search and picks the view for however many locations came back:
+ * none, exactly one (with or without monitoring stations), or several.
+ */
+async function processLocationsSearch(ctx, searchValue) {
+  const { request } = ctx
   const locations = await resolveLocations(request, searchValue)
-  let MonitoringstResult = { getmonitoringstation: [] }
-  let map1 = new Map()
+  const monitoringResult = await resolveMonitoringResult(
+    request,
+    searchValue,
+    ctx.locationMiles
+  )
+  const stations = monitoringResult?.getmonitoringstation ?? []
 
-  if (searchValue != null && searchValue !== '') {
-    MonitoringstResult = await resolveMonitoringResult(
-      request,
-      searchValue,
-      locationMiles
-    )
+  clearErrors(request)
 
-    const hasLocations = locations && locations.length > 0
-    const hasStations = MonitoringstResult?.getmonitoringstation?.length > 0
-
-    if (!hasLocations) {
-      request.yar.set('errors', '')
-      request.yar.set('errorMessage', '')
-      request.yar.set('nooflocation', 'none')
-      return renderNoLocationView(h, locations, searchlocationurl, request)
-    }
-
-    // Locations present — build the pollutant map only when stations exist.
-    if (hasStations) {
-      map1 = buildPollutantMap(MonitoringstResult.getmonitoringstation)
-    }
+  if (!locations?.length) {
+    request.yar.set('nooflocation', 'none')
+    return renderNoLocationView(ctx, locations)
   }
 
-  return handleLocationsResult(
-    h,
-    locations,
-    MonitoringstResult,
-    map1,
-    locationMiles,
-    searchlocationurl,
-    request
-  )
+  if (locations.length === 1) {
+    request.yar.set('nooflocation', 'single')
+    return stations.length === 0
+      ? renderNoStationView(ctx)
+      : renderMonitoringStationView(ctx, stations, buildPollutantMap(stations))
+  }
+
+  request.yar.set('nooflocation', 'multiple')
+  return renderMultipleLocationsView(ctx, locations, stations)
+}
+
+/** Stores the query and radius from the payload when either has changed. */
+function syncSearchSession(request) {
+  const sessionQuery = request?.yar?.get('fullSearchQuery')?.value
+  const payloadQuery = request.payload?.fullSearchQuery
+  const sessionMiles = request?.yar?.get('locationMiles')
+  const payloadMiles = request.payload?.locationMiles
+
+  if (
+    !sessionQuery ||
+    (payloadQuery != null && payloadQuery !== sessionQuery)
+  ) {
+    request.yar.set('selectedLocation', '')
+    request.yar.set(
+      'hasSpecialCharacter',
+      DISALLOWED_SEARCH_CHARACTERS.test(payloadQuery)
+    )
+    request.yar.set('fullSearchQuery', { value: payloadQuery })
+    request.yar.set('searchQuery', { value: payloadQuery })
+  }
+
+  if (
+    !sessionMiles ||
+    (payloadMiles != null && payloadMiles !== sessionMiles)
+  ) {
+    request.yar.set('locationMiles', payloadMiles)
+  }
 }
 
 const multipleLocationsController = {
   handler: async (request, h) => {
     try {
       h.state('js_enabled', 'false')
-      const searchlocationurl = '/search-location'
+      clearErrors(request)
+      syncSearchSession(request)
 
-      if (request !== null) {
-        request.yar.set('errors', '')
-        request.yar.set('errorMessage', '')
-        const sessionQuery = request?.yar?.get('fullSearchQuery')?.value
-        const payloadQuery = request.payload?.fullSearchQuery
-        const milessession = request?.yar?.get('locationMiles')
-        const payloadmiles = request.payload?.locationMiles
-
-        if (
-          !sessionQuery ||
-          (payloadQuery != null && payloadQuery !== sessionQuery)
-        ) {
-          request.yar.set('selectedLocation', '')
-          const hasSpecialCharacter = /[^a-zA-Z0-9 \-_.',]/.test(payloadQuery)
-          request.yar.set('hasSpecialCharacter', hasSpecialCharacter)
-          request.yar.set('fullSearchQuery', {
-            value: request.payload.fullSearchQuery
-          })
-          request.yar.set('searchQuery', {
-            value: request.payload.fullSearchQuery
-          })
-        }
-        if (
-          !milessession ||
-          (payloadmiles != null && payloadmiles !== milessession)
-        ) {
-          request.yar.set('locationMiles', request.payload?.locationMiles)
-        }
-      }
-
-      const searchInput = request?.yar?.get('fullSearchQuery').value
       const searchValue = request?.yar?.get('fullSearchQuery').value
-      const locationMiles = request?.yar?.get('locationMiles')
-
-      if (searchValue != null && searchValue !== '') {
-        request.yar.set('searchLocation', searchValue)
-        request.yar.set('searchValue', searchValue)
-      } else {
-        request.yar.set('searchLocation', '')
-        request.yar.set('searchValue', '')
+      const ctx = {
+        h,
+        request,
+        locationMiles: request?.yar?.get('locationMiles')
       }
 
-      if (searchInput && !request.yar.get('hasSpecialCharacter')) {
-        request.yar.set('errors', '')
-        request.yar.set('errorMessage', '')
-        return await processLocationsSearch(
-          h,
-          request,
-          searchValue,
-          locationMiles,
-          searchlocationurl
-        )
+      request.yar.set('searchLocation', searchValue || '')
+      request.yar.set('searchValue', searchValue || '')
+
+      if (searchValue && !request.yar.get('hasSpecialCharacter')) {
+        clearErrors(request)
+        return await processLocationsSearch(ctx, searchValue)
       }
 
-      const fullSearchQuery = request?.yar?.get('fullSearchQuery')
-      if (request.yar.get('hasSpecialCharacter')) {
-        const errorData = english.searchLocation.errorText_sp.uk
-        return renderSearchErrorView(
-          h,
-          english,
-          fullSearchQuery,
-          request,
-          errorData
-        )
-      }
+      // Either the query was empty or it contained characters we reject.
+      const errorText = request.yar.get('hasSpecialCharacter')
+        ? english.searchLocation.errorText_sp.uk
+        : english.searchLocation.errorText.uk
 
-      if (!searchInput?.value) {
-        const errorData = english.searchLocation.errorText.uk
-        return renderSearchErrorView(
-          h,
-          english,
-          fullSearchQuery,
-          request,
-          errorData
-        )
-      }
+      return renderSearchErrorView(
+        ctx,
+        request?.yar?.get('fullSearchQuery'),
+        errorText
+      )
     } catch (error) {
       logger.error(`Handler error: ${error.message}`)
       return h.redirect('/problem-with-service')

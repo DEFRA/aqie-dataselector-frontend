@@ -61,7 +61,7 @@ export async function invokeDownload(apiParameters, logger) {
         payload: JSON.stringify(apiParameters),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })
@@ -98,7 +98,7 @@ export async function invokeTable(params) {
         payload: JSON.stringify(params),
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': config.get('osNamesDevApiKey')
+          'x-api-key': config.get('DevApiKey')
         },
         json: true
       })
@@ -119,6 +119,27 @@ export async function invokeTable(params) {
 }
 
 /**
+ * Fetches a site's yearly table data, collapsing every "nothing to show"
+ * shape the API can return - an error, null, an empty array or an empty
+ * object - to null, so callers and templates only have to test for null.
+ * @param {{ siteId: string, year: string|number }} params
+ * @returns {Promise<any|null>}
+ */
+export async function fetchYearTable({ siteId, year }) {
+  const tabledata = await invokeTable({ siteId, year })
+
+  if (!tabledata || tabledata instanceof Error) {
+    return null
+  }
+
+  const isEmpty = Array.isArray(tabledata)
+    ? tabledata.length === 0
+    : typeof tabledata === 'object' && Object.keys(tabledata).length === 0
+
+  return isEmpty ? null : tabledata
+}
+
+/**
  * Builds a Google Maps URL from coordinates.
  * @param {number} lat
  * @param {number} lon
@@ -129,13 +150,22 @@ export function buildMapLocation(lat, lon) {
 }
 
 /**
+ * The current calendar year. Templates compare the selected year against this
+ * to decide whether a year is complete ("1 January to 31 December") or still
+ * running ("1 January to <today>").
+ * @returns {number}
+ */
+export function getCurrentYear() {
+  return new Date().getFullYear()
+}
+
+/**
  * Generates an array of years from 2018 to the current year.
  * @returns {number[]}
  */
 export function buildYearsArray() {
-  const currentYear = new Date().getFullYear()
   return Array.from(
-    { length: currentYear - YEAR_2017 },
+    { length: getCurrentYear() - YEAR_2017 },
     (_, i) => YEAR_2018 + i
   )
 }

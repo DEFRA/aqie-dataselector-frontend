@@ -127,6 +127,29 @@ const validateSelectedLocation = (request, h, backUrl) => {
   return null
 }
 
+function buildNoJsViewModel(request) {
+  const downloadForceNearRealtimeOnly = Boolean(
+    request.yar.get('downloadForceNearRealtimeOnly')
+  )
+
+  const datasourceCategoryType =
+    request.yar.get('downloadDatasourceCategoryType') ||
+    request.yar.get('datasourceCategoryType') ||
+    'unknown'
+
+  const datasourceGroups = downloadForceNearRealtimeOnly
+    ? request.yar.get('downloadDatasourceGroups') || []
+    : request.yar.get('datasourceGroups') || []
+
+  return {
+    datasourceGroups,
+    datasourceCategoryType,
+    downloadForceNearRealtimeOnly,
+    TimeSelectionMode: request.yar.get('TimeSelectionMode'),
+    selectedyear: request.yar.get('selectedyear')
+  }
+}
+
 export const downloadDataselectornojsController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -158,7 +181,10 @@ export const downloadDataselectornojsController = {
     const viewData = buildViewData(request, backUrl)
     request.yar.set('viewDatanojs', viewData)
 
-    return h.view('download_dataselector_nojs/index', viewData)
+    return h.view('download_dataselector_nojs/index', {
+      ...viewData,
+      ...buildNoJsViewModel(request)
+    })
   }
 }
 

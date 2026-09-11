@@ -33,7 +33,7 @@ async function invokeEmailRequestDev(emailRequestParameters) {
       payload: JSON.stringify(emailRequestParameters),
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': config.get('osNamesDevApiKey')
+        'x-api-key': config.get('DevApiKey')
       },
       json: true
     })

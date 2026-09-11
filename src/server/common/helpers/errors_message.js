@@ -17,6 +17,12 @@ function setErrorMessage(request, titleText, errorListText) {
   return true
 }
 
+/** Counterpart to setErrorMessage: drops any error held in the session. */
+function clearErrors(request) {
+  request.yar.set('errors', '')
+  request.yar.set('errorMessage', '')
+}
+
 function catchAll(request, h) {
   const { response } = request
 
@@ -30,4 +36,4 @@ function catchAll(request, h) {
   return h.redirect('/problem-with-service')
 }
 
-export { catchAll, setErrorMessage }
+export { catchAll, setErrorMessage, clearErrors }
