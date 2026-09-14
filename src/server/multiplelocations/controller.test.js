@@ -1,6 +1,6 @@
 import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
 import axios from 'axios'
-// import { config } from '~/src/config/config.js'
+import * as apiClient from '~/src/server/common/helpers/api-client.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 
 jest.mock('axios')
@@ -490,6 +490,37 @@ describe('multipleLocationsController', () => {
     await multipleLocationsController.handler(request, h)
 
     // With empty OS places, should render no location view
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nolocation',
+      expect.any(Object)
+    )
+  })
+
+  it('should render no location view when postJson resolves to null', async () => {
+    // postJson returns null when the underlying API call fails (see
+    // api-client.js); resolveLocations must fall back to [] rather than
+    // crashing on result.getOSPlaces.
+    jest.spyOn(apiClient, 'postJson').mockResolvedValueOnce(null)
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: [] // Not cached, will trigger the API call
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
     expect(h.view).toHaveBeenCalledWith(
       'multiplelocations/nolocation',
       expect.any(Object)
