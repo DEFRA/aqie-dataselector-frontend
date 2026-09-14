@@ -50,6 +50,7 @@ function onPreResponse(request, h) {
 
   response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.header('Cache-Control', 'no-store')
+  // CSP header is set by the Blankie plugin (generateNonces: true), not here
   return h.continue
 }
 
