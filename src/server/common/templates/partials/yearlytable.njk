@@ -46,27 +46,31 @@
   </td>
 {% endmacro %}
 
-{% macro downloadLink(pollutantKey, pollutantLabel, frequency, actionText) %}
-  <a href="#" role="button"
-     onclick="getAPIstn_details1('{{ pollutantKey }}', '{{ frequency }}'); return false;"
-     class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-     aria-label="{{ actionText }} for {{ pollutantLabel }}">
+{% macro downloadLink(pollutantKey, pollutantLabel, frequency, actionText, isAllPollutants=false) %}
+  {% if isAllPollutants %}
+    <a id="download-all-{{ frequency | lower }}" href="#" role="button"
+       class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+       aria-label="{{ actionText }} for {{ pollutantLabel }}">
+  {% else %}
+    <a href="#" class="download-pollutant aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+       data-pollutant="{{ pollutantKey }}" data-frequency="{{ frequency }}" role="button"
+       aria-label="{{ actionText }} for {{ pollutantLabel }}">
+  {% endif %}
     <span class="aq-button-secondary__icon">
-      {# Icon defined once as #aq-icon-download in layouts/page.njk #}
       <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-        <use href="#aq-icon-download"/>
+        <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
       </svg>
     </span>
     <span class="aq-button-secondary__text">{{ actionText }}</span>
   </a>
 {% endmacro %}
 
-{% macro downloadLinksFor(pollutantKey, pollutantLabel) %}
-  {{ downloadLink(pollutantKey, pollutantLabel, 'Hourly', 'Download hourly data') }}
+{% macro downloadLinksFor(pollutantKey, pollutantLabel, isAllPollutants=false) %}
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Hourly', 'Download hourly data', isAllPollutants) }}
   <br>
-  {{ downloadLink(pollutantKey, pollutantLabel, 'Daily', 'Download daily average data') }}
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Daily', 'Download daily average data', isAllPollutants) }}
   <br>
-  {{ downloadLink(pollutantKey, pollutantLabel, 'Annual', 'Download annual average data') }}
+  {{ downloadLink(pollutantKey, pollutantLabel, 'Annual', 'Download annual average data', isAllPollutants) }}
 {% endmacro %}
 
 <span id="selectedYear" class="display-none">{{ finalyear }}</span>
@@ -150,7 +154,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <h3 class="govuk-heading-m" id="all-p">All pollutants</h3>
-      {{ downloadLinksFor('AllPollutants', 'All pollutants') }}
+      {{ downloadLinksFor('AllPollutants', 'All pollutants', true) }}
 
       {% for pollutant in tabledata %}
         <h3 class="govuk-heading-m">{{ pollutant.pollutantName }}</h3>
@@ -171,7 +175,7 @@
    handlers bound on the initial render keep working against the new markup. #}
 {% if not isPartial %}
 
-<script>
+<script nonce="{{ nonce }}">
   /*
    * Keep table toggletips inside the viewport.
    *
@@ -252,7 +256,7 @@
   })()
 </script>
 
-<script>
+<script nonce="{{ nonce }}">
   /*
    * Called from the download links' onclick. Must stay global: the markup
    * that references it is re-injected with innerHTML on a year change,
@@ -273,7 +277,7 @@
 </script>
 
 {% if downloadresult %}
-  <script>
+  <script nonce="{{ nonce }}">
     window.location.href = {{ downloadresult | dump | safe }}
   </script>
 {% endif %}
