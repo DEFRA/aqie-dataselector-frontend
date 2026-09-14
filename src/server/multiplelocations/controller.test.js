@@ -526,4 +526,93 @@ describe('multipleLocationsController', () => {
       expect.any(Object)
     )
   })
+
+  it('updates locationMiles in session when the search radius changes', async () => {
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'London' }] } })
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '25' // differs from the session's '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(yar.set).toHaveBeenCalledWith('locationMiles', '25')
+  })
+
+  it('falls back to zero stations when the monitoring API response has no getmonitoringstation field', async () => {
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'London' }] } })
+      .mockResolvedValueOnce({ data: {} }) // malformed: field missing entirely
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // Single location, zero stations -> proves the ?? [] fallback ran
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nostation',
+      expect.any(Object)
+    )
+  })
+
+  it('falls back to zero stations when the monitoring API resolves to null', async () => {
+    jest
+      .spyOn(apiClient, 'postJson')
+      .mockResolvedValueOnce({ getOSPlaces: [{ name: 'London' }] }) // OS Names API
+      .mockResolvedValueOnce(null) // Monitoring Station API failed softly
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nostation',
+      expect.any(Object)
+    )
+  })
 })
