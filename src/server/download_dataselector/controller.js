@@ -5,6 +5,7 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 // True when the datasource groups contain the given category with networks.
 function hasCategoryWithNetworks(datasourceGroups, category) {
@@ -173,7 +174,8 @@ export const downloadDataselectorController = {
         request.yar
           .get('finalyear')
           ?.split(',')
-          .map((year) => year.trim()) ?? []
+          .map((year) => year.trim()) ?? [],
+      networkDescriptions
     }
 
     // Store success view data in session

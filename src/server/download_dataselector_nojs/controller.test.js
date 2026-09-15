@@ -1,5 +1,6 @@
 import { downloadDataselectornojsController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
@@ -67,6 +68,16 @@ describe('downloadDataselectornojsController', () => {
           hrefq: '/customdataset',
           finalyear: ['2019', '2020']
         })
+      )
+      expect(res).toBe('view-response')
+    })
+
+    it('includes networkDescriptions in the view model', () => {
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ networkDescriptions })
       )
       expect(res).toBe('view-response')
     })
@@ -251,6 +262,20 @@ describe('downloadDataselectornojsController', () => {
           hrefq: '/customdataset',
           finalyear: ['2020', '2022']
         })
+      )
+      expect(res).toBe('view-response')
+    })
+
+    it('includes networkDescriptions in the success view model', () => {
+      request.yar.set('selectedpollutant', ['CO'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['A'])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ networkDescriptions })
       )
       expect(res).toBe('view-response')
     })
