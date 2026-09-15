@@ -49,11 +49,8 @@ function onPreResponse(request, h) {
   removeGaCookiesIfRejected(request, h)
 
   response.header('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.header(
-    'Content-Security-Policy',
-    "style-src 'self'; img-src 'self'; frame-ancestors 'none'"
-  )
   response.header('Cache-Control', 'no-store')
+  // CSP header is set by the Blankie plugin (generateNonces: true), not here
   return h.continue
 }
 

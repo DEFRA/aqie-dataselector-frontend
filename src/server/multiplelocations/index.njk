@@ -44,7 +44,7 @@
   <input type="hidden" name="locationId" id="location-id-input">
 </form>
 
-<script>
+<script nonce="{{ nonce }}">
   document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('.location-link');
     const form = document.getElementById('location-form');

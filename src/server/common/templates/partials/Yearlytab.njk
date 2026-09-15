@@ -51,7 +51,7 @@
   </noscript>
 </div>
       
-         <script>
+         <script nonce="{{ nonce }}">
     /* Taken from the server rather than the browser clock, so a client with a
        skewed clock or a different timezone still sees the same date range and
        month name as the server-rendered markup. */
@@ -91,4 +91,25 @@
 /* No DOMContentLoaded work is needed: the selected year's table, headings and
    aria-current/aria-selected state are all rendered server side by
    stationdetails/controller.js. updateYear only runs on a tab click. */
+
+   // Delegated listener for download buttons to survive innerHTML swaps
+   document.getElementById('yearlytable-container')?.addEventListener('click', (e) => {
+     const target = e.target.closest('#download-all-hourly, #download-all-daily, #download-all-annual, .download-pollutant');
+     if (!target) return;
+     e.preventDefault();
+
+     if (target.classList.contains('download-pollutant')) {
+       const pollutant = target.getAttribute('data-pollutant');
+       const frequency = target.getAttribute('data-frequency');
+       getAPIstn_details1(pollutant, frequency);
+       return;
+     }
+
+     const frequencyById = {
+       'download-all-hourly': 'Hourly',
+       'download-all-daily': 'Daily',
+       'download-all-annual': 'Annual'
+     };
+     getAPIstn_details1('AllPollutants', frequencyById[target.id]);
+   });
        </script>

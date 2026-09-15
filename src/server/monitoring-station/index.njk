@@ -35,7 +35,7 @@
   <a id="station-link-{{ item.id }}" href="{{ ['/stationDetailsNojs/', item.id] | join }}" class="station-link" data-station-id="{{ item.id }}">{{ item.name }}</a>
 </strong>
 
-<script>
+<script nonce="{{ nonce }}">
   // Change href for JS-enabled users
   document.getElementById('station-link-{{ item.id }}').href = "/stationdetails";
 </script>
@@ -71,7 +71,7 @@
   <input type="hidden" name="stationId" id="station-id-input">
 </form>
 
-<script>
+<script nonce="{{ nonce }}">
   document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('.station-link');
     const form = document.getElementById('station-form');

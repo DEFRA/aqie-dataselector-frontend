@@ -85,7 +85,7 @@
 {# Inline script hides the banner early (before full JS loads) when the user
    has already given a valid response — avoids a layout shift on return visits.
    Without JS the banner remains visible so no-JS users can still consent. #}
-<script>
+<script nonce="{{ nonce }}">
   window.AQIE_CONSENT_COOKIE_VERSION = 1;
 
   (function () {
