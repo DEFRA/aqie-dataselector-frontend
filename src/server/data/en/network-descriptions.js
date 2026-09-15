@@ -1,5 +1,7 @@
 const UKEAP_RURAL_NO2_DESCRIPTION =
   'Monitors NO2 in rural locations. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.'
+const UKEAP_ACID_GASES_AEROSOL_DESCRIPTION =
+  'Monitors atmospheric pollutants. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.'
 
 export const networkDescriptions = {
   'UK Urban NO2 Network': 'Measures nitrogen dioxide at urban traffic sites.',
@@ -17,12 +19,9 @@ export const networkDescriptions = {
     'Monthly measurements of heavy metals at rural background locations.',
   'UKEAP - Metals Network':
     'Monthly measurements of heavy metals at rural background locations.',
-  'UKEAP: Acid gases and aerosol network':
-    'Monitors atmospheric pollutants. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
-  'UKEAP - Acid gases and aerosol network':
-    'Monitors atmospheric pollutants. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
-  'UKEAP - Acid Gas & Aerosol Network':
-    'Monitors atmospheric pollutants. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
+  'UKEAP: Acid gases and aerosol network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
+  'UKEAP - Acid gases and aerosol network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
+  'UKEAP - Acid Gas & Aerosol Network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
   'UKEAP: Acid Deposition Network':
     'Monthly measurements of acid deposition at rural background locations.',
   'UKEAP - Acid Deposition Network':
