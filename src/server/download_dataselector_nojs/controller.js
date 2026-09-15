@@ -5,6 +5,7 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 function getAurnPollutantID(datasourceGroups) {
   if (!Array.isArray(datasourceGroups)) {
@@ -59,7 +60,8 @@ const buildViewData = (request, backUrl) => {
       request.yar
         .get('finalyear')
         ?.split(',')
-        .map((year) => year.trim()) ?? []
+        .map((year) => year.trim()) ?? [],
+    networkDescriptions
   }
 }
 
