@@ -20,7 +20,8 @@ export const networkDescriptions = {
   'UKEAP - Metals Network':
     'Monthly measurements of heavy metals at rural background locations.',
   'UKEAP: Acid gases and aerosol network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
-  'UKEAP - Acid gases and aerosol network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
+  'UKEAP - Acid gases and aerosol network':
+    UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
   'UKEAP - Acid Gas & Aerosol Network': UKEAP_ACID_GASES_AEROSOL_DESCRIPTION,
   'UKEAP: Acid Deposition Network':
     'Monthly measurements of acid deposition at rural background locations.',
