@@ -1,9 +1,10 @@
+const UKEAP_RURAL_NO2_DESCRIPTION =
+  'Monitors NO2 in rural locations. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.'
+
 export const networkDescriptions = {
   'UK Urban NO2 Network': 'Measures nitrogen dioxide at urban traffic sites.',
-  'UKEAP: Rural NO2 Network':
-    'Monitors NO2 in rural locations. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
-  'UKEAP - Rural NO2 Network':
-    'Monitors NO2 in rural locations. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
+  'UKEAP: Rural NO2 Network': UKEAP_RURAL_NO2_DESCRIPTION,
+  'UKEAP - Rural NO2 Network': UKEAP_RURAL_NO2_DESCRIPTION,
   'UKEAP: Rural SO2 Network':
     'Monthly measurements of sulphur dioxide at rural background locations.',
   'UKEAP - Rural SO2 Network':
