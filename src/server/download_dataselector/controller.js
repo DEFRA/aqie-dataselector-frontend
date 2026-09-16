@@ -163,7 +163,6 @@ export const downloadDataselectorController = {
       stationCountUnavailable,
       ukeapNetworks,
       ukeapUnavailable,
-      aurnUnavailable,
       aurnPollutantID,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
