@@ -18,7 +18,6 @@ describe('downloadDataselectornojsController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => undefined) // silence controller debug log
 
     const session = {}
     request = {
@@ -163,8 +162,8 @@ describe('downloadDataselectornojsController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errormsg: 'Select a year to continue',
-          errorref1: 'Add year',
+          errormsg: 'Select a timeperiod to continue',
+          errorref1: 'Add timeperiod',
           errorhref1: '/year-aurn',
           selectedpollutant: ['NO2'],
           selectedlocation: ['Somewhere']

@@ -48,7 +48,13 @@ function getMissingSelectionError(request) {
     ]
   }
   if (!request.yar.get('selectedyear')) {
-    return ['Select a year to continue', 'Add year', '/year-aurn', '', '']
+    return [
+      'Select a timeperiod to continue',
+      'Add timeperiod',
+      '/year-aurn',
+      '',
+      ''
+    ]
   }
   if (!request.yar.get('selectedlocation')) {
     return [
@@ -138,11 +144,11 @@ export const downloadDataselectorController = {
       datasourceGroups,
       'Other data from Defra'
     )
-    const hasNearRealTimeDataSource = hasCategoryWithNetworks(
-      datasourceGroups,
-      'Near real-time data from Defra'
-    )
-    const aurnUnavailable = !hasNearRealTimeDataSource
+    // const hasNearRealTimeDataSource = hasCategoryWithNetworks(
+    //   datasourceGroups,
+    //   'Near real-time data from Defra'
+    // )
+    // onst aurnUnavailable = !hasNearRealTimeDataSource
     const aurnPollutantID = getAurnPollutantID(datasourceGroups)
 
     // NON-AURN networks — array of {networkType, count} objects
@@ -163,7 +169,6 @@ export const downloadDataselectorController = {
       stationCountUnavailable,
       ukeapNetworks,
       ukeapUnavailable,
-      aurnUnavailable,
       aurnPollutantID,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,

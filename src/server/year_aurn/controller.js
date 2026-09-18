@@ -317,14 +317,25 @@ function buildTimePeriod(payload) {
   }).format(today)
 
   if (payload.time === 'last7days') {
-    const startDate = new Date(today)
+    const endDate = new Date(today)
+    endDate.setDate(endDate.getDate() - 1)
+
+    const startDate = new Date(endDate)
     startDate.setDate(startDate.getDate() - (DAYS_IN_SEVEN_DAYS - 1))
+
     const formattedStart = new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
     }).format(startDate)
-    return `${formattedStart} to ${formattedToday}`
+
+    const formattedEnd = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(endDate)
+
+    return `${formattedStart} to ${formattedEnd}`
   }
 
   if (payload.time === 'ytd') {
