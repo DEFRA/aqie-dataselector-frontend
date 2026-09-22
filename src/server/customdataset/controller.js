@@ -278,6 +278,7 @@ function buildStationCountParameters(request, finalyear) {
       Region: request.yar.get('selectedlocation').join(','),
       regiontype: 'Country',
       Year: finalyear,
+
       dataselectorfiltertype: 'dataSelectorCount',
       dataselectordownloadtype: ''
     }
@@ -346,6 +347,7 @@ async function handleStationCountCalculation(request) {
 
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
   request.yar.set('nooflocationukeap', ukeapNetworks)
+
   // nooflocation is always the AURN numeric count used for summary display
   request.yar.set('nooflocation', aurnNumeric)
 
@@ -446,11 +448,12 @@ function getOtherOnlyTimePeriodErrorViewModel() {
 
 function shouldShowLast7DaysDatasourceWarning(request) {
   const isLast7Days = isLast7DaysSelection(request)
-
+  const datasourceType = getDatasourceCategoryType(
+    request.yar.get('datasourceGroups') || []
+  )
   return (
     isLast7Days &&
-    getDatasourceCategoryType(request.yar.get('datasourceGroups') || []) ===
-      'both'
+    (datasourceType === 'both' || datasourceType === 'other-only')
   )
 }
 
@@ -472,7 +475,7 @@ function renderBothZeroView(request, h, backUrl) {
     error: true,
     errormsg:
       'No monitoring stations are available for your selection. Please try:',
-    errorref1: 'Change the year',
+    errorref1: 'Change the time period',
     errorhref1: '/year-aurn/change',
     errorref2: 'Change the location',
     errorhref2: '/location-aurn/change'

@@ -282,6 +282,135 @@ describe('downloadDataselectorController', () => {
       expect(result.model.finalyear).toEqual(['2020', '2021', '2022'])
     })
 
+    test('should render other-only last7days error', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.TimeSelectionMode = 'last7days'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [{ count: 10 }]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errormsg).toBe(
+        'There are no stations available based on your selection. Change the time period'
+      )
+    })
+
+    test('should render error for near-realtime-only when station count is zero', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.nooflocation = 0
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errormsg).toBe(
+        'No monitoring stations are available for your selection. Please try:'
+      )
+    })
+
+    test('should render error for near-realtime-only when station count is empty string', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.nooflocation = ''
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render error for other-only when all nonaurn counts are zero', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [{ count: 0 }, { count: 0 }]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render success for other-only when nonaurn count exists', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 5
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should render error for both datasource when all counts unavailable', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'both'
+      session.nooflocation = 0
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 0
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render success for both datasource when counts exist', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'both'
+      session.nooflocation = 5
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 3
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should mark station count unavailable when nooflocation is Error instance', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = new Error('failure')
+      session.datasourceGroups = []
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.stationCountUnavailable).toBe(true)
+    })
+
+    test('should handle undefined nooflocationukeap', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = 10
+      session.datasourceGroups = []
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should get empty finalyear array when finalyear not present', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = 10
+      session.datasourceGroups = []
+      session.finalyear = undefined
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.finalyear).toEqual([])
+    })
+
     test('should clear downloadaurnresult and persist downloadViewData', () => {
       session.nooflocation = 1
       session.datasourceGroups = []

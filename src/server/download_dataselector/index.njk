@@ -59,21 +59,21 @@
 <div class="govuk-tabs" data-module="govuk-tabs">
   <h2 class="govuk-tabs__title">Contents</h2>
   <ul class="govuk-tabs__list">
-    {% if not aurnUnavailable %}
+    {% if (downloadDatasourceCategoryType == 'near-realtime-only') or (downloadDatasourceCategoryType == 'both') %}
     <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
       <a class="govuk-tabs__tab" href="#tab-nearrealtime">Near real-time data from Defra</a>
     </li>
     {% endif %}
 
     {# Hide "Other data" tab for BOTH + last 7 days #}
-    {% if not ukeapUnavailable and   not forceNearRealtimeOnly %}
-    <li class="govuk-tabs__list-item{% if aurnUnavailable %} govuk-tabs__list-item--selected{% endif %}">
+    {% if (downloadDatasourceCategoryType == 'other-only') or (downloadDatasourceCategoryType == 'both')%}
+    <li class="govuk-tabs__list-item{% if (downloadDatasourceCategoryType == 'other-only') %} govuk-tabs__list-item--selected{% endif %}">
       <a class="govuk-tabs__tab" href="#tab-other">Other data from Defra</a>
     </li>
     {% endif %}
   </ul>
 
-  {% if not aurnUnavailable %}
+  {% if (downloadDatasourceCategoryType == 'near-realtime-only') or (downloadDatasourceCategoryType == 'both') %}
   <div class="govuk-tabs__panel" id="tab-nearrealtime">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
@@ -98,7 +98,7 @@
 
     {% if yearrange == 'Single' and stationcount > 0 %}
     <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}/AURN" class="download-aurn-single aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" role="button" data-year="{{ finalyear }}" data-source="AURN"
-      aria-label=" Download daily average data for {{pollutant.pollutantName}}">
+      aria-label=" Download hourly average data for {{pollutant.pollutantName}}">
       <span class="aq-button-secondary__icon">
         <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
           <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
@@ -142,8 +142,8 @@
   </div>
   {% endif %}
 
-  {% if not ukeapUnavailable and not forceNearRealtimeOnly %}
-  <div class="govuk-tabs__panel{% if not aurnUnavailable %} govuk-tabs__panel--hidden{% endif %}" id="tab-other">
+ {% if (downloadDatasourceCategoryType == 'other-only') or (downloadDatasourceCategoryType == 'both') %}
+  <div class="govuk-tabs__panel" id="tab-other" >
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Other data from Defra</h2>
       <p class="govuk-body">Data is measured hourly, weekly or monthly depending on the network.</p>
@@ -216,7 +216,8 @@
       {% endfor %}
     </div>
   </div>
-  {% endif %}
+   {% endif %}
+
 
   <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="tab-local">
   </div>
