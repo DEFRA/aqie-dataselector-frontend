@@ -142,6 +142,132 @@ describe('customdatasetController', () => {
     })
   })
 
+  describe('last 7 days datasource behaviour', () => {
+    it('shows warning for both datasource types and last7days', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'last7days',
+          selectedlocation: ['England'],
+          TimeSelectionMode: 'last7days',
+          datasourceGroups: [
+            {
+              category: 'Near real-time data from Defra',
+              networks: [{ id: 'aurn' }]
+            },
+            {
+              category: 'Other data from Defra',
+              networks: [{ id: 'ukeap' }]
+            }
+          ]
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          showLast7DaysWarning: true
+        })
+      )
+    })
+
+    it('shows warning for other-only datasource and last7days', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'last7days',
+          selectedlocation: ['England'],
+          TimeSelectionMode: 'last7days',
+          datasourceGroups: [
+            {
+              category: 'Other data from Defra',
+              networks: [{ id: 'ukeap' }]
+            }
+          ]
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errormsg:
+            'There are no stations available based on your selection. Change the time period'
+        })
+      )
+    })
+
+    it('creates download override for both datasource + last7days', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'last7days',
+          selectedlocation: ['England'],
+          TimeSelectionMode: 'last7days',
+          datasourceGroups: [
+            {
+              category: 'Near real-time data from Defra',
+              networks: [{ id: 'aurn' }]
+            },
+            {
+              category: 'Other data from Defra',
+              networks: [{ id: 'ukeap' }]
+            }
+          ]
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadDatasourceCategoryType',
+        'near-realtime-only'
+      )
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadForceNearRealtimeOnly',
+        true
+      )
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedDatasourceType',
+        'AURN'
+      )
+    })
+
+    it('does not create override when datasource is near realtime only', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: 'last7days',
+          selectedlocation: ['England'],
+          TimeSelectionMode: 'last7days',
+          datasourceGroups: [
+            {
+              category: 'Near real-time data from Defra',
+              networks: [{ id: 'aurn' }]
+            }
+          ]
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadForceNearRealtimeOnly',
+        false
+      )
+    })
+  })
+
   // ─── error handling ───────────────────────────────────────────────────────────
 
   describe('error handling (pollutants=null)', () => {
@@ -1037,7 +1163,7 @@ describe('customdatasetController', () => {
           error: true,
           errormsg:
             'No monitoring stations are available for your selection. Please try:',
-          errorref1: 'Change the year',
+          errorref1: 'Change the time period',
           errorhref1: '/year-aurn/change',
           errorref2: 'Change the location',
           errorhref2: '/location-aurn/change'
@@ -1071,7 +1197,7 @@ describe('customdatasetController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errorref1: 'Change the year',
+          errorref1: 'Change the time period',
           errorhref1: '/year-aurn/change',
           errorref2: 'Change the location',
           errorhref2: '/location-aurn/change'
