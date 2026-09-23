@@ -30,12 +30,14 @@ export async function postJson({ devUrlKey, urlKey, payload, label }) {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': config.get('DevApiKey')
-        },
-        json: true
+        }
       })
-      return body
+      // Wreck doesn't parse the body itself
+      return JSON.parse(body.toString())
     } catch (error) {
-      return error
+      // Error objects hold circular refs (e.g. sockets) that can't be stored in the session, so return null instead
+      logger.warn(`${label} error: ${error.message}`)
+      return null
     }
   }
 

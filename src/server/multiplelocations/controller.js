@@ -155,8 +155,10 @@ async function resolveLocations(request, searchValue) {
   const result = await invokeOsNameAPI(searchValue)
   if (result !== null) {
     request.yar.set('osnameapiresult', result)
+    return result.getOSPlaces
   }
-  return result.getOSPlaces
+  // API call failed; empty list routes to the "not found" view
+  return []
 }
 
 /** Resolves the monitoring station result, falling back to an empty result. */

@@ -5,6 +5,7 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 // True when the datasource groups contain the given category with networks.
 function hasCategoryWithNetworks(datasourceGroups, category) {
@@ -33,6 +34,23 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
   )
 }
 
+function getMissingStationError() {
+  return [
+    'No monitoring stations are available for your selection. Please try:',
+    'Change the time period',
+    '/year-aurn/change',
+    'Change the location',
+    '/location-aurn/change'
+  ]
+}
+function getOtherOnlyTimePeriodErrorViewModel() {
+  return [
+    'There are no stations available based on your selection. Change the time period',
+    'Change the time period',
+    '/year-aurn/change'
+  ]
+}
+
 // Returns error view params [msg, ref1, href1, ref2, href2] when a required
 // selection is missing, otherwise null.
 function getMissingSelectionError(request) {
@@ -47,7 +65,13 @@ function getMissingSelectionError(request) {
     ]
   }
   if (!request.yar.get('selectedyear')) {
-    return ['Select a year to continue', 'Add year', '/year-aurn', '', '']
+    return [
+      'Select a timeperiod to continue',
+      'Add timeperiod',
+      '/year-aurn',
+      '',
+      ''
+    ]
   }
   if (!request.yar.get('selectedlocation')) {
     return [
@@ -75,6 +99,12 @@ function getAurnPollutantID(datasourceGroups) {
   }
 
   return ''
+}
+function getNonaurncount(nonaurncount) {
+  if (!Array.isArray(nonaurncount)) {
+    return 0
+  }
+  return nonaurncount.reduce((sum, item) => sum + Number(item.count || 0), 0)
 }
 
 export const downloadDataselectorController = {
@@ -120,28 +150,54 @@ export const downloadDataselectorController = {
 
     // Validation checks
     const missingSelection = getMissingSelectionError(request)
-    if (missingSelection) {
-      return renderErrorState(...missingSelection)
-    }
-
     const numberOfLocations = request.yar.get('nooflocation')
     const stationCountError = request.yar.get('stationCountError')
+    const nonaurncount = getNonaurncount(request.yar.get('nooflocationukeap'))
+
+    const timeperiod = request.yar.get('TimeSelectionMode')
+    const downloadDatasourceCategoryType = request.yar.get(
+      'downloadDatasourceCategoryType'
+    )
+
     const stationCountUnavailable = isStationCountUnavailable(
       numberOfLocations,
       stationCountError
     )
 
-    // Only show each tab if the pollutant's datasource includes that category
-    // (determined at pollutant-selection time).
+    if (missingSelection) {
+      return renderErrorState(...missingSelection)
+    } else if (
+      timeperiod === 'last7days' &&
+      downloadDatasourceCategoryType === 'other-only'
+    ) {
+      return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel())
+    } else if (
+      downloadDatasourceCategoryType === 'near-realtime-only' &&
+      (stationCountUnavailable ||
+        numberOfLocations === 0 ||
+        numberOfLocations === '')
+    ) {
+      return renderErrorState(...getMissingStationError())
+    } else if (
+      downloadDatasourceCategoryType === 'other-only' &&
+      nonaurncount < 1
+    ) {
+      return renderErrorState(...getMissingStationError())
+    } else if (
+      downloadDatasourceCategoryType === 'both' &&
+      (!nonaurncount ||
+        stationCountUnavailable ||
+        numberOfLocations === 0 ||
+        numberOfLocations === '')
+    ) {
+      return renderErrorState(...getMissingStationError())
+    }
+
     const hasOtherDataSource = hasCategoryWithNetworks(
       datasourceGroups,
       'Other data from Defra'
     )
-    const hasNearRealTimeDataSource = hasCategoryWithNetworks(
-      datasourceGroups,
-      'Near real-time data from Defra'
-    )
-    const aurnUnavailable = !hasNearRealTimeDataSource
+
     const aurnPollutantID = getAurnPollutantID(datasourceGroups)
 
     // NON-AURN networks — array of {networkType, count} objects
@@ -162,18 +218,19 @@ export const downloadDataselectorController = {
       stationCountUnavailable,
       ukeapNetworks,
       ukeapUnavailable,
-      aurnUnavailable,
       aurnPollutantID,
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,
+      downloadDatasourceCategoryType,
       datasourceavailability: request.yar.get('Datasourceavailability'),
       timperiodselectionmode: request.yar.get('TimeSelectionMode'),
       finalyear:
         request.yar
           .get('finalyear')
           ?.split(',')
-          .map((year) => year.trim()) ?? []
+          .map((year) => year.trim()) ?? [],
+      networkDescriptions
     }
 
     // Store success view data in session

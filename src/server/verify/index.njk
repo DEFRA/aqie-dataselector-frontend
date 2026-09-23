@@ -18,7 +18,7 @@
         <p class="govuk-body">To request another download, go to <a href="/hubpage" class="govuk-link">Get air pollution data.</a></p>
         
       </p>
-        <script>
+        <script nonce="{{ nonce }}">
           var downloadurl = "{{ downloadEmailUrl | safe }}";
           var url = downloadurl;
           setTimeout(function() {

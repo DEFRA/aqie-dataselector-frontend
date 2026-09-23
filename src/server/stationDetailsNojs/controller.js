@@ -124,10 +124,16 @@ const stationDetailsNojsController = {
     // Validate request and session data
 
     const monitoringResult = request.yar.get('MonitoringstResult')
+    if (!monitoringResult?.getmonitoringstation) {
+      return renderNotFound(h)
+    }
 
     const result = monitoringResult.getmonitoringstation
-
     const station = result.find((x) => x.id === request.yar.get('SiteId'))
+
+    if (!station) {
+      return renderNotFound(h)
+    }
 
     request.yar.set('stationdetails', station)
     const stationDetails = request.yar.get('stationdetails')

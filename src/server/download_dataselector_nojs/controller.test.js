@@ -1,5 +1,6 @@
 import { downloadDataselectornojsController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
@@ -17,7 +18,6 @@ describe('downloadDataselectornojsController', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    jest.spyOn(console, 'log').mockImplementation(() => undefined) // silence controller debug log
 
     const session = {}
     request = {
@@ -67,6 +67,16 @@ describe('downloadDataselectornojsController', () => {
           hrefq: '/customdataset',
           finalyear: ['2019', '2020']
         })
+      )
+      expect(res).toBe('view-response')
+    })
+
+    it('includes networkDescriptions in the view model', () => {
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ networkDescriptions })
       )
       expect(res).toBe('view-response')
     })
@@ -152,8 +162,8 @@ describe('downloadDataselectornojsController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errormsg: 'Select a year to continue',
-          errorref1: 'Add year',
+          errormsg: 'Select a timeperiod to continue',
+          errorref1: 'Add timeperiod',
           errorhref1: '/year-aurn',
           selectedpollutant: ['NO2'],
           selectedlocation: ['Somewhere']
@@ -251,6 +261,20 @@ describe('downloadDataselectornojsController', () => {
           hrefq: '/customdataset',
           finalyear: ['2020', '2022']
         })
+      )
+      expect(res).toBe('view-response')
+    })
+
+    it('includes networkDescriptions in the success view model', () => {
+      request.yar.set('selectedpollutant', ['CO'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['A'])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ networkDescriptions })
       )
       expect(res).toBe('view-response')
     })

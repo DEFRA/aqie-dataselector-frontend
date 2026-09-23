@@ -5,6 +5,7 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
 function getAurnPollutantID(datasourceGroups) {
   if (!Array.isArray(datasourceGroups)) {
@@ -59,7 +60,8 @@ const buildViewData = (request, backUrl) => {
       request.yar
         .get('finalyear')
         ?.split(',')
-        .map((year) => year.trim()) ?? []
+        .map((year) => year.trim()) ?? [],
+    networkDescriptions
   }
 }
 
@@ -103,8 +105,8 @@ const validateSelectedYear = (request, h, backUrl) => {
   const selectedYear = request.yar.get('selectedyear')
   if (!selectedYear) {
     return renderErrorState(h, request, backUrl, {
-      errormsg: 'Select a year to continue',
-      errorref1: 'Add year',
+      errormsg: 'Select a timeperiod to continue',
+      errorref1: 'Add timeperiod',
       errorhref1: '/year-aurn',
       errorref2: '',
       errorhref2: ''

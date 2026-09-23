@@ -32,16 +32,17 @@
           <th class="govuk-table__cell"> 
         
           <strong>
-  <a id="station-link-{{ item.id }}" href="{{ ['/stationDetailsNojs/', item.id] | join }}" class="station-link" data-station-id="{{ item.id }}">{{ item.name }}</a>
+  <a
+    href="{{ ['/stationDetailsNojs/', (item.id | urlencode)] | join }}"
+    class="station-link"
+    data-station-id="{{ item.id }}"
+  >
+    {{ item.name }}
+  </a>
 </strong>
 
-<script>
-  // Change href for JS-enabled users
-  document.getElementById('station-link-{{ item.id }}').href = "/stationdetails";
-</script>
-
 <noscript>
-  <!-- Link already has nojs path as default, so no changes needed -->
+  {# default href already points to nojs #}
 </noscript>
            <p class="govuk-body">{{item.distance}} miles away</p>
           </th>
@@ -71,17 +72,19 @@
   <input type="hidden" name="stationId" id="station-id-input">
 </form>
 
-<script>
+<script nonce="{{ nonce }}">
   document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('.station-link');
     const form = document.getElementById('station-form');
     const input = document.getElementById('station-id-input');
-    
+
+    // JS-enabled users should post to stationdetails
     links.forEach(function(link) {
+      link.setAttribute('href', '/stationdetails');
+
       link.addEventListener('click', function(e) {
         e.preventDefault();
         input.value = this.getAttribute('data-station-id');
-        // Use the href to determine which endpoint to POST to
         form.action = this.getAttribute('href');
         form.submit();
       });

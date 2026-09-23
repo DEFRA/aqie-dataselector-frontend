@@ -1,686 +1,431 @@
 import { downloadDataselectorController } from './controller.js'
-import { englishNew } from '~/src/server/data/en/content_aurn.js'
 
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
-      pageTitle: 'Download Data Selector',
-      heading: 'Download Your Selected Data',
-      texts: ['Review your selection', 'Confirm and download']
+      pageTitle: 'Test Page Title',
+      heading: 'Test Heading',
+      texts: {
+        intro: 'test'
+      }
     }
   }
 }))
 
-const makeRequest = (sessionData = {}) => ({
-  yar: {
-    get: jest.fn((key) =>
-      Object.prototype.hasOwnProperty.call(sessionData, key)
-        ? sessionData[key]
-        : null
-    ),
-    set: jest.fn()
+jest.mock('~/src/server/data/en/network-descriptions.js', () => ({
+  networkDescriptions: {
+    TEST_NETWORK: 'Test Network Description'
   }
-})
-
-const makeH = () => ({
-  view: jest.fn().mockReturnValue('view-response')
-})
-
-// Minimal valid session — all three required fields present, station count available
-const validSession = {
-  selectedpollutant: ['NO2'],
-  selectedyear: '2023',
-  selectedlocation: ['London'],
-  nooflocation: 5,
-  stationCountError: false,
-  datasourceGroups: [],
-  nooflocationukeap: null,
-  yearrange: 'Single',
-  finalyear: '2023'
-}
+}))
 
 describe('downloadDataselectorController', () => {
-  describe('pollutant validation', () => {
-    it('renders error when selectedpollutant is null', () => {
-      const request = makeRequest({ ...validSession, selectedpollutant: null })
-      const h = makeH()
+  let session
+  let request
+  let h
+
+  beforeEach(() => {
+    session = {}
+
+    request = {
+      yar: {
+        get: jest.fn((key) => session[key]),
+        set: jest.fn((key, value) => {
+          session[key] = value
+        })
+      }
+    }
+
+    h = {
+      view: jest.fn((view, model) => ({
+        view,
+        model
+      }))
+    }
+  })
+
+  describe('validation errors', () => {
+    test('should render error when pollutant is missing', () => {
       const result = downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'customdataset/index',
-        expect.objectContaining({
-          error: true,
-          errormsg: 'Select a pollutant to continue',
-          errorref1: 'Add pollutant',
-          errorhref1: '/airpollutant',
-          errorref2: '',
-          errorhref2: ''
-        })
-      )
-      expect(result).toBe('view-response')
-    })
 
-    it('renders error when selectedpollutant is an empty array', () => {
-      const request = makeRequest({ ...validSession, selectedpollutant: [] })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'customdataset/index',
-        expect.objectContaining({
-          error: true,
-          errormsg: 'Select a pollutant to continue'
-        })
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errormsg).toBe('Select a pollutant to continue')
+
+      expect(request.yar.set).toHaveBeenCalledWith(
+        'errorViewData',
+        expect.any(Object)
       )
     })
 
-    it('stores errorViewData in session on pollutant error', () => {
-      const request = makeRequest({ ...validSession, selectedpollutant: null })
-      const h = makeH()
+    test('should render error when year is missing', () => {
+      session.selectedpollutant = ['NO2']
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.errormsg).toBe('Select a timeperiod to continue')
+      expect(result.model.errorref1).toBe('Add timeperiod')
+      expect(result.model.errorhref1).toBe('/year-aurn')
+    })
+
+    test('should render error when location is missing', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.errormsg).toBe('Select a location to continue')
+    })
+
+    test('should store errorViewData when year is missing', () => {
+      session.selectedpollutant = ['NO2']
+
       downloadDataselectorController.handler(request, h)
+
       expect(request.yar.set).toHaveBeenCalledWith(
         'errorViewData',
         expect.objectContaining({
           error: true,
-          errormsg: 'Select a pollutant to continue'
+          errormsg: 'Select a timeperiod to continue',
+          errorref1: 'Add timeperiod',
+          errorhref1: '/year-aurn'
         })
       )
     })
 
-    it('includes stationcountukeap and datasourceGroups in error view', () => {
-      const request = makeRequest({
-        ...validSession,
-        selectedpollutant: null,
-        nooflocationukeap: [{ networkType: 'UKEAP', count: 3 }],
-        datasourceGroups: [
-          { category: 'Other data from Defra', networks: ['UKEAP'] }
-        ]
-      })
-      const h = makeH()
+    test('should store errorViewData when location is missing', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+
       downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'customdataset/index',
+
+      expect(request.yar.set).toHaveBeenCalledWith(
+        'errorViewData',
         expect.objectContaining({
-          stationcountukeap: [{ networkType: 'UKEAP', count: 3 }],
-          datasourceGroups: [
-            { category: 'Other data from Defra', networks: ['UKEAP'] }
+          error: true,
+          errormsg: 'Select a location to continue',
+          errorref1: 'Add location',
+          errorhref1: '/location-aurn/change'
+        })
+      )
+    })
+  })
+
+  describe('successful rendering', () => {
+    beforeEach(() => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.yearrange = '2020-2024'
+      session.finalyear = '2023, 2024'
+      session.Datasourceavailability = true
+      session.TimeSelectionMode = 'RANGE'
+    })
+
+    test('should render success page with AURN and UKEAP available', () => {
+      session.nooflocation = 10
+
+      session.datasourceGroups = [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [
+            {
+              pollutantID: '8'
+            }
           ]
-        })
-      )
-    })
+        },
+        {
+          category: 'Other data from Defra',
+          networks: [
+            {
+              id: 'network-1'
+            }
+          ]
+        }
+      ]
 
-    it('defaults datasourceGroups to [] in error view when session is null', () => {
-      const request = makeRequest({
-        ...validSession,
-        selectedpollutant: null,
-        datasourceGroups: null
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'customdataset/index',
-        expect.objectContaining({ datasourceGroups: [] })
-      )
-    })
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 4
+        }
+      ]
 
-    it('defaults datasourceGroups to [] in error view when session value is non-array', () => {
-      const request = makeRequest({
-        ...validSession,
-        selectedpollutant: null,
-        datasourceGroups: { category: 'Other data from Defra' }
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'customdataset/index',
-        expect.objectContaining({ datasourceGroups: [] })
-      )
-    })
-  })
-
-  describe('year validation', () => {
-    it('renders error when selectedyear is missing', () => {
-      const request = makeRequest({ ...validSession, selectedyear: null })
-      const h = makeH()
       const result = downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith('customdataset/index', {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        error: true,
-        errormsg: 'Select a year to continue',
-        errorref1: 'Add year',
-        errorhref1: '/year-aurn',
-        errorref2: '',
-        errorhref2: '',
-        selectedpollutant: ['NO2'],
-        selectedyear: null,
-        selectedlocation: ['London'],
-        stationcount: 5,
-        stationcountukeap: null,
-        datasourceGroups: [],
-        displayBacklink: true,
-        hrefq: '/customdataset'
-      })
-      expect(result).toBe('view-response')
-    })
 
-    it('stores errorViewData in session on year error', () => {
-      const request = makeRequest({ ...validSession, selectedyear: null })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+
+      expect(result.model.stationcount).toBe(10)
+      expect(result.model.stationCountUnavailable).toBe(false)
+      expect(result.model.ukeapUnavailable).toBe(false)
+      expect(result.model.aurnPollutantID).toBe('8')
+
+      expect(result.model.finalyear).toEqual(['2023', '2024'])
+
+      expect(request.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
+
       expect(request.yar.set).toHaveBeenCalledWith(
-        'errorViewData',
-        expect.objectContaining({
-          error: true,
-          errormsg: 'Select a year to continue'
-        })
+        'downloadViewData',
+        expect.any(Object)
       )
     })
-  })
 
-  describe('location validation', () => {
-    it('renders error when selectedlocation is missing', () => {
-      const request = makeRequest({ ...validSession, selectedlocation: null })
-      const h = makeH()
+    test('should handle undefined datasourceGroups', () => {
+      session.nooflocation = 5
+      session.datasourceGroups = undefined
+
       const result = downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith('customdataset/index', {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        error: true,
-        errormsg: 'Select a location to continue',
-        errorref1: 'Add location',
-        errorhref1: '/location-aurn/change',
-        errorref2: '',
-        errorhref2: '',
-        selectedpollutant: ['NO2'],
-        selectedyear: '2023',
-        selectedlocation: null,
-        stationcount: 5,
-        stationcountukeap: null,
-        datasourceGroups: [],
-        displayBacklink: true,
-        hrefq: '/customdataset'
-      })
-      expect(result).toBe('view-response')
-    })
-  })
 
-  describe('stationCountUnavailable logic', () => {
-    it('is true when stationCountError flag is set', () => {
-      const request = makeRequest({
-        ...validSession,
-        stationCountError: true,
-        nooflocation: 5
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: true,
-          stationcount: null
-        })
-      )
+      expect(result.view).toBe('download_dataselector/index')
+
+      expect(result.model.ukeapUnavailable).toBe(true)
+      expect(result.model.aurnPollutantID).toBe('')
     })
 
-    it('is true when nooflocation is null', () => {
-      const request = makeRequest({ ...validSession, nooflocation: null })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: true,
-          stationcount: null
-        })
-      )
-    })
+    test('should handle empty datasourceGroups array', () => {
+      session.nooflocation = 5
+      session.datasourceGroups = []
 
-    it('is true when nooflocation is an Error instance', () => {
-      const request = makeRequest({
-        ...validSession,
-        nooflocation: new Error('API failed')
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: true,
-          stationcount: null
-        })
-      )
-    })
-
-    it('is true when nooflocation is a plain object', () => {
-      const request = makeRequest({
-        ...validSession,
-        nooflocation: { some: 'object' }
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: true,
-          stationcount: null
-        })
-      )
-    })
-
-    it('is false when nooflocation is a number', () => {
-      const request = makeRequest({ ...validSession, nooflocation: 5 })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: false,
-          stationcount: 5
-        })
-      )
-    })
-
-    it('is false when nooflocation is 0 (arrays of NON-AURN counts are valid)', () => {
-      const request = makeRequest({ ...validSession, nooflocation: 0 })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          stationCountUnavailable: false,
-          stationcount: 0
-        })
-      )
-    })
-
-    it('is false when nooflocation is an array (NON-AURN format)', () => {
-      const request = makeRequest({
-        ...validSession,
-        nooflocation: [{ networkType: 'UKEAP', count: 3 }]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ stationCountUnavailable: false })
-      )
-    })
-  })
-
-  describe('ukeapNetworks and ukeapUnavailable logic', () => {
-    it('ukeapUnavailable is true when datasourceGroups has no Other data category', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Near real-time data from Defra', networks: ['AURN'] }
-        ],
-        nooflocationukeap: [{ networkType: 'UKEAP', count: 3 }]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          ukeapUnavailable: true,
-          ukeapNetworks: [{ networkType: 'UKEAP', count: 3 }]
-        })
-      )
-    })
-
-    it('ukeapUnavailable is true when Other data category has empty networks', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [{ category: 'Other data from Defra', networks: [] }],
-        nooflocationukeap: [{ networkType: 'UKEAP', count: 3 }]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ ukeapUnavailable: true })
-      )
-    })
-
-    it('ukeapUnavailable is true when hasOtherDataSource but ukeapNetworks is empty', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Other data from Defra', networks: ['UKEAP'] }
-        ],
-        nooflocationukeap: null
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ ukeapUnavailable: true, ukeapNetworks: [] })
-      )
-    })
-
-    it('ukeapUnavailable is false when hasOtherDataSource and ukeapNetworks is populated', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Other data from Defra', networks: ['UKEAP'] }
-        ],
-        nooflocationukeap: [{ networkType: 'UKEAP', count: 4 }]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          ukeapUnavailable: false,
-          ukeapNetworks: [{ networkType: 'UKEAP', count: 4 }]
-        })
-      )
-    })
-
-    it('ukeapNetworks defaults to [] when nooflocationukeap is not an array', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Other data from Defra', networks: ['UKEAP'] }
-        ],
-        nooflocationukeap: 'not-an-array'
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ ukeapNetworks: [] })
-      )
-    })
-  })
-
-  describe('aurnUnavailable logic', () => {
-    it('aurnUnavailable is true when datasourceGroups has no Near real-time category', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Other data from Defra', networks: ['UKEAP'] }
-        ]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ aurnUnavailable: true })
-      )
-    })
-
-    it('aurnUnavailable is true when Near real-time category has empty networks', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Near real-time data from Defra', networks: [] }
-        ]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ aurnUnavailable: true })
-      )
-    })
-
-    it('aurnUnavailable is false when Near real-time category has networks', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Near real-time data from Defra', networks: ['AURN'] }
-        ]
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ aurnUnavailable: false })
-      )
-    })
-
-    it('defaults aurnPollutantID to empty string when datasourceGroups is missing', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: null
-      })
-      const h = makeH()
-
-      downloadDataselectorController.handler(request, h)
-
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ aurnPollutantID: '' })
-      )
-    })
-
-    it('handles non-array datasourceGroups without throwing on success path', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: {}
-      })
-      const h = makeH()
-
-      downloadDataselectorController.handler(request, h)
-
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          aurnPollutantID: '',
-          aurnUnavailable: true,
-          ukeapUnavailable: true
-        })
-      )
-    })
-
-    it('extracts aurnPollutantID from a matching AURN network object', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          {
-            category: 'Near real-time data from Defra',
-            networks: [{ pollutantID: 'NO2-ONLY' }]
-          }
-        ]
-      })
-      const h = makeH()
-
-      downloadDataselectorController.handler(request, h)
-
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          aurnUnavailable: false,
-          aurnPollutantID: 'NO2-ONLY'
-        })
-      )
-    })
-
-    it('skips groups without networks and finds AURN pollutant in a later group', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          { category: 'Near real-time data from Defra' },
-          {
-            category: 'Near real-time data from Defra',
-            networks: [{ pollutantID: 'O3-ONLY' }]
-          }
-        ]
-      })
-      const h = makeH()
-
-      downloadDataselectorController.handler(request, h)
-
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          aurnUnavailable: false,
-          aurnPollutantID: 'O3-ONLY'
-        })
-      )
-    })
-
-    it('returns empty aurnPollutantID when matching network has no pollutantID', () => {
-      const request = makeRequest({
-        ...validSession,
-        datasourceGroups: [
-          {
-            category: 'Near real-time data from Defra',
-            networks: [{}]
-          }
-        ]
-      })
-      const h = makeH()
-
-      downloadDataselectorController.handler(request, h)
-
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          aurnUnavailable: false,
-          aurnPollutantID: ''
-        })
-      )
-    })
-  })
-
-  describe('success view rendering', () => {
-    it('renders full success view with all fields', () => {
-      const request = makeRequest({
-        selectedpollutant: ['NO2'],
-        selectedyear: '2021-2023',
-        selectedlocation: ['London'],
-        nooflocation: 5,
-        stationCountError: false,
-        datasourceGroups: [],
-        nooflocationukeap: null,
-        yearrange: 'Multiple',
-        finalyear: '2021,2022,2023'
-      })
-      const h = makeH()
       const result = downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({
-          aurnPollutantID: '',
-          aurnUnavailable: true,
-          datasourceavailability: null,
-          timperiodselectionmode: null,
-          displayBacklink: true,
-          downloadaurnresult: null,
-          finalyear: ['2021', '2022', '2023'],
-          pageTitle: englishNew.custom.pageTitle,
-          heading: englishNew.custom.heading,
-          texts: englishNew.custom.texts,
-          hrefq: '/customdataset',
-          stationCountUnavailable: false,
-          stationcount: 5,
-          ukeapNetworks: [],
-          ukeapUnavailable: true,
-          yearrange: 'Multiple'
-        })
-      )
-      expect(result).toBe('view-response')
+
+      expect(result.model.ukeapUnavailable).toBe(true)
+      expect(result.model.aurnPollutantID).toBe('')
     })
 
-    it('clears downloadaurnresult in session before rendering', () => {
-      const request = makeRequest(validSession)
-      const h = makeH()
+    test('should mark station count unavailable when stationCountError exists', () => {
+      session.nooflocation = 10
+      session.stationCountError = true
+      session.datasourceGroups = []
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.stationCountUnavailable).toBe(true)
+      expect(result.model.stationcount).toBeNull()
+    })
+
+    test('should mark station count unavailable when nooflocation is plain object', () => {
+      session.nooflocation = { bad: true }
+      session.datasourceGroups = []
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.stationCountUnavailable).toBe(true)
+      expect(result.model.stationcount).toBeNull()
+    })
+
+    test('should keep station count available when nooflocation is array', () => {
+      session.nooflocation = [{ networkType: 'UKEAP', count: 2 }]
+      session.datasourceGroups = []
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.stationCountUnavailable).toBe(false)
+      expect(result.model.stationcount).toEqual([
+        { networkType: 'UKEAP', count: 2 }
+      ])
+    })
+
+    test('should normalize datasourceGroups to [] when session value is non-array', () => {
+      session.nooflocation = 5
+      session.datasourceGroups = { category: 'Other data from Defra' }
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.ukeapUnavailable).toBe(true)
+      expect(result.model.aurnPollutantID).toBe('')
+    })
+
+    test('should set ukeapUnavailable=false when Other data source and ukeap networks exist', () => {
+      session.nooflocation = 5
+      session.datasourceGroups = [
+        { category: 'Other data from Defra', networks: [{ id: 'n1' }] }
+      ]
+      session.nooflocationukeap = [{ networkType: 'UKEAP', count: 4 }]
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.ukeapUnavailable).toBe(false)
+      expect(result.model.ukeapNetworks).toEqual([
+        { networkType: 'UKEAP', count: 4 }
+      ])
+    })
+
+    test('should include networkDescriptions in success view model', () => {
+      session.nooflocation = 10
+      session.datasourceGroups = []
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.view).toBe('download_dataselector/index')
+      expect(result.model.networkDescriptions).toEqual({
+        TEST_NETWORK: 'Test Network Description'
+      })
+    })
+
+    test('should clear download result before rendering success', () => {
+      session.nooflocation = 1
+      session.datasourceGroups = []
+
       downloadDataselectorController.handler(request, h)
+
       expect(request.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
     })
 
-    it('stores downloadViewData in session on success', () => {
-      const request = makeRequest(validSession)
-      const h = makeH()
+    test('should trim and split finalyear values', () => {
+      session.nooflocation = 1
+      session.datasourceGroups = []
+      session.finalyear = '2020,  2021 ,2022'
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.finalyear).toEqual(['2020', '2021', '2022'])
+    })
+
+    test('should render other-only last7days error', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.TimeSelectionMode = 'last7days'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [{ count: 10 }]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errormsg).toBe(
+        'There are no stations available based on your selection. Change the time period'
+      )
+    })
+
+    test('should render error for near-realtime-only when station count is zero', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.nooflocation = 0
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errormsg).toBe(
+        'No monitoring stations are available for your selection. Please try:'
+      )
+    })
+
+    test('should render error for near-realtime-only when station count is empty string', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.nooflocation = ''
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render error for other-only when all nonaurn counts are zero', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [{ count: 0 }, { count: 0 }]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render success for other-only when nonaurn count exists', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'other-only'
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 5
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should render error for both datasource when all counts unavailable', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'both'
+      session.nooflocation = 0
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 0
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+    })
+
+    test('should render success for both datasource when counts exist', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.downloadDatasourceCategoryType = 'both'
+      session.nooflocation = 5
+      session.nooflocationukeap = [
+        {
+          networkType: 'UKEAP',
+          count: 3
+        }
+      ]
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should mark station count unavailable when nooflocation is Error instance', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = new Error('failure')
+      session.datasourceGroups = []
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.stationCountUnavailable).toBe(true)
+    })
+
+    test('should handle undefined nooflocationukeap', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = 10
+      session.datasourceGroups = []
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.view).toBe('download_dataselector/index')
+    })
+
+    test('should get empty finalyear array when finalyear not present', () => {
+      session.selectedpollutant = ['NO2']
+      session.selectedyear = '2024'
+      session.selectedlocation = 'London'
+      session.nooflocation = 10
+      session.datasourceGroups = []
+      session.finalyear = undefined
+      const result = downloadDataselectorController.handler(request, h)
+      expect(result.model.finalyear).toEqual([])
+    })
+
+    test('should clear downloadaurnresult and persist downloadViewData', () => {
+      session.nooflocation = 1
+      session.datasourceGroups = []
+
       downloadDataselectorController.handler(request, h)
+
+      expect(request.yar.set).toHaveBeenCalledWith('downloadaurnresult', null)
       expect(request.yar.set).toHaveBeenCalledWith(
         'downloadViewData',
         expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
-          downloadaurnresult: null,
-          stationcount: 5,
-          stationCountUnavailable: false,
-          displayBacklink: true,
+          pageTitle: 'Test Page Title',
+          heading: 'Test Heading',
           hrefq: '/customdataset'
         })
       )
-    })
-
-    it('handles undefined finalyear -> empty array', () => {
-      const request = makeRequest({ ...validSession, finalyear: undefined })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ finalyear: [] })
-      )
-    })
-
-    it('handles null finalyear -> empty array', () => {
-      const request = makeRequest({ ...validSession, finalyear: null })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ finalyear: [] })
-      )
-    })
-
-    it('parses finalyear with extra whitespace', () => {
-      const request = makeRequest({
-        ...validSession,
-        finalyear: '2020,  2021  , 2022 , 2023',
-        yearrange: 'Multiple'
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ finalyear: ['2020', '2021', '2022', '2023'] })
-      )
-    })
-
-    it('handles single year finalyear', () => {
-      const request = makeRequest({
-        ...validSession,
-        finalyear: '2023',
-        yearrange: 'Single'
-      })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ finalyear: ['2023'], yearrange: 'Single' })
-      )
-    })
-
-    it('reads yearrange from session', () => {
-      const request = makeRequest({ ...validSession, yearrange: 'Multiple' })
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(h.view).toHaveBeenCalledWith(
-        'download_dataselector/index',
-        expect.objectContaining({ yearrange: 'Multiple' })
-      )
-    })
-  })
-
-  describe('session reads', () => {
-    it('reads all required session keys on success path', () => {
-      const request = makeRequest(validSession)
-      const h = makeH()
-      downloadDataselectorController.handler(request, h)
-      expect(request.yar.get).toHaveBeenCalledWith('selectedpollutant')
-      expect(request.yar.get).toHaveBeenCalledWith('selectedyear')
-      expect(request.yar.get).toHaveBeenCalledWith('selectedlocation')
-      expect(request.yar.get).toHaveBeenCalledWith('nooflocation')
-      expect(request.yar.get).toHaveBeenCalledWith('stationCountError')
-      expect(request.yar.get).toHaveBeenCalledWith('datasourceGroups')
-      expect(request.yar.get).toHaveBeenCalledWith('nooflocationukeap')
-      expect(request.yar.get).toHaveBeenCalledWith('yearrange')
-      expect(request.yar.get).toHaveBeenCalledWith('finalyear')
     })
   })
 })

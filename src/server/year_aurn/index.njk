@@ -34,7 +34,7 @@
             </p>
           {% endif %}
 
-          {# <div id="time-hint" class="govuk-hint">Choose how you want to add years</div> #}
+          {# <div id="time-hint" class="govuk-hint">Choose how you want to Add timeperiods</div> #}
 
           <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
             {# Last 7 days #}
@@ -47,7 +47,7 @@
                      aria-describedby="time-last7days-hint"
                      {% if formData.time == 'last7days' %}checked{% endif %}>
               <label class="govuk-label govuk-radios__label" for="time-last7days">Last 7 days</label>
-              <div id="time-last7days-hint" class="govuk-hint govuk-radios__hint">Only near real time data from Defra is available</div>
+              <div id="time-last7days-hint" class="govuk-hint govuk-radios__hint">Only near real-time data from Defra is available</div>
             </div>
 
             {# Year to date #}
@@ -182,7 +182,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
   const today = new Date();
   const formatted = new Intl.DateTimeFormat('en-GB', {

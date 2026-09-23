@@ -1,6 +1,6 @@
 import { multipleLocationsController } from '~/src/server/multiplelocations/controller.js'
 import axios from 'axios'
-// import { config } from '~/src/config/config.js'
+import * as apiClient from '~/src/server/common/helpers/api-client.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
 
 jest.mock('axios')
@@ -492,6 +492,126 @@ describe('multipleLocationsController', () => {
     // With empty OS places, should render no location view
     expect(h.view).toHaveBeenCalledWith(
       'multiplelocations/nolocation',
+      expect.any(Object)
+    )
+  })
+
+  it('should render no location view when postJson resolves to null', async () => {
+    // postJson returns null when the underlying API call fails (see
+    // api-client.js); resolveLocations must fall back to [] rather than
+    // crashing on result.getOSPlaces.
+    jest.spyOn(apiClient, 'postJson').mockResolvedValueOnce(null)
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: [] // Not cached, will trigger the API call
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nolocation',
+      expect.any(Object)
+    )
+  })
+
+  it('updates locationMiles in session when the search radius changes', async () => {
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'London' }] } })
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '25' // differs from the session's '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(yar.set).toHaveBeenCalledWith('locationMiles', '25')
+  })
+
+  it('falls back to zero stations when the monitoring API response has no getmonitoringstation field', async () => {
+    axios.post
+      .mockResolvedValueOnce({ data: { getOSPlaces: [{ name: 'London' }] } })
+      .mockResolvedValueOnce({ data: {} }) // malformed: field missing entirely
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    // Single location, zero stations -> proves the ?? [] fallback ran
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nostation',
+      expect.any(Object)
+    )
+  })
+
+  it('falls back to zero stations when the monitoring API resolves to null', async () => {
+    jest
+      .spyOn(apiClient, 'postJson')
+      .mockResolvedValueOnce({ getOSPlaces: [{ name: 'London' }] }) // OS Names API
+      .mockResolvedValueOnce(null) // Monitoring Station API failed softly
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'London' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      searchLocation: 'London',
+      osnameapiresult: []
+    })
+
+    const request = {
+      yar,
+      payload: {
+        fullSearchQuery: 'London',
+        locationMiles: '10'
+      }
+    }
+    const h = mockH()
+
+    await multipleLocationsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nostation',
       expect.any(Object)
     )
   })

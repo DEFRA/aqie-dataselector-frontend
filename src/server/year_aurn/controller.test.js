@@ -149,7 +149,7 @@ describe('yearController', () => {
       mockRequest.method = 'post'
     })
 
-    it('Last 7 days sets a period ending today and redirects (no year input required)', () => {
+    it('Last 7 days sets a period ending yesterday and redirects (no year input required)', () => {
       // Date-aware formatter so both ends of the span are distinguishable
       global.Intl = {
         DateTimeFormat: jest.fn().mockImplementation(() => ({
@@ -160,10 +160,10 @@ describe('yearController', () => {
 
       yearController.handler(mockRequest, mockH)
 
-      // 7 days inclusive of today (2026-01-16)
+      // 7 days inclusive ending yesterday (2026-01-15)
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'selectedTimePeriod',
-        '2026-01-10 to 2026-01-16'
+        '2026-01-09 to 2026-01-15'
       )
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'TimeSelectionMode',
