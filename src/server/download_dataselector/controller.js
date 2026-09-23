@@ -170,19 +170,19 @@ export const downloadDataselectorController = {
       timeperiod === 'last7days' &&
       downloadDatasourceCategoryType === 'other-only'
     ) {
-      return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel(request))
+      return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel())
     } else if (
       downloadDatasourceCategoryType === 'near-realtime-only' &&
       (stationCountUnavailable ||
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {
-      return renderErrorState(...getMissingStationError(request))
+      return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'other-only' &&
       nonaurncount < 1
     ) {
-      return renderErrorState(...getMissingStationError(request))
+      return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'both' &&
       (!nonaurncount ||
@@ -190,18 +190,9 @@ export const downloadDataselectorController = {
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {
-      return renderErrorState(...getMissingStationError(request))
+      return renderErrorState(...getMissingStationError())
     }
 
-    // else if(stationCountUnavailable) {
-    //   console.log('Station count unavailable') // Debug log
-    //   return renderErrorState(
-    //     ...getMissingStationError(request)
-    //   )
-    // }
-
-    // Only show each tab if the pollutant's datasource includes that category
-    // (determined at pollutant-selection time).
     const hasOtherDataSource = hasCategoryWithNetworks(
       datasourceGroups,
       'Other data from Defra'
