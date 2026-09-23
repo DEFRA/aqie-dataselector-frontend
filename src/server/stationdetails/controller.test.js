@@ -141,6 +141,40 @@ describe('stationDetailsController.handler', () => {
     expect(h.code).toHaveBeenCalledWith(404)
   })
 
+  it('should render the view for a trusted deep link with no referer, consuming the flag', async () => {
+    request.method = 'get'
+    request.payload = undefined
+    request.headers = {}
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'urban',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2', 'PM10']
+    }
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'single',
+        SiteId: 'site123',
+        deepLinkTrusted: true
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('deepLinkTrusted', false)
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ hrefq: '/multiplelocations' })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
   it('should return 404 if monitoring result is missing', async () => {
     request.yar.get = jest.fn((key) => {
       const session = {
