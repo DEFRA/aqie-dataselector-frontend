@@ -67,7 +67,7 @@ function getMissingSelectionError(request) {
   if (!request.yar.get('selectedyear')) {
     return [
       'Select a timeperiod to continue',
-      'Add timeperiod',
+      'Add time period',
       '/year-aurn',
       '',
       ''

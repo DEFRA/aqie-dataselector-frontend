@@ -106,7 +106,7 @@ const validateSelectedYear = (request, h, backUrl) => {
   if (!selectedYear) {
     return renderErrorState(h, request, backUrl, {
       errormsg: 'Select a timeperiod to continue',
-      errorref1: 'Add timeperiod',
+      errorref1: 'Add time period',
       errorhref1: '/year-aurn',
       errorref2: '',
       errorhref2: ''
