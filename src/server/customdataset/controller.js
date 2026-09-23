@@ -25,6 +25,7 @@ const CUSTOMDATASET_VIEW = 'customdataset/index'
 const DAYS_IN_WEEK_OFFSET = 6
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
+const OTHERONLY = 'other-only'
 
 export { invokeStationCount } from '~/src/server/customdataset/station-count.js'
 
@@ -400,7 +401,7 @@ function inferDatasourceCategoryTypeFromGroups(groups) {
     return 'near-realtime-only'
   }
   if (hasOther) {
-    return 'other-only'
+    return OTHERONLY
   }
   return 'unknown'
 }
@@ -432,7 +433,7 @@ function shouldShowOtherOnlyTimePeriodError(request) {
     hasLocationSelected(request) &&
     isLast7DaysSelection(request) &&
     getDatasourceCategoryType(request.yar.get('datasourceGroups') || []) ===
-      'other-only'
+      OTHERONLY
   )
 }
 
@@ -448,13 +449,7 @@ function getOtherOnlyTimePeriodErrorViewModel() {
 
 function shouldShowLast7DaysDatasourceWarning(request) {
   const isLast7Days = isLast7DaysSelection(request)
-  const datasourceType = getDatasourceCategoryType(
-    request.yar.get('datasourceGroups') || []
-  )
-  return (
-    isLast7Days &&
-    (datasourceType === 'both' || datasourceType === 'other-only')
-  )
+  return isLast7Days
 }
 
 function renderBothZeroView(request, h, backUrl) {
