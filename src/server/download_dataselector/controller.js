@@ -37,16 +37,16 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
 function getMissingStationError() {
   return [
     'No monitoring stations are available for your selection. Please try:',
-    'Change the time period',
+    'Change time period',
     '/year-aurn/change',
-    'Change the location',
+    'Change location',
     '/location-aurn/change'
   ]
 }
 function getOtherOnlyTimePeriodErrorViewModel() {
   return [
-    'There are no stations available based on your selection. Change the time period',
-    'Change the time period',
+    'There are no stations available based on your selection. Change time period',
+    'Change time period',
     '/year-aurn/change'
   ]
 }
@@ -185,7 +185,8 @@ export const downloadDataselectorController = {
       return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'both' &&
-      ((nonaurncount < 1 && stationCountUnavailable) ||
+      nonaurncount < 1 &&
+      (stationCountUnavailable ||
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {
