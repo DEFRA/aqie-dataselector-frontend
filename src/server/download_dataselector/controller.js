@@ -185,8 +185,7 @@ export const downloadDataselectorController = {
       return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'both' &&
-      (!nonaurncount ||
-        stationCountUnavailable ||
+      ((nonaurncount < 1 && stationCountUnavailable) ||
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {
