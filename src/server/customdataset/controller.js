@@ -310,6 +310,7 @@ async function handleStationCountCalculation(request) {
   request.yar.set('finalyear1', finalyear)
 
   const baseParams = buildStationCountParameters(request, finalyear)
+
   const nonAurnNetworkId = getNonAurnNetworkIdCsv(
     request.yar.get('datasourceGroups') || []
   )
@@ -441,8 +442,8 @@ function getOtherOnlyTimePeriodErrorViewModel() {
   return {
     error: true,
     errormsg:
-      'There are no stations available based on your selection. Change the time period',
-    errorref1: 'Change the time period',
+      'There are no stations available based on your selection. Change time period',
+    errorref1: 'Change time period',
     errorhref1: '/year-aurn/change'
   }
 }
@@ -470,9 +471,9 @@ function renderBothZeroView(request, h, backUrl) {
     error: true,
     errormsg:
       'No monitoring stations are available for your selection. Please try:',
-    errorref1: 'Change the time period',
+    errorref1: 'Change time period',
     errorhref1: '/year-aurn/change',
-    errorref2: 'Change the location',
+    errorref2: 'Change location',
     errorhref2: '/location-aurn/change'
   })
 }

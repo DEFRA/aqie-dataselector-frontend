@@ -293,7 +293,7 @@ describe('downloadDataselectorController', () => {
       expect(result.view).toBe('customdataset/index')
       expect(result.model.error).toBe(true)
       expect(result.model.errormsg).toBe(
-        'There are no stations available based on your selection. Change the time period'
+        'There are no stations available based on your selection. Change time period'
       )
     })
 
