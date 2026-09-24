@@ -74,7 +74,9 @@
   </ul>
 
   {% if (downloadDatasourceCategoryType == 'near-realtime-only') or (downloadDatasourceCategoryType == 'both') %}
-  <div class="govuk-tabs__panel" id="tab-nearrealtime">
+  <div
+class="govuk-tabs__panel {% if downloadDatasourceCategoryType == 'other-only' %}govuk-tabs__panel--hidden{% endif %}"
+id="tab-nearrealtime">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
       <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
@@ -143,7 +145,10 @@
   {% endif %}
 
  {% if (downloadDatasourceCategoryType == 'other-only') or (downloadDatasourceCategoryType == 'both') %}
-  <div class="govuk-tabs__panel" id="tab-other" >
+ 
+  <div
+class="govuk-tabs__panel {% if downloadDatasourceCategoryType != 'other-only' %}govuk-tabs__panel--hidden{% endif %}"
+id="tab-other">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Other data from Defra</h2>
       <p class="govuk-body">Data is measured hourly, weekly or monthly depending on the network.</p>

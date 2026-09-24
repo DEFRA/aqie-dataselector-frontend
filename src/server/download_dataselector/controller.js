@@ -67,7 +67,7 @@ function getMissingSelectionError(request) {
   if (!request.yar.get('selectedyear')) {
     return [
       'Select a timeperiod to continue',
-      'Add timeperiod',
+      'Add time period',
       '/year-aurn',
       '',
       ''
@@ -185,8 +185,7 @@ export const downloadDataselectorController = {
       return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'both' &&
-      (!nonaurncount ||
-        stationCountUnavailable ||
+      ((nonaurncount < 1 && stationCountUnavailable) ||
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {

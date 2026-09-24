@@ -64,7 +64,7 @@ describe('downloadDataselectorController', () => {
 
       expect(result.view).toBe('customdataset/index')
       expect(result.model.errormsg).toBe('Select a timeperiod to continue')
-      expect(result.model.errorref1).toBe('Add timeperiod')
+      expect(result.model.errorref1).toBe('Add time period')
       expect(result.model.errorhref1).toBe('/year-aurn')
     })
 
@@ -88,7 +88,7 @@ describe('downloadDataselectorController', () => {
         expect.objectContaining({
           error: true,
           errormsg: 'Select a timeperiod to continue',
-          errorref1: 'Add timeperiod',
+          errorref1: 'Add time period',
           errorhref1: '/year-aurn'
         })
       )

@@ -163,7 +163,7 @@ describe('downloadDataselectornojsController', () => {
         expect.objectContaining({
           error: true,
           errormsg: 'Select a timeperiod to continue',
-          errorref1: 'Add timeperiod',
+          errorref1: 'Add time period',
           errorhref1: '/year-aurn',
           selectedpollutant: ['NO2'],
           selectedlocation: ['Somewhere']
