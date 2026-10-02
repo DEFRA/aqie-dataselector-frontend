@@ -148,6 +148,15 @@ export const downloadDataselectorController = {
       return h.view('customdataset/index', errorViewData)
     }
 
+    // Zones + other data only: no stations — stay on customdataset, which
+    // shows the zone "Change location" error, instead of the download page
+    if (
+      request.yar.get('Location') === 'Zone' &&
+      request.yar.get('downloadDatasourceCategoryType') === 'other-only'
+    ) {
+      return h.redirect(backUrl)
+    }
+
     // Validation checks
     const missingSelection = getMissingSelectionError(request)
     const numberOfLocations = request.yar.get('nooflocation')

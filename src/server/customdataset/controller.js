@@ -26,6 +26,8 @@ const DAYS_IN_WEEK_OFFSET = 6
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
 const OTHERONLY = 'other-only'
+const ZONE_WARNING_TEXT =
+  'Only the Automatic Urban and Rural Network is available for zones'
 
 export { invokeStationCount } from '~/src/server/customdataset/station-count.js'
 
@@ -272,6 +274,20 @@ function buildStationCountParameters(request, finalyear) {
   const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
   const pollutantID = request.yar.get('selectedPollutantID')
 
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (request.yar.get('Location') === 'Zone') {
+    return {
+      pollutantName: pollutantID,
+      dataSource,
+      RegionId: request.yar.get('selectedZoneIDs') || '',
+      Region: '',
+      regiontype: 'Region',
+      Year: finalyear,
+      dataselectorfiltertype: 'dataSelectorCount',
+      dataselectordownloadtype: ''
+    }
+  }
+
   if (isCountry) {
     return {
       pollutantName: pollutantID,
@@ -279,7 +295,6 @@ function buildStationCountParameters(request, finalyear) {
       Region: request.yar.get('selectedlocation').join(','),
       regiontype: 'Country',
       Year: finalyear,
-
       dataselectorfiltertype: 'dataSelectorCount',
       dataselectordownloadtype: ''
     }
@@ -346,6 +361,11 @@ async function handleStationCountCalculation(request) {
     nonAurnCount,
     request.yar.get('datasourceGroups') || []
   )
+
+  // Zones: only AURN data is available, so ignore the NON-AURN counts
+  if (isZoneSelection(request)) {
+    ukeapNetworks.length = 0
+  }
 
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
   request.yar.set('nooflocationukeap', ukeapNetworks)
@@ -466,6 +486,8 @@ function renderBothZeroView(request, h, backUrl) {
     datasourceCategoryType: getDatasourceCategoryType(request),
     showLast7DaysWarning: shouldShowLast7DaysDatasourceWarning(request),
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: shouldShowZoneWarning(request),
+    zoneWarningText: ZONE_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
@@ -499,10 +521,78 @@ function renderCustomDatasetView(request, h, backUrl) {
     showLast7DaysWarning:
       !showOtherOnlyError && shouldShowLast7DaysDatasourceWarning(request),
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: !showOtherOnlyError && shouldShowZoneWarning(request),
+    zoneWarningText: ZONE_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     ...(showOtherOnlyError ? getOtherOnlyTimePeriodErrorViewModel() : {})
   })
+}
+
+// ─── Zones ─────────────────────────────────────────────────────────────────
+// Zones are only available for AURN (near real-time) data.
+
+function isZoneSelection(request) {
+  return request.yar.get('Location') === 'Zone'
+}
+
+function getZoneCategoryType(request) {
+  return isZoneSelection(request)
+    ? getDatasourceCategoryType(request.yar.get('datasourceGroups') || [])
+    : null
+}
+
+// Zone + both AURN and other data: warn that only AURN is available
+function shouldShowZoneWarning(request) {
+  return getZoneCategoryType(request) === 'both'
+}
+
+// Zone + other data only: there are no stations for a zone
+function shouldShowZoneOtherOnlyError(request) {
+  return (
+    hasLocationSelected(request) && getZoneCategoryType(request) === OTHERONLY
+  )
+}
+
+function renderZoneOtherOnlyView(request, h, backUrl) {
+  // Clear stale NON-AURN counts so the download pages block this selection too
+  request.yar.set('nooflocationukeap', [])
+
+  return h.view(CUSTOMDATASET_VIEW, {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: 0,
+    datasourceGroups: request.yar.get('datasourceGroups') || [],
+    datasourceCategoryType: getDatasourceCategoryType(request),
+    showLast7DaysWarning: false,
+    last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: false,
+    zoneWarningText: ZONE_WARNING_TEXT,
+    displayBacklink: true,
+    hrefq: backUrl,
+    error: true,
+    errormsg:
+      'No monitoring stations are available for your selection. Please try:',
+    errorref1: 'Change location',
+    // No-JS route by default; the page script upgrades it to /location-aurn/change
+    errorhref1: '/location-aurn/nojs'
+  })
+}
+
+// Zone + both: download page shows only the AURN (near real-time) tab
+function setDownloadDatasourceOverrideForZones(request) {
+  if (!shouldShowZoneWarning(request)) {
+    return
+  }
+  const groups = request.yar.get('datasourceGroups') || []
+  request.yar.set('downloadDatasourceGroups', getNearRealtimeOnlyGroups(groups))
+  request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+  request.yar.set('downloadForceNearRealtimeOnly', true)
+  request.yar.set('selectedDatasourceType', 'AURN')
 }
 
 function getNearRealtimeOnlyGroups(groups) {
@@ -565,9 +655,17 @@ export const customdatasetController = {
     // apply download override for specific case: both categories + last 7 days
     setDownloadDatasourceOverrideForLast7Days(request)
 
+    // apply download override for zones: both categories → AURN only
+    setDownloadDatasourceOverrideForZones(request)
+
     // Stop early for invalid: other-only datasource + last 7 days
     if (shouldShowOtherOnlyTimePeriodError(request)) {
       return renderCustomDatasetView(request, h, backUrl)
+    }
+
+    // Stop early for invalid: other-only datasource + zones
+    if (shouldShowZoneOtherOnlyError(request)) {
+      return renderZoneOtherOnlyView(request, h, backUrl)
     }
 
     // Calculate station count if all required data is present

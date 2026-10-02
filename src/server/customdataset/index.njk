@@ -49,6 +49,13 @@
     }) }}
   {% endif %}
 
+  {% if showZoneWarning %}
+    {{ govukWarningText({
+      text: zoneWarningText,
+      iconFallbackText: "Warning"
+    }) }}
+  {% endif %}
+
 <!-- <p class="govuk-body">Choose pollutant(s)</p> -->
     <dl class="govuk-summary-list">
       <div class="govuk-summary-list__row">
@@ -225,6 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (locationLink) {
     locationLink.setAttribute('href', '/location-aurn/change')
   }
+
+  // Upgrade no-JS location links in the error summary to the JS route
+  document
+    .querySelectorAll('.govuk-error-summary a[href="/location-aurn/nojs"]')
+    .forEach((link) => link.setAttribute('href', '/location-aurn/change'))
 
   // Source of truth = SSR list from DOM
   const listEl = document.getElementById('pollutant-summary-list')

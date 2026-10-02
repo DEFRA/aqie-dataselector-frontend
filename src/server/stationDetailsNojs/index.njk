@@ -581,7 +581,6 @@
               let selyear;
        function updateYear(year) {
     selyear = year;
-  // console.log( document.getElementById('link-'+selyear))
     //document.getElementById('year-heading').textContent = `Download data for ${year}`;
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
     const currentDate = new Date();
@@ -622,7 +621,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedYearElement = document.getElementById('selectedYear');
     const selectedYear = selectedYearElement ? selectedYearElement.textContent : null;
       document.getElementById('year-heading').textContent = `Download data for ${selectedYear}`;
-     // console.log("document.getElementById('year-heading').textContent",document.getElementById('year-heading').textContent)
     document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${selectedYear}`;
 
     

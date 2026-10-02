@@ -593,6 +593,27 @@ describe('datasourceController POST handler', () => {
     )
   })
 
+  it('builds Zone region params with RegionId and an empty Region', async () => {
+    request.payload = { 'datasource-type': 'AURN' }
+    request.yar.get.mockImplementation((key) => {
+      if (key === 'finalyear1') return '2023'
+      if (key === 'selectedPollutantID') return '40,39,44,37,38'
+      if (key === 'selectedlocation') return ['Greater London']
+      if (key === 'Location') return 'Zone'
+      if (key === 'selectedZoneIDs') return '15'
+      return null
+    })
+    invokeStationCount.mockResolvedValue(10)
+    await datasourceController.handler(request, h)
+    expect(invokeStationCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RegionId: '15',
+        Region: '',
+        regiontype: 'Region'
+      })
+    )
+  })
+
   it('skips station count when finalyear1 is missing', async () => {
     request.payload = {}
     request.yar.get.mockImplementation((key) => {

@@ -428,4 +428,38 @@ describe('downloadDataselectorController', () => {
       )
     })
   })
+
+  describe('zones', () => {
+    beforeEach(() => {
+      h.redirect = jest.fn((url) => ({ redirect: url }))
+      Object.assign(session, {
+        selectedpollutant: ['NO2'],
+        selectedyear: '2024',
+        selectedlocation: ['Greater London'],
+        Location: 'Zone',
+        nooflocation: 5
+      })
+    })
+
+    test('redirects back to customdataset for Zone + other data only', () => {
+      session.downloadDatasourceCategoryType = 'other-only'
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result).toEqual({ redirect: '/customdataset' })
+      expect(h.view).not.toHaveBeenCalled()
+    })
+
+    test('renders the download page for Zone + AURN only', () => {
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(result.view).toBe('download_dataselector/index')
+      expect(result.model.downloadDatasourceCategoryType).toBe(
+        'near-realtime-only'
+      )
+    })
+  })
 })

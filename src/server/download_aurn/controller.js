@@ -210,6 +210,23 @@ function buildApiParams(request, dataSource, selectedyear) {
     .replace(/[\s_-]/g, '')
   const days = normalizedTimeSelectionMode === 'last7days' ? '7days' : ''
 
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (request.yar.get('Location') === 'Zone') {
+    return {
+      pollutantName:
+        networkPollutantID || request.yar.get('selectedPollutantID'),
+      dataSource,
+      networkId,
+      RegionId: request.yar.get('selectedZoneIDs') || '',
+      Region: '',
+      regiontype: 'Region',
+      Days: days,
+      Year: selectedyear,
+      dataselectorfiltertype: 'dataSelectorHourly',
+      dataselectordownloadtype: 'dataSelectorSingle'
+    }
+  }
+
   return {
     pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),
     dataSource,
@@ -254,7 +271,6 @@ const downloadAurnController = {
         request.params.dataSource,
         request.params.year
       )
-
       const downloadstatusapiparams = await invokeDownload(apiparams)
 
       if (downloadstatusapiparams?.error) {

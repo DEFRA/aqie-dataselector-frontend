@@ -27,6 +27,14 @@ jest.mock('~/src/server/common/helpers/catch-proxy-fetch-error.js', () => ({
   )
 }))
 
+jest.mock('axios', () => ({
+  get: jest.fn(() => Promise.resolve({ data: [] }))
+}))
+
+jest.mock('@hapi/wreck', () => ({
+  get: jest.fn(() => Promise.resolve({ payload: [] }))
+}))
+
 // Constants matching controller.js
 const SESSION_LOCATION = 'Location'
 const SESSION_SELECTED_LOCATION = 'selectedLocation'
@@ -112,6 +120,8 @@ describe('locationaurnController', () => {
           ]
         },
         localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets'],
+        regionList: [],
+        zonesUnavailable: true,
         laqmUnavailable: false,
         laqmUnavailableReason: undefined,
         formData: {}
@@ -991,4 +1001,298 @@ describe('locationaurnController', () => {
   //     expect(mockH.redirect).toHaveBeenCalledWith(expect.any(String))
   //   })
   // })
+
+  describe('fetchRegionList (AtomDataSelectionRegionMaster)', () => {
+    const regions = [
+      { regionID: 2, regionName: 'East Midlands' },
+      { regionID: 1, regionName: 'Central Scotland' }
+    ]
+    // Normalised to { id, name } and sorted by name
+    const normalised = [
+      { id: '1', name: 'Central Scotland' },
+      { id: '2', name: 'East Midlands' }
+    ]
+
+    async function setEnv(isDevelopment) {
+      await loadController()
+      const base = mockConfigGet.getMockImplementation()
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'isDevelopment') return isDevelopment
+        if (key === 'regionMasterApiUrl')
+          return 'https://api.example.com/AtomDataSelectionRegionMaster'
+        if (key === 'regionMasterDevUrl')
+          return 'https://dev.example.com/AtomDataSelectionRegionMaster'
+        if (key === 'DevApiKey') return 'dev-key'
+        return base(key)
+      })
+    }
+
+    it('passes region list to the view on page load (prod)', async () => {
+      await setEnv(false)
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockResolvedValueOnce({ data: regions })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://api.example.com/AtomDataSelectionRegionMaster'
+      )
+      expect(mockH.view).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ regionList: normalised })
+      )
+    })
+
+    it('uses Wreck with the dev API key in development', async () => {
+      await setEnv(true)
+      const Wreck =
+        (await import('@hapi/wreck')).default ?? (await import('@hapi/wreck'))
+      Wreck.get.mockResolvedValueOnce({ payload: regions })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(Wreck.get).toHaveBeenCalledWith(
+        'https://dev.example.com/AtomDataSelectionRegionMaster',
+        expect.objectContaining({ headers: { 'x-api-key': 'dev-key' } })
+      )
+      expect(mockH.view).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ regionList: normalised })
+      )
+    })
+
+    it('returns an empty region list and flags zones unavailable when the API fails', async () => {
+      await setEnv(false)
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockRejectedValueOnce(new Error('network down'))
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ regionList: [], zonesUnavailable: true })
+      )
+    })
+
+    it('does not flag zones unavailable when the API returns zones', async () => {
+      await setEnv(false)
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockResolvedValueOnce({ data: regions })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ zonesUnavailable: false })
+      )
+    })
+
+    it('returns an empty region list for a non-array payload', async () => {
+      await setEnv(false)
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockResolvedValueOnce({ data: { unexpected: true } })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ regionList: [] })
+      )
+    })
+  })
+
+  describe('normaliseRegionList', () => {
+    it('handles strings, alternative keys and drops items without a name', async () => {
+      await loadController()
+      const { normaliseRegionList } = await import('./controller.js')
+
+      expect(
+        normaliseRegionList([
+          'Highland',
+          { RegionID: 7, RegionName: ' Eastern ' },
+          { id: 9 },
+          null
+        ])
+      ).toEqual([
+        { id: '7', name: 'Eastern' },
+        { id: 'Highland', name: 'Highland' }
+      ])
+    })
+  })
+
+  describe('zones selection', () => {
+    const regions = [
+      { regionID: 10, regionName: 'Central Scotland' },
+      { regionID: 20, regionName: 'Greater London' },
+      { regionID: 30, regionName: 'North East' }
+    ]
+
+    async function loadWithRegions(data = regions) {
+      await loadController()
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockResolvedValue({ data })
+      mockRequest.method = 'post'
+    }
+
+    afterEach(async () => {
+      const axios = (await import('axios')).default ?? (await import('axios'))
+      axios.get.mockReset()
+      axios.get.mockResolvedValue({ data: [] })
+    })
+
+    it('saves selected zones and IDs to session and redirects', async () => {
+      await loadWithRegions()
+      mockRequest.payload = {
+        location: 'zones',
+        zone: ['North East', 'Central Scotland']
+      }
+
+      const result = await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedZones', [
+        'North East',
+        'Central Scotland'
+      ])
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedZoneIDs',
+        '30,10'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
+        'Zones: North East, Central Scotland'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(SESSION_LOCATION, 'Zone')
+      expect(result).toBe('redirect-response')
+    })
+
+    it('accepts a single zone as a string', async () => {
+      await loadWithRegions()
+      mockRequest.payload = { location: 'zones', zone: 'Greater London' }
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedZones', [
+        'Greater London'
+      ])
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it.each([
+      [
+        'no zone is selected',
+        regions,
+        { location: 'zones' },
+        'Select at least one zone'
+      ],
+      [
+        'an unknown zone is submitted',
+        regions,
+        { location: 'zones', zone: ['Atlantis'] },
+        'Select zones from the list'
+      ],
+      [
+        'the region API returned nothing',
+        [],
+        { location: 'zones', zone: ['Greater London'] },
+        'Zones are currently unavailable. Try again later.'
+      ]
+    ])('shows an error when %s', async (_label, data, payload, message) => {
+      await loadWithRegions(data)
+      mockRequest.payload = payload
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: {
+            list: [{ text: message, href: '#zone-1' }],
+            details: { zone: message }
+          }
+        })
+      )
+    })
+
+    it('renders the no-JS view with the zone error and region list', async () => {
+      await loadWithRegions()
+      mockRequest.path = '/location-aurn/nojs'
+      mockRequest.payload = { location: 'zones' }
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({
+          regionList: expect.arrayContaining([
+            { id: '20', name: 'Greater London' }
+          ]),
+          errors: expect.objectContaining({
+            details: { zone: 'Select at least one zone' }
+          })
+        })
+      )
+    })
+
+    it('flags zones unavailable on the no-JS page when the API returns nothing', async () => {
+      await loadWithRegions([])
+      mockRequest.method = 'get'
+      mockRequest.path = '/location-aurn/nojs'
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({ regionList: [], zonesUnavailable: true })
+      )
+    })
+
+    it('rejects an unknown zone on the no-JS form', async () => {
+      await loadWithRegions()
+      mockRequest.path = '/location-aurn/nojs'
+      mockRequest.payload = { location: 'zones', zone: 'Atlantis' }
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index_nojs',
+        expect.objectContaining({
+          errors: expect.objectContaining({
+            details: { zone: 'Select zones from the list' }
+          })
+        })
+      )
+    })
+
+    it('saves zones from the no-JS form and redirects', async () => {
+      await loadWithRegions()
+      mockRequest.path = '/location-aurn/nojs'
+      mockRequest.payload = { location: 'zones', zone: 'Greater London' }
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('selectedZoneIDs', '20')
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it('prepopulates zones from session on GET', async () => {
+      await loadWithRegions()
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === SESSION_LOCATION) return 'Zone'
+        if (key === 'selectedZones') return ['Greater London']
+        return null
+      })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          formData: { location: 'zones', zone: ['Greater London'] }
+        })
+      )
+    })
+  })
 })

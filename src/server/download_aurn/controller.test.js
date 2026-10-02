@@ -221,6 +221,37 @@ describe('downloadAurnController', () => {
     )
 
     it(
+      'handles Zone region type with RegionId and an empty Region',
+      async () => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedPollutantID: 'PM2.5',
+            selectedZoneIDs: '15',
+            selectedLAIDs: '1,2,3',
+            selectedlocation: ['Greater London'],
+            Location: 'Zone',
+            viewDatanojs: { pageTitle: 'Test' }
+          }
+          return values[key]
+        })
+
+        axios.post.mockResolvedValueOnce({ data: 'job-zone' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({
+            RegionId: '15',
+            Region: '',
+            regiontype: 'Region'
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
       'sends networkId for NON-AURN from datasource groups',
       async () => {
         mockRequest.params = { year: '2024', dataSource: 'NON-AURN' }

@@ -209,6 +209,12 @@ async function recalculateStationCount(request, datasourceType) {
     dataselectorfiltertype: DATASOURCE_COUNT_FILTER_TYPE,
     dataselectordownloadtype: ''
   }
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (request.yar.get('Location') === 'Zone') {
+    baseParams.RegionId = request.yar.get('selectedZoneIDs') || ''
+    baseParams.Region = ''
+    baseParams.regiontype = 'Region'
+  }
   try {
     const [aurnCount, nonAurnCount] = await Promise.all([
       invokeStationCount({ ...baseParams, dataSource: AURN, networkId: '' }),

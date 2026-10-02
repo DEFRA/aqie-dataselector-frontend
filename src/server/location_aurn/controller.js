@@ -4,6 +4,8 @@
  * @satisfies {Partial<ServerRoute>}
  */
 
+import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { config } from '~/src/config/config.js'
 import { statusCodes } from '~/src/server/common/constants/status-codes.js'
@@ -33,9 +35,12 @@ const SESSION_SELECTED_LOCATIONS = 'selectedLocations'
 const SESSION_SELECTED_COUNTRIES = 'selectedCountries'
 const SESSION_SELECTED_LOCATION_LOWER = 'selectedlocation'
 const SESSION_SELECTED_LA_IDS = 'selectedLAIDs'
+const SESSION_SELECTED_ZONES = 'selectedZones'
+const SESSION_SELECTED_ZONE_IDS = 'selectedZoneIDs'
 
 // Form field names and error anchor IDs
 const FIELD_LOCAL_AUTHORITY = 'local-authority'
+const ANCHOR_ZONE_FIRST = '#zone-1'
 const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 const ANCHOR_SELECTED_LOCATIONS = '#selected-locations'
 
@@ -88,9 +93,16 @@ function determineFormDataFromSession(
   selectedLocation,
   selectedCountries,
   selectedLocalAuthorities,
-  selectedlocations
+  selectedlocations,
+  selectedZones = null
 ) {
   const formData = {}
+
+  if (selectedLocation === 'Zone' && selectedZones) {
+    formData.location = 'zones'
+    formData.zone = selectedZones
+    return formData
+  }
 
   if (selectedLocation === 'Country' && selectedCountries) {
     formData.location = 'countries'
@@ -218,7 +230,7 @@ function mapLocalAuthorityIDs(selectedLocations, laResult) {
 }
 
 function buildViewContext(
-  _request,
+  request,
   laResult,
   localAuthorityNames,
   laqmMetadata,
@@ -234,6 +246,8 @@ function buildViewContext(
     hrefq: backUrl,
     laResult,
     localAuthorityNames,
+    regionList: request?.app?.regionList ?? [],
+    zonesUnavailable: (request?.app?.regionList ?? []).length === 0,
     laqmUnavailable: laqmMetadata.unavailable,
     laqmUnavailableReason: laqmMetadata.reason
   }
@@ -263,12 +277,14 @@ function handleGetRequest(request, h, laContext, laqmMetadata, backUrl) {
   const selectedCountries = request.yar.get(SESSION_SELECTED_COUNTRIES)
   const selectedlocations = request.yar.get(SESSION_SELECTED_LOCATION_LOWER)
   const selectedLocalAuthorities = request.yar.get(SESSION_SELECTED_LOCATIONS)
+  const selectedZones = request.yar.get(SESSION_SELECTED_ZONES)
 
   const formData = determineFormDataFromSession(
     selectedLocation,
     selectedCountries,
     selectedLocalAuthorities,
-    selectedlocations
+    selectedlocations,
+    selectedZones
   )
   const isNoJs = isNoJsRequest(request)
   const templatePath = getTemplatePath(isNoJs)
@@ -382,6 +398,81 @@ function handlePostCountries(payload, request) {
   )
   request.yar.set(SESSION_LOCATION, 'Country')
   request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedCountries)
+}
+
+function toArray(value) {
+  if (!value) {
+    return []
+  }
+  return (Array.isArray(value) ? value : [value]).filter((v) => v?.trim())
+}
+
+// Returns the matching region objects, or null after pushing an error.
+function validateZones(payload, regionList, errors) {
+  const addError = (text) => {
+    errors.list.push({ text, href: ANCHOR_ZONE_FIRST })
+    errors.details.zone = text
+    return null
+  }
+
+  if (regionList.length === 0) {
+    return addError('Zones are currently unavailable. Try again later.')
+  }
+
+  const selected = toArray(payload.zone)
+  if (selected.length === 0) {
+    return addError('Select at least one zone')
+  }
+
+  const byName = new Map(regionList.map((r) => [r.name.toLowerCase(), r]))
+  const matched = []
+  for (const name of selected) {
+    const region = byName.get(name.trim().toLowerCase())
+    if (!region) {
+      return addError('Select zones from the list')
+    }
+    if (!matched.includes(region)) {
+      matched.push(region)
+    }
+  }
+  return matched
+}
+
+function handlePostZones(regions, request) {
+  const names = regions.map((r) => r.name)
+  request.yar.set(SESSION_SELECTED_ZONES, names)
+  request.yar.set(SESSION_SELECTED_ZONE_IDS, regions.map((r) => r.id).join(','))
+  request.yar.set(SESSION_SELECTED_LOCATION, 'Zones: ' + names.join(', '))
+  request.yar.set(SESSION_LOCATION, 'Zone')
+  request.yar.set(SESSION_SELECTED_LOCATION_LOWER, names)
+}
+
+function processZonesPost(
+  payload,
+  request,
+  h,
+  laContext,
+  laqmMetadata,
+  backUrl,
+  errors
+) {
+  const regions = validateZones(payload, request.app?.regionList ?? [], errors)
+  if (!regions) {
+    return handlePostValidationError(
+      request,
+      h,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
+      errors
+    )
+  }
+  handlePostZones(regions, request)
+  return h.redirect(backUrl)
 }
 
 function handlePostLocalAuthorities(payload, request, laResult) {
@@ -537,6 +628,18 @@ function handlePostRequest(
     )
   }
 
+  if (payload.location === 'zones') {
+    return processZonesPost(
+      payload,
+      request,
+      h,
+      laContext,
+      laqmMetadata,
+      backUrl,
+      errors
+    )
+  }
+
   if (payload.location === 'la') {
     return processLocalAuthoritiesPost(
       payload,
@@ -672,6 +775,77 @@ async function invokeLocalAuthority() {
   return parsed.response
 }
 
+// Extract a human-readable message from a thrown value.
+const errMsg = (error) =>
+  error instanceof Error ? error.message : 'unknown error'
+
+// Fetch region (zone) list from the AtomDataSelectionRegionMaster API
+async function fetchRegionListDev() {
+  try {
+    const { payload } = await Wreck.get(config.get('regionMasterDevUrl'), {
+      headers: {
+        'x-api-key': config.get('DevApiKey')
+      },
+      json: true
+    })
+    const list = Array.isArray(payload) ? payload : []
+    logger.info(`Fetched ${list.length} regions from region master API`)
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch region list: ${errMsg(error)}`)
+    return []
+  }
+}
+
+async function fetchRegionListProd() {
+  try {
+    const response = await axios.get(config.get('regionMasterApiUrl'))
+    const list = Array.isArray(response.data) ? response.data : []
+    logger.info(`Fetched ${list.length} regions from region master API`)
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch region list: ${errMsg(error)}`)
+    return []
+  }
+}
+
+// Map each API item to { id, name } so the view and validation do not depend
+// on the exact field names the region master API returns.
+const REGION_NAME_KEYS = ['regionName', 'RegionName', 'region_Name', 'name']
+const REGION_ID_KEYS = ['regionID', 'regionId', 'RegionID', 'region_ID', 'id']
+
+function pickField(item, keys) {
+  const key = keys.find((k) => item[k] !== undefined && item[k] !== null)
+  return key ? item[key] : undefined
+}
+
+export function normaliseRegionList(list) {
+  return list
+    .map((item) => {
+      if (typeof item === 'string') {
+        return { id: item, name: item }
+      }
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+      const name = pickField(item, REGION_NAME_KEYS)
+      if (!name) {
+        return null
+      }
+      const id = pickField(item, REGION_ID_KEYS) ?? name
+      return { id: String(id), name: String(name).trim() }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function fetchRegionList() {
+  const list = config.get('isDevelopment')
+    ? await fetchRegionListDev()
+    : await fetchRegionListProd()
+  return normaliseRegionList(list)
+}
+
 export const locationaurnController = {
   handler: async (request, h) => {
     const backUrl = CUSTOMDATASET_URL
@@ -682,7 +856,11 @@ export const locationaurnController = {
       request.yar.set('osnameapiresult', '')
     }
 
-    const laResult = await invokeLocalAuthority()
+    const [laResult, regionList] = await Promise.all([
+      invokeLocalAuthority(),
+      fetchRegionList()
+    ])
+    request.app = { ...request.app, regionList }
     const localAuthorityNames = getLocalAuthorityNames(laResult)
     const laqmUnavailable = Boolean(laResult?._meta?.unavailable)
     const laqmUnavailableReason = laResult?._meta?.reason
