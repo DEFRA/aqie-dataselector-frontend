@@ -40,10 +40,9 @@ function resolveStationHrefq(request) {
 
 const stationDetailsController = {
   handler: async (request, h) => {
-    // Redirects (e.g. from /station-summary) keep the original external
-    // referer, not the redirecting page, so a same-origin redirect alone
-    // can't satisfy this check - station-summary sets deepLinkTrusted after
-    // a verified lookup instead. Consumed immediately so it can't be replayed.
+    // A redirect (e.g. from /station-summary) keeps the original external
+    // referer, so deepLinkTrusted stands in for the referer check here -
+    // consumed immediately so it can't be replayed.
     const isTrustedDeepLink = request.yar.get('deepLinkTrusted')
     if (isTrustedDeepLink) {
       request.yar.set('deepLinkTrusted', false)

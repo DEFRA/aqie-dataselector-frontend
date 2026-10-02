@@ -8,10 +8,9 @@ const logger = createLogger()
  * Entry point for deep links from other services (e.g. aqie-maps-frontend)
  * that only have a station's coordinates, not a session-scoped station id.
  * Looks the station up, seeds the session as a normal search would, then
- * redirects into /stationdetails. Browsers keep the original external
- * referer through a redirect rather than updating it to this page, so
- * /stationdetails can't rely on its referer guard here - deepLinkTrusted
- * is set instead, as an explicit one-time handoff.
+ * redirects into /stationdetails. A redirect keeps the original external
+ * referer rather than this page's, so /stationdetails can't rely on its
+ * referer guard here - deepLinkTrusted is set instead as a one-time handoff.
  */
 const stationSummaryController = {
   handler: async (request, h) => {
