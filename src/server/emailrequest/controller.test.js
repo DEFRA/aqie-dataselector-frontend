@@ -598,6 +598,46 @@ describe('emailrequestController', () => {
       )
     })
 
+    it('sends RegionId with an empty Region for Zone', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
+        if (key === 'selectedlocation') return ['Greater London']
+        if (key === 'Location') return 'Zone'
+        if (key === 'selectedZoneIDs') return '15'
+        if (key === 'finalyear1') return '2024'
+        if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).toHaveBeenCalledWith(
+        'https://api.example.com/email',
+        expect.objectContaining({
+          RegionId: '15',
+          Region: '',
+          regiontype: 'Region'
+        })
+      )
+    })
+
+    it('redirects to problem-with-service for Zone without zone IDs', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === 'selectedPollutantID') return 'pollutant-id-123'
+        if (key === 'Location') return 'Zone'
+        if (key === 'finalyear1') return '2024'
+        if (key === 'email') return 'test@example.com'
+        if (key === 'selectedDatasourceType') return 'AURN'
+        return undefined
+      })
+
+      await emailrequestController.handler(mockRequest, mockH)
+
+      expect(mockAxios).not.toHaveBeenCalled()
+      expect(mockH.redirect).toHaveBeenCalledWith('/problem-with-service')
+    })
+
     it('redirects to problem-with-service when pollutant ID is null', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         if (key === 'selectedPollutantID') return null

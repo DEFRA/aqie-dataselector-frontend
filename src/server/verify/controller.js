@@ -108,7 +108,6 @@ export const verifyController = {
       Number.isNaN(providedTime) ||
       currentTime - providedTime > TWO_DAYS_MS
     ) {
-      // console.log('Link has expired. Current time:', currentTime, 'Provided time:', providedTime)
       return h.view('verify/index_exp', {
         pageTitle: 'Link Expired',
         heading: 'Your link has expired',

@@ -12,7 +12,6 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/some-path',
       handler: (_request, h) => {
-        // console.log('Redirecting to /invalid-path')
         return h.redirect('/invalid-path')
       }
     }

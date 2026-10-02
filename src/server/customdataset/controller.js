@@ -18,6 +18,17 @@ import {
   isInternalNavigation,
   renderNotFound
 } from '~/src/server/common/helpers/navigation-helpers.js'
+import {
+  inferDatasourceCategoryTypeFromGroups,
+  getDatasourceCategoryType,
+  isLast7DaysSelection,
+  shouldShowOtherOnlyTimePeriodError,
+  setDownloadDatasourceOverrideForLast7Days,
+  isZoneSelection,
+  shouldShowZoneWarning,
+  shouldShowZoneOtherOnlyError,
+  setDownloadDatasourceOverrideForZones
+} from '~/src/server/customdataset/datasource-category.js'
 
 const logger = createLogger()
 
@@ -25,7 +36,8 @@ const CUSTOMDATASET_VIEW = 'customdataset/index'
 const DAYS_IN_WEEK_OFFSET = 6
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
-const OTHERONLY = 'other-only'
+const ZONE_WARNING_TEXT =
+  'Only the Automatic Urban and Rural Network is available for zones'
 
 export { invokeStationCount } from '~/src/server/customdataset/station-count.js'
 
@@ -272,6 +284,20 @@ function buildStationCountParameters(request, finalyear) {
   const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
   const pollutantID = request.yar.get('selectedPollutantID')
 
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (request.yar.get('Location') === 'Zone') {
+    return {
+      pollutantName: pollutantID,
+      dataSource,
+      RegionId: request.yar.get('selectedZoneIDs') || '',
+      Region: '',
+      regiontype: 'Region',
+      Year: finalyear,
+      dataselectorfiltertype: 'dataSelectorCount',
+      dataselectordownloadtype: ''
+    }
+  }
+
   if (isCountry) {
     return {
       pollutantName: pollutantID,
@@ -279,7 +305,6 @@ function buildStationCountParameters(request, finalyear) {
       Region: request.yar.get('selectedlocation').join(','),
       regiontype: 'Country',
       Year: finalyear,
-
       dataselectorfiltertype: 'dataSelectorCount',
       dataselectordownloadtype: ''
     }
@@ -347,6 +372,11 @@ async function handleStationCountCalculation(request) {
     request.yar.get('datasourceGroups') || []
   )
 
+  // Zones: only AURN data is available, so ignore the NON-AURN counts
+  if (isZoneSelection(request)) {
+    ukeapNetworks.length = 0
+  }
+
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
   request.yar.set('nooflocationukeap', ukeapNetworks)
 
@@ -370,71 +400,6 @@ function hasAllRequiredData(request) {
     request.yar.get('selectedlocation') &&
       request.yar.get('selectedyear') &&
       request.yar.get('selectedpollutant')
-  )
-}
-
-const CATEGORY_NEAR_REALTIME = 'near real-time data from defra'
-const CATEGORY_OTHER = 'other data from defra'
-
-function normalizeToken(value) {
-  return String(value || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[\s_-]/g, '')
-}
-
-function inferDatasourceCategoryTypeFromGroups(groups) {
-  const normalizedCategories = new Set(
-    (Array.isArray(groups) ? groups : []).map((g) =>
-      String(g?.category || '')
-        .toLowerCase()
-        .trim()
-    )
-  )
-
-  const hasNearRealtime = normalizedCategories.has(CATEGORY_NEAR_REALTIME)
-  const hasOther = normalizedCategories.has(CATEGORY_OTHER)
-
-  if (hasNearRealtime && hasOther) {
-    return 'both'
-  }
-  if (hasNearRealtime) {
-    return 'near-realtime-only'
-  }
-  if (hasOther) {
-    return OTHERONLY
-  }
-  return 'unknown'
-}
-
-function getDatasourceCategoryType(requestOrGroups) {
-  // Accept either request object or groups array
-  const groups = Array.isArray(requestOrGroups)
-    ? requestOrGroups
-    : requestOrGroups?.yar?.get('datasourceGroups') || []
-
-  return inferDatasourceCategoryTypeFromGroups(groups)
-}
-
-function isLast7DaysSelection(request) {
-  const timeSelectionMode = normalizeToken(request.yar.get('TimeSelectionMode'))
-  const selectedYear = normalizeToken(request.yar.get('selectedyear'))
-  return timeSelectionMode === 'last7days' || selectedYear.includes('last7days')
-}
-
-function hasLocationSelected(request) {
-  const selectedlocation = request.yar.get('selectedlocation')
-  return Array.isArray(selectedlocation)
-    ? selectedlocation.length > 0
-    : Boolean(selectedlocation)
-}
-
-function shouldShowOtherOnlyTimePeriodError(request) {
-  return (
-    hasLocationSelected(request) &&
-    isLast7DaysSelection(request) &&
-    getDatasourceCategoryType(request.yar.get('datasourceGroups') || []) ===
-      OTHERONLY
   )
 }
 
@@ -466,6 +431,8 @@ function renderBothZeroView(request, h, backUrl) {
     datasourceCategoryType: getDatasourceCategoryType(request),
     showLast7DaysWarning: shouldShowLast7DaysDatasourceWarning(request),
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: shouldShowZoneWarning(request),
+    zoneWarningText: ZONE_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
@@ -499,45 +466,41 @@ function renderCustomDatasetView(request, h, backUrl) {
     showLast7DaysWarning:
       !showOtherOnlyError && shouldShowLast7DaysDatasourceWarning(request),
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: !showOtherOnlyError && shouldShowZoneWarning(request),
+    zoneWarningText: ZONE_WARNING_TEXT,
     displayBacklink: true,
     hrefq: backUrl,
     ...(showOtherOnlyError ? getOtherOnlyTimePeriodErrorViewModel() : {})
   })
 }
 
-function getNearRealtimeOnlyGroups(groups) {
-  return (Array.isArray(groups) ? groups : []).filter(
-    (g) =>
-      normalizeToken(g?.category) === normalizeToken(CATEGORY_NEAR_REALTIME)
-  )
-}
+function renderZoneOtherOnlyView(request, h, backUrl) {
+  // Clear stale NON-AURN counts so the download pages block this selection too
+  request.yar.set('nooflocationukeap', [])
 
-function isBothAndLast7Days(request) {
-  const groups = request.yar.get('datasourceGroups') || []
-  return (
-    isLast7DaysSelection(request) &&
-    getDatasourceCategoryType(groups) === 'both'
-  )
-}
-
-function setDownloadDatasourceOverrideForLast7Days(request) {
-  const groups = request.yar.get('datasourceGroups') || []
-
-  if (isBothAndLast7Days(request)) {
-    const nearRealtimeOnly = getNearRealtimeOnlyGroups(groups)
-    request.yar.set('downloadDatasourceGroups', nearRealtimeOnly)
-    request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
-    request.yar.set('downloadForceNearRealtimeOnly', true)
-    request.yar.set('selectedDatasourceType', 'AURN')
-    return
-  }
-
-  request.yar.set('downloadDatasourceGroups', groups)
-  request.yar.set(
-    'downloadDatasourceCategoryType',
-    getDatasourceCategoryType(groups)
-  )
-  request.yar.set('downloadForceNearRealtimeOnly', false)
+  return h.view(CUSTOMDATASET_VIEW, {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: 0,
+    datasourceGroups: request.yar.get('datasourceGroups') || [],
+    datasourceCategoryType: getDatasourceCategoryType(request),
+    showLast7DaysWarning: false,
+    last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
+    showZoneWarning: false,
+    zoneWarningText: ZONE_WARNING_TEXT,
+    displayBacklink: true,
+    hrefq: backUrl,
+    error: true,
+    errormsg:
+      'No monitoring stations are available for your selection. Please try:',
+    errorref1: 'Change location',
+    // No-JS route by default; the page script upgrades it to /location-aurn/change
+    errorhref1: '/location-aurn/nojs'
+  })
 }
 
 export const customdatasetController = {
@@ -565,9 +528,17 @@ export const customdatasetController = {
     // apply download override for specific case: both categories + last 7 days
     setDownloadDatasourceOverrideForLast7Days(request)
 
+    // apply download override for zones: both categories → AURN only
+    setDownloadDatasourceOverrideForZones(request)
+
     // Stop early for invalid: other-only datasource + last 7 days
     if (shouldShowOtherOnlyTimePeriodError(request)) {
       return renderCustomDatasetView(request, h, backUrl)
+    }
+
+    // Stop early for invalid: other-only datasource + zones
+    if (shouldShowZoneOtherOnlyError(request)) {
+      return renderZoneOtherOnlyView(request, h, backUrl)
     }
 
     // Calculate station count if all required data is present
