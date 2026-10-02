@@ -67,7 +67,7 @@ export async function getJson({ devUrlKey, urlKey, path, params, label }) {
   if (config.get('isDevelopment')) {
     try {
       const { payload: body } = await Wreck.get(
-        `${config.get(devUrlKey)}${path}?${query}`,
+        `${String(config.get(devUrlKey))}${path}?${query}`,
         {
           headers: { 'x-api-key': config.get('DevApiKey') }
         }
@@ -80,7 +80,9 @@ export async function getJson({ devUrlKey, urlKey, path, params, label }) {
   }
 
   try {
-    const response = await axios.get(`${config.get(urlKey)}${path}?${query}`)
+    const response = await axios.get(
+      `${String(config.get(urlKey))}${path}?${query}`
+    )
     return response.data
   } catch (error) {
     logger.error(`${label} error: ${error.message}`)
