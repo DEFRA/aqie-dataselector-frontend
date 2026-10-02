@@ -241,6 +241,12 @@ const buildStationCountParameters = (request) => {
     dataselectordownloadtype: 'dataSelectorMultiple',
     email: request.yar.get('email')
   }
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (regionType === 'Zone') {
+    params.RegionId = request.yar.get('selectedZoneIDs') || ''
+    params.Region = ''
+    params.regiontype = 'Region'
+  }
   request.yar.clear('pendingPollutantID')
   request.yar.clear('pendingNetworkId')
   return params
@@ -248,7 +254,10 @@ const buildStationCountParameters = (request) => {
 
 const hasMissingRequiredParams = (params) =>
   REQUIRED_PARAMS.some((param) => {
-    const value = params[param]
+    // Zones send RegionId with an empty Region
+    const key =
+      param === 'Region' && params.regiontype === 'Region' ? 'RegionId' : param
+    const value = params[key]
     return value === null || value === undefined || value === ''
   })
 

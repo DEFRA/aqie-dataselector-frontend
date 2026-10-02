@@ -348,6 +348,19 @@ export const config = convict({
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionPollutantMaster`,
     env: 'POLLUTANT_MASTER_API_URL'
   },
+  regionMasterDevUrl: {
+    doc: 'Region (zone) master API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionRegionMaster',
+    env: 'REGION_MASTER_DEV_URL'
+  },
+  regionMasterApiUrl: {
+    doc: 'Region (zone) master API URL for CDP environments',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionRegionMaster`,
+    env: 'REGION_MASTER_API_URL'
+  },
   datasourceDevUrl: {
     doc: 'Datasource API URL for localhost development',
     format: String,

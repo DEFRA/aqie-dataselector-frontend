@@ -63,6 +63,16 @@
       </div>
     {% endif %}
 
+    {% if zonesUnavailable %}
+      <div class="govuk-warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-visually-hidden">Warning</span>
+          Zones are not currently available. Choose countries, local authorities or try again later.
+        </strong>
+      </div>
+    {% endif %}
+
     <form action="/location-aurn" method="post">
       <div class="govuk-form-group {% if errors.details.location %}govuk-form-group--error{% endif %}">
         <fieldset class="govuk-fieldset">
@@ -138,6 +148,61 @@
                     <label class="govuk-label govuk-checkboxes__label" for="country-ni">Northern Ireland</label>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Zones (loaded from AtomDataSelectionRegionMaster API) -->
+            {% if formData.zone is string %}
+              {% set selectedZones = [formData.zone] %}
+            {% else %}
+              {% set selectedZones = formData.zone or [] %}
+            {% endif %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="location-3"
+                     name="location"
+                     type="radio"
+                     value="zones"
+                     data-aria-controls="conditional-location-3"
+                     aria-describedby="location-3-hint"
+                     {% if formData.location == "zones" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-3">
+                Zones
+              </label>
+              <div id="location-3-hint" class="govuk-hint govuk-radios__hint">
+                Choose one or more UK air quality zones<br>
+                Only the Automatic Urban and Rural Network is available for zones
+              </div>
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "zones" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-3">
+              <div class="govuk-form-group {% if errors.details.zone %}govuk-form-group--error{% endif %}">
+                {% if errors.details.zone %}
+                <p id="zone-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details.zone }}
+                </p>
+                {% endif %}
+                {% if regionList and regionList | length %}
+                <fieldset class="govuk-fieldset" {% if errors.details.zone %}aria-describedby="zone-error"{% endif %}>
+                  <legend class="govuk-fieldset__legend govuk-visually-hidden">Select zones</legend>
+                  <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    {% for region in regionList %}
+                    <div class="govuk-checkboxes__item">
+                      <input class="govuk-checkboxes__input"
+                             id="zone-{{ loop.index }}"
+                             name="zone"
+                             type="checkbox"
+                             value="{{ region.name }}"
+                             data-region-id="{{ region.id }}"
+                             {% if region.name in selectedZones %}checked{% endif %}>
+                      <label class="govuk-label govuk-checkboxes__label" for="zone-{{ loop.index }}">{{ region.name }}</label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </fieldset>
+                {% else %}
+                <p class="govuk-body" id="zone-1">Zones are not currently available. Choose countries, local authorities or try again later.</p>
+                {% endif %}
               </div>
             </div>
 
@@ -293,6 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
           });
         }
         return;
+        
       } catch (error) {
         console.error('❌ Error with accessibleAutocomplete:', error);
       }
@@ -682,6 +748,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (countryError) {
       countryError.style.display = 'none'
     }
+    const zoneError = document.getElementById('zone-error')
+    if (zoneError) {
+      zoneError.style.display = 'none'
+    }
   }
 
   function clearClientErrors() {
@@ -772,6 +842,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
+      // Validate Zones option
+      if (selectedLocation.value === 'zones') {
+        const checkedZones = document.querySelectorAll('input[name="zone"]:checked')
+
+        if (checkedZones.length === 0) {
+          showClientError('Select at least one zone', '#zone-1')
+          return
+        }
+      }
+
       // Validate Local authority option
       if (selectedLocation.value === 'la') {
         const hasSelected = selectedInputsContainer.querySelectorAll('input[name="selected-locations"]').length > 0

@@ -198,7 +198,7 @@ describe('customdatasetController', () => {
         expect.objectContaining({
           error: true,
           errormsg:
-            'There are no stations available based on your selection. Change the time period'
+            'There are no stations available based on your selection. Change time period'
         })
       )
     })
@@ -264,6 +264,137 @@ describe('customdatasetController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith(
         'downloadForceNearRealtimeOnly',
         false
+      )
+    })
+  })
+
+  // ─── zones datasource behaviour ──────────────────────────────────────────────
+
+  describe('zones datasource behaviour', () => {
+    const AURN_GROUP = {
+      category: 'Near real-time data from Defra',
+      networks: [{ id: 'aurn' }]
+    }
+    const OTHER_GROUP = {
+      category: 'Other data from Defra',
+      networks: [{ id: 'ukeap' }]
+    }
+
+    const zoneSession = (datasourceGroups) => (key) => {
+      const values = {
+        selectedpollutant: ['Ozone (O3)'],
+        selectedyear: '1 January to 31 December 2024',
+        selectedlocation: ['Greater London'],
+        Location: 'Zone',
+        selectedZoneIDs: '15',
+        datasourceGroups
+      }
+      return values[key]
+    }
+
+    it('Zone + AURN only: no warning, no error, no download override', async () => {
+      mockRequest.yar.get.mockImplementation(zoneSession([AURN_GROUP]))
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      const viewData = mockH.view.mock.calls[0][1]
+      expect(viewData.showZoneWarning).toBe(false)
+      expect(viewData.error).toBeUndefined()
+      expect(mockRequest.yar.set).not.toHaveBeenCalledWith(
+        'downloadForceNearRealtimeOnly',
+        true
+      )
+      expect(axios.post).toHaveBeenCalled()
+    })
+
+    it('Zone + other data only: shows no-stations error with Change location and skips station count', async () => {
+      mockRequest.yar.get.mockImplementation(zoneSession([OTHER_GROUP]))
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(axios.post).not.toHaveBeenCalled()
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [])
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errormsg:
+            'No monitoring stations are available for your selection. Please try:',
+          errorref1: 'Change location',
+          errorhref1: '/location-aurn/nojs',
+          showZoneWarning: false
+        })
+      )
+    })
+
+    it('Zone + both: shows the AURN-only warning and forces the AURN-only download', async () => {
+      mockRequest.yar.get.mockImplementation(
+        zoneSession([AURN_GROUP, OTHER_GROUP])
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          showZoneWarning: true,
+          zoneWarningText:
+            'Only the Automatic Urban and Rural Network is available for zones'
+        })
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadDatasourceGroups',
+        [AURN_GROUP]
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadDatasourceCategoryType',
+        'near-realtime-only'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'downloadForceNearRealtimeOnly',
+        true
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedDatasourceType',
+        'AURN'
+      )
+    })
+
+    it('Zone + both: ignores NON-AURN station counts', async () => {
+      mockRequest.yar.get.mockImplementation(
+        zoneSession([AURN_GROUP, OTHER_GROUP])
+      )
+      axios.post.mockImplementation((_url, params) =>
+        Promise.resolve({
+          data:
+            params.dataSource === 'NON-AURN'
+              ? [{ networkType: 'ukeap', count: 3 }]
+              : 2
+        })
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith('nooflocationukeap', [])
+    })
+
+    it('does not show the zone warning for countries with both data sources', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Ozone (O3)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['England'],
+          Location: 'Country',
+          datasourceGroups: [AURN_GROUP, OTHER_GROUP]
+        }
+        return values[key]
+      })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({ showZoneWarning: false })
       )
     })
   })
@@ -1163,9 +1294,9 @@ describe('customdatasetController', () => {
           error: true,
           errormsg:
             'No monitoring stations are available for your selection. Please try:',
-          errorref1: 'Change the time period',
+          errorref1: 'Change time period',
           errorhref1: '/year-aurn/change',
-          errorref2: 'Change the location',
+          errorref2: 'Change location',
           errorhref2: '/location-aurn/change'
         })
       )
@@ -1197,9 +1328,9 @@ describe('customdatasetController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errorref1: 'Change the time period',
+          errorref1: 'Change time period',
           errorhref1: '/year-aurn/change',
-          errorref2: 'Change the location',
+          errorref2: 'Change location',
           errorhref2: '/location-aurn/change'
         })
       )
@@ -1426,6 +1557,38 @@ describe('customdatasetController', () => {
         expect.objectContaining({
           regiontype: 'LocalAuthority',
           Region: '1,2,3',
+          pollutantName: 'pm10-id',
+          dataSource: 'AURN',
+          Year: '2024'
+        })
+      )
+    })
+
+    it('builds Zone parameters with RegionId and an empty Region', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const values = {
+          selectedpollutant: ['Particulate matter (PM10)'],
+          selectedyear: '1 January to 31 December 2024',
+          selectedlocation: ['Greater London'],
+          Location: 'Zone',
+          selectedZoneIDs: '15',
+          selectedLAIDs: '1,2,3',
+          selectedPollutantID: 'pm10-id',
+          selectedPollutants: null,
+          selectedTimePeriod: null
+        }
+        return values[key]
+      })
+      axios.post.mockResolvedValue({ data: 15 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalledWith(
+        'https://api.example.com/station-count',
+        expect.objectContaining({
+          RegionId: '15',
+          Region: '',
+          regiontype: 'Region',
           pollutantName: 'pm10-id',
           dataSource: 'AURN',
           Year: '2024'

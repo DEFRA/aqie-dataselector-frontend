@@ -7,6 +7,8 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
+const OTHER_ONLY = 'other-only'
+
 // True when the datasource groups contain the given category with networks.
 function hasCategoryWithNetworks(datasourceGroups, category) {
   if (!Array.isArray(datasourceGroups)) {
@@ -37,16 +39,16 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
 function getMissingStationError() {
   return [
     'No monitoring stations are available for your selection. Please try:',
-    'Change the time period',
+    'Change time period',
     '/year-aurn/change',
-    'Change the location',
+    'Change location',
     '/location-aurn/change'
   ]
 }
 function getOtherOnlyTimePeriodErrorViewModel() {
   return [
-    'There are no stations available based on your selection. Change the time period',
-    'Change the time period',
+    'There are no stations available based on your selection. Change time period',
+    'Change time period',
     '/year-aurn/change'
   ]
 }
@@ -67,7 +69,7 @@ function getMissingSelectionError(request) {
   if (!request.yar.get('selectedyear')) {
     return [
       'Select a timeperiod to continue',
-      'Add timeperiod',
+      'Add time period',
       '/year-aurn',
       '',
       ''
@@ -148,6 +150,15 @@ export const downloadDataselectorController = {
       return h.view('customdataset/index', errorViewData)
     }
 
+    // Zones + other data only: no stations — stay on customdataset, which
+    // shows the zone "Change location" error, instead of the download page
+    if (
+      request.yar.get('Location') === 'Zone' &&
+      request.yar.get('downloadDatasourceCategoryType') === OTHER_ONLY
+    ) {
+      return h.redirect(backUrl)
+    }
+
     // Validation checks
     const missingSelection = getMissingSelectionError(request)
     const numberOfLocations = request.yar.get('nooflocation')
@@ -168,7 +179,7 @@ export const downloadDataselectorController = {
       return renderErrorState(...missingSelection)
     } else if (
       timeperiod === 'last7days' &&
-      downloadDatasourceCategoryType === 'other-only'
+      downloadDatasourceCategoryType === OTHER_ONLY
     ) {
       return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel())
     } else if (
@@ -179,14 +190,14 @@ export const downloadDataselectorController = {
     ) {
       return renderErrorState(...getMissingStationError())
     } else if (
-      downloadDatasourceCategoryType === 'other-only' &&
+      downloadDatasourceCategoryType === OTHER_ONLY &&
       nonaurncount < 1
     ) {
       return renderErrorState(...getMissingStationError())
     } else if (
       downloadDatasourceCategoryType === 'both' &&
-      (!nonaurncount ||
-        stationCountUnavailable ||
+      nonaurncount < 1 &&
+      (stationCountUnavailable ||
         numberOfLocations === 0 ||
         numberOfLocations === '')
     ) {

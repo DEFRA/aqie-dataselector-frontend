@@ -163,7 +163,7 @@ describe('downloadDataselectornojsController', () => {
         expect.objectContaining({
           error: true,
           errormsg: 'Select a timeperiod to continue',
-          errorref1: 'Add timeperiod',
+          errorref1: 'Add time period',
           errorhref1: '/year-aurn',
           selectedpollutant: ['NO2'],
           selectedlocation: ['Somewhere']
@@ -283,6 +283,8 @@ describe('downloadDataselectornojsController', () => {
       request.yar.set('selectedpollutant', ['NO2'])
       request.yar.set('selectedyear', 'Last 7 days')
       request.yar.set('selectedlocation', ['A'])
+      // Station count present so the near-realtime-only check passes
+      request.yar.set('nooflocation', 5)
 
       request.yar.set('downloadForceNearRealtimeOnly', true)
       request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
@@ -324,6 +326,8 @@ describe('downloadDataselectornojsController', () => {
       request.yar.set('selectedpollutant', ['NO2'])
       request.yar.set('selectedyear', '2024')
       request.yar.set('selectedlocation', ['A'])
+      // Station count present so the 'both' check passes
+      request.yar.set('nooflocation', 5)
 
       request.yar.set('downloadForceNearRealtimeOnly', false)
       request.yar.set('downloadDatasourceCategoryType', '')
@@ -357,6 +361,100 @@ describe('downloadDataselectornojsController', () => {
             }
           ]
         })
+      )
+    })
+  })
+
+  describe('zones', () => {
+    beforeEach(() => {
+      request.method = 'post'
+      request.yar.set('selectedpollutant', ['NO2'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['Greater London'])
+      request.yar.set('Location', 'Zone')
+      request.yar.set('nooflocation', 5)
+    })
+
+    it('redirects back to customdataset for Zone + other data only', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(res).toBe('redirect-response')
+      expect(h.redirect).toHaveBeenCalledWith('/customdataset')
+      expect(h.view).not.toHaveBeenCalled()
+    })
+
+    it('renders the AURN-only download page for Zone + both', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('downloadForceNearRealtimeOnly', true)
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ downloadForceNearRealtimeOnly: true })
+      )
+    })
+  })
+
+  describe('AURN tab visibility', () => {
+    beforeEach(() => {
+      request.method = 'post'
+      request.yar.set('selectedpollutant', ['Lead'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['England'])
+    })
+
+    it('hides the AURN tab for a non-AURN only pollutant', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+      request.yar.set('nooflocationukeap', [{ networkType: 'UKEAP', count: 3 }])
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it('falls back to datasourceCategoryType when the download override is not set', () => {
+      request.yar.set('datasourceCategoryType', 'other-only')
+      request.yar.set('nooflocationukeap', [{ networkType: 'UKEAP', count: 3 }])
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it.each(['near-realtime-only', 'both'])(
+      'shows the AURN tab for %s',
+      (categoryType) => {
+        request.yar.set('downloadDatasourceCategoryType', categoryType)
+        request.yar.set('nooflocation', 5)
+
+        downloadDataselectornojsController.handler(request, h)
+
+        expect(h.view).toHaveBeenCalledWith(
+          'download_dataselector_nojs/index',
+          expect.objectContaining({ aurnUnavailable: false })
+        )
+      }
+    )
+
+    it('hides the AURN tab on GET for a non-AURN only pollutant', () => {
+      request.method = 'get'
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
       )
     })
   })
