@@ -59,6 +59,7 @@
       </ul>
 
       <!-- NEAR REAL-TIME TAB -->
+      {% if not aurnUnavailable %}
       <div class="govuk-tabs__panel" id="tab-nearrealtime">
         <div class="govuk-!-margin-top-3">
           <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
@@ -120,6 +121,7 @@
 
         <div id="download-content-container"></div>
       </div>
+      {% endif %}
 
       <!-- OTHER DATA TAB -->
       {% if not ukeapUnavailable and not forceNearRealtimeOnly %}

@@ -59,11 +59,21 @@ async function invokeDownload(apiparams) {
     : invokeDownloadProd(apiparams)
 }
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Wait, fetch the job status, and repeat until it is 'Completed'.
+async function pollUntilCompleted(fetchStatus) {
+  await wait(POLL_INTERVAL_MS)
+  const statusResponse = await fetchStatus()
+  if (statusResponse.status === 'Completed') {
+    return statusResponse.resultUrl
+  }
+  return pollUntilCompleted(fetchStatus)
+}
+
 async function pollDownloadStatusDev(downloadstatusapiparams) {
   const url = config.get('pollingDevUrl')
-  let statusResponse
-  do {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+  return pollUntilCompleted(async () => {
     try {
       const { payload } = await Wreck.post(url, {
         payload: JSON.stringify(downloadstatusapiparams),
@@ -73,31 +83,27 @@ async function pollDownloadStatusDev(downloadstatusapiparams) {
         },
         json: true
       })
-      statusResponse = payload
+      return payload
     } catch (error) {
       logger.error(`AURN polling API error (local): ${errMsg(error)}`)
       throw error
     }
-  } while (statusResponse.status !== 'Completed')
-  return statusResponse.resultUrl
+  })
 }
 
 async function pollDownloadStatusProd(downloadstatusapiparams) {
-  let statusResponse
-  do {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+  return pollUntilCompleted(async () => {
     try {
       const statusResult = await axios.post(
         config.get('Polling_URL'),
         downloadstatusapiparams
       )
-      statusResponse = statusResult.data
+      return statusResult.data
     } catch (error) {
       logger.error(`AURN polling API error: ${errMsg(error)}`)
       throw error
     }
-  } while (statusResponse.status !== 'Completed')
-  return statusResponse.resultUrl
+  })
 }
 
 async function invokeDownloadS3(downloadstatusapiparams) {

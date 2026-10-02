@@ -89,6 +89,49 @@ function handleBadPayload(laqmCache, logger) {
   return { data: [], _meta: { unavailable: true, reason: 'bad-payload' } }
 }
 
+// Form data from the saved location type, or null when it can't be used
+function formDataFromLocationType(selectedLocation, selections) {
+  const { selectedCountries, selectedLocalAuthorities, selectedZones } =
+    selections
+
+  if (selectedLocation === 'Zone' && selectedZones) {
+    return { location: 'zones', zone: selectedZones }
+  }
+
+  if (selectedLocation === 'Country' && selectedCountries) {
+    return { location: 'countries', country: selectedCountries }
+  }
+
+  if (selectedLocation === 'LocalAuthority' && selectedLocalAuthorities) {
+    return { location: 'la', 'selected-locations': selectedLocalAuthorities }
+  }
+
+  return null
+}
+
+// Fallback: infer countries vs local authorities from the saved names
+function formDataFromLocationNames(selectedlocations) {
+  if (!Array.isArray(selectedlocations)) {
+    return {}
+  }
+
+  const countryNames = new Set([
+    'england',
+    'scotland',
+    'wales',
+    'northern ireland'
+  ])
+  const isCountries = selectedlocations.some((loc) =>
+    countryNames.has(loc.toLowerCase())
+  )
+
+  const key = isCountries ? 'country' : 'selected-locations'
+  return {
+    location: isCountries ? 'countries' : 'la',
+    [key]: selectedlocations
+  }
+}
+
 function determineFormDataFromSession(
   selectedLocation,
   selectedCountries,
@@ -96,43 +139,13 @@ function determineFormDataFromSession(
   selectedlocations,
   selectedZones = null
 ) {
-  const formData = {}
-
-  if (selectedLocation === 'Zone' && selectedZones) {
-    formData.location = 'zones'
-    formData.zone = selectedZones
-    return formData
-  }
-
-  if (selectedLocation === 'Country' && selectedCountries) {
-    formData.location = 'countries'
-    formData.country = selectedCountries
-    return formData
-  }
-
-  if (selectedLocation === 'LocalAuthority' && selectedLocalAuthorities) {
-    formData.location = 'la'
-    formData['selected-locations'] = selectedLocalAuthorities
-    return formData
-  }
-
-  if (selectedlocations && Array.isArray(selectedlocations)) {
-    const countryNames = new Set([
-      'england',
-      'scotland',
-      'wales',
-      'northern ireland'
-    ])
-    const isCountries = selectedlocations.some((loc) =>
-      countryNames.has(loc.toLowerCase())
-    )
-
-    formData.location = isCountries ? 'countries' : 'la'
-    const key = isCountries ? 'country' : 'selected-locations'
-    formData[key] = selectedlocations
-  }
-
-  return formData
+  return (
+    formDataFromLocationType(selectedLocation, {
+      selectedCountries,
+      selectedLocalAuthorities,
+      selectedZones
+    }) ?? formDataFromLocationNames(selectedlocations)
+  )
 }
 
 function categorizeLocation(

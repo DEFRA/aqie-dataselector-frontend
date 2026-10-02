@@ -398,4 +398,64 @@ describe('downloadDataselectornojsController', () => {
       )
     })
   })
+
+  describe('AURN tab visibility', () => {
+    beforeEach(() => {
+      request.method = 'post'
+      request.yar.set('selectedpollutant', ['Lead'])
+      request.yar.set('selectedyear', '2024')
+      request.yar.set('selectedlocation', ['England'])
+    })
+
+    it('hides the AURN tab for a non-AURN only pollutant', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+      request.yar.set('nooflocationukeap', [{ networkType: 'UKEAP', count: 3 }])
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it('falls back to datasourceCategoryType when the download override is not set', () => {
+      request.yar.set('datasourceCategoryType', 'other-only')
+      request.yar.set('nooflocationukeap', [{ networkType: 'UKEAP', count: 3 }])
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+
+    it.each(['near-realtime-only', 'both'])(
+      'shows the AURN tab for %s',
+      (categoryType) => {
+        request.yar.set('downloadDatasourceCategoryType', categoryType)
+        request.yar.set('nooflocation', 5)
+
+        downloadDataselectornojsController.handler(request, h)
+
+        expect(h.view).toHaveBeenCalledWith(
+          'download_dataselector_nojs/index',
+          expect.objectContaining({ aurnUnavailable: false })
+        )
+      }
+    )
+
+    it('hides the AURN tab on GET for a non-AURN only pollutant', () => {
+      request.method = 'get'
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ aurnUnavailable: true })
+      )
+    })
+  })
 })

@@ -7,6 +7,8 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 
+const OTHER_ONLY = 'other-only'
+
 function getAurnPollutantID(datasourceGroups) {
   if (!Array.isArray(datasourceGroups)) {
     return ''
@@ -110,6 +112,8 @@ const buildViewData = (request, backUrl) => {
     stationcount: getStationCount(request),
     ukeapNetworks,
     ukeapUnavailable,
+    // Non-AURN only pollutant: hide the near real-time (AURN) tab
+    aurnUnavailable: getDownloadCategoryType(request) === OTHER_ONLY,
     aurnPollutantID,
     yearrange: request.yar.get('yearrange'),
     hrefq: backUrl,
@@ -215,6 +219,61 @@ function buildNoJsViewModel(request) {
   }
 }
 
+function getDownloadCategoryType(request) {
+  return (
+    request.yar.get('downloadDatasourceCategoryType') ||
+    request.yar.get('datasourceCategoryType')
+  )
+}
+
+// Zones + other data only: no stations — stay on customdataset, which
+// shows the zone "Change location" error, instead of the download page
+function isZoneOtherOnly(request) {
+  return (
+    request.yar.get('Location') === 'Zone' &&
+    getDownloadCategoryType(request) === OTHER_ONLY
+  )
+}
+
+// First missing pollutant / year / location error view, or null
+function getSelectionError(request, h, backUrl) {
+  return (
+    validateSelectedPollutant(request, h, backUrl) ||
+    validateSelectedYear(request, h, backUrl) ||
+    validateSelectedLocation(request, h, backUrl)
+  )
+}
+
+// True when the AURN station count is unavailable or zero
+function hasNoAurnStations(request) {
+  const numberOfLocations = request.yar.get('nooflocation')
+  return (
+    isStationCountUnavailable(
+      numberOfLocations,
+      request.yar.get('stationCountError')
+    ) ||
+    numberOfLocations === 0 ||
+    numberOfLocations === ''
+  )
+}
+
+// True when there are no stations for the selected datasource category
+function hasMissingStations(request, categoryType) {
+  const noOtherStations =
+    getNonaurncount(request.yar.get('nooflocationukeap')) < 1
+
+  if (categoryType === 'near-realtime-only') {
+    return hasNoAurnStations(request)
+  }
+  if (categoryType === OTHER_ONLY) {
+    return noOtherStations
+  }
+  if (categoryType === 'both') {
+    return noOtherStations && hasNoAurnStations(request)
+  }
+  return false
+}
+
 export const downloadDataselectornojsController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -226,54 +285,20 @@ export const downloadDataselectornojsController = {
       )
     }
 
-    // Zones + other data only: no stations — stay on customdataset, which
-    // shows the zone "Change location" error, instead of the download page
-    if (
-      request.yar.get('Location') === 'Zone' &&
-      (request.yar.get('downloadDatasourceCategoryType') ||
-        request.yar.get('datasourceCategoryType')) === 'other-only'
-    ) {
+    if (isZoneOtherOnly(request)) {
       return h.redirect(backUrl)
     }
 
-    const pollutantError = validateSelectedPollutant(request, h, backUrl)
-
-    if (pollutantError) {
-      return pollutantError
+    const selectionError = getSelectionError(request, h, backUrl)
+    if (selectionError) {
+      return selectionError
     }
 
-    const yearError = validateSelectedYear(request, h, backUrl)
-
-    if (yearError) {
-      return yearError
-    }
-
-    const locationError = validateSelectedLocation(request, h, backUrl)
-
-    if (locationError) {
-      return locationError
-    }
-
-    const numberOfLocations = request.yar.get('nooflocation')
-
-    const stationCountError = request.yar.get('stationCountError')
-
-    const nonaurncount = getNonaurncount(request.yar.get('nooflocationukeap'))
-
-    const timeperiod = request.yar.get('TimeSelectionMode')
-
-    const downloadDatasourceCategoryType =
-      request.yar.get('downloadDatasourceCategoryType') ||
-      request.yar.get('datasourceCategoryType')
-
-    const stationCountUnavailable = isStationCountUnavailable(
-      numberOfLocations,
-      stationCountError
-    )
+    const categoryType = getDownloadCategoryType(request)
 
     if (
-      timeperiod === 'last7days' &&
-      downloadDatasourceCategoryType === 'other-only'
+      request.yar.get('TimeSelectionMode') === 'last7days' &&
+      categoryType === OTHER_ONLY
     ) {
       return renderErrorState(
         h,
@@ -283,36 +308,7 @@ export const downloadDataselectornojsController = {
       )
     }
 
-    if (
-      downloadDatasourceCategoryType === 'near-realtime-only' &&
-      (stationCountUnavailable ||
-        numberOfLocations === 0 ||
-        numberOfLocations === '')
-    ) {
-      return renderErrorState(
-        h,
-        request,
-        backUrl,
-        getMissingStationErrorModel()
-      )
-    }
-
-    if (downloadDatasourceCategoryType === 'other-only' && nonaurncount < 1) {
-      return renderErrorState(
-        h,
-        request,
-        backUrl,
-        getMissingStationErrorModel()
-      )
-    }
-
-    if (
-      downloadDatasourceCategoryType === 'both' &&
-      nonaurncount < 1 &&
-      (stationCountUnavailable ||
-        numberOfLocations === 0 ||
-        numberOfLocations === '')
-    ) {
+    if (hasMissingStations(request, categoryType)) {
       return renderErrorState(
         h,
         request,
