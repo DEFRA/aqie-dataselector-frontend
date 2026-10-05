@@ -22,7 +22,12 @@ import {
 
 const logger = createLogger()
 
-// Get station ID from POST payload or session
+/**
+ * Resolves the station id from the POST payload or the session, persisting
+ * it to the session when it arrives via payload.
+ * @param {object} request
+ * @returns {string}
+ */
 function resolveStationId(request) {
   if (request.method === 'post' && request.payload?.stationId) {
     const stationId = request.payload.stationId
@@ -32,30 +37,129 @@ function resolveStationId(request) {
   return request.yar.get('SiteId')
 }
 
+/**
+ * Returns the backlink href, based on whether the session has one or many
+ * matching locations.
+ * @param {object} request
+ * @returns {string}
+ */
 function resolveStationHrefq(request) {
   return request.yar.get('nooflocation') === 'single'
     ? `/multiplelocations`
     : `/location`
 }
 
+/**
+ * Guards against direct/untrusted navigation to this route. A redirect (e.g.
+ * from /station-summary) keeps the original external referer, so
+ * deepLinkTrusted stands in for the referer check here - consumed
+ * immediately so it can't be replayed.
+ * @param {object} request
+ * @param {object} h
+ * @returns {object|null} Hapi response if access should be denied, otherwise null.
+ */
+function checkAccessDenied(request, h) {
+  if (!request) {
+    return h.response('Invalid request').code(HTTP_BAD_REQUEST)
+  }
+
+  const isTrustedDeepLink = request.yar.get('deepLinkTrusted')
+  if (isTrustedDeepLink) {
+    request.yar.set('deepLinkTrusted', false)
+  }
+
+  // If accessed directly (no valid referer), return 404 page not found
+  if (!isTrustedDeepLink && !isInternalNavigation(request)) {
+    return renderNotFound(h)
+  }
+
+  return null
+}
+
+/**
+ * Stores the requested download year, pollutant and frequency in the
+ * session, when a download is being requested.
+ * @param {object} request
+ * @returns {void}
+ */
+function setDownloadSessionParams(request) {
+  if (!request.params.download) {
+    return
+  }
+  request.yar.set('selectedYear', request.params.download)
+  request.yar.set('downloadPollutant', request.params.pollutant)
+  request.yar.set('downloadFrequency', request.params.frequency)
+}
+
+/**
+ * Validates session data and locates the requested station, returning either
+ * an error response or the resolved station.
+ * @param {object} request
+ * @param {string} stationId
+ * @param {object} h
+ * @returns {{response?: object, station?: object}}
+ */
+function resolveStation(request, stationId, h) {
+  const monitoringResult = request.yar.get('MonitoringstResult')
+  if (!monitoringResult) {
+    return {
+      response: h.response('Monitoring result not found').code(HTTP_NOT_FOUND)
+    }
+  }
+
+  const result = monitoringResult.getmonitoringstation
+  if (!Array.isArray(result)) {
+    return {
+      response: h
+        .response('Invalid monitoring data format')
+        .code(HTTP_INTERNAL_SERVER_ERROR)
+    }
+  }
+
+  const station = result.find((x) => x.id === stationId)
+  if (!station) {
+    return { response: h.response('Station not found').code(HTTP_NOT_FOUND) }
+  }
+
+  return { station }
+}
+
+/**
+ * Invokes the download API when a download is being requested, storing the
+ * result in the session.
+ * @param {object} request
+ * @param {object} apiParams
+ * @param {object} h
+ * @returns {Promise<object|null>} Hapi response on failure, otherwise null.
+ */
+async function performDownloadIfRequested(request, apiParams, h) {
+  if (!request.params.download) {
+    return null
+  }
+  const downloadResult = await invokeDownload(apiParams, logger)
+  if (downloadResult instanceof Error) {
+    return h
+      .response('Failed to download data')
+      .code(HTTP_INTERNAL_SERVER_ERROR)
+  }
+  request.yar.set('downloadresult', downloadResult)
+  return null
+}
+
+/**
+ * Hapi route handler for /stationdetails. Resolves the requested station,
+ * optionally performs a download, and renders the station details view.
+ * @param {object} request
+ * @param {object} h
+ * @returns {Promise<object>} Hapi response
+ */
 const stationDetailsController = {
   handler: async (request, h) => {
-    // A redirect (e.g. from /station-summary) keeps the original external
-    // referer, so deepLinkTrusted stands in for the referer check here -
-    // consumed immediately so it can't be replayed.
-    const isTrustedDeepLink = request.yar.get('deepLinkTrusted')
-    if (isTrustedDeepLink) {
-      request.yar.set('deepLinkTrusted', false)
+    const accessDenied = checkAccessDenied(request, h)
+    if (accessDenied) {
+      return accessDenied
     }
 
-    // If accessed directly (no valid referer), return 404 page not found
-    if (!isTrustedDeepLink && !isInternalNavigation(request)) {
-      return renderNotFound(h)
-    }
-
-    if (!request) {
-      return h.response('Invalid request').code(HTTP_BAD_REQUEST)
-    }
     // Clear previous session values
     request.yar.set('errors', '')
     request.yar.set('errorMessage', '')
@@ -66,30 +170,16 @@ const stationDetailsController = {
     // Get station ID from POST payload or session
     const stationId = resolveStationId(request)
 
-    // Handle download parameters
-    if (request.params.download) {
-      request.yar.set('selectedYear', request.params.download)
-      request.yar.set('downloadPollutant', request.params.pollutant)
-      request.yar.set('downloadFrequency', request.params.frequency)
-    }
+    setDownloadSessionParams(request)
 
     // Validate request and session data
-
-    const monitoringResult = request.yar.get('MonitoringstResult')
-    if (!monitoringResult) {
-      return h.response('Monitoring result not found').code(HTTP_NOT_FOUND)
-    }
-
-    const result = monitoringResult.getmonitoringstation
-    if (!Array.isArray(result)) {
-      return h
-        .response('Invalid monitoring data format')
-        .code(HTTP_INTERNAL_SERVER_ERROR)
-    }
-
-    const station = result.find((x) => x.id === stationId)
-    if (!station) {
-      return h.response('Station not found').code(HTTP_NOT_FOUND)
+    const { response: stationError, station } = resolveStation(
+      request,
+      stationId,
+      h
+    )
+    if (stationError) {
+      return stationError
     }
 
     request.yar.set('stationdetails', station)
@@ -127,14 +217,13 @@ const stationDetailsController = {
     }
 
     // Handle download request
-    if (request.params.download) {
-      const downloadResult = await invokeDownload(apiParams, logger)
-      if (downloadResult instanceof Error) {
-        return h
-          .response('Failed to download data')
-          .code(HTTP_INTERNAL_SERVER_ERROR)
-      }
-      request.yar.set('downloadresult', downloadResult)
+    const downloadError = await performDownloadIfRequested(
+      request,
+      apiParams,
+      h
+    )
+    if (downloadError) {
+      return downloadError
     }
 
     // Fetch the year table server side so the first paint shows real data.
