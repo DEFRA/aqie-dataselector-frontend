@@ -11,14 +11,15 @@ const logger = createLogger()
  * redirects into /stationdetails. A redirect keeps the original external
  * referer rather than this page's, so /stationdetails can't rely on its
  * referer guard here - deepLinkTrusted is set instead as a one-time handoff.
+ *
+ * Takes its parameters via POST body rather than query string so coordinates
+ * aren't exposed in URLs (browser history, server access logs, onward
+ * referer headers). The route's Joi schema has already validated lat/lng are
+ * numeric and in range by the time this handler runs.
  */
 const stationSummaryController = {
   handler: async (request, h) => {
-    const { lat, lng, name } = request.query
-
-    if (!lat || !lng) {
-      return renderNotFound(h)
-    }
+    const { lat, lng, name } = request.payload
 
     const station = await fetchStationByLocation({ lat, lng, name })
     if (!station) {

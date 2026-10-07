@@ -14,32 +14,16 @@ describe('stationSummaryController.handler', () => {
       redirect: jest.fn().mockReturnThis()
     }
     renderNotFound.mockReturnValue('not-found-response')
+    // lat/lng/name arrive here already validated and coerced to numbers by
+    // the route's Joi schema (see schema.js/schema.test.js) - invalid/missing
+    // values never reach the handler.
     request = {
-      query: { lat: '51.5', lng: '-0.1', name: 'Test Station' },
+      payload: { lat: 51.5, lng: -0.1, name: 'Test Station' },
       yar: {
         get: jest.fn(),
         set: jest.fn()
       }
     }
-  })
-
-  it('renders not found when lat is missing', async () => {
-    request.query = { lng: '-0.1' }
-
-    const result = await stationSummaryController.handler(request, h)
-
-    expect(fetchStationByLocation).not.toHaveBeenCalled()
-    expect(renderNotFound).toHaveBeenCalledWith(h)
-    expect(result).toBe('not-found-response')
-  })
-
-  it('renders not found when lng is missing', async () => {
-    request.query = { lat: '51.5' }
-
-    const result = await stationSummaryController.handler(request, h)
-
-    expect(fetchStationByLocation).not.toHaveBeenCalled()
-    expect(result).toBe('not-found-response')
   })
 
   it('renders not found when no station matches', async () => {
@@ -48,8 +32,8 @@ describe('stationSummaryController.handler', () => {
     const result = await stationSummaryController.handler(request, h)
 
     expect(fetchStationByLocation).toHaveBeenCalledWith({
-      lat: '51.5',
-      lng: '-0.1',
+      lat: 51.5,
+      lng: -0.1,
       name: 'Test Station'
     })
     expect(request.yar.set).not.toHaveBeenCalled()
