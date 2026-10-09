@@ -80,8 +80,19 @@ id="tab-nearrealtime">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
       <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
+      {# Networks from the datasource API; falls back to AURN when none are listed #}
+      {% set nrtNetworks = nearRealtimeNetworks if (nearRealtimeNetworks and nearRealtimeNetworks | length) else [{ name: 'Automatic Urban and Rural Network (AURN)', isAurn: true }] %}
+      {% for network in nrtNetworks %}
+        {% if network.isAurn %}
       <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
       <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
+        {% else %}
+      <h3 class="govuk-heading-s">{{ network.name }}</h3>
+          {% if networkDescriptions and networkDescriptions[network.name] %}
+      <p class="govuk-body">{{ networkDescriptions[network.name] }}</p>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
    {% if  stationcount > 0 %}
      <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen" >
      

@@ -109,7 +109,6 @@ async function fetchDatasourceDev(body, pollutantID) {
       },
       json: true
     })
-
     const result = Array.isArray(payload) ? payload : []
 
     logger.info(

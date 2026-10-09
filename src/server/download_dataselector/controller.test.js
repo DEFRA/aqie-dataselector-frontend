@@ -462,4 +462,39 @@ describe('downloadDataselectorController', () => {
       )
     })
   })
+
+  describe('near real-time networks', () => {
+    beforeEach(() => {
+      Object.assign(session, {
+        selectedpollutant: ['Benzene'],
+        selectedyear: '2024',
+        selectedlocation: ['England'],
+        Location: 'Country',
+        nooflocation: 4,
+        downloadDatasourceCategoryType: 'near-realtime-only'
+      })
+    })
+
+    test('passes the networks returned by the datasource API to the view', () => {
+      session.datasourceGroups = [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ]
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.view).toBe('download_dataselector/index')
+      expect(result.model.nearRealtimeNetworks).toEqual([
+        { name: 'Automatic Hydrocarbon Network', isAurn: false }
+      ])
+    })
+
+    test('passes an empty list when there are no datasource groups', () => {
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.model.nearRealtimeNetworks).toEqual([])
+    })
+  })
 })

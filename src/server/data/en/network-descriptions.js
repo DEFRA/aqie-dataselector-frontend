@@ -31,6 +31,8 @@ export const networkDescriptions = {
     'Monitors the chemical composition of pollution in rainwater. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
   'UKEAP - National Ammonia Monitoring Network':
     'Monitors air pollution from gaseous ammonia and ammonium. Part of the UK Eutrophying and Acidifying Atmospheric Pollutants (UKEAP) Network that monitors long-term pollutant trends in rural and remote locations.',
+  'Automatic Hydrocarbon Network':
+    'Hourly measurements of speciated (separated) hydrocarbons.',
   'Non-Automatic Hydrocarbon Network': 'Monitors air pollution from benzene.',
   'PAH Andersen': 'Data from PAH Andersen analysers.',
   'PAH Deposition':
