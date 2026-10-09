@@ -49,3 +49,43 @@ export async function postJson({ devUrlKey, urlKey, payload, label }) {
     throw error
   }
 }
+
+/**
+ * GETs from one of the platform APIs, following the same dev/production
+ * branching as postJson (see above for why the branches differ).
+ * @param {object} options
+ * @param {string} options.devUrlKey config key holding the localhost dev URL
+ * @param {string} options.urlKey config key holding the deployed URL
+ * @param {string} options.path appended to the base URL (e.g. 'by-location')
+ * @param {Record<string, string>} options.params query string params
+ * @param {string} options.label name used in the error log line
+ * @returns {Promise<any>} the response body, or null on failure
+ */
+export async function getJson({ devUrlKey, urlKey, path, params, label }) {
+  const query = new URLSearchParams(params).toString()
+
+  if (config.get('isDevelopment')) {
+    try {
+      const { payload: body } = await Wreck.get(
+        `${String(config.get(devUrlKey))}${path}?${query}`,
+        {
+          headers: { 'x-api-key': config.get('DevApiKey') }
+        }
+      )
+      return JSON.parse(body.toString())
+    } catch (error) {
+      logger.warn(`${label} error: ${error.message}`)
+      return null
+    }
+  }
+
+  try {
+    const response = await axios.get(
+      `${String(config.get(urlKey))}${path}?${query}`
+    )
+    return response.data
+  } catch (error) {
+    logger.error(`${label} error: ${error.message}`)
+    return null
+  }
+}
