@@ -6,6 +6,7 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
+import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-helpers.js'
 
 const OTHER_ONLY = 'other-only'
 
@@ -115,6 +116,8 @@ const buildViewData = (request, backUrl) => {
     // Non-AURN only pollutant: hide the near real-time (AURN) tab
     aurnUnavailable: getDownloadCategoryType(request) === OTHER_ONLY,
     aurnPollutantID,
+    // Near real-time networks from the datasource API (display only)
+    nearRealtimeNetworks: getNearRealtimeNetworks(datasourceGroups),
     yearrange: request.yar.get('yearrange'),
     hrefq: backUrl,
     finalyear:

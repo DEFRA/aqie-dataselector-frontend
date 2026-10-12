@@ -6,6 +6,7 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
+import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-helpers.js'
 
 const OTHER_ONLY = 'other-only'
 
@@ -230,6 +231,8 @@ export const downloadDataselectorController = {
       ukeapNetworks,
       ukeapUnavailable,
       aurnPollutantID,
+      // Near real-time networks from the datasource API (display only)
+      nearRealtimeNetworks: getNearRealtimeNetworks(datasourceGroups),
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,
