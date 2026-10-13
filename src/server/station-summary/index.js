@@ -15,7 +15,7 @@ const configureRoutes = (server) => {
           payload: stationSummaryPayloadSchema,
           // Renders the same not-found page as an unmatched station, rather than
           // a raw 400, so a malformed deep link doesn't leak validation details.
-          failAction: (request, h, error) => {
+          failAction: (_request, h, error) => {
             logger.info(
               `Station summary deep link: invalid payload - ${error.message}`
             )
