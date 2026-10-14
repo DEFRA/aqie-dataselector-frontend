@@ -29,43 +29,45 @@ function isAurnNearRealtimeNetwork(network) {
   )
 }
 
-function getNearRealtimeNetworkSelections(datasourceGroups) {
+function getNetworkSelectionName(network) {
+  return typeof network === 'string'
+    ? network
+    : String(network?.name || network?.fullName || '').trim()
+}
+
+function getNetworkSelectionPollutantId(network) {
+  return typeof network === 'object' && network !== null
+    ? String(network.pollutantID || '').trim()
+    : ''
+}
+
+function getNearRealtimeGroupNetworks(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   const nearRealtimeGroup = groups.find(
     (g) => g?.category === 'Near real-time data from Defra'
   )
-  const networks = Array.isArray(nearRealtimeGroup?.networks)
+  return Array.isArray(nearRealtimeGroup?.networks)
     ? nearRealtimeGroup.networks
     : []
+}
 
+function getNearRealtimeNetworkSelections(datasourceGroups) {
   const seen = new Set()
   const selections = []
 
-  for (const network of networks) {
-    const name =
-      typeof network === 'string'
-        ? network
-        : String(network?.name || network?.fullName || '').trim()
-    const pollutantID =
-      typeof network === 'object' && network !== null
-        ? String(network?.pollutantID || '').trim()
-        : ''
-
-    if (!name || !pollutantID) {
-      continue
-    }
-
+  for (const network of getNearRealtimeGroupNetworks(datasourceGroups)) {
+    const name = getNetworkSelectionName(network)
+    const pollutantID = getNetworkSelectionPollutantId(network)
     const key = `${name}::${pollutantID}`
-    if (seen.has(key)) {
-      continue
-    }
-    seen.add(key)
 
-    selections.push({
-      name,
-      pollutantID,
-      isAurn: isAurnNearRealtimeNetwork(network)
-    })
+    if (name && pollutantID && !seen.has(key)) {
+      seen.add(key)
+      selections.push({
+        name,
+        pollutantID,
+        isAurn: isAurnNearRealtimeNetwork(network)
+      })
+    }
   }
 
   return selections
@@ -172,16 +174,16 @@ async function resolveAurnDisplayCount(
   selectedPollutantIds
 ) {
   if (isStationCountError(aurnCount)) {
-    const fallbackAurnCount = await getAurnFallbackCountByPollutants(
+    const errorFallbackCount = await getAurnFallbackCountByPollutants(
       baseParams,
       selectedPollutantIds
     )
 
-    if (fallbackAurnCount > 0) {
+    if (errorFallbackCount > 0) {
       logger.warn(
-        `Station count combined AURN failed; using per-pollutant fallback total=${fallbackAurnCount}`
+        `Station count combined AURN failed; using per-pollutant fallback total=${errorFallbackCount}`
       )
-      return fallbackAurnCount
+      return errorFallbackCount
     }
 
     return null

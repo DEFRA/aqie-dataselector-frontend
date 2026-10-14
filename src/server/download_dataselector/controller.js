@@ -9,6 +9,8 @@ import { networkDescriptions } from '~/src/server/data/en/network-descriptions.j
 import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-helpers.js'
 
 const OTHER_ONLY = 'other-only'
+const CHANGE_LOCATION_URL = '/location-aurn/change'
+const CHANGE_TIME_PERIOD_URL = '/year-aurn/change'
 
 function normalizeNetworkName(name) {
   return String(name || '')
@@ -120,23 +122,23 @@ function getMissingStationError(request) {
     return [
       'No monitoring stations are available for your selection. Please try:',
       'Change location',
-      '/location-aurn/change'
+      CHANGE_LOCATION_URL
     ]
   }
 
   return [
     'No monitoring stations are available for your selection. Please try:',
     'Change time period',
-    '/year-aurn/change',
+    CHANGE_TIME_PERIOD_URL,
     'Change location',
-    '/location-aurn/change'
+    CHANGE_LOCATION_URL
   ]
 }
 function getOtherOnlyTimePeriodErrorViewModel() {
   return [
     'There are no stations available based on your selection. Change time period',
     'Change time period',
-    '/year-aurn/change'
+    CHANGE_TIME_PERIOD_URL
   ]
 }
 
@@ -166,7 +168,7 @@ function getMissingSelectionError(request) {
     return [
       'Select a location to continue',
       'Add location',
-      '/location-aurn/change',
+      CHANGE_LOCATION_URL,
       '',
       ''
     ]
@@ -174,37 +176,22 @@ function getMissingSelectionError(request) {
   return null
 }
 
+function isNetworkWithoutId(network) {
+  return Boolean(network) && typeof network === 'object' && !network.id
+}
+
 function getAurnPollutantID(datasourceGroups) {
   if (!Array.isArray(datasourceGroups)) {
     return ''
   }
 
-  const nearRealtimeGroups = datasourceGroups.filter(
-    (g) => g?.category === CATEGORY_NEAR_REALTIME
-  )
+  const candidates = datasourceGroups
+    .filter((g) => g?.category === CATEGORY_NEAR_REALTIME)
+    .flatMap((group) => group.networks || [])
+    .filter(isNetworkWithoutId)
 
-  for (const group of nearRealtimeGroups) {
-    for (const network of group.networks || []) {
-      if (
-        network &&
-        typeof network === 'object' &&
-        !network.id &&
-        isAurnNetwork(network)
-      ) {
-        return network.pollutantID || ''
-      }
-    }
-  }
-
-  for (const group of nearRealtimeGroups) {
-    for (const network of group.networks || []) {
-      if (network && typeof network === 'object' && !network.id) {
-        return network.pollutantID || ''
-      }
-    }
-  }
-
-  return ''
+  const network = candidates.find(isAurnNetwork) ?? candidates[0]
+  return network?.pollutantID || ''
 }
 function getNonaurncount(nonaurncount) {
   if (!Array.isArray(nonaurncount)) {
@@ -239,14 +226,30 @@ function renderErrorState(request, h, backUrl, datasourceGroups, errorModel) {
   return h.view('customdataset/index', errorViewData)
 }
 
-function getValidationErrorModel(request, validation) {
+// True when the selected datasource category has no stations to download.
+function hasNoStationsForCategory(validation) {
   const {
-    missingSelection,
-    timeperiod,
     downloadDatasourceCategoryType,
     nonaurncount,
     hasNoNearRealtimeStations
   } = validation
+  const hasNoOtherStations = nonaurncount < 1
+
+  switch (downloadDatasourceCategoryType) {
+    case 'near-realtime-only':
+      return hasNoNearRealtimeStations
+    case OTHER_ONLY:
+      return hasNoOtherStations
+    case 'both':
+      return hasNoOtherStations && hasNoNearRealtimeStations
+    default:
+      return false
+  }
+}
+
+function getValidationErrorModel(request, validation) {
+  const { missingSelection, timeperiod, downloadDatasourceCategoryType } =
+    validation
 
   if (missingSelection) {
     return missingSelection
@@ -257,20 +260,7 @@ function getValidationErrorModel(request, validation) {
   ) {
     return getOtherOnlyTimePeriodErrorViewModel()
   }
-  if (
-    downloadDatasourceCategoryType === 'near-realtime-only' &&
-    hasNoNearRealtimeStations
-  ) {
-    return getMissingStationError(request)
-  }
-  if (downloadDatasourceCategoryType === OTHER_ONLY && nonaurncount < 1) {
-    return getMissingStationError(request)
-  }
-  if (
-    downloadDatasourceCategoryType === 'both' &&
-    nonaurncount < 1 &&
-    hasNoNearRealtimeStations
-  ) {
+  if (hasNoStationsForCategory(validation)) {
     return getMissingStationError(request)
   }
 

@@ -10,6 +10,8 @@ import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-hel
 
 const OTHER_ONLY = 'other-only'
 const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
+const CHANGE_LOCATION_URL = '/location-aurn/nojs'
+const CHANGE_TIME_PERIOD_URL = '/year-aurn/change'
 
 function normalizeNetworkName(name) {
   return String(name || '')
@@ -163,7 +165,7 @@ function getMissingStationErrorModel(request) {
       errormsg:
         'No monitoring stations are available for your selection. Please try:',
       errorref1: 'Change location',
-      errorhref1: '/location-aurn/nojs'
+      errorhref1: CHANGE_LOCATION_URL
     }
   }
 
@@ -171,9 +173,9 @@ function getMissingStationErrorModel(request) {
     errormsg:
       'No monitoring stations are available for your selection. Please try:',
     errorref1: 'Change time period',
-    errorhref1: '/year-aurn/change',
+    errorhref1: CHANGE_TIME_PERIOD_URL,
     errorref2: 'Change location',
-    errorhref2: '/location-aurn/nojs'
+    errorhref2: CHANGE_LOCATION_URL
   }
 }
 
@@ -182,7 +184,7 @@ function getOtherOnlyTimePeriodErrorModel() {
     errormsg:
       'There are no stations available based on your selection. Change time period',
     errorref1: 'Change time period',
-    errorhref1: '/year-aurn/change',
+    errorhref1: CHANGE_TIME_PERIOD_URL,
     errorref2: '',
     errorhref2: ''
   }
@@ -304,7 +306,7 @@ const validateSelectedLocation = (request, h, backUrl) => {
     return renderErrorState(h, request, backUrl, {
       errormsg: 'Select a location to continue',
       errorref1: 'Add location',
-      errorhref1: '/location-aurn/nojs',
+      errorhref1: CHANGE_LOCATION_URL,
       errorref2: '',
       errorhref2: ''
     })
