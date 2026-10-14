@@ -1337,6 +1337,44 @@ describe('customdatasetController', () => {
       expect(result).toBe('view-response')
     })
 
+    it('renders location-only error summary for Zone when AURN and NON-AURN counts are 0', async () => {
+      mockRequest.yar.get.mockImplementation((key) => {
+        const zoneValues = {
+          ...baseYarValues,
+          Location: 'Zone',
+          selectedZoneIDs: '15',
+          datasourceGroups: [
+            {
+              category: 'Near real-time data from Defra',
+              networks: [{ name: 'Automatic Urban and Rural Network' }]
+            }
+          ]
+        }
+        return zoneValues[key]
+      })
+
+      axios.post
+        .mockResolvedValueOnce({ data: 0 })
+        .mockResolvedValueOnce({ data: [] })
+
+      const result = await customdatasetController.handler(mockRequest, mockH)
+      const viewData = mockH.view.mock.calls[0][1]
+
+      expect(mockH.view).toHaveBeenCalledWith('customdataset/index', viewData)
+      expect(viewData).toEqual(
+        expect.objectContaining({
+          error: true,
+          errormsg:
+            'No monitoring stations are available for your selection. Please try:',
+          errorref1: 'Change location',
+          errorhref1: '/location-aurn/change'
+        })
+      )
+      expect(viewData).not.toHaveProperty('errorref2')
+      expect(viewData).not.toHaveProperty('errorhref2')
+      expect(result).toBe('view-response')
+    })
+
     it('does NOT show error when AURN is 0 but NON-AURN has stations', async () => {
       mockRequest.yar.get.mockImplementation((key) => baseYarValues[key])
       // AURN returns 0, NON-AURN returns some stations

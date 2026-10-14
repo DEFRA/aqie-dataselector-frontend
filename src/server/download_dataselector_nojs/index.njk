@@ -64,71 +64,71 @@
         <div class="govuk-!-margin-top-3">
           <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
           <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
-          {# Networks from the datasource API; falls back to AURN when none are listed #}
-          {% set nrtNetworks = nearRealtimeNetworks if (nearRealtimeNetworks and nearRealtimeNetworks | length) else [{ name: 'Automatic Urban and Rural Network (AURN)', isAurn: true }] %}
+          {% set nrtNetworks = nearRealtimeNetworkCounts if (nearRealtimeNetworkCounts and nearRealtimeNetworkCounts | length) else [{ name: 'Automatic Urban and Rural Network (AURN)', isAurn: true, count: stationcount | default(0), pollutantID: aurnPollutantID | default('') }] %}
           {% for network in nrtNetworks %}
             {% if network.isAurn %}
-          <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
-          <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
+              <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
+              <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
             {% else %}
-          <h3 class="govuk-heading-s">{{ network.name }}</h3>
+              <h3 class="govuk-heading-s">{{ network.name }}</h3>
               {% if networkDescriptions and networkDescriptions[network.name] %}
-          <p class="govuk-body">{{ networkDescriptions[network.name] }}</p>
+                <p class="govuk-body">{{ networkDescriptions[network.name] }}</p>
+              {% endif %}
+            {% endif %}
+
+            <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 {% if network.count == 0 %}insettextorange{% else %}insettextgreen{% endif %}">
+              {{ network.count }} stations available
+            </div>
+
+            {% if network.count == 0 %}
+              <p class="govuk-body">No data available for the selected range.</p>
+            {% else %}
+              {% if yearrange == 'Single' %}
+                <a href="/download_aurn_nojs/{{ finalyear }}/AURN?networkName={{ network.name | urlencode }}"
+                   role="button"
+                   class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+                   aria-label="Download hourly data for {{ network.name }}">
+                  <span class="aq-button-secondary__icon">
+                    <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                      <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+                    </svg>
+                  </span>
+                  <span class="aq-button-secondary__text">
+                    Download hourly data
+                    <span class="govuk-visually-hidden">(Visual only)</span>
+                  </span>
+                </a>
+              {% endif %}
+
+              {% if yearrange == 'Multiple' %}
+                <table class="govuk-table">
+                  <thead class="govuk-table__head">
+                    <tr class="govuk-table__row">
+                      <th scope="col" class="govuk-table__header">Year</th>
+                      <th scope="col" class="govuk-table__header">Hourly data</th>
+                    </tr>
+                  </thead>
+                  <tbody class="govuk-table__body">
+                    <tr class="govuk-table__row">
+                      <th scope="row" class="govuk-table__header">Download all years</th>
+                      <td class="govuk-table__cell">
+                        <a href="/emailrequest/AURN?pollutantID={{ network.pollutantID if network.pollutantID is not none else '' }}" class="govuk-link">Request Data</a>
+                      </td>
+                    </tr>
+                    {% for year in finalyear %}
+                    <tr class="govuk-table__row">
+                      <th scope="row" class="govuk-table__header">{{ year }}</th>
+                      <td class="govuk-table__cell">
+                        <a href="/download_aurn_nojs/{{ year }}/AURN?networkName={{ network.name | urlencode }}" class="govuk-link">Download hourly data</a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               {% endif %}
             {% endif %}
           {% endfor %}
-
-          <div id="station-count"
-               class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen"
-               data-initial-count="{{ stationcount | default(0) }}">
-            {{ stationcount | default(0) }} stations available
-          </div>
         </div>
-
-        {% if yearrange == 'Single' %}
-        <a id="download-link"
-           href="/download_aurn_nojs/{{ finalyear }}/AURN"
-           role="button"
-           class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
-           aria-label="Download daily average data">
-          <span class="aq-button-secondary__icon">
-            <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-              <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-            </svg>
-          </span>
-          <span class="aq-button-secondary__text">
-            Download hourly data
-            <span class="govuk-visually-hidden">(Visual only)</span>
-          </span>
-        </a>
-        {% endif %}
-
-        {% if yearrange == 'Multiple' %}
-        <table class="govuk-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">Year</th>
-              <th scope="col" class="govuk-table__header">Hourly data</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">Download all years</th>
-              <td class="govuk-table__cell">
-                <a href="/emailrequest/AURN?pollutantID={{ aurnPollutantID if aurnPollutantID is not none else '' }}" class="govuk-link">Request Data</a>
-              </td>
-            </tr>
-            {% for year in finalyear %}
-            <tr class="govuk-table__row">
-              <th scope="row" class="govuk-table__header">{{ year }}</th>
-              <td class="govuk-table__cell">
-                <a href="/download_aurn_nojs/{{ year }}/AURN" class="govuk-link">Download hourly data</a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
 
         <div id="download-content-container"></div>
       </div>

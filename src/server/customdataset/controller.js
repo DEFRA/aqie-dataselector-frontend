@@ -6,14 +6,6 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { setErrorMessage } from '~/src/server/common/helpers/errors_message.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
-import {
-  invokeStationCount,
-  isStationCountError,
-  buildUkeapNetworks,
-  toAurnNumeric
-} from '~/src/server/customdataset/station-count.js'
 import {
   isInternalNavigation,
   renderNotFound
@@ -29,15 +21,24 @@ import {
   shouldShowZoneOtherOnlyError,
   setDownloadDatasourceOverrideForZones
 } from '~/src/server/customdataset/datasource-category.js'
-
-const logger = createLogger()
+import {
+  handlePollutantsFromParams,
+  handleTimePeriodSelection,
+  handleLocationSelection
+} from '~/src/server/customdataset/selection-helpers.js'
+import { handleStationCountCalculation } from '~/src/server/customdataset/station-count-workflow.js'
 
 const CUSTOMDATASET_VIEW = 'customdataset/index'
-const DAYS_IN_WEEK_OFFSET = 6
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
 const ZONE_WARNING_TEXT =
   'Only the Automatic Urban and Rural Network is available for zones'
+const NO_STATIONS_ERROR_MESSAGE =
+  'No monitoring stations are available for your selection. Please try:'
+const CHANGE_TIME_PERIOD_TEXT = 'Change time period'
+const CHANGE_TIME_PERIOD_HREF = '/year-aurn/change'
+const CHANGE_LOCATION_TEXT = 'Change location'
+const CHANGE_LOCATION_HREF = '/location-aurn/change'
 
 export { invokeStationCount } from '~/src/server/customdataset/station-count.js'
 
@@ -76,6 +77,7 @@ function clearAllSessionData(request) {
   request.yar.set('downloadDatasourceGroups', null)
   request.yar.set('downloadDatasourceCategoryType', '')
   request.yar.set('downloadForceNearRealtimeOnly', false)
+  request.yar.set('nearRealtimeStationCounts', [])
 }
 
 function handleClearPath(request, h, backUrl) {
@@ -126,275 +128,6 @@ function handleNullPollutantsError(request, h) {
   })
 }
 
-function getCorePollutants() {
-  return [
-    'Fine particulate matter (PM2.5)',
-    'Particulate matter (PM10)',
-    'Nitrogen dioxide (NO2)',
-    'Ozone (O3)',
-    'Sulphur dioxide (SO2)'
-  ]
-}
-
-function getCompliancePollutants() {
-  return [
-    'Fine particulate matter (PM2.5)',
-    'Particulate matter (PM10)',
-    'Nitrogen dioxide (NO2)',
-    'Ozone (O3)',
-    'Sulphur dioxide (SO2)',
-    'Nitric oxide (NO)',
-    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)',
-    'Carbon monoxide (CO)'
-  ]
-}
-
-function parsePollutantArray(selectedpollutant) {
-  if (selectedpollutant.length === 1 && selectedpollutant[0].includes(',')) {
-    return selectedpollutant[0].split(',').map((s) => s.trim())
-  }
-  return selectedpollutant
-}
-
-function parsePollutantString(selectedpollutant) {
-  return selectedpollutant.split(',').map((s) => s.trim())
-}
-
-function processPollutantSelection(selectedpollutant) {
-  if (selectedpollutant === 'core') {
-    return getCorePollutants()
-  }
-
-  if (selectedpollutant === 'compliance') {
-    return getCompliancePollutants()
-  }
-
-  if (Array.isArray(selectedpollutant)) {
-    return parsePollutantArray(selectedpollutant)
-  }
-
-  if (typeof selectedpollutant === 'string') {
-    return parsePollutantString(selectedpollutant)
-  }
-
-  return selectedpollutant
-}
-
-function handlePollutantsFromParams(request) {
-  const sessionPollutants = request.yar.get('selectedPollutants')
-  if (sessionPollutants && sessionPollutants.length > 0) {
-    request.yar.set('selectedpollutant', sessionPollutants)
-    return
-  }
-
-  if (request.params.pollutants === undefined) {
-    return
-  }
-
-  const selectedpollutant = processPollutantSelection(request.params.pollutants)
-  request.yar.set('selectedpollutant', selectedpollutant)
-}
-
-function handleTimePeriodSelection(request) {
-  const sessionTimePeriod = request.yar.get('selectedTimePeriod')
-  if (sessionTimePeriod) {
-    request.yar.set('selectedyear', sessionTimePeriod)
-    return
-  }
-
-  if (request.path?.includes('/year')) {
-    request.yar.set('selectedyear', request.params.year)
-  }
-}
-
-function handleLocationSelection(request) {
-  if (request.path?.includes('/location')) {
-    // Location selection handling logic would go here
-  }
-}
-
-function parseYearRange(selectedyear, request) {
-  // Last 7 days should be calculated from "now", not from selectedyear text
-  if (isLast7DaysSelection(request)) {
-    const today = new Date()
-    const startDate = new Date(today)
-    startDate.setDate(today.getDate() - DAYS_IN_WEEK_OFFSET) // inclusive 7-day window
-
-    const startYear = startDate.getFullYear()
-    const endYear = today.getFullYear()
-
-    if (startYear === endYear) {
-      request.yar.set('yearrange', 'Single')
-      const singleYearResult = String(endYear)
-      request.yar.set('finalyear', singleYearResult)
-      return singleYearResult
-    }
-
-    request.yar.set('yearrange', 'Multiple')
-    const yearListLast7 = []
-    for (let y = startYear; y <= endYear; y++) {
-      yearListLast7.push(y)
-    }
-    const multipleYearResult = yearListLast7.join(',')
-    request.yar.set('finalyear', multipleYearResult)
-    return multipleYearResult
-  }
-
-  const years = selectedyear.match(/\d{4}/g)
-
-  if (years?.length === 2) {
-    request.yar.set('yearrange', 'Multiple')
-    const start = Number.parseInt(years[0], 10)
-    const end = Number.parseInt(years[1], 10)
-    const yearList = []
-    for (let y = start; y <= end; y++) {
-      yearList.push(y)
-    }
-    const finalyear = yearList.join(',')
-    request.yar.set('finalyear', finalyear)
-    return finalyear
-  }
-
-  if (years?.length === 1) {
-    request.yar.set('yearrange', 'Single')
-    const finalyear = years[0]
-    request.yar.set('finalyear', finalyear)
-    return finalyear
-  }
-
-  return ''
-}
-
-function getPollutantNames() {
-  return {
-    'Fine particulate matter (PM2.5)': 'PM2.5',
-    'Particulate matter (PM10)': 'PM10',
-    'Nitrogen dioxide (NO2)': 'Nitrogen dioxide',
-    'Ozone (O3)': 'Ozone',
-    'Sulphur dioxide (SO2)': 'Sulphur dioxide',
-    'Nitric oxide (NO)': null,
-    'Nitrogen oxides as nitrogen dioxide (NOx as NO2)':
-      'Nitrogen oxides as nitrogen dioxide',
-    'Carbon monoxide (CO)': 'Carbon monoxide'
-  }
-}
-
-function buildStationCountParameters(request, finalyear) {
-  const isCountry = request.yar.get('Location') === 'Country'
-  const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
-  const pollutantID = request.yar.get('selectedPollutantID')
-
-  // Zones: the selected region IDs go in RegionId and Region is left empty
-  if (request.yar.get('Location') === 'Zone') {
-    return {
-      pollutantName: pollutantID,
-      dataSource,
-      RegionId: request.yar.get('selectedZoneIDs') || '',
-      Region: '',
-      regiontype: 'Region',
-      Year: finalyear,
-      dataselectorfiltertype: 'dataSelectorCount',
-      dataselectordownloadtype: ''
-    }
-  }
-
-  if (isCountry) {
-    return {
-      pollutantName: pollutantID,
-      dataSource,
-      Region: request.yar.get('selectedlocation').join(','),
-      regiontype: 'Country',
-      Year: finalyear,
-      dataselectorfiltertype: 'dataSelectorCount',
-      dataselectordownloadtype: ''
-    }
-  }
-
-  return {
-    pollutantName: pollutantID,
-    dataSource,
-    Region: request.yar.get('selectedLAIDs'),
-    regiontype: 'LocalAuthority',
-    Year: finalyear,
-    dataselectorfiltertype: 'dataSelectorCount',
-    dataselectordownloadtype: ''
-  }
-}
-
-async function handleStationCountCalculation(request) {
-  const selectedyear = request.yar.get('selectedyear')
-  const finalyear = parseYearRange(selectedyear, request)
-
-  const pollutantNames = getPollutantNames()
-  const formattedPollutants = request.yar
-    .get('selectedpollutant')
-    .map((p) => pollutantNames[p] || p)
-    .join(',')
-
-  request.yar.set('formattedPollutants', formattedPollutants)
-  request.yar.set('finalyear1', finalyear)
-
-  const baseParams = buildStationCountParameters(request, finalyear)
-
-  const nonAurnNetworkId = getNonAurnNetworkIdCsv(
-    request.yar.get('datasourceGroups') || []
-  )
-
-  const [aurnCount, nonAurnCount] = await Promise.all([
-    invokeStationCount({ ...baseParams, dataSource: 'AURN', networkId: '' }),
-    invokeStationCount({
-      ...baseParams,
-      dataSource: 'NON-AURN',
-      networkId: nonAurnNetworkId
-    })
-  ])
-
-  // Only gate on AURN count — it is the primary station count
-  if (isStationCountError(aurnCount)) {
-    logger.error(
-      `Station count API failed: ${aurnCount?.message || 'no response'}`
-    )
-    // API error — allow the user to proceed to download, which shows "unavailable"
-    request.yar.set('stationCountError', true)
-    request.yar.set('nooflocation', null)
-    return null
-  }
-
-  const aurnNumeric = toAurnNumeric(aurnCount)
-
-  request.yar.set('stationCountError', false)
-  request.yar.set('Region', request.yar.get('selectedlocation').join(','))
-  request.yar.set('stationCountAURN', aurnNumeric)
-  request.yar.set('stationCountNONAURN', nonAurnCount)
-
-  const ukeapNetworks = buildUkeapNetworks(
-    nonAurnCount,
-    request.yar.get('datasourceGroups') || []
-  )
-
-  // Zones: only AURN data is available, so ignore the NON-AURN counts
-  if (isZoneSelection(request)) {
-    ukeapNetworks.length = 0
-  }
-
-  // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
-  request.yar.set('nooflocationukeap', ukeapNetworks)
-
-  // nooflocation is always the AURN numeric count used for summary display
-  request.yar.set('nooflocation', aurnNumeric)
-
-  // If BOTH AURN and all NON-AURN counts are 0, return error asking user to change year/location
-  const nonAurnTotal = ukeapNetworks.reduce(
-    (sum, n) => sum + (Number(n.count) || 0),
-    0
-  )
-  if (aurnNumeric === 0 && nonAurnTotal === 0) {
-    return { bothZero: true }
-  }
-
-  return null
-}
-
 function hasAllRequiredData(request) {
   return Boolean(
     request.yar.get('selectedlocation') &&
@@ -408,8 +141,8 @@ function getOtherOnlyTimePeriodErrorViewModel() {
     error: true,
     errormsg:
       'There are no stations available based on your selection. Change time period',
-    errorref1: 'Change time period',
-    errorhref1: '/year-aurn/change'
+    errorref1: CHANGE_TIME_PERIOD_TEXT,
+    errorhref1: CHANGE_TIME_PERIOD_HREF
   }
 }
 
@@ -419,6 +152,8 @@ function shouldShowLast7DaysDatasourceWarning(request) {
 }
 
 function renderBothZeroView(request, h, backUrl) {
+  const isZone = isZoneSelection(request)
+
   return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -436,12 +171,15 @@ function renderBothZeroView(request, h, backUrl) {
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
-    errormsg:
-      'No monitoring stations are available for your selection. Please try:',
-    errorref1: 'Change time period',
-    errorhref1: '/year-aurn/change',
-    errorref2: 'Change location',
-    errorhref2: '/location-aurn/change'
+    errormsg: NO_STATIONS_ERROR_MESSAGE,
+    errorref1: isZone ? CHANGE_LOCATION_TEXT : CHANGE_TIME_PERIOD_TEXT,
+    errorhref1: isZone ? CHANGE_LOCATION_HREF : CHANGE_TIME_PERIOD_HREF,
+    ...(isZone
+      ? {}
+      : {
+          errorref2: CHANGE_LOCATION_TEXT,
+          errorhref2: CHANGE_LOCATION_HREF
+        })
   })
 }
 
@@ -495,9 +233,8 @@ function renderZoneOtherOnlyView(request, h, backUrl) {
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
-    errormsg:
-      'No monitoring stations are available for your selection. Please try:',
-    errorref1: 'Change location',
+    errormsg: NO_STATIONS_ERROR_MESSAGE,
+    errorref1: CHANGE_LOCATION_TEXT,
     // No-JS route by default; the page script upgrades it to /location-aurn/change
     errorhref1: '/location-aurn/nojs'
   })

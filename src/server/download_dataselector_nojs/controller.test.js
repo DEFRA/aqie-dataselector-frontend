@@ -107,8 +107,12 @@ describe('downloadDataselectornojsController', () => {
     it('sets aurnPollutantID and marks UKEAP available when datasource groups and networks exist', () => {
       request.yar.set('datasourceGroups', [
         {
+          category: 'Near real-time data from Defra',
+          networks: [{ pollutantID: 'NO2' }]
+        },
+        {
           category: 'Other data from Defra',
-          networks: [{ id: 'aurn-network' }, { pollutantID: 'NO2' }]
+          networks: [{ id: 'uka-network' }]
         }
       ])
       request.yar.set('nooflocationukeap', ['UKA1'])
@@ -396,6 +400,27 @@ describe('downloadDataselectornojsController', () => {
         'download_dataselector_nojs/index',
         expect.objectContaining({ downloadForceNearRealtimeOnly: true })
       )
+    })
+
+    it('renders location-only error for Zone + AURN only when no stations are available', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('downloadForceNearRealtimeOnly', true)
+      request.yar.set('nooflocation', 0)
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errorref1: 'Change location',
+          errorhref1: '/location-aurn/nojs'
+        })
+      )
+
+      const viewData = h.view.mock.calls[0][1]
+      expect(viewData.errorref2).toBeUndefined()
+      expect(viewData.errorhref2).toBeUndefined()
     })
   })
 

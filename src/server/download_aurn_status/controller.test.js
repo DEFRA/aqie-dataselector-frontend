@@ -34,9 +34,6 @@ describe('downloadAurnstatusController', () => {
       type: jest.fn().mockReturnThis(),
       code: jest.fn().mockReturnThis()
     }
-
-    // Mock console.log used inside controller
-    //  global.console.log = jest.fn()
   })
 
   describe('handler', () => {
@@ -295,30 +292,6 @@ describe('downloadAurnstatusController', () => {
         viewData: null
       })
     })
-
-    // it('should log jobID/params/response to console as expected', async () => {
-    //   const jobID = 'test-job-logging'
-    //   const resultUrl = 'https://s3.example.com/data.csv'
-
-    //   mockRequest.params.jobID = jobID
-    //   mockRequest.yar.get.mockReturnValue(null)
-
-    //   axios.post.mockResolvedValue({
-    //     data: {
-    //       status: 'Completed',
-    //       resultUrl
-    //     }
-    //   })
-
-    //   await downloadAurnstatusController.handler(mockRequest, mockH)
-
-    //   expect(console.log).toHaveBeenCalledWith('downloadstatusapiparams in handler', { jobID })
-    //   expect(console.log).toHaveBeenCalledWith('downloadstatusapiparams', { jobID })
-    //   expect(console.log).toHaveBeenCalledWith('statusResponse', {
-    //     status: 'Completed',
-    //     resultUrl
-    //   })
-    // })
 
     it('should use config.get to retrieve polling URL', async () => {
       const jobID = 'test-job-config'
