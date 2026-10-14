@@ -401,6 +401,27 @@ describe('downloadDataselectornojsController', () => {
         expect.objectContaining({ downloadForceNearRealtimeOnly: true })
       )
     })
+
+    it('renders location-only error for Zone + AURN only when no stations are available', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('downloadForceNearRealtimeOnly', true)
+      request.yar.set('nooflocation', 0)
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errorref1: 'Change location',
+          errorhref1: '/location-aurn/nojs'
+        })
+      )
+
+      const viewData = h.view.mock.calls[0][1]
+      expect(viewData.errorref2).toBeUndefined()
+      expect(viewData.errorhref2).toBeUndefined()
+    })
   })
 
   describe('AURN tab visibility', () => {

@@ -114,7 +114,16 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
   )
 }
 
-function getMissingStationError() {
+function getMissingStationError(request) {
+  const isZone = request.yar.get('Location') === 'Zone'
+  if (isZone) {
+    return [
+      'No monitoring stations are available for your selection. Please try:',
+      'Change location',
+      '/location-aurn/change'
+    ]
+  }
+
   return [
     'No monitoring stations are available for your selection. Please try:',
     'Change time period',
@@ -204,6 +213,141 @@ function getNonaurncount(nonaurncount) {
   return nonaurncount.reduce((sum, item) => sum + Number(item.count || 0), 0)
 }
 
+function renderErrorState(request, h, backUrl, datasourceGroups, errorModel) {
+  const [errormsg, errorref1, errorhref1, errorref2, errorhref2] = errorModel
+  const errorViewData = {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    error: true,
+    errormsg,
+    errorref1,
+    errorhref1,
+    errorref2,
+    errorhref2,
+    selectedpollutant: request.yar.get('selectedpollutant'),
+    selectedyear: request.yar.get('selectedyear'),
+    selectedlocation: request.yar.get('selectedlocation'),
+    stationcount: request.yar.get('nooflocation'),
+    stationcountukeap: request.yar.get('nooflocationukeap'),
+    datasourceGroups,
+    displayBacklink: true,
+    hrefq: backUrl
+  }
+
+  request.yar.set('errorViewData', errorViewData)
+  return h.view('customdataset/index', errorViewData)
+}
+
+function getValidationErrorModel(request, validation) {
+  const {
+    missingSelection,
+    timeperiod,
+    downloadDatasourceCategoryType,
+    nonaurncount,
+    hasNoNearRealtimeStations
+  } = validation
+
+  if (missingSelection) {
+    return missingSelection
+  }
+  if (
+    timeperiod === 'last7days' &&
+    downloadDatasourceCategoryType === OTHER_ONLY
+  ) {
+    return getOtherOnlyTimePeriodErrorViewModel()
+  }
+  if (
+    downloadDatasourceCategoryType === 'near-realtime-only' &&
+    hasNoNearRealtimeStations
+  ) {
+    return getMissingStationError(request)
+  }
+  if (downloadDatasourceCategoryType === OTHER_ONLY && nonaurncount < 1) {
+    return getMissingStationError(request)
+  }
+  if (
+    downloadDatasourceCategoryType === 'both' &&
+    nonaurncount < 1 &&
+    hasNoNearRealtimeStations
+  ) {
+    return getMissingStationError(request)
+  }
+
+  return null
+}
+
+function getValidationContext(request) {
+  const numberOfLocations = request.yar.get('nooflocation')
+  const combinedNearRealtimeCount = Number(
+    request.yar.get('stationCountAURN') ?? numberOfLocations ?? 0
+  )
+  const stationCountError = request.yar.get('stationCountError')
+
+  const stationCountUnavailable = isStationCountUnavailable(
+    numberOfLocations,
+    stationCountError
+  )
+
+  return {
+    missingSelection: getMissingSelectionError(request),
+    numberOfLocations,
+    stationCountUnavailable,
+    hasNoNearRealtimeStations:
+      stationCountUnavailable || combinedNearRealtimeCount < 1,
+    nonaurncount: getNonaurncount(request.yar.get('nooflocationukeap')),
+    timeperiod: request.yar.get('TimeSelectionMode'),
+    downloadDatasourceCategoryType: request.yar.get(
+      'downloadDatasourceCategoryType'
+    ),
+    combinedNearRealtimeCount
+  }
+}
+
+function buildSuccessViewData(
+  request,
+  backUrl,
+  datasourceGroups,
+  validation,
+  hasOtherDataSource,
+  aurnPollutantID
+) {
+  const rawUkeap = request.yar.get('nooflocationukeap')
+  const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
+  const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
+
+  return {
+    pageTitle: englishNew.custom.pageTitle,
+    heading: englishNew.custom.heading,
+    texts: englishNew.custom.texts,
+    downloadaurnresult: null,
+    stationcount: validation.stationCountUnavailable
+      ? null
+      : validation.combinedNearRealtimeCount,
+    stationCountUnavailable: validation.stationCountUnavailable,
+    ukeapNetworks,
+    ukeapUnavailable,
+    aurnPollutantID,
+    nearRealtimeNetworkCounts: buildNearRealtimeNetworkCounts(
+      getNearRealtimeNetworks(datasourceGroups),
+      request.yar.get('nearRealtimeStationCounts'),
+      validation.numberOfLocations
+    ),
+    yearrange: request.yar.get('yearrange'),
+    displayBacklink: true,
+    hrefq: backUrl,
+    downloadDatasourceCategoryType: validation.downloadDatasourceCategoryType,
+    datasourceavailability: request.yar.get('Datasourceavailability'),
+    timperiodselectionmode: request.yar.get('TimeSelectionMode'),
+    finalyear:
+      request.yar
+        .get('finalyear')
+        ?.split(',')
+        .map((year) => year.trim()) ?? [],
+    networkDescriptions
+  }
+}
+
 export const downloadDataselectorController = {
   handler(request, h) {
     const backUrl = '/customdataset'
@@ -211,39 +355,6 @@ export const downloadDataselectorController = {
     const datasourceGroups = Array.isArray(rawDatasourceGroups)
       ? rawDatasourceGroups
       : []
-    // Helper function to render error state
-    const renderErrorState = (
-      errormsg,
-      errorref1,
-      errorhref1,
-      errorref2,
-      errorhref2
-    ) => {
-      const errorViewData = {
-        pageTitle: englishNew.custom.pageTitle,
-        heading: englishNew.custom.heading,
-        texts: englishNew.custom.texts,
-        error: true,
-        errormsg,
-        errorref1,
-        errorhref1,
-        errorref2,
-        errorhref2,
-        selectedpollutant: request.yar.get('selectedpollutant'),
-        selectedyear: request.yar.get('selectedyear'),
-        selectedlocation: request.yar.get('selectedlocation'),
-        stationcount: request.yar.get('nooflocation'),
-        stationcountukeap: request.yar.get('nooflocationukeap'),
-        datasourceGroups,
-        displayBacklink: true,
-        hrefq: backUrl
-      }
-
-      // Store error view data in session
-      request.yar.set('errorViewData', errorViewData)
-
-      return h.view('customdataset/index', errorViewData)
-    }
 
     // Zones + other data only: no stations — stay on customdataset, which
     // shows the zone "Change location" error, instead of the download page
@@ -254,51 +365,10 @@ export const downloadDataselectorController = {
       return h.redirect(backUrl)
     }
 
-    // Validation checks
-    const missingSelection = getMissingSelectionError(request)
-    const numberOfLocations = request.yar.get('nooflocation')
-    const combinedNearRealtimeCount = Number(
-      request.yar.get('stationCountAURN') ?? numberOfLocations ?? 0
-    )
-    const stationCountError = request.yar.get('stationCountError')
-    const nonaurncount = getNonaurncount(request.yar.get('nooflocationukeap'))
-
-    const timeperiod = request.yar.get('TimeSelectionMode')
-    const downloadDatasourceCategoryType = request.yar.get(
-      'downloadDatasourceCategoryType'
-    )
-
-    const stationCountUnavailable = isStationCountUnavailable(
-      numberOfLocations,
-      stationCountError
-    )
-
-    const hasNoNearRealtimeStations =
-      stationCountUnavailable || combinedNearRealtimeCount < 1
-
-    if (missingSelection) {
-      return renderErrorState(...missingSelection)
-    } else if (
-      timeperiod === 'last7days' &&
-      downloadDatasourceCategoryType === OTHER_ONLY
-    ) {
-      return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel())
-    } else if (
-      downloadDatasourceCategoryType === 'near-realtime-only' &&
-      hasNoNearRealtimeStations
-    ) {
-      return renderErrorState(...getMissingStationError())
-    } else if (
-      downloadDatasourceCategoryType === OTHER_ONLY &&
-      nonaurncount < 1
-    ) {
-      return renderErrorState(...getMissingStationError())
-    } else if (
-      downloadDatasourceCategoryType === 'both' &&
-      nonaurncount < 1 &&
-      hasNoNearRealtimeStations
-    ) {
-      return renderErrorState(...getMissingStationError())
+    const validation = getValidationContext(request)
+    const errorModel = getValidationErrorModel(request, validation)
+    if (errorModel) {
+      return renderErrorState(request, h, backUrl, datasourceGroups, errorModel)
     }
 
     const hasOtherDataSource = hasCategoryWithNetworks(
@@ -308,44 +378,17 @@ export const downloadDataselectorController = {
 
     const aurnPollutantID = getAurnPollutantID(datasourceGroups)
 
-    // NON-AURN networks — array of {networkType, count} objects
-    const rawUkeap = request.yar.get('nooflocationukeap')
-    const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
-    const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
-
     // Clear any previous download result to prevent auto-download
     request.yar.set('downloadaurnresult', null)
 
-    // Success case - prepare view data
-    const successViewData = {
-      pageTitle: englishNew.custom.pageTitle,
-      heading: englishNew.custom.heading,
-      texts: englishNew.custom.texts,
-      downloadaurnresult: null, // Don't auto-download, wait for user to click
-      stationcount: stationCountUnavailable ? null : combinedNearRealtimeCount,
-      stationCountUnavailable,
-      ukeapNetworks,
-      ukeapUnavailable,
-      aurnPollutantID,
-      // Near real-time networks with per-network station counts
-      nearRealtimeNetworkCounts: buildNearRealtimeNetworkCounts(
-        getNearRealtimeNetworks(datasourceGroups),
-        request.yar.get('nearRealtimeStationCounts'),
-        numberOfLocations
-      ),
-      yearrange: request.yar.get('yearrange'),
-      displayBacklink: true,
-      hrefq: backUrl,
-      downloadDatasourceCategoryType,
-      datasourceavailability: request.yar.get('Datasourceavailability'),
-      timperiodselectionmode: request.yar.get('TimeSelectionMode'),
-      finalyear:
-        request.yar
-          .get('finalyear')
-          ?.split(',')
-          .map((year) => year.trim()) ?? [],
-      networkDescriptions
-    }
+    const successViewData = buildSuccessViewData(
+      request,
+      backUrl,
+      datasourceGroups,
+      validation,
+      hasOtherDataSource,
+      aurnPollutantID
+    )
 
     // Store success view data in session
     request.yar.set('downloadViewData', successViewData)

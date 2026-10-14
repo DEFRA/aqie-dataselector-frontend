@@ -23,7 +23,7 @@ function normaliseCountValue(entry) {
 function normaliseNetworkLabel(value) {
   return String(value || '')
     .toLowerCase()
-    .replace(/monitoring/g, '')
+    .replaceAll('monitoring', '')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()

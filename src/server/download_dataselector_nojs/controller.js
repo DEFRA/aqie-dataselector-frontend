@@ -87,6 +87,23 @@ function isAurnNetwork(network) {
   )
 }
 
+function findPollutantIdInNearRealtimeGroups(groups, predicate) {
+  for (const group of groups) {
+    for (const network of group.networks || []) {
+      const isCandidate =
+        network &&
+        typeof network === 'object' &&
+        !network.id &&
+        predicate(network)
+      if (isCandidate) {
+        return network.pollutantID || ''
+      }
+    }
+  }
+
+  return ''
+}
+
 function getAurnPollutantID(datasourceGroups) {
   if (!Array.isArray(datasourceGroups)) {
     return ''
@@ -96,28 +113,15 @@ function getAurnPollutantID(datasourceGroups) {
     (g) => g?.category === CATEGORY_NEAR_REALTIME
   )
 
-  for (const group of nearRealtimeGroups) {
-    for (const network of group.networks || []) {
-      if (
-        network &&
-        typeof network === 'object' &&
-        !network.id &&
-        isAurnNetwork(network)
-      ) {
-        return network.pollutantID || ''
-      }
-    }
+  const aurnPollutantId = findPollutantIdInNearRealtimeGroups(
+    nearRealtimeGroups,
+    (network) => isAurnNetwork(network)
+  )
+  if (aurnPollutantId) {
+    return aurnPollutantId
   }
 
-  for (const group of nearRealtimeGroups) {
-    for (const network of group.networks || []) {
-      if (network && typeof network === 'object' && !network.id) {
-        return network.pollutantID || ''
-      }
-    }
-  }
-
-  return ''
+  return findPollutantIdInNearRealtimeGroups(nearRealtimeGroups, () => true)
 }
 
 function hasCategoryWithNetworks(datasourceGroups, category) {
@@ -152,7 +156,17 @@ function getNonaurncount(nonaurncount) {
   return nonaurncount.reduce((sum, item) => sum + Number(item.count || 0), 0)
 }
 
-function getMissingStationErrorModel() {
+function getMissingStationErrorModel(request) {
+  const isZone = request.yar.get('Location') === 'Zone'
+  if (isZone) {
+    return {
+      errormsg:
+        'No monitoring stations are available for your selection. Please try:',
+      errorref1: 'Change location',
+      errorhref1: '/location-aurn/nojs'
+    }
+  }
+
   return {
     errormsg:
       'No monitoring stations are available for your selection. Please try:',
@@ -418,7 +432,7 @@ export const downloadDataselectornojsController = {
         h,
         request,
         backUrl,
-        getMissingStationErrorModel()
+        getMissingStationErrorModel(request)
       )
     }
 

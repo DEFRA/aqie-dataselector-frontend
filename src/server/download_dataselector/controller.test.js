@@ -460,6 +460,20 @@ describe('downloadDataselectorController', () => {
         'near-realtime-only'
       )
     })
+
+    test('renders location-only error for Zone + AURN only when no stations are available', () => {
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.nooflocation = 0
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.error).toBe(true)
+      expect(result.model.errorref1).toBe('Change location')
+      expect(result.model.errorhref1).toBe('/location-aurn/change')
+      expect(result.model.errorref2).toBeUndefined()
+      expect(result.model.errorhref2).toBeUndefined()
+    })
   })
 
   describe('near real-time networks', () => {

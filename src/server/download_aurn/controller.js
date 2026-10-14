@@ -166,6 +166,22 @@ function isMatchingNetwork(network, dataSource, networkId, networkName) {
   )
 }
 
+function flattenDatasourceNetworks(datasourceGroups) {
+  return datasourceGroups.flatMap((group) => group.networks || [])
+}
+
+function findMatchingNetwork(networks, dataSource, networkId, networkName) {
+  return networks.find((network) =>
+    isMatchingNetwork(network, dataSource, networkId, networkName)
+  )
+}
+
+function findFallbackAurnNetwork(networks) {
+  return networks.find(
+    (network) => network && typeof network === 'object' && !network.id
+  )
+}
+
 /**
  * Resolves the correct pollutantID for the network that triggered the download.
  *
@@ -188,22 +204,22 @@ function getPollutantIDForNetwork(
     return null
   }
 
-  for (const group of datasourceGroups) {
-    for (const network of group.networks || []) {
-      if (isMatchingNetwork(network, dataSource, networkId, networkName)) {
-        return network.pollutantID || null
-      }
-    }
+  const networks = flattenDatasourceNetworks(datasourceGroups)
+  const matchedNetwork = findMatchingNetwork(
+    networks,
+    dataSource,
+    networkId,
+    networkName
+  )
+  if (matchedNetwork) {
+    return matchedNetwork.pollutantID || null
   }
 
   if (dataSource === 'AURN') {
     // Fallback for near-real-time networks without explicit AURN metadata.
-    for (const group of datasourceGroups) {
-      for (const network of group.networks || []) {
-        if (network && typeof network === 'object' && !network.id) {
-          return network.pollutantID || null
-        }
-      }
+    const fallbackNetwork = findFallbackAurnNetwork(networks)
+    if (fallbackNetwork) {
+      return fallbackNetwork.pollutantID || null
     }
   }
 
