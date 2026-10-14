@@ -76,6 +76,7 @@ function clearAllSessionData(request) {
   request.yar.set('downloadDatasourceGroups', null)
   request.yar.set('downloadDatasourceCategoryType', '')
   request.yar.set('downloadForceNearRealtimeOnly', false)
+  request.yar.set('nearRealtimeStationCounts', [])
 }
 
 function handleClearPath(request, h, backUrl) {
@@ -279,6 +280,107 @@ function getPollutantNames() {
   }
 }
 
+function isAurnNearRealtimeNetwork(network) {
+  const abbreviation = String(network?.abbreviation || '')
+    .toUpperCase()
+    .trim()
+  const combinedName =
+    typeof network === 'string'
+      ? network
+      : `${network?.name || ''} ${network?.fullName || ''}`
+
+  return (
+    abbreviation === 'AURN' ||
+    /\baurn\b|automatic\s+urban\s+and\s+rural/i.test(combinedName)
+  )
+}
+
+function getNearRealtimeNetworkSelections(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  const nearRealtimeGroup = groups.find(
+    (g) => g?.category === 'Near real-time data from Defra'
+  )
+  const networks = Array.isArray(nearRealtimeGroup?.networks)
+    ? nearRealtimeGroup.networks
+    : []
+
+  const seen = new Set()
+  const selections = []
+
+  for (const network of networks) {
+    const name =
+      typeof network === 'string'
+        ? network
+        : String(network?.name || network?.fullName || '').trim()
+    const pollutantID =
+      typeof network === 'object' && network !== null
+        ? String(network?.pollutantID || '').trim()
+        : ''
+
+    if (!name || !pollutantID) {
+      continue
+    }
+
+    const key = `${name}::${pollutantID}`
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+
+    selections.push({
+      name,
+      pollutantID,
+      isAurn: isAurnNearRealtimeNetwork(network)
+    })
+  }
+
+  return selections
+}
+
+function getSelectedPollutantIds(request) {
+  const raw = String(request.yar.get('selectedPollutantID') || '')
+  if (!raw) {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+    )
+  )
+}
+
+async function getAurnFallbackCountByPollutants(baseParams, pollutantIds) {
+  if (!Array.isArray(pollutantIds) || pollutantIds.length <= 1) {
+    return 0
+  }
+
+  const perPollutantCounts = await Promise.all(
+    pollutantIds.map(async (pollutantId) => {
+      const response = await invokeStationCount({
+        ...baseParams,
+        pollutantName: pollutantId,
+        dataSource: 'AURN',
+        networkId: ''
+      })
+
+      if (isStationCountError(response)) {
+        return 0
+      }
+
+      return toAurnNumeric(response)
+    })
+  )
+
+  return perPollutantCounts.reduce(
+    (sum, count) => sum + (Number(count) || 0),
+    0
+  )
+}
+
 function buildStationCountParameters(request, finalyear) {
   const isCountry = request.yar.get('Location') === 'Country'
   const dataSource = request.yar.get('selectedDatasourceType') || 'AURN'
@@ -335,42 +437,108 @@ async function handleStationCountCalculation(request) {
   request.yar.set('finalyear1', finalyear)
 
   const baseParams = buildStationCountParameters(request, finalyear)
+  const datasourceGroups = request.yar.get('datasourceGroups') || []
+  const nearRealtimeSelections =
+    getNearRealtimeNetworkSelections(datasourceGroups)
 
-  const nonAurnNetworkId = getNonAurnNetworkIdCsv(
-    request.yar.get('datasourceGroups') || []
+  const nearRealtimeStationCounts = await Promise.all(
+    nearRealtimeSelections.map(async (network) => {
+      const networkCount = await invokeStationCount({
+        ...baseParams,
+        pollutantName: network.pollutantID,
+        dataSource: 'AURN',
+        networkId: ''
+      })
+
+      if (isStationCountError(networkCount)) {
+        return {
+          ...network,
+          count: 0
+        }
+      }
+
+      return {
+        ...network,
+        count: toAurnNumeric(networkCount)
+      }
+    })
   )
 
-  const [aurnCount, nonAurnCount] = await Promise.all([
-    invokeStationCount({ ...baseParams, dataSource: 'AURN', networkId: '' }),
-    invokeStationCount({
-      ...baseParams,
-      dataSource: 'NON-AURN',
-      networkId: nonAurnNetworkId
-    })
-  ])
+  const nearRealtimeTotal = nearRealtimeStationCounts.reduce(
+    (sum, network) => sum + (Number(network?.count) || 0),
+    0
+  )
 
-  // Only gate on AURN count — it is the primary station count
-  if (isStationCountError(aurnCount)) {
-    logger.error(
-      `Station count API failed: ${aurnCount?.message || 'no response'}`
-    )
-    // API error — allow the user to proceed to download, which shows "unavailable"
-    request.yar.set('stationCountError', true)
-    request.yar.set('nooflocation', null)
-    return null
+  request.yar.set('nearRealtimeStationCounts', nearRealtimeStationCounts)
+
+  const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
+
+  const aurnStationCountParams = {
+    ...baseParams,
+    dataSource: 'AURN',
+    networkId: ''
   }
 
-  const aurnNumeric = toAurnNumeric(aurnCount)
+  const nonAurnStationCountParams = {
+    ...baseParams,
+    dataSource: 'NON-AURN',
+    networkId: nonAurnNetworkId
+  }
+
+  const [aurnCount, nonAurnCount] = await Promise.all([
+    invokeStationCount(aurnStationCountParams),
+    invokeStationCount(nonAurnStationCountParams)
+  ])
+
+  // Log raw network responses immediately so this is visible even on early returns
+
+  const selectedPollutantIds = getSelectedPollutantIds(request)
+  let aurnDisplayCount = 0
+
+  // Combined AURN station count can fail for multi-pollutant selections.
+  // Fallback to per-pollutant counts before marking AURN unavailable.
+  if (isStationCountError(aurnCount)) {
+    const fallbackAurnCount = await getAurnFallbackCountByPollutants(
+      baseParams,
+      selectedPollutantIds
+    )
+
+    if (fallbackAurnCount > 0) {
+      aurnDisplayCount = fallbackAurnCount
+      logger.warn(
+        `Station count combined AURN failed; using per-pollutant fallback total=${fallbackAurnCount}`
+      )
+    } else {
+      logger.error(
+        `Station count API failed: ${aurnCount?.message || 'no response'}`
+      )
+      // API error — allow the user to proceed to download, which shows "unavailable"
+      request.yar.set('stationCountError', true)
+      request.yar.set('nooflocation', null)
+      return null
+    }
+  } else {
+    const aurnNumeric = toAurnNumeric(aurnCount)
+    aurnDisplayCount = aurnNumeric
+
+    if (aurnDisplayCount === 0) {
+      const fallbackAurnCount = await getAurnFallbackCountByPollutants(
+        baseParams,
+        selectedPollutantIds
+      )
+
+      if (fallbackAurnCount > 0) {
+        aurnDisplayCount = fallbackAurnCount
+      }
+    }
+  }
 
   request.yar.set('stationCountError', false)
   request.yar.set('Region', request.yar.get('selectedlocation').join(','))
-  request.yar.set('stationCountAURN', aurnNumeric)
+  request.yar.set('stationCountAURN', aurnDisplayCount)
   request.yar.set('stationCountNONAURN', nonAurnCount)
 
-  const ukeapNetworks = buildUkeapNetworks(
-    nonAurnCount,
-    request.yar.get('datasourceGroups') || []
-  )
+  const ukeapNetworks = buildUkeapNetworks(nonAurnCount, datasourceGroups)
 
   // Zones: only AURN data is available, so ignore the NON-AURN counts
   if (isZoneSelection(request)) {
@@ -380,15 +548,16 @@ async function handleStationCountCalculation(request) {
   // NON-AURN is an array of {networkType, count} — stored for the download page "Other data" tab
   request.yar.set('nooflocationukeap', ukeapNetworks)
 
-  // nooflocation is always the AURN numeric count used for summary display
-  request.yar.set('nooflocation', aurnNumeric)
+  // Combined AURN count is the authoritative near-real-time total for gating
+  // and page-level station count messaging.
+  request.yar.set('nooflocation', aurnDisplayCount)
 
   // If BOTH AURN and all NON-AURN counts are 0, return error asking user to change year/location
   const nonAurnTotal = ukeapNetworks.reduce(
     (sum, n) => sum + (Number(n.count) || 0),
     0
   )
-  if (aurnNumeric === 0 && nonAurnTotal === 0) {
+  if (aurnDisplayCount === 0 && nonAurnTotal === 0) {
     return { bothZero: true }
   }
 
@@ -419,6 +588,8 @@ function shouldShowLast7DaysDatasourceWarning(request) {
 }
 
 function renderBothZeroView(request, h, backUrl) {
+  const isZone = isZoneSelection(request)
+
   return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -438,10 +609,14 @@ function renderBothZeroView(request, h, backUrl) {
     error: true,
     errormsg:
       'No monitoring stations are available for your selection. Please try:',
-    errorref1: 'Change time period',
-    errorhref1: '/year-aurn/change',
-    errorref2: 'Change location',
-    errorhref2: '/location-aurn/change'
+    errorref1: isZone ? 'Change location' : 'Change time period',
+    errorhref1: isZone ? '/location-aurn/change' : '/year-aurn/change',
+    ...(isZone
+      ? {}
+      : {
+          errorref2: 'Change location',
+          errorhref2: '/location-aurn/change'
+        })
   })
 }
 

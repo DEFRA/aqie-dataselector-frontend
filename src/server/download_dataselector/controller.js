@@ -10,6 +10,83 @@ import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-hel
 
 const OTHER_ONLY = 'other-only'
 
+function normalizeNetworkName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function buildNearRealtimeNetworkCounts(
+  nearRealtimeNetworks,
+  nearRealtimeStationCounts,
+  fallbackStationCount
+) {
+  const displayNetworks = Array.isArray(nearRealtimeNetworks)
+    ? nearRealtimeNetworks
+    : []
+  const countRows = Array.isArray(nearRealtimeStationCounts)
+    ? nearRealtimeStationCounts
+    : []
+
+  if (countRows.length === 0) {
+    return displayNetworks.map((network, index) => ({
+      ...network,
+      pollutantID: '',
+      count: index === 0 ? Number(fallbackStationCount) || 0 : 0
+    }))
+  }
+
+  let hasNameMatch = false
+  const mapped = displayNetworks.map((network, index) => {
+    const match = countRows.find(
+      (row) =>
+        normalizeNetworkName(row.name) === normalizeNetworkName(network.name)
+    )
+
+    if (match) {
+      hasNameMatch = true
+    }
+
+    const fallbackRow = match ? null : countRows[index]
+
+    return {
+      ...network,
+      pollutantID: match?.pollutantID || fallbackRow?.pollutantID || '',
+      count: Number(match?.count ?? fallbackRow?.count ?? 0)
+    }
+  })
+
+  const mappedTotal = mapped.reduce((sum, n) => sum + (Number(n.count) || 0), 0)
+  if (
+    (!hasNameMatch || mappedTotal === 0) &&
+    Number(fallbackStationCount) > 0
+  ) {
+    mapped[0] = {
+      ...mapped[0],
+      count: Number(fallbackStationCount)
+    }
+  }
+
+  return mapped
+}
+const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
+
+function isAurnNetwork(network) {
+  const abbreviation = String(network?.abbreviation || '')
+    .toUpperCase()
+    .trim()
+  const name =
+    typeof network === 'string'
+      ? network
+      : `${network?.name || ''} ${network?.fullName || ''}`
+
+  return (
+    abbreviation === 'AURN' ||
+    /\baurn\b|automatic\s+urban\s+and\s+rural/i.test(name)
+  )
+}
+
 // True when the datasource groups contain the given category with networks.
 function hasCategoryWithNetworks(datasourceGroups, category) {
   if (!Array.isArray(datasourceGroups)) {
@@ -93,7 +170,24 @@ function getAurnPollutantID(datasourceGroups) {
     return ''
   }
 
-  for (const group of datasourceGroups) {
+  const nearRealtimeGroups = datasourceGroups.filter(
+    (g) => g?.category === CATEGORY_NEAR_REALTIME
+  )
+
+  for (const group of nearRealtimeGroups) {
+    for (const network of group.networks || []) {
+      if (
+        network &&
+        typeof network === 'object' &&
+        !network.id &&
+        isAurnNetwork(network)
+      ) {
+        return network.pollutantID || ''
+      }
+    }
+  }
+
+  for (const group of nearRealtimeGroups) {
     for (const network of group.networks || []) {
       if (network && typeof network === 'object' && !network.id) {
         return network.pollutantID || ''
@@ -163,6 +257,9 @@ export const downloadDataselectorController = {
     // Validation checks
     const missingSelection = getMissingSelectionError(request)
     const numberOfLocations = request.yar.get('nooflocation')
+    const combinedNearRealtimeCount = Number(
+      request.yar.get('stationCountAURN') ?? numberOfLocations ?? 0
+    )
     const stationCountError = request.yar.get('stationCountError')
     const nonaurncount = getNonaurncount(request.yar.get('nooflocationukeap'))
 
@@ -176,6 +273,9 @@ export const downloadDataselectorController = {
       stationCountError
     )
 
+    const hasNoNearRealtimeStations =
+      stationCountUnavailable || combinedNearRealtimeCount < 1
+
     if (missingSelection) {
       return renderErrorState(...missingSelection)
     } else if (
@@ -185,9 +285,7 @@ export const downloadDataselectorController = {
       return renderErrorState(...getOtherOnlyTimePeriodErrorViewModel())
     } else if (
       downloadDatasourceCategoryType === 'near-realtime-only' &&
-      (stationCountUnavailable ||
-        numberOfLocations === 0 ||
-        numberOfLocations === '')
+      hasNoNearRealtimeStations
     ) {
       return renderErrorState(...getMissingStationError())
     } else if (
@@ -198,9 +296,7 @@ export const downloadDataselectorController = {
     } else if (
       downloadDatasourceCategoryType === 'both' &&
       nonaurncount < 1 &&
-      (stationCountUnavailable ||
-        numberOfLocations === 0 ||
-        numberOfLocations === '')
+      hasNoNearRealtimeStations
     ) {
       return renderErrorState(...getMissingStationError())
     }
@@ -226,13 +322,17 @@ export const downloadDataselectorController = {
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts,
       downloadaurnresult: null, // Don't auto-download, wait for user to click
-      stationcount: stationCountUnavailable ? null : numberOfLocations,
+      stationcount: stationCountUnavailable ? null : combinedNearRealtimeCount,
       stationCountUnavailable,
       ukeapNetworks,
       ukeapUnavailable,
       aurnPollutantID,
-      // Near real-time networks from the datasource API (display only)
-      nearRealtimeNetworks: getNearRealtimeNetworks(datasourceGroups),
+      // Near real-time networks with per-network station counts
+      nearRealtimeNetworkCounts: buildNearRealtimeNetworkCounts(
+        getNearRealtimeNetworks(datasourceGroups),
+        request.yar.get('nearRealtimeStationCounts'),
+        numberOfLocations
+      ),
       yearrange: request.yar.get('yearrange'),
       displayBacklink: true,
       hrefq: backUrl,

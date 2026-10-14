@@ -19,21 +19,6 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
   }))
 }))
 
-const originalConsole = console
-
-beforeAll(() => {
-  global.console = {
-    ...originalConsole,
-    log: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn()
-  }
-})
-
-afterAll(() => {
-  global.console = originalConsole
-})
-
 // Shared expected payload for all expired/invalid timestamp cases
 const expiredViewPayload = {
   pageTitle: 'Link Expired',

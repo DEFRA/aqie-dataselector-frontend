@@ -214,16 +214,15 @@ describe('downloadDataselectorController', () => {
       expect(result.model.stationcount).toBeNull()
     })
 
-    test('should keep station count available when nooflocation is array', () => {
+    test('should keep station count available when nooflocation is array and stationCountAURN exists', () => {
       session.nooflocation = [{ networkType: 'UKEAP', count: 2 }]
+      session.stationCountAURN = 2
       session.datasourceGroups = []
 
       const result = downloadDataselectorController.handler(request, h)
 
       expect(result.model.stationCountUnavailable).toBe(false)
-      expect(result.model.stationcount).toEqual([
-        { networkType: 'UKEAP', count: 2 }
-      ])
+      expect(result.model.stationcount).toBe(2)
     })
 
     test('should normalize datasourceGroups to [] when session value is non-array', () => {
@@ -486,15 +485,20 @@ describe('downloadDataselectorController', () => {
       const result = downloadDataselectorController.handler(request, h)
 
       expect(result.view).toBe('download_dataselector/index')
-      expect(result.model.nearRealtimeNetworks).toEqual([
-        { name: 'Automatic Hydrocarbon Network', isAurn: false }
+      expect(result.model.nearRealtimeNetworkCounts).toEqual([
+        {
+          name: 'Automatic Hydrocarbon Network',
+          isAurn: false,
+          pollutantID: '',
+          count: 4
+        }
       ])
     })
 
     test('passes an empty list when there are no datasource groups', () => {
       const result = downloadDataselectorController.handler(request, h)
 
-      expect(result.model.nearRealtimeNetworks).toEqual([])
+      expect(result.model.nearRealtimeNetworkCounts).toEqual([])
     })
   })
 })

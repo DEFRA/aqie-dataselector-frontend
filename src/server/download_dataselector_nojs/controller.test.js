@@ -107,8 +107,12 @@ describe('downloadDataselectornojsController', () => {
     it('sets aurnPollutantID and marks UKEAP available when datasource groups and networks exist', () => {
       request.yar.set('datasourceGroups', [
         {
+          category: 'Near real-time data from Defra',
+          networks: [{ pollutantID: 'NO2' }]
+        },
+        {
           category: 'Other data from Defra',
-          networks: [{ id: 'aurn-network' }, { pollutantID: 'NO2' }]
+          networks: [{ id: 'uka-network' }]
         }
       ])
       request.yar.set('nooflocationukeap', ['UKA1'])

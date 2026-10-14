@@ -80,76 +80,87 @@ id="tab-nearrealtime">
     <div class="govuk-!-margin-top-3">
       <h2 class="govuk-heading-m">Near real-time data from Defra</h2>
       <p class="govuk-body govuk-!-margin-bottom-5">This data is automatically measured and published every hour.</p>
-      {# Networks from the datasource API; falls back to AURN when none are listed #}
-      {% set nrtNetworks = nearRealtimeNetworks if (nearRealtimeNetworks and nearRealtimeNetworks | length) else [{ name: 'Automatic Urban and Rural Network (AURN)', isAurn: true }] %}
+      {% set nrtNetworks = nearRealtimeNetworkCounts if (nearRealtimeNetworkCounts and nearRealtimeNetworkCounts | length) else [{ name: 'Automatic Urban and Rural Network (AURN)', isAurn: true, count: stationcount | default(0), pollutantID: aurnPollutantID | default('') }] %}
       {% for network in nrtNetworks %}
         {% if network.isAurn %}
-      <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
-      <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
+          <h3 class="govuk-heading-s">Automatic Urban and Rural Network (AURN)</h3>
+          <p class="govuk-body">The most reliable air pollution data in the UK. Provides hourly measurements of fine particulate matter (PM2.5), particulate matter (PM10), nitrogen dioxide (NO2), nitric oxide (NO), nitrogen oxides as nitrogen dioxide (NOx), ozone (O3), sulphur dioxide (SO2) and carbon monoxide (CO).</p>
         {% else %}
-      <h3 class="govuk-heading-s">{{ network.name }}</h3>
+          <h3 class="govuk-heading-s">{{ network.name }}</h3>
           {% if networkDescriptions and networkDescriptions[network.name] %}
-      <p class="govuk-body">{{ networkDescriptions[network.name] }}</p>
+            <p class="govuk-body">{{ networkDescriptions[network.name] }}</p>
           {% endif %}
         {% endif %}
-      {% endfor %}
-   {% if  stationcount > 0 %}
-     <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen" >
-     
-         
-          {{stationcount}} stations available
-      
-      </div>
+
+        {% if network.count > 0 %}
+          <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextgreen">
+            {{ network.count }} stations available
+          </div>
+        {% else %}
+          <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextorange">
+            {{ network.count }} stations available
+          </div>
+          <p class="govuk-body">No data available for the selected range.</p>
         {% endif %}
-      {% if stationcount == 0 %}
-        <div class="govuk-inset-text govuk-!-margin-top-1 govuk-!-margin-bottom-3 insettextorange">
-        {{stationcount}} stations available
-              </div>
-            <p class="govuk-body">No data available for the selected range.</p>
-      {% endif %}
+
+        {% if yearrange == 'Single' and network.count > 0 %}
+          <a href="/download_aurn_nojs/{{ finalyear }}/AURN?networkName={{ network.name | urlencode }}"
+             class="download-aurn-single aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3"
+             role="button"
+             data-year="{{ finalyear }}"
+             data-source="AURN"
+             data-network-name="{{ network.name }}"
+             aria-label="Download hourly data for {{ network.name }}">
+            <span class="aq-button-secondary__icon">
+              <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
+                <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
+              </svg>
+            </span>
+            <span class="aq-button-secondary__text">
+              Download hourly data
+              <span class="govuk-visually-hidden">(Visual only)</span>
+            </span>
+          </a>
+        {% endif %}
+
+        {% if yearrange == 'Multiple' and network.count > 0 %}
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">Year</th>
+                <th scope="col" class="govuk-table__header">Hourly data</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Download all years</th>
+                <td class="govuk-table__cell">
+                  <a href="/emailrequest/AURN?pollutantID={{ network.pollutantID if network.pollutantID is not none else '' }}"
+                     class="email-request-aurn-all-years govuk-link"
+                     data-pollutant="{{ network.pollutantID if network.pollutantID is not none else '' }}">
+                    Request Data
+                  </a>
+                </td>
+              </tr>
+              {% for year in finalyear %}
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">{{ year }}</th>
+                <td class="govuk-table__cell">
+                  <a href="/download_aurn_nojs/{{ year }}/AURN?networkName={{ network.name | urlencode }}"
+                     class="download-aurn-multi govuk-link"
+                     data-year="{{ year }}"
+                     data-source="AURN"
+                     data-network-name="{{ network.name }}">
+                    Download hourly data
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+      {% endfor %}
     </div>
-
-    {% if yearrange == 'Single' and stationcount > 0 %}
-    <a id="download-link" href="/download_aurn_nojs/{{ finalyear }}/AURN" class="download-aurn-single aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-3" role="button" data-year="{{ finalyear }}" data-source="AURN"
-      aria-label=" Download hourly average data for {{pollutant.pollutantName}}">
-      <span class="aq-button-secondary__icon">
-        <svg focusable="false" aria-hidden="true" width="14" height="20" viewBox="0 0 14 20">
-          <path d="M1.929 9L7 14.071 12.071 9M7 14.071V1M1 18h12" fill="none" stroke="currentColor" stroke-width="2"></path>
-        </svg>
-      </span>
-      <span class="aq-button-secondary__text">
-        Download hourly data
-        <span class="govuk-visually-hidden">(Visual only)</span>
-      </span>
-    </a>
-    {% endif %}
-
-    {% if yearrange == 'Multiple' and stationcount > 0 %}
-    <table class="govuk-table">
-      <thead class="govuk-table__head">
-        <tr class="govuk-table__row">
-          <th scope="col" class="govuk-table__header">Year</th>
-          <th scope="col" class="govuk-table__header">Hourly data</th>
-        </tr>
-      </thead>
-      <tbody class="govuk-table__body">
-        <tr class="govuk-table__row">
-          <th scope="row" class="govuk-table__header">Download all years</th>
-          <td class="govuk-table__cell">
-            <a href="/emailrequest" class="email-request-aurn-all-years govuk-link" data-pollutant="{{ aurnPollutantID if aurnPollutantID is not none else '' }}">Request Data</a>
-          </td>
-        </tr>
-        {% for year in finalyear %}
-        <tr class="govuk-table__row">
-          <th scope="row" class="govuk-table__header">{{ year }}</th>
-          <td class="govuk-table__cell">
-            <a href="/download_aurn_nojs/{{ year }}/AURN" class="download-aurn-multi govuk-link" data-year="{{ year }}" data-source="AURN">Download hourly data</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
 
     <div id="download-content-container"></div>
   </div>
@@ -271,11 +282,14 @@ id="tab-other">
 // Event listeners for download buttons (replaces onclick handlers for CSP compliance)
 document.addEventListener('DOMContentLoaded', function() {
   // AURN single year download
-  document.querySelector('.download-aurn-single')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const year = e.target.closest('a')?.getAttribute('data-year');
-    const source = e.target.closest('a')?.getAttribute('data-source');
-    if (year && source) getAPIdownload(year, source);
+  document.querySelectorAll('.download-aurn-single').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const year = e.target.closest('a')?.getAttribute('data-year');
+      const source = e.target.closest('a')?.getAttribute('data-source');
+      const networkName = e.target.closest('a')?.getAttribute('data-network-name');
+      if (year && source) getAPIdownload(year, source, undefined, networkName || undefined);
+    });
   });
 
   // AURN email request for all years
@@ -294,7 +308,8 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       const year = e.target.closest('a')?.getAttribute('data-year');
       const source = e.target.closest('a')?.getAttribute('data-source');
-      if (year && source) getAPIdownload(year, source);
+      const networkName = e.target.closest('a')?.getAttribute('data-network-name');
+      if (year && source) getAPIdownload(year, source, undefined, networkName || undefined);
     });
   });
 
@@ -332,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-async function getAPIdownload(year, dataSource, networkId = '') {
+async function getAPIdownload(year, dataSource, networkId = '', networkName = '') {
    
     // Show loading indicator
   showLoadingIndicator('Preparing your download...');
@@ -340,8 +355,15 @@ async function getAPIdownload(year, dataSource, networkId = '') {
 
     try {
         // Step 1: Start download job and get jobID
-        const networkIdQuery = networkId ? `?networkId=${encodeURIComponent(networkId)}` : '';
-        const response = await fetch(`/download_aurn/${year}/${dataSource}${networkIdQuery}`);
+        const params = new URLSearchParams();
+        if (networkId) {
+          params.set('networkId', networkId);
+        }
+        if (networkName) {
+          params.set('networkName', networkName);
+        }
+        const queryString = params.toString() ? `?${params.toString()}` : '';
+        const response = await fetch(`/download_aurn/${year}/${dataSource}${queryString}`);
         
         if (!response.ok) {
             throw new Error(`Failed to start download: ${response.status}`);
@@ -426,8 +448,15 @@ async function getAPIdownload(year, dataSource, networkId = '') {
         console.error('Error fetching download:', error);
         hideLoadingIndicator();
         // Fallback to no-JS route if AJAX fails
-        const networkIdQuery = networkId ? `?networkId=${encodeURIComponent(networkId)}` : '';
-        window.location.href = `/download_aurn_nojs/${year}/${dataSource}${networkIdQuery}`;
+        const fallbackParams = new URLSearchParams();
+        if (networkId) {
+          fallbackParams.set('networkId', networkId);
+        }
+        if (networkName) {
+          fallbackParams.set('networkName', networkName);
+        }
+        const fallbackQueryString = fallbackParams.toString() ? `?${fallbackParams.toString()}` : '';
+        window.location.href = `/download_aurn_nojs/${year}/${dataSource}${fallbackQueryString}`;
     }
 }
 

@@ -14,6 +14,28 @@ const POLL_INTERVAL_MS = 1000
 const errMsg = (error) =>
   error instanceof Error ? error.message : 'unknown error'
 
+function normalizeNetworkName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function isAurnNetwork(network) {
+  const abbreviation = String(network?.abbreviation || '')
+    .toUpperCase()
+    .trim()
+  const combinedName =
+    typeof network === 'string'
+      ? network
+      : `${network?.name || ''} ${network?.fullName || ''}`
+
+  return (
+    abbreviation === 'AURN' ||
+    /\baurn\b|automatic\s+urban\s+and\s+rural/i.test(combinedName)
+  )
+}
+
 async function invokeDownloadDev(apiparams) {
   try {
     const url = config.get('downloadAurnDevUrl')
@@ -119,14 +141,29 @@ async function invokeDownloadS3(downloadstatusapiparams) {
  * @param {string} networkId        - the resolved networkId (may be '')
  * @returns {boolean}
  */
-function isMatchingNetwork(network, dataSource, networkId) {
+function isMatchingNetwork(network, dataSource, networkId, networkName) {
   if (dataSource === 'NON-AURN') {
     // NON-AURN networks have a numeric `id` — match by it
     return Boolean(networkId) && String(network.id) === String(networkId)
   }
 
-  // AURN networks have no `id` field — take the first one found
-  return dataSource === 'AURN' && !network.id && Boolean(network.pollutantID)
+  if (dataSource === 'AURN' && networkName) {
+    const requested = normalizeNetworkName(networkName)
+    const currentName = normalizeNetworkName(network?.name)
+    const currentFullName = normalizeNetworkName(network?.fullName)
+    return (
+      requested !== '' &&
+      (requested === currentName || requested === currentFullName)
+    )
+  }
+
+  // AURN networks have no `id` field — prefer explicit AURN network
+  return (
+    dataSource === 'AURN' &&
+    !network.id &&
+    Boolean(network.pollutantID) &&
+    isAurnNetwork(network)
+  )
 }
 
 /**
@@ -141,15 +178,31 @@ function isMatchingNetwork(network, dataSource, networkId) {
  * @param {string} networkId        - the networkId from the query string (may be '')
  * @returns {string|null}
  */
-function getPollutantIDForNetwork(datasourceGroups, dataSource, networkId) {
+function getPollutantIDForNetwork(
+  datasourceGroups,
+  dataSource,
+  networkId,
+  networkName
+) {
   if (!Array.isArray(datasourceGroups) || datasourceGroups.length === 0) {
     return null
   }
 
   for (const group of datasourceGroups) {
     for (const network of group.networks || []) {
-      if (isMatchingNetwork(network, dataSource, networkId)) {
+      if (isMatchingNetwork(network, dataSource, networkId, networkName)) {
         return network.pollutantID || null
+      }
+    }
+  }
+
+  if (dataSource === 'AURN') {
+    // Fallback for near-real-time networks without explicit AURN metadata.
+    for (const group of datasourceGroups) {
+      for (const network of group.networks || []) {
+        if (network && typeof network === 'object' && !network.id) {
+          return network.pollutantID || null
+        }
       }
     }
   }
@@ -193,6 +246,9 @@ function resolveRegion(request) {
  */
 function buildApiParams(request, dataSource, selectedyear) {
   const requestedNetworkId = (request.query?.networkId || '').toString().trim()
+  const requestedNetworkName = (request.query?.networkName || '')
+    .toString()
+    .trim()
   const datasourceGroups = request.yar.get('datasourceGroups') || []
   const nonAurnNetworkId = getNonAurnNetworkIdCsv(datasourceGroups)
   const networkId = resolveNetworkId(
@@ -206,7 +262,8 @@ function buildApiParams(request, dataSource, selectedyear) {
   const networkPollutantID = getPollutantIDForNetwork(
     datasourceGroups,
     dataSource,
-    networkId
+    networkId,
+    requestedNetworkName
   )
 
   const normalizedTimeSelectionMode = String(

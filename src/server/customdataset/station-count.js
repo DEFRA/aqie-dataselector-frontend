@@ -20,6 +20,15 @@ function normaliseCountValue(entry) {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
+function normaliseNetworkLabel(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/monitoring/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function aggregateNetworkCounts(networkEntries) {
   const aggregated = new Map()
 
@@ -90,6 +99,27 @@ export function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   const rawNonAurn = Array.isArray(nonAurnCount) ? nonAurnCount : []
   // Lookup of API-returned counts (excluding "Unknown" entries)
   const apiCountMap = aggregateNetworkCounts(rawNonAurn)
+
+  // Canonical lookup so slight naming differences still match expected networks,
+  // while preserving API names for display.
+  const apiByCanonical = new Map()
+  for (const [networkType, count] of apiCountMap.entries()) {
+    const canonical = normaliseNetworkLabel(networkType)
+    if (!canonical) {
+      continue
+    }
+
+    const existing = apiByCanonical.get(canonical)
+    if (existing) {
+      existing.count += count
+    } else {
+      apiByCanonical.set(canonical, {
+        networkType,
+        count
+      })
+    }
+  }
+
   const expectedNetworks = getExpectedNetworks(datasourceGroups)
 
   if (expectedNetworks.length === 0) {
@@ -103,22 +133,30 @@ export function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   }
 
   // Map each expected network to its count (0 if API didn't return it or returned "Unknown")
-  const matchedNetworks = expectedNetworks.map((network) => ({
-    networkType: network.name,
-    id: network.id,
-    pollutantID: network.pollutantID,
-    count: apiCountMap.has(network.name) ? apiCountMap.get(network.name) : 0
-  }))
+  const consumedCanonical = new Set()
+  const matchedNetworks = expectedNetworks.map((network) => {
+    const canonical = normaliseNetworkLabel(network.name)
+    const apiMatch = canonical ? apiByCanonical.get(canonical) : null
+    if (canonical && apiMatch) {
+      consumedCanonical.add(canonical)
+    }
+
+    return {
+      networkType: apiMatch?.networkType || network.name,
+      id: network.id,
+      pollutantID: network.pollutantID,
+      count: apiMatch ? apiMatch.count : 0
+    }
+  })
 
   // Include any additional network types returned by API but not present in datasourceGroups
-  const expectedSet = new Set(expectedNetworks.map((network) => network.name))
-  const additionalNetworks = Array.from(apiCountMap.entries())
-    .filter(([name]) => !expectedSet.has(name))
-    .map(([networkType, count]) => ({
-      networkType,
+  const additionalNetworks = Array.from(apiByCanonical.entries())
+    .filter(([canonical]) => !consumedCanonical.has(canonical))
+    .map(([, entry]) => ({
+      networkType: entry.networkType,
       id: null,
       pollutantID: null,
-      count
+      count: entry.count
     }))
 
   return matchedNetworks.concat(additionalNetworks)
