@@ -377,10 +377,35 @@ describe('downloadDataselectornojsController', () => {
       request.yar.set('selectedlocation', ['Greater London'])
       request.yar.set('Location', 'Zone')
       request.yar.set('nooflocation', 5)
+      request.yar.set('datasourceGroups', [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Urban and Rural Network (AURN)' }]
+        }
+      ])
+    })
+
+    it('redirects back to customdataset for Zone + non-AURN near real-time only', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('datasourceGroups', [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(res).toBe('redirect-response')
+      expect(h.redirect).toHaveBeenCalledWith('/customdataset')
+      expect(h.view).not.toHaveBeenCalled()
     })
 
     it('redirects back to customdataset for Zone + other data only', () => {
       request.yar.set('downloadDatasourceCategoryType', 'other-only')
+      request.yar.set('datasourceGroups', [
+        { category: 'Other data from Defra', networks: [{ id: 'ukeap' }] }
+      ])
 
       const res = downloadDataselectornojsController.handler(request, h)
 
@@ -402,7 +427,7 @@ describe('downloadDataselectornojsController', () => {
       )
     })
 
-    it('renders location-only error for Zone + AURN only when no stations are available', () => {
+    it('renders time period and location error for Zone + AURN only when no stations are available', () => {
       request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
       request.yar.set('downloadForceNearRealtimeOnly', true)
       request.yar.set('nooflocation', 0)
@@ -413,14 +438,35 @@ describe('downloadDataselectornojsController', () => {
         'customdataset/index',
         expect.objectContaining({
           error: true,
-          errorref1: 'Change location',
-          errorhref1: '/location-aurn/nojs'
+          errorref1: 'Change time period',
+          errorhref1: '/year-aurn/change',
+          errorref2: 'Change location',
+          errorhref2: '/location-aurn/nojs'
         })
       )
+    })
 
-      const viewData = h.view.mock.calls[0][1]
-      expect(viewData.errorref2).toBeUndefined()
-      expect(viewData.errorhref2).toBeUndefined()
+    it('renders time period and location error for non-zone + non-AURN near real-time when no stations are available', () => {
+      request.yar.set('Location', 'Country')
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('datasourceGroups', [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ])
+      request.yar.set('nooflocation', 0)
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          errorref1: 'Change time period',
+          errorref2: 'Change location'
+        })
+      )
     })
   })
 

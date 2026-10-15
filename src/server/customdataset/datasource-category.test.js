@@ -7,13 +7,18 @@ import {
   setDownloadDatasourceOverrideForLast7Days,
   isZoneSelection,
   shouldShowZoneWarning,
-  shouldShowZoneOtherOnlyError,
+  isZoneWithoutAurn,
+  shouldShowZoneNonAurnError,
   setDownloadDatasourceOverrideForZones
 } from './datasource-category.js'
 
 const AURN_GROUP = {
   category: 'Near real-time data from Defra',
-  networks: [{ id: 'aurn' }]
+  networks: [{ id: 'aurn', name: 'Automatic Urban and Rural Network (AURN)' }]
+}
+const AHC_GROUP = {
+  category: 'Near real-time data from Defra',
+  networks: [{ name: 'Automatic Hydrocarbon Network', abbreviation: 'AHC' }]
 }
 const OTHER_GROUP = {
   category: 'Other data from Defra',
@@ -218,11 +223,49 @@ describe('zones', () => {
     })
   })
 
-  describe('shouldShowZoneOtherOnlyError', () => {
-    it('is true for a zone with other data only', () => {
+  describe('isZoneWithoutAurn', () => {
+    it.each([
+      ['other data only', [OTHER_GROUP]],
+      ['non-AURN near real-time only', [AHC_GROUP]],
+      ['no groups', undefined]
+    ])('is true for a zone with %s', (_label, groups) => {
+      expect(isZoneWithoutAurn(makeRequest(zoneSession(groups)))).toBe(true)
+    })
+
+    it.each([
+      ['AURN only', [AURN_GROUP]],
+      ['AURN and other data', [AURN_GROUP, OTHER_GROUP]],
+      [
+        'AURN and non-AURN near real-time',
+        [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [...AURN_GROUP.networks, ...AHC_GROUP.networks]
+          }
+        ]
+      ]
+    ])('is false for a zone with %s', (_label, groups) => {
+      expect(isZoneWithoutAurn(makeRequest(zoneSession(groups)))).toBe(false)
+    })
+
+    it('is false for countries without AURN', () => {
       expect(
-        shouldShowZoneOtherOnlyError(makeRequest(zoneSession([OTHER_GROUP])))
-      ).toBe(true)
+        isZoneWithoutAurn(
+          makeRequest({ Location: 'Country', datasourceGroups: [AHC_GROUP] })
+        )
+      ).toBe(false)
+    })
+  })
+
+  describe('shouldShowZoneNonAurnError', () => {
+    it.each([
+      ['other data only', [OTHER_GROUP]],
+      ['non-AURN near real-time only', [AHC_GROUP]],
+      ['non-AURN near real-time and other data', [AHC_GROUP, OTHER_GROUP]]
+    ])('is true for a zone with %s', (_label, groups) => {
+      expect(shouldShowZoneNonAurnError(makeRequest(zoneSession(groups)))).toBe(
+        true
+      )
     })
 
     it.each([
@@ -235,9 +278,13 @@ describe('zones', () => {
       [
         'countries with other data only',
         { ...zoneSession([OTHER_GROUP]), Location: 'Country' }
+      ],
+      [
+        'countries with non-AURN near real-time only',
+        { ...zoneSession([AHC_GROUP]), Location: 'Country' }
       ]
     ])('is false for %s', (_label, session) => {
-      expect(shouldShowZoneOtherOnlyError(makeRequest(session))).toBe(false)
+      expect(shouldShowZoneNonAurnError(makeRequest(session))).toBe(false)
     })
   })
 

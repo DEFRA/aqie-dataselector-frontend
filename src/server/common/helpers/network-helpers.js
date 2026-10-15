@@ -53,3 +53,33 @@ export function getNearRealtimeNetworks(datasourceGroups) {
     isAurn: /\baurn\b|automatic urban and rural/i.test(name)
   }))
 }
+
+function isAurnNetwork(network) {
+  const abbreviation = String(network?.abbreviation || '')
+    .toUpperCase()
+    .trim()
+  const name =
+    typeof network === 'string'
+      ? network
+      : `${network?.name || ''} ${network?.fullName || ''}`
+
+  return (
+    abbreviation === 'AURN' ||
+    /\baurn\b|automatic\s+urban\s+and\s+rural/i.test(name)
+  )
+}
+
+/**
+ * True when the "Near real-time data from Defra" group contains the AURN
+ * network. Other near real-time networks (e.g. Automatic Hydrocarbon
+ * Network) are NON-AURN.
+ */
+export function hasAurnNetwork(datasourceGroups) {
+  const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
+  return groups.some(
+    (g) =>
+      g?.category === 'Near real-time data from Defra' &&
+      Array.isArray(g.networks) &&
+      g.networks.some(isAurnNetwork)
+  )
+}

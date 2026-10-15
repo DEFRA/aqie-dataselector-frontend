@@ -16,9 +16,8 @@ import {
   isLast7DaysSelection,
   shouldShowOtherOnlyTimePeriodError,
   setDownloadDatasourceOverrideForLast7Days,
-  isZoneSelection,
   shouldShowZoneWarning,
-  shouldShowZoneOtherOnlyError,
+  shouldShowZoneNonAurnError,
   setDownloadDatasourceOverrideForZones
 } from '~/src/server/customdataset/datasource-category.js'
 import {
@@ -151,9 +150,9 @@ function shouldShowLast7DaysDatasourceWarning(request) {
   return isLast7Days
 }
 
+// AURN (incl. zones) with no stations: offer both time period and location.
+// Zone + NON-AURN is handled separately by renderZoneNonAurnView.
 function renderBothZeroView(request, h, backUrl) {
-  const isZone = isZoneSelection(request)
-
   return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -172,14 +171,10 @@ function renderBothZeroView(request, h, backUrl) {
     hrefq: backUrl,
     error: true,
     errormsg: NO_STATIONS_ERROR_MESSAGE,
-    errorref1: isZone ? CHANGE_LOCATION_TEXT : CHANGE_TIME_PERIOD_TEXT,
-    errorhref1: isZone ? CHANGE_LOCATION_HREF : CHANGE_TIME_PERIOD_HREF,
-    ...(isZone
-      ? {}
-      : {
-          errorref2: CHANGE_LOCATION_TEXT,
-          errorhref2: CHANGE_LOCATION_HREF
-        })
+    errorref1: CHANGE_TIME_PERIOD_TEXT,
+    errorhref1: CHANGE_TIME_PERIOD_HREF,
+    errorref2: CHANGE_LOCATION_TEXT,
+    errorhref2: CHANGE_LOCATION_HREF
   })
 }
 
@@ -212,7 +207,7 @@ function renderCustomDatasetView(request, h, backUrl) {
   })
 }
 
-function renderZoneOtherOnlyView(request, h, backUrl) {
+function renderZoneNonAurnView(request, h, backUrl) {
   // Clear stale NON-AURN counts so the download pages block this selection too
   request.yar.set('nooflocationukeap', [])
 
@@ -273,9 +268,9 @@ export const customdatasetController = {
       return renderCustomDatasetView(request, h, backUrl)
     }
 
-    // Stop early for invalid: other-only datasource + zones
-    if (shouldShowZoneOtherOnlyError(request)) {
-      return renderZoneOtherOnlyView(request, h, backUrl)
+    // Stop early for invalid: NON-AURN (no AURN network) + zones
+    if (shouldShowZoneNonAurnError(request)) {
+      return renderZoneNonAurnView(request, h, backUrl)
     }
 
     // Calculate station count if all required data is present

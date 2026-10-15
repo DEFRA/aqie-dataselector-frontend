@@ -273,7 +273,9 @@ describe('customdatasetController', () => {
   describe('zones datasource behaviour', () => {
     const AURN_GROUP = {
       category: 'Near real-time data from Defra',
-      networks: [{ id: 'aurn' }]
+      networks: [
+        { id: 'aurn', name: 'Automatic Urban and Rural Network (AURN)' }
+      ]
     }
     const OTHER_GROUP = {
       category: 'Other data from Defra',
@@ -291,6 +293,26 @@ describe('customdatasetController', () => {
       }
       return values[key]
     }
+
+    it('Zone + AURN and non-AURN near real-time: no Change location only error', async () => {
+      mockRequest.yar.get.mockImplementation(
+        zoneSession([
+          {
+            category: 'Near real-time data from Defra',
+            networks: [
+              ...AURN_GROUP.networks,
+              { name: 'Automatic Hydrocarbon Network' }
+            ]
+          }
+        ])
+      )
+      axios.post.mockResolvedValue({ data: 5 })
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(axios.post).toHaveBeenCalled()
+      expect(mockH.view.mock.calls[0][1].error).toBeUndefined()
+    })
 
     it('Zone + AURN only: no warning, no error, no download override', async () => {
       mockRequest.yar.get.mockImplementation(zoneSession([AURN_GROUP]))
@@ -325,6 +347,30 @@ describe('customdatasetController', () => {
           showZoneWarning: false
         })
       )
+    })
+
+    it('Zone + non-AURN near real-time only: shows Change location only and skips station count', async () => {
+      mockRequest.yar.get.mockImplementation(
+        zoneSession([
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'Automatic Hydrocarbon Network' }]
+          }
+        ])
+      )
+
+      await customdatasetController.handler(mockRequest, mockH)
+
+      expect(axios.post).not.toHaveBeenCalled()
+      const viewData = mockH.view.mock.calls[0][1]
+      expect(viewData).toEqual(
+        expect.objectContaining({
+          error: true,
+          errorref1: 'Change location',
+          errorhref1: '/location-aurn/nojs'
+        })
+      )
+      expect(viewData).not.toHaveProperty('errorref2')
     })
 
     it('Zone + both: shows the AURN-only warning and forces the AURN-only download', async () => {
@@ -1337,7 +1383,7 @@ describe('customdatasetController', () => {
       expect(result).toBe('view-response')
     })
 
-    it('renders location-only error summary for Zone when AURN and NON-AURN counts are 0', async () => {
+    it('renders time period and location error summary for Zone + AURN when counts are 0', async () => {
       mockRequest.yar.get.mockImplementation((key) => {
         const zoneValues = {
           ...baseYarValues,
@@ -1366,12 +1412,12 @@ describe('customdatasetController', () => {
           error: true,
           errormsg:
             'No monitoring stations are available for your selection. Please try:',
-          errorref1: 'Change location',
-          errorhref1: '/location-aurn/change'
+          errorref1: 'Change time period',
+          errorhref1: '/year-aurn/change',
+          errorref2: 'Change location',
+          errorhref2: '/location-aurn/change'
         })
       )
-      expect(viewData).not.toHaveProperty('errorref2')
-      expect(viewData).not.toHaveProperty('errorhref2')
       expect(result).toBe('view-response')
     })
 
@@ -1613,7 +1659,13 @@ describe('customdatasetController', () => {
           selectedLAIDs: '1,2,3',
           selectedPollutantID: 'pm10-id',
           selectedPollutants: null,
-          selectedTimePeriod: null
+          selectedTimePeriod: null,
+          datasourceGroups: [
+            {
+              category: 'Near real-time data from Defra',
+              networks: [{ name: 'Automatic Urban and Rural Network (AURN)' }]
+            }
+          ]
         }
         return values[key]
       })
