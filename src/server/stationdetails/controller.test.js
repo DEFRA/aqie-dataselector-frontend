@@ -91,7 +91,7 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
-  it('should include graph summary CTA metadata for the monitoring station summary', async () => {
+  it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
     request.params.download = undefined
 
     await stationDetailsController.handler(request, h)
@@ -99,11 +99,11 @@ describe('stationDetailsController.handler', () => {
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/index',
       expect.objectContaining({
-        viewGraphSummary: {
+        viewGraphSummary: expect.objectContaining({
           title: 'View graph and pollutant summary',
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary'
-        }
+          href: expect.stringContaining('period=last7days')
+        })
       })
     )
   })

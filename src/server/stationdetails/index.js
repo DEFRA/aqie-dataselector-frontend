@@ -1,4 +1,7 @@
-import { stationDetailsController } from '~/src/server/stationdetails/controller.js'
+import {
+  stationDetailsController,
+  graphSummaryController
+} from '~/src/server/stationdetails/controller.js'
 
 // Define the route configuration function
 const configureRoutes = (server) => {
@@ -17,6 +20,11 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/stationdetails/year/{year}',
       ...stationDetailsController
+    },
+    {
+      method: 'GET',
+      path: '/stationdetails/graph-summary',
+      ...graphSummaryController
     },
     {
       method: 'GET',

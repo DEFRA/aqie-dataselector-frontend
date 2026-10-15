@@ -91,6 +91,38 @@ function setDownloadSessionParams(request) {
   request.yar.set('downloadFrequency', request.params.frequency)
 }
 
+function resolveGraphSummaryPeriod(request) {
+  const periodFromQuery = request.query?.period || request.payload?.period
+  if (
+    periodFromQuery === 'last24hours' ||
+    periodFromQuery === 'daily' ||
+    periodFromQuery === 'daqi'
+  ) {
+    return 'last24hours'
+  }
+
+  if (
+    periodFromQuery === 'last7days' ||
+    periodFromQuery === 'year' ||
+    request.yar.get('selectedYear')
+  ) {
+    return 'last7days'
+  }
+
+  return 'last24hours'
+}
+
+function resolveGraphSummaryHref(request) {
+  const stationId = resolveStationId(request) || request.yar.get('SiteId')
+  const period = resolveGraphSummaryPeriod(request)
+  const params = new URLSearchParams({
+    stationId: stationId || '',
+    period
+  })
+
+  return `/stationdetails/graph-summary?${params.toString()}`
+}
+
 /**
  * Validates session data and locates the requested station, returning either
  * an error response or the resolved station.
@@ -260,7 +292,7 @@ const stationDetailsController = {
       viewGraphSummary: {
         title: 'View graph and pollutant summary',
         buttonText: 'View graph and pollutant summary',
-        href: '/stationdetails/graph-summary'
+        href: resolveGraphSummaryHref(request)
       }
     }
 
@@ -268,4 +300,22 @@ const stationDetailsController = {
   }
 }
 
-export { stationDetailsController }
+const graphSummaryController = {
+  handler: (request, h) => {
+    const station = request.yar.get('stationdetails')
+    const stationId = request.query?.stationId || request.yar.get('SiteId')
+    const period = request.query?.period || 'last24hours'
+
+    return h.view('stationdetails/graph-summary', {
+      pageTitle: 'View graph and pollutant summary',
+      title: 'View graph and pollutant summary',
+      stationdetails: station,
+      stationId,
+      period,
+      periodLabel:
+        period === 'last7days' ? 'last 7 days' : 'last 24 hours'
+    })
+  }
+}
+
+export { stationDetailsController, graphSummaryController }
