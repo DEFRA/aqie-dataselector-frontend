@@ -1,6 +1,7 @@
 import {
   getNonAurnNetworkIdCsv,
-  getNearRealtimeNetworks
+  getNearRealtimeNetworks,
+  hasAurnNetwork
 } from './network-helpers.js'
 
 const NEAR_REALTIME = 'Near real-time data from Defra'
@@ -86,5 +87,72 @@ describe('getNonAurnNetworkIdCsv', () => {
 
   it('returns an empty string when there is no other data group', () => {
     expect(getNonAurnNetworkIdCsv(undefined)).toBe('')
+  })
+})
+
+describe('hasAurnNetwork', () => {
+  it.each([
+    ['name', { name: 'Automatic Urban and Rural Network (AURN)' }],
+    ['abbreviation', { abbreviation: 'aurn' }],
+    ['fullName', { fullName: 'Automatic Urban and Rural Network' }],
+    ['string', 'AURN']
+  ])('is true when AURN is matched by %s', (_label, network) => {
+    expect(
+      hasAurnNetwork([{ category: NEAR_REALTIME, networks: [network] }])
+    ).toBe(true)
+  })
+
+  it('is true when AURN is listed with other near real-time networks', () => {
+    expect(
+      hasAurnNetwork([
+        {
+          category: NEAR_REALTIME,
+          networks: [
+            { name: 'Automatic Urban and Rural Network (AURN)' },
+            { name: 'Automatic Hydrocarbon Network' }
+          ]
+        },
+        {
+          category: OTHER,
+          networks: [{ name: 'UKEAP: Acid Gas and Aerosol Network' }]
+        }
+      ])
+    ).toBe(true)
+  })
+
+  it.each([
+    [
+      'only non-AURN near real-time networks',
+      [
+        {
+          category: NEAR_REALTIME,
+          networks: [
+            { name: 'Automatic Hydrocarbon Network', abbreviation: 'AHC' }
+          ]
+        }
+      ]
+    ],
+    [
+      'only other data',
+      [
+        {
+          category: OTHER,
+          networks: [{ name: 'UKEAP: Acid Gas and Aerosol Network' }]
+        }
+      ]
+    ],
+    [
+      'an AURN name outside the near real-time group',
+      [
+        {
+          category: OTHER,
+          networks: [{ name: 'Automatic Urban and Rural Network (AURN)' }]
+        }
+      ]
+    ],
+    ['a near real-time group without networks', [{ category: NEAR_REALTIME }]],
+    ['no groups', undefined]
+  ])('is false for %s', (_label, groups) => {
+    expect(hasAurnNetwork(groups)).toBe(false)
   })
 })

@@ -6,7 +6,10 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
-import { getNearRealtimeNetworks } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  getNearRealtimeNetworks,
+  hasAurnNetwork
+} from '~/src/server/common/helpers/network-helpers.js'
 
 const OTHER_ONLY = 'other-only'
 const CHANGE_LOCATION_URL = '/location-aurn/change'
@@ -116,9 +119,18 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
   )
 }
 
+// Zone + NON-AURN (no AURN network) has no stations for a zone
+function isZoneWithoutAurn(request) {
+  return (
+    request.yar.get('Location') === 'Zone' &&
+    !hasAurnNetwork(request.yar.get('datasourceGroups'))
+  )
+}
+
+// Zone + NON-AURN: location only. Zone + AURN and all other locations:
+// both time period and location.
 function getMissingStationError(request) {
-  const isZone = request.yar.get('Location') === 'Zone'
-  if (isZone) {
+  if (isZoneWithoutAurn(request)) {
     return [
       'No monitoring stations are available for your selection. Please try:',
       'Change location',
@@ -346,12 +358,9 @@ export const downloadDataselectorController = {
       ? rawDatasourceGroups
       : []
 
-    // Zones + other data only: no stations — stay on customdataset, which
+    // Zones + NON-AURN: no stations — stay on customdataset, which
     // shows the zone "Change location" error, instead of the download page
-    if (
-      request.yar.get('Location') === 'Zone' &&
-      request.yar.get('downloadDatasourceCategoryType') === OTHER_ONLY
-    ) {
+    if (isZoneWithoutAurn(request)) {
       return h.redirect(backUrl)
     }
 

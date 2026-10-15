@@ -436,12 +436,36 @@ describe('downloadDataselectorController', () => {
         selectedyear: '2024',
         selectedlocation: ['Greater London'],
         Location: 'Zone',
-        nooflocation: 5
+        nooflocation: 5,
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'Automatic Urban and Rural Network (AURN)' }]
+          }
+        ]
       })
+    })
+
+    test('redirects back to customdataset for Zone + non-AURN near real-time only', () => {
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.datasourceGroups = [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ]
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(result).toEqual({ redirect: '/customdataset' })
+      expect(h.view).not.toHaveBeenCalled()
     })
 
     test('redirects back to customdataset for Zone + other data only', () => {
       session.downloadDatasourceCategoryType = 'other-only'
+      session.datasourceGroups = [
+        { category: 'Other data from Defra', networks: [{ id: 'ukeap' }] }
+      ]
 
       const result = downloadDataselectorController.handler(request, h)
 
@@ -461,7 +485,7 @@ describe('downloadDataselectorController', () => {
       )
     })
 
-    test('renders location-only error for Zone + AURN only when no stations are available', () => {
+    test('renders time period and location error for Zone + AURN only when no stations are available', () => {
       session.downloadDatasourceCategoryType = 'near-realtime-only'
       session.nooflocation = 0
 
@@ -469,10 +493,29 @@ describe('downloadDataselectorController', () => {
 
       expect(result.view).toBe('customdataset/index')
       expect(result.model.error).toBe(true)
-      expect(result.model.errorref1).toBe('Change location')
-      expect(result.model.errorhref1).toBe('/location-aurn/change')
-      expect(result.model.errorref2).toBeUndefined()
-      expect(result.model.errorhref2).toBeUndefined()
+      expect(result.model.errorref1).toBe('Change time period')
+      expect(result.model.errorhref1).toBe('/year-aurn/change')
+      expect(result.model.errorref2).toBe('Change location')
+      expect(result.model.errorhref2).toBe('/location-aurn/change')
+    })
+
+    test('renders time period and location error for non-zone + non-AURN near real-time when no stations are available', () => {
+      session.Location = 'Country'
+      session.downloadDatasourceCategoryType = 'near-realtime-only'
+      session.datasourceGroups = [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ]
+      session.nooflocation = 0
+
+      const result = downloadDataselectorController.handler(request, h)
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(result.view).toBe('customdataset/index')
+      expect(result.model.errorref1).toBe('Change time period')
+      expect(result.model.errorref2).toBe('Change location')
     })
   })
 
