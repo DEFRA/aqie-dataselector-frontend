@@ -73,24 +73,18 @@
             <h2 class="govuk-heading-m govuk-!-margin-bottom-3">{{ viewGraphSummary.title }}</h2>
             <a
               href="{{ viewGraphSummary.href }}"
-              class="govuk-button govuk-button--secondary govuk-button--start govuk-!-margin-bottom-0 govuk-!-padding-right-4"
+              class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-0"
               role="button"
               draggable="false"
             >
-              <svg
-                aria-hidden="true"
-                focusable="false"
-                class="govuk-button__icon"
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M2.5 15.5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M4 13.5V10.5M8 13.5V7.5M12 13.5V5.5M16 13.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M3 3.5H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <span>{{ viewGraphSummary.buttonText }}</span>
+              <span class="aq-button-secondary__icon">
+                <svg focusable="false" aria-hidden="true" width="16" height="20" viewBox="0 0 16 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 15.5H15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M3 13V9.5M6.5 13V5.5M10 13V8M13 13V10.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M2 2.5H14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="aq-button-secondary__text">{{ viewGraphSummary.buttonText }}</span>
             </a>
           </div>
         {% endif %}
