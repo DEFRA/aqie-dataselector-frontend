@@ -66,10 +66,35 @@
             </div>
             </dl>
             
-        {% include "partials/Yearlytab.njk" %}    
-         
+        {% include "partials/Yearlytab.njk" %}
 
- 
+        {% if viewGraphSummary %}
+          <div class="govuk-!-margin-top-6 govuk-!-margin-bottom-6">
+            <h2 class="govuk-heading-m govuk-!-margin-bottom-3">{{ viewGraphSummary.title }}</h2>
+            <a
+              href="{{ viewGraphSummary.href }}"
+              class="govuk-button govuk-button--secondary govuk-button--start govuk-!-margin-bottom-0 govuk-!-padding-right-4"
+              role="button"
+              draggable="false"
+            >
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                class="govuk-button__icon"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M2.5 15.5H17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M4 13.5V10.5M8 13.5V7.5M12 13.5V5.5M16 13.5V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M3 3.5H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span>{{ viewGraphSummary.buttonText }}</span>
+            </a>
+          </div>
+        {% endif %}
+
   <script nonce="{{ nonce }}">
   (function () {
     var base = window.devicePixelRatio || 1;

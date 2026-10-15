@@ -91,6 +91,23 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
+  it('should include graph summary CTA metadata for the monitoring station summary', async () => {
+    request.params.download = undefined
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        viewGraphSummary: {
+          title: 'View graph and pollutant summary',
+          buttonText: 'View graph and pollutant summary',
+          href: '/stationdetails/graph-summary'
+        }
+      })
+    )
+  })
+
   it('should handle download requests and set downloadresult', async () => {
     request.params.download = 2024
     request.params.pollutant = 'NO2'

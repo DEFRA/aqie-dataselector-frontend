@@ -256,7 +256,12 @@ const stationDetailsController = {
       tabledata,
       finalyear: selectedYear,
       downloadresult: request.yar.get('downloadresult'),
-      hrefq: resolveStationHrefq(request)
+      hrefq: resolveStationHrefq(request),
+      viewGraphSummary: {
+        title: 'View graph and pollutant summary',
+        buttonText: 'View graph and pollutant summary',
+        href: '/stationdetails/graph-summary'
+      }
     }
 
     return h.view(stationDetailsView, viewData)
