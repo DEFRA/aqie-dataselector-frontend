@@ -116,6 +116,20 @@ Install application dependencies:
 npm install
 ```
 
+### Dev API key
+
+Locally the app calls the CDP dev backends, which need an API key. Without it, location search returns no results.
+
+1. Log in to the CDP portal with your profile and generate a dev API key. The key expires after 24 hours, so you need to repeat this daily.
+2. Add it to your `.env` file:
+
+```bash
+# .env
+OS_NAMES_DEV_API_KEYS=<your-dev-api-key>
+```
+
+3. Restart the application.
+
 ### Development
 
 To run the application in `development` mode run:
