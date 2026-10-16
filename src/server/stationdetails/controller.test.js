@@ -1,4 +1,8 @@
-import { stationDetailsController } from './controller.js'
+import {
+  stationDetailsController,
+  graphSummaryController,
+  buildViewGraphSummary
+} from './controller.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
 
@@ -463,6 +467,125 @@ describe('stationDetailsController.handler', () => {
       'stationdetails/index',
       expect.objectContaining({
         maptoggletips: null
+      })
+    )
+  })
+})
+
+describe('buildViewGraphSummary', () => {
+  const buildRequest = ({ session = {}, query, payload, method } = {}) => ({
+    method,
+    query,
+    payload,
+    yar: { get: jest.fn((key) => session[key]), set: jest.fn() }
+  })
+
+  beforeEach(() => {
+    config.set('featureFlags.viewGraphSummary', true)
+  })
+
+  it('returns null when the feature flag is off', () => {
+    config.set('featureFlags.viewGraphSummary', false)
+
+    expect(buildViewGraphSummary(buildRequest())).toBeNull()
+  })
+
+  it.each([
+    ['last24hours', 'last24hours'],
+    ['daily', 'last24hours'],
+    ['daqi', 'last24hours'],
+    ['last7days', 'last7days'],
+    ['year', 'last7days']
+  ])('maps the %s period to %s', (period, expected) => {
+    const result = buildViewGraphSummary(
+      buildRequest({ query: { period }, session: { SiteId: 'site1' } })
+    )
+
+    expect(result.href).toBe(
+      `/stationdetails/graph-summary?stationId=site1&period=${expected}`
+    )
+  })
+
+  it('reads the period from the payload', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ payload: { period: 'daily' }, session: { SiteId: 's' } })
+    )
+
+    expect(result.href).toContain('period=last24hours')
+  })
+
+  it('defaults to last7days when a year is selected', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ session: { SiteId: 's', selectedYear: 2024 } })
+    )
+
+    expect(result.href).toContain('period=last7days')
+  })
+
+  it('defaults to last24hours when no period or year is known', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ session: { SiteId: 's' } })
+    )
+
+    expect(result.href).toContain('period=last24hours')
+  })
+
+  it('uses and stores the station id from a POST payload', () => {
+    const request = buildRequest({
+      method: 'post',
+      payload: { stationId: 'posted' }
+    })
+
+    const result = buildViewGraphSummary(request)
+
+    expect(result.href).toContain('stationId=posted')
+    expect(request.yar.set).toHaveBeenCalledWith('SiteId', 'posted')
+  })
+
+  it('uses an empty station id when none is available', () => {
+    const result = buildViewGraphSummary(buildRequest())
+
+    expect(result.href).toContain('stationId=&')
+  })
+})
+
+describe('graphSummaryController.handler', () => {
+  const h = { view: jest.fn().mockReturnValue('view') }
+  const station = { id: 'site1' }
+  const buildRequest = (query) => ({
+    query,
+    yar: {
+      get: jest.fn((key) => ({ stationdetails: station, SiteId: 'sess' })[key])
+    }
+  })
+
+  it('renders the graph summary view using query values', () => {
+    const result = graphSummaryController.handler(
+      buildRequest({ stationId: 'q1', period: 'last7days' }),
+      h
+    )
+
+    expect(result).toBe('view')
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/graph-summary',
+      expect.objectContaining({
+        stationdetails: station,
+        stationId: 'q1',
+        period: 'last7days',
+        periodLabel: 'last 7 days'
+      })
+    )
+  })
+
+  it('falls back to the session station and last 24 hours', () => {
+    graphSummaryController.handler(buildRequest(undefined), h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/graph-summary',
+      expect.objectContaining({
+        stationId: 'sess',
+        period: 'last24hours',
+        periodLabel: 'last 24 hours'
       })
     )
   })
