@@ -23,6 +23,8 @@ import {
 
 const logger = createLogger()
 
+const GRAPH_SUMMARY_TITLE = 'View graph and pollutant summary'
+
 /**
  * Resolves the station id from the POST payload or the session, persisting
  * it to the session when it arrives via payload.
@@ -134,8 +136,8 @@ function buildViewGraphSummary(request) {
     return null
   }
   return {
-    title: 'View graph and pollutant summary',
-    buttonText: 'View graph and pollutant summary',
+    title: GRAPH_SUMMARY_TITLE,
+    buttonText: GRAPH_SUMMARY_TITLE,
     href: resolveGraphSummaryHref(request)
   }
 }
@@ -322,8 +324,8 @@ const graphSummaryController = {
     const period = request.query?.period || 'last24hours'
 
     return h.view('stationdetails/graph-summary', {
-      pageTitle: 'View graph and pollutant summary',
-      title: 'View graph and pollutant summary',
+      pageTitle: GRAPH_SUMMARY_TITLE,
+      title: GRAPH_SUMMARY_TITLE,
       stationdetails: station,
       stationId,
       period,
