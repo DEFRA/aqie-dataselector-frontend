@@ -78,6 +78,14 @@ GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
 
 The application only injects the GTM script when a user has accepted analytics cookies. GA4 measurement IDs are configured as tags inside the GTM container, not in this application.
 
+## Feature toggles
+
+| Environment variable         | Default | Description                                                                                                                                                              |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details page and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
+
+The flag is read at startup, so restart the server after changing it.
+
 ## Proxy
 
 We are using forward-proxy which is set up by default. To make use of this: `import { fetch } from 'undici'` then because of the `setGlobalDispatcher(new ProxyAgent(proxyUrl))` calls will use the ProxyAgent Dispatcher
