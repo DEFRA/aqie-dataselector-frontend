@@ -135,6 +135,27 @@
     </div>
   </div>
 
+  {% if viewGraphSummary %}
+    <div class="govuk-!-margin-top-6 govuk-!-margin-bottom-6">
+      <h2 class="govuk-heading-m govuk-!-margin-bottom-3">{{ viewGraphSummary.title }}</h2>
+      <a
+        href="{{ viewGraphSummary.href }}"
+        class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-0"
+        role="button"
+        draggable="false"
+      >
+        <span class="aq-button-secondary__icon">
+          <svg focusable="false" aria-hidden="true" width="16" height="20" viewBox="0 0 16 20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 15.5H15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M3 13V9.5M6.5 13V5.5M10 13V8M13 13V10.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M2 2.5H14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="aq-button-secondary__text">{{ viewGraphSummary.buttonText }}</span>
+      </a>
+    </div>
+  {% endif %}
+
   <h2 id="year-heading" class="govuk-heading-l govuk-!-margin-top-7 govuk-!-margin-bottom-6">Download data for {{ finalyear }}</h2>
 
   <details class="govuk-details">

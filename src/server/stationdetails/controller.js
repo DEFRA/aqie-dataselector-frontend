@@ -125,6 +125,22 @@ function resolveGraphSummaryHref(request) {
 }
 
 /**
+ * CTA view model, or null when the feature flag is off.
+ * @param {object} request
+ * @returns {{title: string, buttonText: string, href: string} | null}
+ */
+function buildViewGraphSummary(request) {
+  if (!config.get('featureFlags.viewGraphSummary')) {
+    return null
+  }
+  return {
+    title: 'View graph and pollutant summary',
+    buttonText: 'View graph and pollutant summary',
+    href: resolveGraphSummaryHref(request)
+  }
+}
+
+/**
  * Validates session data and locates the requested station, returning either
  * an error response or the resolved station.
  * @param {object} request
@@ -270,13 +286,7 @@ const stationDetailsController = {
     request.yar.set('tabledata', tabledata)
 
     // Prepare view data
-    const viewGraphSummary = config.get('featureFlags.viewGraphSummary')
-      ? {
-        title: 'View graph and pollutant summary',
-        buttonText: 'View graph and pollutant summary',
-        href: resolveGraphSummaryHref(request)
-      }
-      : null
+    const viewGraphSummary = buildViewGraphSummary(request)
 
     const viewData = {
       pageTitle: english.stationdetails.pageTitle,
@@ -323,4 +333,8 @@ const graphSummaryController = {
   }
 }
 
-export { stationDetailsController, graphSummaryController }
+export {
+  stationDetailsController,
+  graphSummaryController,
+  buildViewGraphSummary
+}
