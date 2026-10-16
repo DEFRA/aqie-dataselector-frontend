@@ -329,8 +329,7 @@ const graphSummaryController = {
       stationdetails: station,
       stationId,
       period,
-      periodLabel:
-        period === 'last7days' ? 'last 7 days' : 'last 24 hours'
+      periodLabel: period === 'last7days' ? 'last 7 days' : 'last 24 hours'
     })
   }
 }

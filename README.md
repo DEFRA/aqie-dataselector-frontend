@@ -80,8 +80,8 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                              |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Environment variable         | Default | Description                                                                                                                                                               |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details page and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
 
 The flag is read at startup, so restart the server after changing it.
