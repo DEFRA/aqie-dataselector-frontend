@@ -130,6 +130,14 @@ export const config = convict({
     default: isProduction,
     env: 'ENABLE_METRICS'
   },
+  featureFlags: {
+    viewGraphSummary: {
+      doc: 'Show the view graph and pollutant summary CTA on station detail pages',
+      format: Boolean,
+      default: true,
+      env: 'VIEW_GRAPH_SUMMARY_ENABLED'
+    }
+  },
   session: {
     cache: {
       engine: {
