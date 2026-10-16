@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
   parseDateFormat,
@@ -269,6 +270,14 @@ const stationDetailsController = {
     request.yar.set('tabledata', tabledata)
 
     // Prepare view data
+    const viewGraphSummary = config.get('featureFlags.viewGraphSummary')
+      ? {
+        title: 'View graph and pollutant summary',
+        buttonText: 'View graph and pollutant summary',
+        href: resolveGraphSummaryHref(request)
+      }
+      : null
+
     const viewData = {
       pageTitle: english.stationdetails.pageTitle,
       title: english.stationdetails.title,
@@ -289,11 +298,7 @@ const stationDetailsController = {
       finalyear: selectedYear,
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request),
-      viewGraphSummary: {
-        title: 'View graph and pollutant summary',
-        buttonText: 'View graph and pollutant summary',
-        href: resolveGraphSummaryHref(request)
-      }
+      viewGraphSummary
     }
 
     return h.view(stationDetailsView, viewData)

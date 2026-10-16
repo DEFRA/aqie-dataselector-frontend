@@ -1,5 +1,6 @@
 import { stationDetailsController } from './controller.js'
 import axios from 'axios'
+import { config } from '~/src/config/config.js'
 
 jest.mock('axios')
 
@@ -93,6 +94,7 @@ describe('stationDetailsController.handler', () => {
 
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
     request.params.download = undefined
+    config.set('featureFlags.viewGraphSummary', true)
 
     await stationDetailsController.handler(request, h)
 
@@ -105,6 +107,18 @@ describe('stationDetailsController.handler', () => {
           href: expect.stringContaining('period=last7days')
         })
       })
+    )
+  })
+
+  it('should not include graph summary CTA when the feature flag is off', async () => {
+    request.params.download = undefined
+    config.set('featureFlags.viewGraphSummary', false)
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ viewGraphSummary: null })
     )
   })
 
