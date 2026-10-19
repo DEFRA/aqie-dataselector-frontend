@@ -8,9 +8,7 @@ const fourHoursMs = 14400000
 const oneWeekMs = 604800000
 
 const isProduction = process.env.NODE_ENV === 'production'
-const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
-const longpass = 'the-password-must-be-at-least-32-characters-long'
 export const config = convict({
   serviceVersion: {
     doc: 'The service version, this variable is injected into your docker container in CDP environments',
@@ -71,11 +69,6 @@ export const config = convict({
     format: Boolean,
     default: isDevelopment
   },
-  isTest: {
-    doc: 'If this application running in the test environment',
-    format: Boolean,
-    default: isTest
-  },
 
   log: {
     enabled: {
@@ -124,12 +117,6 @@ export const config = convict({
     default: isProduction,
     env: 'ENABLE_SECURE_CONTEXT'
   },
-  isMetricsEnabled: {
-    doc: 'Enable metrics reporting',
-    format: Boolean,
-    default: isProduction,
-    env: 'ENABLE_METRICS'
-  },
   session: {
     cache: {
       engine: {
@@ -159,9 +146,10 @@ export const config = convict({
         env: 'SESSION_COOKIE_TTL'
       },
       password: {
-        doc: 'session cookie password',
+        doc: 'session cookie password - must be supplied via SESSION_COOKIE_PASSWORD env var (min 32 chars), no default is provided for security reasons',
         format: String,
-        default: longpass,
+        default: null,
+        nullable: true,
         env: 'SESSION_COOKIE_PASSWORD',
         sensitive: true
       },
@@ -174,12 +162,6 @@ export const config = convict({
     }
   },
   redis: /** @type {Schema<RedisConfig>} */ ({
-    enabled: {
-      doc: 'Enable Redis on your Frontend. Before you enable Redis, contact the CDP platform team as we need to set up config so you can run Redis in CDP environments',
-      format: Boolean,
-      default: false,
-      env: 'REDIS_ENABLED'
-    },
     host: {
       doc: 'Redis cache host',
       format: String,
@@ -210,12 +192,6 @@ export const config = convict({
       format: Boolean,
       default: !isProduction,
       env: 'USE_SINGLE_INSTANCE_CACHE'
-    },
-    backendApiUrl: {
-      doc: 'Backend api url',
-      format: String,
-      default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
-      env: 'BACKEND_API_URL'
     },
 
     useTLS: {
@@ -299,7 +275,7 @@ export const config = convict({
   DevApiKey: {
     doc: 'Common API key for all dev endpoints (localhost only)',
     format: String,
-    default: '',
+    default: 'YsQq068F7Cjq24P71nt5ddugkZzUYuKY',
     sensitive: true,
     env: 'OS_NAMES_DEV_API_KEYS'
   },
@@ -309,11 +285,6 @@ export const config = convict({
     default:
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-location-backend/osnameplaces',
     env: 'OS_LOCATION_DEV_URL'
-  },
-  localstackEndpoint: {
-    doc: 'Localstack endpoint',
-    format: String,
-    default: 'http://localhost:3000'
   },
   osMonitoringStationDevUrl: {
     doc: 'Monitoring station API URL for localhost development',
@@ -426,71 +397,17 @@ export const config = convict({
     format: String,
     default: 'LAQMAPIPARTNERID',
     env: 'LAQMAPIPARTNERID'
-  },
-
-  // laqmAPIkey: {
-  //   doc: 'laqmAPIkey',
-  //   format: String,
-  //   default: '',
-  //   env: 'LAQMAPIKEY'
-  // },
-  // laqmAPIPartnerId: {
-  //   doc: 'laqmAPIPartnerId',
-  //   format: String,
-  //   default: '',
-  //   env: 'LAQMAPIPARTNERID'
-  // },
-
-  aws: {
-    s3BucketName: {
-      doc: 'AWS S3 bucket name for CDP uploader',
-      format: String,
-      default: 'dev-aqie-historicaldata-backend-c63f2',
-      env: 'AWS_S3_BUCKET_NAME'
-    }
-  },
-  cdpUploaderUrl: {
-    doc: 'CDP Uploader service URL for initiating uploads and checking status',
-    format: String,
-    default: `https://cdp-uploader.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`,
-    env: 'CDP_UPLOADER_URL'
-  },
-  backendApiUrl: {
-    doc: 'Backend API URL for document analysis (getS3 and summarize endpoints)',
-    format: String,
-    default: 'https://aiqe-dataservice-backend.dev.cdp-int.defra.cloud',
-    env: 'BACKEND_API_URL'
-  },
-  analysisTypeMapping: {
-    doc: 'Mapping of user emails to allowed analysis types (red, green, icb, eb)',
-    format: '*',
-    default: { red: [], green: [], icb: [], eb: [] },
-    env: 'ANALYSIS_TYPE_MAPPING'
-  },
-  aqiePassword: {
-    doc: 'password for daqie',
-    format: '*',
-    default: 'airqualitydataset',
-    sensitive: true,
-    env: 'AQIE_PASSWORD'
-  },
-  cookiePassword: {
-    doc: 'password for  cookie',
-    format: '*',
-    default: longpass,
-    sensitive: true,
-    env: 'COOKIE_PASSWORD'
-  },
-  sessionCookiePassword: {
-    doc: 'session password for  cookie',
-    format: '*',
-    default: longpass,
-    sensitive: true,
-    env: 'SESSION_COOKIE_PASSWORD'
   }
 })
 
 config.validate({ allowed: 'strict' })
+
+if (!config.get('session.cookie.password')) {
+  throw new Error(
+    'SESSION_COOKIE_PASSWORD environment variable must be set (min 32 characters). ' +
+      'No default is provided because a hardcoded session secret is a security risk.'
+  )
+}
 
 /**
  * @import { Schema, SchemaObj } from 'convict'
