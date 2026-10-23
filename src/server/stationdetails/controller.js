@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
   parseDateFormat,
@@ -10,6 +11,7 @@ import {
   fetchYearTable,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
+import { buildMockLast7DaysSummary } from '~/src/server/common/helpers/last-7-days-mock.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
@@ -263,4 +265,62 @@ const stationDetailsController = {
   }
 }
 
-export { stationDetailsController }
+/**
+ * Hapi route handler for /stationdetails/last-7-days. Resolves the requested
+ * station the same way as /stationdetails, then renders the 7-day tab.
+ *
+ * TEMPORARY: uses buildMockLast7DaysSummary instead of a real fetch, until
+ * aqie-back-end's Ricardo API dependency is reachable again (see
+ * LAST_7_DAYS_FROM_AQIE_BACKEND_PLAN.md). Replace with a call to
+ * fetchLast7DaysSummary once that's unblocked.
+ * @param {object} request
+ * @param {object} h
+ * @returns {object} Hapi response
+ */
+const last7DaysController = {
+  handler: (request, h) => {
+    const accessDenied = checkAccessDenied(request, h)
+    if (accessDenied) {
+      return accessDenied
+    }
+
+    const stationId = resolveStationId(request)
+    const { response: stationError, station } = resolveStation(
+      request,
+      stationId,
+      h
+    )
+    if (stationError) {
+      return stationError
+    }
+
+    request.yar.set('stationdetails', station)
+
+    const years = buildYearsArray()
+    const lat = station.location.coordinates[0]
+    const lon = station.location.coordinates[1]
+
+    const summary = buildMockLast7DaysSummary(station.pollutants)
+    const updatedTime = parseDateFormat(summary.latestReadingAt)
+
+    const viewData = {
+      pageTitle: last7DaysContent.pageTitle,
+      serviceName: english.stationdetails.serviceName,
+      stationdetails: station,
+      maplocation: buildMapLocation(lat, lon),
+      updatedTime,
+      displayBacklink: true,
+      fullSearchQuery: request.yar.get('fullSearchQuery')?.value,
+      maptoggletips: getToggletip(station.siteType),
+      years,
+      selectedYear: request.yar.get('selectedYear'),
+      activePeriod: 'last7days',
+      last7Days: summary,
+      hrefq: resolveStationHrefq(request)
+    }
+
+    return h.view('stationdetails/last-7-days', viewData)
+  }
+}
+
+export { stationDetailsController, last7DaysController }

@@ -1,4 +1,4 @@
-import { stationDetailsController } from './controller.js'
+import { stationDetailsController, last7DaysController } from './controller.js'
 import axios from 'axios'
 
 jest.mock('axios')
@@ -434,5 +434,105 @@ describe('stationDetailsController.handler', () => {
         maptoggletips: null
       })
     )
+  })
+})
+
+describe('last7DaysController.handler', () => {
+  let h, request, station
+
+  beforeEach(() => {
+    h = {
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+
+    station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5', 'Nitrogen dioxide']
+    }
+
+    request = {
+      method: 'get',
+      params: {},
+      payload: undefined,
+      headers: {
+        referer: 'http://localhost:3010/stationdetails'
+      },
+      info: {
+        host: 'localhost:3010'
+      },
+      yar: {
+        get: jest.fn((key) => {
+          const session = {
+            MonitoringstResult: { getmonitoringstation: [station] },
+            selectedYear: 2024,
+            fullSearchQuery: { value: 'mockFullSearchQuery' },
+            nooflocation: 'multiple',
+            SiteId: 'site123'
+          }
+          return session[key]
+        }),
+        set: jest.fn()
+      }
+    }
+  })
+
+  it("renders the 7-day view with mock data for the station's pollutants", () => {
+    const result = last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        pageTitle: 'Last 7 days',
+        serviceName: 'Get air pollution data',
+        stationdetails: station,
+        displayBacklink: true,
+        fullSearchQuery: 'mockFullSearchQuery',
+        years: expect.any(Array),
+        hrefq: '/location',
+        last7Days: expect.objectContaining({
+          periodStart: expect.any(String),
+          periodEnd: expect.any(String),
+          latestReadingAt: expect.any(String),
+          pollutants: [
+            expect.objectContaining({ pollutantName: 'PM2.5' }),
+            expect.objectContaining({ pollutantName: 'Nitrogen dioxide' })
+          ]
+        })
+      })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('returns 404 if request has no valid referer (direct access)', () => {
+    request.headers = {}
+    last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({ statusCode: '404' })
+    )
+    expect(h.code).toHaveBeenCalledWith(404)
+  })
+
+  it('returns 404 if station is not found in monitoring result', () => {
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [{ id: 'other' }] },
+        SiteId: 'site123'
+      }
+      return session[key]
+    })
+
+    const result = last7DaysController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Station not found')
+    expect(h.code).toHaveBeenCalledWith(404)
+    expect(result).toBe(h.response.mock.results[0].value)
   })
 })

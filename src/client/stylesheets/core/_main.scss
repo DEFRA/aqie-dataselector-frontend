@@ -48,6 +48,13 @@
   color: #505a5f !important;
 }
 
+// "Last 7 days" tab notice - data capture bands reuse the same colours as
+// the version-17 prototype's _status.scss (.not-verified / .verified).
+.not-verified {
+  border-left: 10px solid #f47738;
+  background-color: #f9e2d7;
+}
+
 .defra-aq-features {
     &__list {
         display: flex;

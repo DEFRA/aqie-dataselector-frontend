@@ -1,10 +1,7 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
-import {
-  YEAR_2017,
-  YEAR_2018
-} from '~/src/server/common/constants/magic-numbers.js'
+import { YEAR_2017 } from '~/src/server/common/constants/magic-numbers.js'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { getJson } from '~/src/server/common/helpers/api-client.js'
@@ -179,13 +176,13 @@ export function getCurrentYear() {
 }
 
 /**
- * Generates an array of years from 2018 to the current year.
+ * Generates an array of years from the current year down to 2018 (newest first).
  * @returns {number[]}
  */
 export function buildYearsArray() {
   return Array.from(
     { length: getCurrentYear() - YEAR_2017 },
-    (_, i) => YEAR_2018 + i
+    (_, i) => getCurrentYear() - i
   )
 }
 

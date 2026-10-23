@@ -1,0 +1,34 @@
+{% from "toggletip/macro.njk" import toggletip %}
+
+{#
+  Shared macros for the pollutant-levels tables (yearlytable.njk and
+  last7daystable.njk). An entry is `{ limit, label, text }` from
+  pollutant-toggletips.js or last-7-days.js; `limit` is optional - omitting it
+  suppresses the "Above limit" tag (used by last7daystable.njk, which has no
+  per-calendar-year allowance to compare a 7-day count against).
+#}
+
+{% macro limitToggletip(entry) %}
+  {{ toggletip('', entry.label, entry.text, 'Trend') }}
+{% endmacro %}
+
+{% macro aboveLimitTag() %}
+  <span class="defra-aq-levels-table__cell--data">
+    <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
+  </span>
+{% endmacro %}
+
+{#
+  An exceedance cell: the count, plus its toggletip and an "Above limit" tag
+  when the entry has a limit and the count is over it.
+#}
+{% macro exceedanceCell(modifier, count, entry) %}
+  <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--{{ modifier }}">
+    {% if entry %}
+      <span class="defra-aq-value-with-tip">{{ count }}{{ limitToggletip(entry) }}</span>
+      {% if entry.limit and count > entry.limit %}{{ aboveLimitTag() }}{% endif %}
+    {% else %}
+      {{ count }}
+    {% endif %}
+  </td>
+{% endmacro %}

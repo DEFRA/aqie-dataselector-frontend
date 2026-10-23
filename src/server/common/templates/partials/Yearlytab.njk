@@ -24,6 +24,9 @@
  <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
+  <li class="moj-sub-navigation__item">
+    <a class="moj-sub-navigation__link" href="/stationdetails/last-7-days">Last 7 days</a>
+  </li>
   {% for year in years %}
     <li class="moj-sub-navigation__item">
  <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
