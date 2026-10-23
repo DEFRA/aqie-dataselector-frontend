@@ -1,0 +1,26 @@
+{% extends 'layouts/page.njk' %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">{{ heading }}</h1>
+
+      <p class="govuk-body govuk-!-margin-bottom-4">{{ dates }}</p>
+
+      <nav class="moj-sub-navigation" aria-label="{{ periodNavigationLabel }}">
+        <ul class="moj-sub-navigation__list">
+          {% for tab in periodTabs %}
+            <li class="moj-sub-navigation__item">
+              <a class="moj-sub-navigation__link" href="{{ tab.href }}"{% if tab.isCurrent %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      {{ appVerificationBanner({ text: verificationBanner }) }}
+
+      <p class="govuk-body-s">{{ legalLimits }}</p>
+    </div>
+  </div>
+{% endblock %}

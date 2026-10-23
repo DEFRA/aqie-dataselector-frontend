@@ -199,6 +199,19 @@ export const english = {
       d: 'Pollutants'
     }
   },
+  graphsummary: {
+    callToAction: {
+      buttonText: 'View graph and pollutant summary'
+    },
+    periods: {
+      last24hours: 'Last 24 hours',
+      last7days: 'Last 7 days'
+    },
+    periodNavigationLabel: 'Time period',
+    verificationBanner: 'Data has not been checked and verified',
+    legalLimits:
+      'The pollution levels shown are measured against UK legal limits.'
+  },
   phaseBanner: {
     paragraphs: {
       a: 'Beta',

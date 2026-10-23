@@ -13,6 +13,7 @@ import {
   isInternalNavigation,
   renderNotFound
 } from '~/src/server/common/helpers/navigation-helpers.js'
+import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
 
 function handleDownloadParams(request) {
   if (request.params.download) {
@@ -91,7 +92,11 @@ function buildViewData(request, stationDetails, mapLocation, dateContext) {
     hrefq:
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location/${request?.yar?.get('locationID')}`
+        : `/location/${request?.yar?.get('locationID')}`,
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: stationDetails.id,
+      nojs: true
+    })
   }
 }
 

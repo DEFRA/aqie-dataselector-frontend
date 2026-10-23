@@ -1,5 +1,6 @@
 import { stationDetailsNojsController } from '~/src/server/stationDetailsNojs/controller.js'
 import { english } from '~/src/server/data/en/homecontent.js'
+import { config } from '~/src/config/config.js'
 import {
   parseDateFormat,
   getToggletip,
@@ -556,6 +557,39 @@ describe('stationDetailsNojsController', () => {
           title: { title1: 'Stations summary details' }
         })
       )
+    })
+
+    describe('graph summary CTA', () => {
+      it('should link to the graph summary page, flagged as the no-JS journey', async () => {
+        config.set('featureFlags.viewGraphSummary', true)
+
+        await stationDetailsNojsController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith(
+          'stationDetailsNojs/index',
+          expect.objectContaining({
+            viewGraphSummary: {
+              buttonText: 'View graph and pollutant summary',
+              href: '/stationdetails/graph-summary?stationId=site123&period=last24hours&nojs=true'
+            }
+          })
+        )
+      })
+
+      it('should not pass a CTA when the feature flag is off', async () => {
+        config.set('featureFlags.viewGraphSummary', false)
+
+        await stationDetailsNojsController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith(
+          'stationDetailsNojs/index',
+          expect.objectContaining({ viewGraphSummary: null })
+        )
+      })
+
+      afterEach(() => {
+        config.set('featureFlags.viewGraphSummary', true)
+      })
     })
 
     it('should handle station with different siteType', async () => {

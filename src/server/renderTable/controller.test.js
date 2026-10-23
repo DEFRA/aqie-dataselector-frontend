@@ -18,7 +18,9 @@ describe('rendertablecontroller.handler', () => {
       params: { year: 2024 },
       yar: {
         get: jest.fn((key) => {
-          if (key === 'stationdetails') return { localSiteID: 'site123' }
+          if (key === 'stationdetails') {
+            return { id: 'BirminghamA4540Roadside', localSiteID: 'site123' }
+          }
           if (key === 'selectedYear') return 2024
           if (key === 'tabledata') return { some: 'data' }
           return undefined
@@ -27,10 +29,10 @@ describe('rendertablecontroller.handler', () => {
       }
     }
     nunjucks.render.mockReturnValue('<table>content</table>')
+    config.set('featureFlags.viewGraphSummary', true)
   })
 
   it('renders table with valid data', async () => {
-    config.set('featureFlags.viewGraphSummary', true)
     axios.post.mockResolvedValue({ data: { some: 'data' } })
 
     await rendertablecontroller.handler(request, h)
@@ -40,13 +42,26 @@ describe('rendertablecontroller.handler', () => {
     expect(nunjucks.render).toHaveBeenCalledWith('partials/yearlytable.njk', {
       tabledata: { some: 'data' },
       finalyear: 2024,
-      viewGraphSummary: expect.objectContaining({
-        href: expect.stringContaining('/stationdetails/graph-summary')
-      }),
+      viewGraphSummary: {
+        buttonText: 'View graph and pollutant summary',
+        href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours'
+      },
       isPartial: true
     })
     expect(h.response).toHaveBeenCalledWith('<table>content</table>')
     expect(h.code).toHaveBeenCalledWith(200)
+  })
+
+  it('omits the graph summary CTA when the feature flag is off', async () => {
+    config.set('featureFlags.viewGraphSummary', false)
+    axios.post.mockResolvedValue({ data: { some: 'data' } })
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/yearlytable.njk',
+      expect.objectContaining({ viewGraphSummary: null })
+    )
   })
 
   it('handles null tabledata', async () => {
@@ -81,6 +96,11 @@ describe('rendertablecontroller.handler', () => {
     await rendertablecontroller.handler(request, h)
     // apiparams.siteId will be null, but should not throw
     expect(request.yar.set).toHaveBeenCalledWith('selectedYear', 2024)
+    // with no station there is nothing for the graph summary CTA to link to
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/yearlytable.njk',
+      expect.objectContaining({ viewGraphSummary: null })
+    )
   })
 
   it('handles thrown error in main try/catch', async () => {

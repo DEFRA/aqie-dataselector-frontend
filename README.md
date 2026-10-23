@@ -80,11 +80,23 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                               |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details page and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
+| Environment variable         | Default | Description                                                                                                                                                                                              |
+| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details pages (with and without JavaScript) and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
 
 The flag is read at startup, so restart the server after changing it.
+
+### Graph and pollutant summary page
+
+`GET /stationdetails/graph-summary` is reached from the "View graph and pollutant summary" button on a station page. It takes these query parameters:
+
+| Parameter   | Required | Description                                                                                                                                    |
+| ----------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stationId` | yes      | The station's `id` from the user's search results in the session. A station the user has not searched for, or an expired session, gives a 404. |
+| `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                         |
+| `nojs`      | no       | `true` when the user came from the no-JavaScript station page, so that Back returns to that page. Defaults to `false`.                         |
+
+The page works without JavaScript: the tabs are links and nothing is drawn client side. The date or date range under the heading is worked out from the server clock, in UTC, so it is not yet tied to the readings shown. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
 
 ## Proxy
 
