@@ -1,6 +1,7 @@
 import { rendertablecontroller } from '~/src/server/renderTable/controller.js'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
+import { config } from '~/src/config/config.js'
 
 jest.mock('axios')
 jest.mock('nunjucks')
@@ -29,6 +30,7 @@ describe('rendertablecontroller.handler', () => {
   })
 
   it('renders table with valid data', async () => {
+    config.set('featureFlags.viewGraphSummary', true)
     axios.post.mockResolvedValue({ data: { some: 'data' } })
 
     await rendertablecontroller.handler(request, h)
@@ -38,6 +40,9 @@ describe('rendertablecontroller.handler', () => {
     expect(nunjucks.render).toHaveBeenCalledWith('partials/yearlytable.njk', {
       tabledata: { some: 'data' },
       finalyear: 2024,
+      viewGraphSummary: expect.objectContaining({
+        href: expect.stringContaining('/stationdetails/graph-summary')
+      }),
       isPartial: true
     })
     expect(h.response).toHaveBeenCalledWith('<table>content</table>')
