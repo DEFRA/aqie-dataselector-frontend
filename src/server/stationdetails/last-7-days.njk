@@ -7,7 +7,7 @@
 
 <h2 id="last7days-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">{{ last7DaysContent.heading }}</h2>
 
-{% if last7Days.pollutants %}
+{% if last7Days.pollutants.length %}
   <p id="last7days-duration" class="govuk-body govuk-!-margin-bottom-3">
     {{ last7Days.periodStart | formatDate('d MMMM') }} to {{ last7Days.periodEnd | formatDate('d MMMM yyyy') }}
   </p>

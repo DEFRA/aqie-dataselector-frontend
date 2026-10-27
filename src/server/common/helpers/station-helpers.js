@@ -166,6 +166,26 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
+ * Fetches a station's hourly pollutant history for the last 7 days from
+ * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
+ * siteId, e.g. "UKA00315" - the short localSiteID form 400s). See
+ * LAST_7_DAYS_FROM_AQIE_BACKEND_PLAN.md.
+ * @param {{ siteId: string }} params
+ * @returns {Promise<{siteId: string, period: string, from: string, to: string,
+ *   truncated: boolean, pollutants: Record<string, Array<{time: string, value: number|null}>>}|null>}
+ */
+export async function fetchLast7DaysSummary({ siteId }) {
+  const result = await getJson({
+    devUrlKey: 'monitoringStationHistoryDevUrl',
+    urlKey: 'monitoringStationHistoryUrl',
+    path: '',
+    params: { siteId, period: '7d' },
+    label: 'Monitoring station history API'
+  })
+  return result ?? null
+}
+
+/**
  * The current calendar year. Templates compare the selected year against this
  * to decide whether a year is complete ("1 January to 31 December") or still
  * running ("1 January to <today>").

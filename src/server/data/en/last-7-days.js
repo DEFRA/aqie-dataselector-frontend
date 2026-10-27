@@ -33,7 +33,8 @@ const last7DaysContent = {
   pageTitle: 'Last 7 days',
   heading: 'Air pollution summary: last 7 days',
   notice: 'Data has not been checked and verified',
-  noDataMessage: 'Could not load data for the last 7 days.'
+  noDataMessage: 'Could not load data for the last 7 days.',
+  noMappingMessage: 'The last 7 days view is not available for this station.'
 }
 
 export { last7DaysContent, last7DaysLimits }

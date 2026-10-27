@@ -453,7 +453,8 @@ describe('last7DaysController.handler', () => {
       siteType: 'Urban Traffic',
       name: 'StationName',
       location: { coordinates: [1.23, 4.56] },
-      pollutants: ['PM2.5', 'Nitrogen dioxide']
+      pollutants: ['PM2.5', 'Nitrogen dioxide'],
+      siteId: 'UKA00315'
     }
 
     request = {
@@ -482,9 +483,23 @@ describe('last7DaysController.handler', () => {
     }
   })
 
-  it("renders the 7-day view with mock data for the station's pollutants", () => {
-    const result = last7DaysController.handler(request, h)
+  it("renders the 7-day view with real data for the station's pollutants", async () => {
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-08-19T00:00:00.000Z',
+        to: '2026-08-25T23:00:00.000Z',
+        pollutants: {
+          PM25: [{ time: '2026-08-19T01:00:00.000Z', value: 8 }],
+          NO2: [{ time: '2026-08-19T01:00:00.000Z', value: 52 }]
+        }
+      }
+    })
 
+    const result = await last7DaysController.handler(request, h)
+
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining('siteId=UKA00315')
+    )
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/last-7-days',
       expect.objectContaining({
@@ -496,12 +511,15 @@ describe('last7DaysController.handler', () => {
         years: expect.any(Array),
         hrefq: '/location',
         last7Days: expect.objectContaining({
-          periodStart: expect.any(String),
-          periodEnd: expect.any(String),
-          latestReadingAt: expect.any(String),
+          periodStart: '2026-08-19T00:00:00.000Z',
+          periodEnd: '2026-08-25T23:00:00.000Z',
+          latestReadingAt: '2026-08-25T23:00:00.000Z',
           pollutants: [
-            expect.objectContaining({ pollutantName: 'PM2.5' }),
-            expect.objectContaining({ pollutantName: 'Nitrogen dioxide' })
+            expect.objectContaining({ pollutantName: 'PM2.5', average: 8 }),
+            expect.objectContaining({
+              pollutantName: 'Nitrogen dioxide',
+              average: 52
+            })
           ]
         })
       })
@@ -509,9 +527,36 @@ describe('last7DaysController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
-  it('returns 404 if request has no valid referer (direct access)', () => {
+  it('shows the no-mapping state when the station has no AURN siteId', async () => {
+    delete station.siteId
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(axios.get).not.toHaveBeenCalled()
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        last7Days: { noMapping: true }
+      })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('shows the no-data state when the upstream call fails', async () => {
+    axios.get.mockRejectedValue(new Error('fail'))
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({ last7Days: {} })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('returns 404 if request has no valid referer (direct access)', async () => {
     request.headers = {}
-    last7DaysController.handler(request, h)
+    await last7DaysController.handler(request, h)
 
     expect(h.view).toHaveBeenCalledWith(
       'error/index',
@@ -520,7 +565,7 @@ describe('last7DaysController.handler', () => {
     expect(h.code).toHaveBeenCalledWith(404)
   })
 
-  it('returns 404 if station is not found in monitoring result', () => {
+  it('returns 404 if station is not found in monitoring result', async () => {
     request.yar.get = jest.fn((key) => {
       const session = {
         MonitoringstResult: { getmonitoringstation: [{ id: 'other' }] },
@@ -529,7 +574,7 @@ describe('last7DaysController.handler', () => {
       return session[key]
     })
 
-    const result = last7DaysController.handler(request, h)
+    const result = await last7DaysController.handler(request, h)
 
     expect(h.response).toHaveBeenCalledWith('Station not found')
     expect(h.code).toHaveBeenCalledWith(404)

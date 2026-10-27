@@ -20,7 +20,7 @@
   above the period nav, so this partial starts at the notice banner.
 #}
 
-{% if last7Days.pollutants %}
+{% if last7Days.pollutants.length %}
 
   <div class="govuk-inset-text not-verified">{{ last7DaysContent.notice }}</div>
 
@@ -73,6 +73,10 @@
   </div>
 
   <p id="last7days-hint" class="govuk-hint">The pollution levels shown are measured against <a href="https://www.gov.uk/guidance/air-pollution-uk-legal-limits" class="govuk-link">UK legal limits</a>.</p>
+
+{% elif last7Days.noMapping %}
+
+  <div class="govuk-inset-text">{{ last7DaysContent.noMappingMessage }}</div>
 
 {% else %}
 

@@ -234,6 +234,12 @@ export const config = convict({
     default: `https://aqie-monitoringstation-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringstation/`,
     env: 'OS_NAMES_API_URL_1'
   },
+  monitoringStationHistoryUrl: {
+    doc: 'connect to get 7-day pollutant history from aqie-back-end prod',
+    format: String,
+    default: `https://aqie-back-end.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/monitoringStationHistory`,
+    env: 'MONITORING_STATION_HISTORY_URL'
+  },
   Download_URL: {
     doc: 'connect to get download data prod',
     format: String,
@@ -292,6 +298,13 @@ export const config = convict({
     default:
       'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-monitoringstation-backend/monitoringstation/',
     env: 'OS_MONITORING_STATION_DEV_URL'
+  },
+  monitoringStationHistoryDevUrl: {
+    doc: '7-day pollutant history API URL (aqie-back-end) for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-back-end/monitoringStationHistory',
+    env: 'MONITORING_STATION_HISTORY_DEV_URL'
   },
   tableDevUrl: {
     doc: 'Table (exceedence) API URL for localhost development',
