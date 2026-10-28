@@ -129,14 +129,13 @@ function resolveGraphSummaryHref(request) {
 /**
  * CTA view model, or null when the feature flag is off.
  * @param {object} request
- * @returns {{title: string, buttonText: string, href: string} | null}
+ * @returns {{buttonText: string, href: string} | null}
  */
 function buildViewGraphSummary(request) {
   if (!config.get('featureFlags.viewGraphSummary')) {
     return null
   }
   return {
-    title: GRAPH_SUMMARY_TITLE,
     buttonText: GRAPH_SUMMARY_TITLE,
     href: resolveGraphSummaryHref(request)
   }

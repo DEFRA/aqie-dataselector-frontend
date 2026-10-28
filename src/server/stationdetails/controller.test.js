@@ -105,11 +105,10 @@ describe('stationDetailsController.handler', () => {
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/index',
       expect.objectContaining({
-        viewGraphSummary: expect.objectContaining({
-          title: 'View graph and pollutant summary',
+        viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
           href: expect.stringContaining('period=last7days')
-        })
+        }
       })
     )
   })
