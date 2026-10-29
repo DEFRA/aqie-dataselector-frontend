@@ -1,5 +1,4 @@
 {% extends 'layouts/page.njk' %}
-{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {% block content %}
 
@@ -7,11 +6,6 @@
   <div class="govuk-grid-column-two-thirds-from-desktop">
 
     <h1 class="govuk-heading-xl">{{pageTitle}}</h1>
-
-    {{ govukWarningText({
-      text: "No data currently being received. We are investigating the issue and hope to have it resolved soon.",
-      iconFallbackText: "Warning"
-    }) }}
     </div>
     </div>
 
