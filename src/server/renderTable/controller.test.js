@@ -83,6 +83,73 @@ describe('rendertablecontroller.handler', () => {
     expect(request.yar.set).toHaveBeenCalledWith('selectedYear', 2024)
   })
 
+  it('renders last-7-days partial with formatted duration when year is last-7-days', async () => {
+    request.params = { year: 'last-7-days' }
+    request.yar.get = jest.fn((key) => {
+      if (key === 'stationdetails') {
+        return {
+          localSiteID: 'site123',
+          siteId: 'UKA00315',
+          pollutants: ['PM2.5']
+        }
+      }
+      return undefined
+    })
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-08-19T12:00:00.000Z',
+        to: '2026-08-25T12:00:00.000Z',
+        pollutants: {},
+        summary: {
+          daqiIndex: 2,
+          pollutants: {
+            PM25: {
+              periodAverage: 8.2,
+              dataCapture: {
+                validHours: 168,
+                expectedHours: 168,
+                capturePercentage: 100,
+                isLowDataCapture: false
+              },
+              dailyExceedances: null,
+              hourlyExceedances: null
+            }
+          }
+        }
+      }
+    })
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/last7daystable.njk',
+      expect.objectContaining({
+        last7Days: expect.objectContaining({
+          pollutants: expect.any(Array)
+        }),
+        durationText: '19 August to 25 August 2026'
+      })
+    )
+    expect(h.response).toHaveBeenCalledWith('<table>content</table>')
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
+  it('renders last-7-days partial with empty duration when stationdetails is missing', async () => {
+    request.params = { year: 'last-7-days' }
+    request.yar.get = jest.fn(() => null)
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/last7daystable.njk',
+      {
+        last7Days: {},
+        durationText: ''
+      }
+    )
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
   it('handles thrown error in main try/catch', async () => {
     request.yar.set = jest.fn(() => {
       throw new Error('fail')

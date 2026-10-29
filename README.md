@@ -12,6 +12,8 @@ This service is to find air quality monitoring stations for the location provide
 - [Redis](#redis)
 - [Google Analytics](#google-analytics)
 - [Local Development](#local-development)
+  - [Dependent Services (`aqie-monitoringstation-backend` & `aqie-back-end`)](#dependent-services-aqie-monitoringstation-backend--aqie-back-end)
+  - [Environment Variables](#environment-variables)
   - [Setup](#setup)
   - [Development](#development)
   - [Production](#production)
@@ -107,6 +109,54 @@ return await fetch(url, {
 ```
 
 ## Local Development
+
+### Dependent Services (`aqie-monitoringstation-backend` & `aqie-back-end`)
+
+When running `aqie-dataselector-frontend` locally (on `http://localhost:3010` via Docker Compose), station search and the **Last 7 days** tab (`http://localhost:3010/stationdetails/last-7-days`) depend on local backend services running first:
+
+1. **`aqie-monitoringstation-backend` (Port `3555`)** — **Required**
+   - Provides the monitoring station data (`POST /monitoringstation` for location search and `GET /monitoringstation/by-location` for deep links from `aqie-maps-frontend`).
+   - Populates each station object with both `localSiteID` (short code, e.g. `MY1`) and `siteId` (Ricardo's AURN code, e.g. `UKA00315`).
+   - On first startup, `ricardo-stations-scheduler.js` syncs the full station list from Ricardo into its local MongoDB `stations` collection.
+   - Without `aqie-monitoringstation-backend` running and returning the station data (including `siteId`), the frontend session (`MonitoringstResult`) will not have the station metadata required for `/stationdetails` or `/stationdetails/last-7-days`.
+
+   Start it before searching for stations in the frontend:
+
+   ```bash
+   cd ../aqie-monitoringstation-backend
+   docker compose up --build -d
+   ```
+
+2. **`aqie-back-end` (Port `3001`)** — **Required for `/stationdetails/last-7-days`**
+   - Serves `GET /monitoringStationHistory?siteId=<AURN_siteId>&period=7d`, which provides the hourly pollutant readings and 7-day summary figures (averages, data capture %, and hourly/daily exceedances) for the **Last 7 days** tab.
+   - Requires the station's AURN `siteId` supplied by `aqie-monitoringstation-backend`.
+
+   ```bash
+   cd ../../check-air-quality/aqie-back-end
+   docker compose up --build -d
+   ```
+
+> **Note on navigating to `http://localhost:3010/stationdetails/last-7-days`:**
+> Both `/stationdetails` and `/stationdetails/last-7-days` rely on station data stored in the user's session (`MonitoringstResult` and `SiteId`) and enforce an internal-navigation referer check. Navigating directly to `http://localhost:3010/stationdetails/last-7-days` in a fresh browser session will return a `404`. Always navigate via the location search flow (`/search-location`) or a `/station-summary` deep link from aqie-maps-frontend while `aqie-monitoringstation-backend` is running.
+
+### Environment Variables
+
+Ensure your `.env` file includes the required session secret and points to your running local backend containers:
+
+```bash
+# Required (minimum 32 characters)
+SESSION_COOKIE_PASSWORD=your-session-cookie-password-at-least-32-chars
+
+# Local backend endpoints (use host.docker.internal when running via Docker Compose, or localhost when running via npm run dev)
+OS_MONITORING_STATION_DEV_URL=http://host.docker.internal:3555/monitoringstation/
+MONITORING_STATION_HISTORY_DEV_URL=http://host.docker.internal:3001/monitoringStationHistory
+
+# API key for CDP ephemeral dev endpoints (e.g. OS Names lookup / historical data tables)
+OS_NAMES_DEV_API_KEYS=<your-dev-api-key>
+
+# Google Tag Manager
+GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
+```
 
 ### Setup
 

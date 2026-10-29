@@ -1,0 +1,92 @@
+{% from "partials/aq-table-macros.njk" import limitToggletip, aboveLimitTag, exceedanceCell %}
+
+{#
+  Last 7 days air pollution levels table.
+
+  `last7Days` comes from stationdetails/controller.js's last7DaysController:
+  { periodStart, periodEnd, latestReadingAt, pollutants: [{ pollutantName,
+  dataCapturePercentage, lowDataCapture, average, dailyCount, hourlyCount }] },
+  mapped from aqie-back-end's /monitoringStationHistory `summary` by
+  last-7-days-summary.js. The back end decides whether an average exists (75%
+  data capture); a withheld average arrives as '-' and `lowDataCapture` is true,
+  so the tag and the dash always agree.
+
+  The average column's toggletip reuses pollutantToggletips[name].annual, and
+  the daily exceedances column reuses pollutantToggletips[name].daily
+  (src/server/data/en/pollutant-toggletips.js) - same copy as the year table,
+  per designer guidance. Hourly exceedances are separate, from the
+  last7DaysLimits nunjucks global (src/server/data/en/last-7-days.js) -
+  placeholder copy pending confirmed designer wording.
+
+  The heading and date range are rendered by stationdetails/last-7-days.njk,
+  above the period nav, so this partial starts at the notice banner.
+#}
+
+{% if durationText %}
+  <span id="last7days-duration-value" class="display-none">{{ durationText }}</span>
+{% endif %}
+
+{% if last7Days.pollutants.length %}
+
+  <div class="govuk-inset-text not-verified">{{ last7DaysContent.notice }}</div>
+
+  <div class="table-scroll-container">
+    <table id="last7daystable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+      <thead class="defra-aq-levels-table__head">
+        <tr class="defra-aq-levels-table__row">
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Average</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">Daily exceedances</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
+        </tr>
+      </thead>
+
+      <tbody class="defra-aq-levels-table__body">
+        {% for data in last7Days.pollutants %}
+          {% set hourlyLimit = last7DaysLimits[data.pollutantName].hourly %}
+          {% set dailyLimit = pollutantToggletips[data.pollutantName].daily %}
+          {% set annualLimit = pollutantToggletips[data.pollutantName].annual %}
+          {% set lowDataCapture = data.lowDataCapture %}
+
+          <tr class="defra-aq-levels-table__row">
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
+              {{ data.pollutantName }}
+              {% if lowDataCapture %}
+                <span class="defra-aq-levels-table__cell--data">
+                  <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
+                </span>
+              {% endif %}
+              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
+                {% if lowDataCapture %}
+                  <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
+                {% endif %}
+              </span>
+            </td>
+
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
+              {% if data.average != '-' and annualLimit %}
+                <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3{{ limitToggletip(annualLimit) }}</span>
+              {% else %}
+                {{ data.average }}
+              {% endif %}
+            </td>
+
+            {{ exceedanceCell('daily', data.dailyCount, dailyLimit) }}
+            {{ exceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p id="last7days-hint" class="govuk-hint">The pollution levels shown are measured against <a href="https://www.gov.uk/guidance/air-pollution-uk-legal-limits" class="govuk-link">UK legal limits</a>.</p>
+
+{% elif last7Days.noMapping %}
+
+  <div class="govuk-inset-text">{{ last7DaysContent.noMappingMessage }}</div>
+
+{% else %}
+
+  <div class="govuk-inset-text">{{ last7DaysContent.noDataMessage }}</div>
+
+{% endif %}

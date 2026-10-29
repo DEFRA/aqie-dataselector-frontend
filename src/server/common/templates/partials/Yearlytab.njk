@@ -24,6 +24,9 @@
  <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
+  <li class="moj-sub-navigation__item">
+    <a class="moj-sub-navigation__link" id="link-last-7-days" href="/stationdetails/last-7-days" role="tab" aria-selected="false">Last 7 days</a>
+  </li>
   {% for year in years %}
     <li class="moj-sub-navigation__item">
  <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
@@ -56,28 +59,33 @@
        month name as the server-rendered markup. */
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
+    var LAST_7_DAYS_HEADING = {{ last7DaysContent.heading | dump | safe }};
 
-    function updateYear(year) {
-      document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
-
-      // The current year is still running, so its data only goes up to today.
-      document.getElementById('duration_current').textContent =
-          Number(year) === Number(CURRENT_YEAR)
-              ? '1 January to ' + CURRENT_DATE
-              : '1 January to 31 December';
-
+    function setActiveTab(selectedLink) {
       var links = document.querySelectorAll('.moj-sub-navigation__link');
       links.forEach(function(link) {
           link.removeAttribute('aria-current');
           link.setAttribute('aria-selected', 'false');
       });
 
-      // Set aria-current and aria-selected to the clicked link
-      var selectedLink = document.getElementById('link-' + year);
       if (selectedLink) {
           selectedLink.setAttribute('aria-current', 'page');
           selectedLink.setAttribute('aria-selected', 'true');
       }
+    }
+
+    function updateYear(year) {
+      document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
+
+      // The current year is still running, so its data only goes up to today.
+      var durationEl = document.getElementById('duration_current');
+      durationEl.textContent =
+          Number(year) === Number(CURRENT_YEAR)
+              ? '1 January to ' + CURRENT_DATE
+              : '1 January to 31 December';
+      durationEl.style.display = '';
+
+      setActiveTab(document.getElementById('link-' + year));
 
       fetch(`/rendertable/${year}`)
           .then(response => response.text())
@@ -87,8 +95,33 @@
           .catch(error => console.error('Error fetching partial content:', error));
     }
 
-    /* Delegated listener for year tab clicks to survive any DOM updates */
+    function updateLast7Days() {
+      document.getElementById('airpollution-heading').textContent = LAST_7_DAYS_HEADING;
+      setActiveTab(document.getElementById('link-last-7-days'));
+
+      fetch('/rendertable/last-7-days')
+          .then(response => response.text())
+          .then(data => {
+              document.getElementById('yearlytable-container').innerHTML = data;
+              var durationValue = document.getElementById('last7days-duration-value');
+              var durationEl = document.getElementById('duration_current');
+              if (durationEl) {
+                durationEl.textContent = durationValue ? durationValue.textContent : '';
+                durationEl.style.display = durationValue ? '' : 'none';
+              }
+          })
+          .catch(error => console.error('Error fetching partial content:', error));
+    }
+
+    /* Delegated listener for year and Last 7 days tab clicks to survive any DOM updates */
     document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
+      const last7DaysLink = e.target.closest('#link-last-7-days');
+      if (last7DaysLink) {
+        e.preventDefault();
+        updateLast7Days();
+        return;
+      }
+
       const yearLink = e.target.closest('.year-link');
       if (!yearLink) return;
       e.preventDefault();

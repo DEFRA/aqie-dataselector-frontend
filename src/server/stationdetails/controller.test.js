@@ -1,5 +1,6 @@
 import {
   stationDetailsController,
+  last7DaysController,
   graphSummaryController,
   buildViewGraphSummary
 } from './controller.js'
@@ -94,6 +95,21 @@ describe('stationDetailsController.handler', () => {
     )
 
     expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('should update selectedYear when request.params.year is provided', async () => {
+    request.params.year = '2023'
+
+    await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('selectedYear', '2023')
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        selectedYear: '2023',
+        finalyear: '2023'
+      })
+    )
   })
 
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
@@ -468,6 +484,184 @@ describe('stationDetailsController.handler', () => {
         maptoggletips: null
       })
     )
+  })
+})
+
+describe('last7DaysController.handler', () => {
+  let h, request, station
+
+  beforeEach(() => {
+    h = {
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+
+    station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5', 'Nitrogen dioxide'],
+      siteId: 'UKA00315'
+    }
+
+    request = {
+      method: 'get',
+      params: {},
+      payload: undefined,
+      headers: {
+        referer: 'http://localhost:3010/stationdetails'
+      },
+      info: {
+        host: 'localhost:3010'
+      },
+      yar: {
+        get: jest.fn((key) => {
+          const session = {
+            MonitoringstResult: { getmonitoringstation: [station] },
+            selectedYear: 2024,
+            fullSearchQuery: { value: 'mockFullSearchQuery' },
+            nooflocation: 'multiple',
+            SiteId: 'site123'
+          }
+          return session[key]
+        }),
+        set: jest.fn()
+      }
+    }
+  })
+
+  it("renders the 7-day view with real data for the station's pollutants", async () => {
+    const summary = (periodAverage) => ({
+      periodAverage,
+      dataCapture: {
+        validHours: 168,
+        expectedHours: 168,
+        capturePercentage: 100,
+        isLowDataCapture: false
+      },
+      hourlyExceedances: null,
+      dailyExceedances: null
+    })
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-08-19T01:00:00.000Z',
+        to: '2026-08-26T00:00:00.000Z',
+        pollutants: {},
+        summary: {
+          daqiIndex: 2,
+          pollutants: { PM25: summary(8.2), NO2: summary(52.4) }
+        }
+      }
+    })
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining('siteId=UKA00315')
+    )
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        pageTitle: 'Last 7 days',
+        serviceName: 'Get air pollution data',
+        stationdetails: station,
+        displayBacklink: true,
+        fullSearchQuery: 'mockFullSearchQuery',
+        years: expect.any(Array),
+        hrefq: '/location',
+        last7Days: expect.objectContaining({
+          periodStart: '2026-08-19T00:00:00.000Z',
+          periodEnd: '2026-08-25T23:00:00.000Z',
+          latestReadingAt: '2026-08-26T00:00:00.000Z',
+          pollutants: [
+            expect.objectContaining({ pollutantName: 'PM2.5', average: 8 }),
+            expect.objectContaining({
+              pollutantName: 'Nitrogen dioxide',
+              average: 52
+            })
+          ]
+        })
+      })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('shows the no-mapping state when the station has no AURN siteId', async () => {
+    delete station.siteId
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(axios.get).not.toHaveBeenCalled()
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        last7Days: { noMapping: true }
+      })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('shows no pollutant rows when the back end returns no summary', async () => {
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-08-19T00:00:00.000Z',
+        to: '2026-08-25T23:00:00.000Z',
+        pollutants: {
+          PM25: [{ time: '2026-08-19T01:00:00.000Z', value: 8 }]
+        }
+      }
+    })
+
+    await last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        last7Days: expect.objectContaining({ pollutants: [] })
+      })
+    )
+  })
+
+  it('shows the no-data state when the upstream call fails', async () => {
+    axios.get.mockRejectedValue(new Error('fail'))
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({ last7Days: {} })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('returns 404 if request has no valid referer (direct access)', async () => {
+    request.headers = {}
+    await last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({ statusCode: '404' })
+    )
+    expect(h.code).toHaveBeenCalledWith(404)
+  })
+
+  it('returns 404 if station is not found in monitoring result', async () => {
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [{ id: 'other' }] },
+        SiteId: 'site123'
+      }
+      return session[key]
+    })
+
+    const result = await last7DaysController.handler(request, h)
+
+    expect(h.response).toHaveBeenCalledWith('Station not found')
+    expect(h.code).toHaveBeenCalledWith(404)
+    expect(result).toBe(h.response.mock.results[0].value)
   })
 })
 
