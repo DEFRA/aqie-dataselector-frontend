@@ -13,6 +13,8 @@
  */
 
 const UNITS = 'micrograms per cubic metre (µg/m³)'
+const NO2_HOURLY_LIMIT = 200
+const SO2_HOURLY_LIMIT = 350
 
 const hourlyToggletip = (name, concentration) => ({
   label: `More information about hourly exceedances for ${name}`,
@@ -22,10 +24,10 @@ const hourlyToggletip = (name, concentration) => ({
 /** Per-pollutant hourly-exceedance copy shown in the 7-day table's toggletips. */
 const last7DaysLimits = {
   'Nitrogen dioxide': {
-    hourly: hourlyToggletip('nitrogen dioxide', 200)
+    hourly: hourlyToggletip('nitrogen dioxide', NO2_HOURLY_LIMIT)
   },
   'Sulphur dioxide': {
-    hourly: hourlyToggletip('sulphur dioxide', 350)
+    hourly: hourlyToggletip('sulphur dioxide', SO2_HOURLY_LIMIT)
   }
 }
 
