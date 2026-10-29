@@ -97,6 +97,21 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
+  it('should update selectedYear when request.params.year is provided', async () => {
+    request.params.year = '2023'
+
+    await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('selectedYear', '2023')
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        selectedYear: '2023',
+        finalyear: '2023'
+      })
+    )
+  })
+
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
     request.params.download = undefined
     config.set('featureFlags.viewGraphSummary', true)

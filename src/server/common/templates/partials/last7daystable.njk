@@ -22,6 +22,10 @@
   above the period nav, so this partial starts at the notice banner.
 #}
 
+{% if durationText %}
+  <span id="last7days-duration-value" class="display-none">{{ durationText }}</span>
+{% endif %}
+
 {% if last7Days.pollutants.length %}
 
   <div class="govuk-inset-text not-verified">{{ last7DaysContent.notice }}</div>

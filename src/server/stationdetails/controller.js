@@ -282,7 +282,10 @@ const stationDetailsController = {
     // Fetch the year table server side so the first paint shows real data.
     // Without this Yearlytab has to fire a follow-up /rendertable request on
     // load, costing an extra round trip and flashing an empty table.
-    const selectedYear = request.yar.get('selectedYear')
+    if (request.params?.year) {
+      request.yar.set('selectedYear', request.params.year)
+    }
+    const selectedYear = request.params?.year || request.yar.get('selectedYear')
     const tabledata = await fetchYearTable({
       siteId: stationDetails.localSiteID,
       year: selectedYear
@@ -418,6 +421,7 @@ const graphSummaryController = {
 export {
   stationDetailsController,
   last7DaysController,
+  resolveLast7Days,
   graphSummaryController,
   buildViewGraphSummary
 }

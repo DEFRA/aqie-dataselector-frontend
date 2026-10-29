@@ -1,7 +1,11 @@
 import nunjucks from 'nunjucks'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { fetchYearTable } from '~/src/server/common/helpers/station-helpers.js'
-import { buildViewGraphSummary } from '~/src/server/stationdetails/controller.js'
+import {
+  buildViewGraphSummary,
+  resolveLast7Days
+} from '~/src/server/stationdetails/controller.js'
+import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 import {
   HTTP_OK,
   HTTP_INTERNAL_SERVER_ERROR
@@ -9,9 +13,29 @@ import {
 
 const logger = createLogger()
 
+async function renderLast7DaysPartial(request, h) {
+  const station = request.yar.get('stationdetails')
+  const last7Days = station ? await resolveLast7Days(station) : {}
+  const durationText =
+    last7Days.pollutants?.length && last7Days.periodStart && last7Days.periodEnd
+      ? `${formatDate(last7Days.periodStart, 'd MMMM')} to ${formatDate(last7Days.periodEnd, 'd MMMM yyyy')}`
+      : ''
+
+  const partialContent = nunjucks.render('partials/last7daystable.njk', {
+    last7Days,
+    durationText
+  })
+
+  return h.response(partialContent).code(HTTP_OK)
+}
+
 const rendertablecontroller = {
   handler: async (request, h) => {
     try {
+      if (request.params.year === 'last-7-days') {
+        return await renderLast7DaysPartial(request, h)
+      }
+
       request.yar.set('selectedYear', request.params.year)
 
       const tabledata = await fetchYearTable({
