@@ -19,26 +19,6 @@
 {% endmacro %}
 
 {#
-  The 7-day table's variants. The text goes inside the toggletip, so the icon is
-  part of the same inline unit as the value: it stays on the value's line when
-  the table narrows and sits on the text's centre line.
-#}
-{% macro inlineToggletip(text, entry) %}
-  <span class="defra-aq-value-with-tip">{{ toggletip(text, entry.label, entry.text, 'Trend') }}</span>
-{% endmacro %}
-
-{% macro inlineExceedanceCell(modifier, count, entry) %}
-  <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--{{ modifier }}">
-    {% if entry %}
-      {{ inlineToggletip(count, entry) }}
-      {% if entry.limit and count > entry.limit %}{{ aboveLimitTag() }}{% endif %}
-    {% else %}
-      {{ count }}
-    {% endif %}
-  </td>
-{% endmacro %}
-
-{#
   An exceedance cell: the count, plus its toggletip and an "Above limit" tag
   when the entry has a limit and the count is over it.
 #}
