@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { config } from '~/src/config/config.js'
 import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
@@ -24,6 +25,8 @@ import {
 } from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
+
+const GRAPH_SUMMARY_TITLE = 'View graph and pollutant summary'
 
 /**
  * Resolves the station id from the POST payload or the session, persisting
@@ -92,6 +95,53 @@ function setDownloadSessionParams(request) {
   request.yar.set('selectedYear', request.params.download)
   request.yar.set('downloadPollutant', request.params.pollutant)
   request.yar.set('downloadFrequency', request.params.frequency)
+}
+
+function resolveGraphSummaryPeriod(request) {
+  const periodFromQuery = request.query?.period || request.payload?.period
+  if (
+    periodFromQuery === 'last24hours' ||
+    periodFromQuery === 'daily' ||
+    periodFromQuery === 'daqi'
+  ) {
+    return 'last24hours'
+  }
+
+  if (
+    periodFromQuery === 'last7days' ||
+    periodFromQuery === 'year' ||
+    request.yar.get('selectedYear')
+  ) {
+    return 'last7days'
+  }
+
+  return 'last24hours'
+}
+
+function resolveGraphSummaryHref(request) {
+  const stationId = resolveStationId(request) || request.yar.get('SiteId')
+  const period = resolveGraphSummaryPeriod(request)
+  const params = new URLSearchParams({
+    stationId: stationId || '',
+    period
+  })
+
+  return `/stationdetails/graph-summary?${params.toString()}`
+}
+
+/**
+ * CTA view model, or null when the feature flag is off.
+ * @param {object} request
+ * @returns {{buttonText: string, href: string} | null}
+ */
+function buildViewGraphSummary(request) {
+  if (!config.get('featureFlags.viewGraphSummary')) {
+    return null
+  }
+  return {
+    buttonText: GRAPH_SUMMARY_TITLE,
+    href: resolveGraphSummaryHref(request)
+  }
 }
 
 /**
@@ -240,6 +290,8 @@ const stationDetailsController = {
     request.yar.set('tabledata', tabledata)
 
     // Prepare view data
+    const viewGraphSummary = buildViewGraphSummary(request)
+
     const viewData = {
       pageTitle: english.stationdetails.pageTitle,
       title: english.stationdetails.title,
@@ -259,7 +311,8 @@ const stationDetailsController = {
       tabledata,
       finalyear: selectedYear,
       downloadresult: request.yar.get('downloadresult'),
-      hrefq: resolveStationHrefq(request)
+      hrefq: resolveStationHrefq(request),
+      viewGraphSummary
     }
 
     return h.view(stationDetailsView, viewData)
@@ -345,4 +398,26 @@ async function resolveLast7Days(station) {
   return summariseStationHistory(history, station.pollutants)
 }
 
-export { stationDetailsController, last7DaysController }
+const graphSummaryController = {
+  handler: (request, h) => {
+    const station = request.yar.get('stationdetails')
+    const stationId = request.query?.stationId || request.yar.get('SiteId')
+    const period = request.query?.period || 'last24hours'
+
+    return h.view('stationdetails/graph-summary', {
+      pageTitle: GRAPH_SUMMARY_TITLE,
+      title: GRAPH_SUMMARY_TITLE,
+      stationdetails: station,
+      stationId,
+      period,
+      periodLabel: period === 'last7days' ? 'last 7 days' : 'last 24 hours'
+    })
+  }
+}
+
+export {
+  stationDetailsController,
+  last7DaysController,
+  graphSummaryController,
+  buildViewGraphSummary
+}
