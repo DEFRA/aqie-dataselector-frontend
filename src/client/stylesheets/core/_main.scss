@@ -48,9 +48,8 @@
   color: #505a5f !important;
 }
 
-// "Last 7 days" tab notice - data capture bands reuse the same colours as
-// the version-17 prototype's _status.scss (.not-verified / .verified).
-.not-verified {
+// "Last 7 days" tab notice - data capture bands
+.govuk-inset-text.not-verified {
   border-left: 10px solid #f47738;
   background-color: #f9e2d7;
 }
@@ -825,6 +824,106 @@ width: 100%;
       clip-path: none !important;
       white-space: nowrap !important;
     }
+  }
+}
+
+// "Last 7 days" table. It fits at normal widths, so there is no scroll container
+// from desktop up (this also stops the hidden toggletip popups making the page
+// scrollable). Below that the table shrinks and its headings wrap; horizontal
+// scrolling is only the fallback for the narrow band above the stacked mobile
+// layout, as GOV.UK recommends for tables that genuinely cannot fit.
+.table-scroll-container--fit {
+  // The toggletip wraps the value, so its icon only needs a small nudge to sit
+  // on the text's centre line (the prototype's values: 3px in the stacked
+  // layout's 20px lines, 1px from tablet on). The base offset is for the empty
+  // toggletips the year table uses.
+  .defra-toggletip__container {
+    top: -3px;
+
+    @include mq ($from: tablet) {
+      top: -1px;
+    }
+  }
+
+  // Popups in the last column open leftwards from the icon. Left-anchored they
+  // stick out past the table's right edge, even while hidden, and that
+  // invisible overhang is what made the table (and page) scroll.
+  .defra-aq-levels-table__row > :last-child .defra-toggletip__info {
+    left: auto;
+    right: 0;
+  }
+
+  // The data capture line sits 5px below the pollutant name at every width.
+  .defra-aq-levels-table__cell--data-capture {
+    margin-top: 5px;
+  }
+
+  // Stacked (phone) layout, matching the prototype: column widths of 30/35/35%,
+  // no right padding on the figure columns, no top padding on the header cells,
+  // and a smaller data capture line.
+  @include mq ($until: tablet) {
+    .defra-aq-levels-table__head .defra-aq-levels-table__cell {
+      padding-top: 0;
+    }
+
+    .defra-aq-levels-table__cell--pollutant {
+      min-width: 0;
+    }
+
+    .defra-aq-levels-table__cell--average,
+    .defra-aq-levels-table__cell--daily,
+    .defra-aq-levels-table__cell--hourly {
+      padding-right: 0;
+    }
+
+    .defra-aq-levels-table__cell--average {
+      width: 30%;
+    }
+
+    .defra-aq-levels-table__cell--daily,
+    .defra-aq-levels-table__cell--hourly {
+      width: 35%;
+    }
+
+    .defra-aq-levels-table__cell--data-capture {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+  }
+
+  @include mq ($from: tablet) {
+    overflow-x: visible;
+
+    .defra-aq-levels-table {
+      min-width: 0;
+    }
+
+    .defra-aq-levels-table th {
+      white-space: normal;
+    }
+
+    // Header cells are tighter than body cells (the shared rule forces 20px),
+    // and the figure columns have no right padding, as in the prototype, which
+    // also has no minimum column widths.
+    .defra-aq-levels-table__cell--pollutant,
+    .defra-aq-levels-table__cell--average,
+    .defra-aq-levels-table__cell--daily,
+    .defra-aq-levels-table__cell--hourly {
+      min-width: 0;
+    }
+    .defra-aq-levels-table__head .defra-aq-levels-table__cell {
+      padding-bottom: 10px !important;
+    }
+
+    .defra-aq-levels-table__cell--average,
+    .defra-aq-levels-table__cell--daily,
+    .defra-aq-levels-table__cell--hourly {
+      padding-right: 0;
+    }
+  }
+
+  @include mq ($from: tablet, $until: desktop) {
+    overflow-x: auto;
   }
 }
 
