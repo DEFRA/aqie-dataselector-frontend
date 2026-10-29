@@ -484,13 +484,25 @@ describe('last7DaysController.handler', () => {
   })
 
   it("renders the 7-day view with real data for the station's pollutants", async () => {
+    const summary = (periodAverage) => ({
+      periodAverage,
+      dataCapture: {
+        validHours: 168,
+        expectedHours: 168,
+        capturePercentage: 100,
+        isLowDataCapture: false
+      },
+      hourlyExceedances: null,
+      dailyExceedances: null
+    })
     axios.get.mockResolvedValue({
       data: {
-        from: '2026-08-19T00:00:00.000Z',
-        to: '2026-08-25T23:00:00.000Z',
-        pollutants: {
-          PM25: [{ time: '2026-08-19T01:00:00.000Z', value: 8 }],
-          NO2: [{ time: '2026-08-19T01:00:00.000Z', value: 52 }]
+        from: '2026-08-19T01:00:00.000Z',
+        to: '2026-08-26T00:00:00.000Z',
+        pollutants: {},
+        summary: {
+          daqiIndex: 2,
+          pollutants: { PM25: summary(8.2), NO2: summary(52.4) }
         }
       }
     })
@@ -513,7 +525,7 @@ describe('last7DaysController.handler', () => {
         last7Days: expect.objectContaining({
           periodStart: '2026-08-19T00:00:00.000Z',
           periodEnd: '2026-08-25T23:00:00.000Z',
-          latestReadingAt: '2026-08-25T23:00:00.000Z',
+          latestReadingAt: '2026-08-26T00:00:00.000Z',
           pollutants: [
             expect.objectContaining({ pollutantName: 'PM2.5', average: 8 }),
             expect.objectContaining({
@@ -540,6 +552,27 @@ describe('last7DaysController.handler', () => {
       })
     )
     expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('shows no pollutant rows when the back end returns no summary', async () => {
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-08-19T00:00:00.000Z',
+        to: '2026-08-25T23:00:00.000Z',
+        pollutants: {
+          PM25: [{ time: '2026-08-19T01:00:00.000Z', value: 8 }]
+        }
+      }
+    })
+
+    await last7DaysController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({
+        last7Days: expect.objectContaining({ pollutants: [] })
+      })
+    )
   })
 
   it('shows the no-data state when the upstream call fails', async () => {

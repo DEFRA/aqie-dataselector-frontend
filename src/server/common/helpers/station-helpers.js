@@ -168,11 +168,14 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 /**
  * Fetches a station's hourly pollutant history for the last 7 days from
  * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
- * siteId, e.g. "UKA00315" - the short localSiteID form 400s). See
- * LAST_7_DAYS_FROM_AQIE_BACKEND_PLAN.md.
+ * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
+ * `summary` block carries the figures the 7-day table shows (average, data
+ * capture, exceedances); they are calculated by aqie-back-end, not here.
  * @param {{ siteId: string }} params
  * @returns {Promise<{siteId: string, period: string, from: string, to: string,
- *   truncated: boolean, pollutants: Record<string, Array<{time: string, value: number|null}>>}|null>}
+ *   truncated: boolean,
+ *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
+ *   summary?: {daqiIndex: number|null, pollutants: Record<string, object>}}|null>}
  */
 export async function fetchLast7DaysSummary({ siteId }) {
   const result = await getJson({
