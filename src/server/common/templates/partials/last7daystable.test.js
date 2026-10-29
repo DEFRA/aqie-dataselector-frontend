@@ -30,12 +30,11 @@ const TOGGLETIP_TEXT =
   'Data capture under 75% is low. We do not calculate the average when data capture is low.'
 
 describe('last7daystable.njk low data capture behaviour', () => {
-  it('uses the fit modifier so the table only scrolls when it genuinely cannot fit', () => {
+  it('uses table-scroll-container to match the year tables', () => {
     const $ = render({ pollutants: [row()] })
 
-    expect(
-      $('.table-scroll-container.table-scroll-container--fit')
-    ).toHaveLength(1)
+    expect($('.table-scroll-container')).toHaveLength(1)
+    expect($('.table-scroll-container--fit')).toHaveLength(0)
   })
 
   it('shows the average and no tag when data capture is sufficient', () => {

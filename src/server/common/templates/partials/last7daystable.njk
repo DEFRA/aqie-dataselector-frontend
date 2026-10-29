@@ -1,4 +1,4 @@
-{% from "partials/aq-table-macros.njk" import inlineToggletip, inlineExceedanceCell %}
+{% from "partials/aq-table-macros.njk" import limitToggletip, aboveLimitTag, exceedanceCell %}
 
 {#
   Last 7 days air pollution levels table.
@@ -30,7 +30,7 @@
 
   <div class="govuk-inset-text not-verified">{{ last7DaysContent.notice }}</div>
 
-  <div class="table-scroll-container table-scroll-container--fit">
+  <div class="table-scroll-container">
     <table id="last7daystable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
       <thead class="defra-aq-levels-table__head">
         <tr class="defra-aq-levels-table__row">
@@ -56,25 +56,23 @@
                   <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
                 </span>
               {% endif %}
-              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">
+              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
                 {% if lowDataCapture %}
-                  {{ inlineToggletip('Data capture: ' ~ data.dataCapturePercentage ~ '%', dataCaptureToggletip) }}
-                {% else %}
-                  Data capture: {{ data.dataCapturePercentage }}%
+                  <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
                 {% endif %}
               </span>
             </td>
 
             <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
               {% if data.average != '-' and annualLimit %}
-                {{ inlineToggletip(data.average ~ ' µg/m3', annualLimit) }}
+                <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3{{ limitToggletip(annualLimit) }}</span>
               {% else %}
                 {{ data.average }}
               {% endif %}
             </td>
 
-            {{ inlineExceedanceCell('daily', data.dailyCount, dailyLimit) }}
-            {{ inlineExceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
+            {{ exceedanceCell('daily', data.dailyCount, dailyLimit) }}
+            {{ exceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
           </tr>
         {% endfor %}
       </tbody>

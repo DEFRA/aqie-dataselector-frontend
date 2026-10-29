@@ -91,12 +91,13 @@
 
               {# Annual average. A null limit means the pollutant has no UK limit value. #}
               <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
-                {{ data.annualcount }}
                 {% if data.annualcount != '-' and limits.annual %}
-                  <span class="defra-aq-value-with-tip">µg/m3{{ limitToggletip(limits.annual) }}</span>
+                  <span class="defra-aq-value-with-tip">{{ data.annualcount }} µg/m3{{ limitToggletip(limits.annual) }}</span>
                   {% if limits.annual.limit and data.annualcount > limits.annual.limit and not lowDataCapture %}
                     {{ aboveLimitTag() }}
                   {% endif %}
+                {% else %}
+                  {{ data.annualcount }}
                 {% endif %}
               </td>
 
