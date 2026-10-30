@@ -271,6 +271,7 @@ export async function handleStationCountCalculation(request) {
 
   const baseParams = buildStationCountParameters(request, finalyear)
   const datasourceGroups = request.yar.get('datasourceGroups') || []
+
   const nearRealtimeSelections =
     getNearRealtimeNetworkSelections(datasourceGroups)
 
@@ -283,10 +284,29 @@ export async function handleStationCountCalculation(request) {
 
   const { aurnStationCountParams, nonAurnStationCountParams } =
     buildDatasourceStationCountParams(baseParams, datasourceGroups)
+  const hasAurnDatasource = datasourceGroups.some(
+    (g) => g.category === 'Near real-time data from Defra'
+  )
+
+  const hasNonAurnDatasource = datasourceGroups.some(
+    (g) => g.category === 'Other data from Defra'
+  )
+  // const [aurnCount, nonAurnCount] = await Promise.all([
+  //   invokeStationCount(aurnStationCountParams),
+  //   invokeStationCount(nonAurnStationCountParams)
+  // ])
+
+  const aurnCountPromise = hasAurnDatasource
+    ? invokeStationCount(aurnStationCountParams)
+    : Promise.resolve(0)
+
+  const nonAurnCountPromise = hasNonAurnDatasource
+    ? invokeStationCount(nonAurnStationCountParams)
+    : Promise.resolve([])
 
   const [aurnCount, nonAurnCount] = await Promise.all([
-    invokeStationCount(aurnStationCountParams),
-    invokeStationCount(nonAurnStationCountParams)
+    aurnCountPromise,
+    nonAurnCountPromise
   ])
 
   const selectedPollutantIds = getSelectedPollutantIds(request)
