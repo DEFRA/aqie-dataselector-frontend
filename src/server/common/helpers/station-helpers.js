@@ -7,6 +7,7 @@ import {
 } from '~/src/server/common/constants/magic-numbers.js'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { getJson } from '~/src/server/common/helpers/api-client.js'
 
 const loggers = createLogger()
 const FORMAT_HOURS = 12
@@ -147,6 +148,24 @@ export async function fetchYearTable({ siteId, year }) {
  */
 export function buildMapLocation(lat, lon) {
   return `https://www.google.co.uk/maps?q=${lat},${lon}`
+}
+
+/**
+ * Looks up a single station by coordinates via aqie-monitoringstation-backend,
+ * for deep links from other services (e.g. aqie-maps-frontend) that only
+ * have lat/lng and a name, not a session-scoped station id.
+ * @param {{ lat: string|number, lng: string|number, name?: string }} params
+ * @returns {Promise<object|null>} the station, or null if not found/failed
+ */
+export async function fetchStationByLocation({ lat, lng, name }) {
+  const result = await getJson({
+    devUrlKey: 'osMonitoringStationDevUrl',
+    urlKey: 'OS_NAMES_API_URL_1',
+    path: 'by-location',
+    params: { lat, lng, name: name ?? '' },
+    label: 'Station by location API'
+  })
+  return result?.station ?? null
 }
 
 /**

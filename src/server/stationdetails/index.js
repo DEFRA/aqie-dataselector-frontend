@@ -1,4 +1,8 @@
-import { stationDetailsController } from '~/src/server/stationdetails/controller.js'
+import {
+  stationDetailsController,
+  graphSummaryController
+} from '~/src/server/stationdetails/controller.js'
+import { config } from '~/src/config/config.js'
 
 // Define the route configuration function
 const configureRoutes = (server) => {
@@ -24,6 +28,14 @@ const configureRoutes = (server) => {
       ...stationDetailsController
     }
   ])
+
+  if (config.get('featureFlags.viewGraphSummary')) {
+    server.route({
+      method: 'GET',
+      path: '/stationdetails/graph-summary',
+      ...graphSummaryController
+    })
+  }
 }
 
 // Define the plugin

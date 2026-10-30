@@ -1,6 +1,7 @@
 import nunjucks from 'nunjucks'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { fetchYearTable } from '~/src/server/common/helpers/station-helpers.js'
+import { buildViewGraphSummary } from '~/src/server/stationdetails/controller.js'
 import {
   HTTP_OK,
   HTTP_INTERNAL_SERVER_ERROR
@@ -24,6 +25,7 @@ const rendertablecontroller = {
       const partialContent1 = nunjucks.render('partials/yearlytable.njk', {
         tabledata,
         finalyear,
+        viewGraphSummary: buildViewGraphSummary(request),
         // This response is injected with innerHTML, where <script> tags never
         // execute - so the template omits them rather than sending dead bytes.
         isPartial: true

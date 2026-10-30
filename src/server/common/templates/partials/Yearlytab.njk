@@ -26,10 +26,9 @@
   <ul class="moj-sub-navigation__list"  role="tablist">
   {% for year in years %}
     <li class="moj-sub-navigation__item">
- <a class="moj-sub-navigation__link" id="link-{{ year }}" href="javascript:void(0)" 
+ <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
  role="tab" aria-controls="panel-{{ year }}"
- name="year_selected" value="{{ year }}" 
- onclick="updateYear({{ year }})"
+ data-year="{{ year }}"
  {% if year == selectedYear %}
  aria-current="page" aria-selected="true"
  {% else %}
@@ -58,58 +57,69 @@
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
 
-       function updateYear(year) {
-    document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
+    function updateYear(year) {
+      document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
 
-    // The current year is still running, so its data only goes up to today.
-    document.getElementById('duration_current').textContent =
-        Number(year) === Number(CURRENT_YEAR)
-            ? '1 January to ' + CURRENT_DATE
-            : '1 January to 31 December';
+      // The current year is still running, so its data only goes up to today.
+      document.getElementById('duration_current').textContent =
+          Number(year) === Number(CURRENT_YEAR)
+              ? '1 January to ' + CURRENT_DATE
+              : '1 January to 31 December';
 
-    var links = document.querySelectorAll('.moj-sub-navigation__link');
-    links.forEach(function(link) {
-        link.removeAttribute('aria-current');
-        link.setAttribute('aria-selected', 'false');
-    });
+      var links = document.querySelectorAll('.moj-sub-navigation__link');
+      links.forEach(function(link) {
+          link.removeAttribute('aria-current');
+          link.setAttribute('aria-selected', 'false');
+      });
 
-    // Set aria-current and aria-selected to the clicked link
-    var selectedLink = document.getElementById('link-' + year);
-    if (selectedLink) {
-        selectedLink.setAttribute('aria-current', 'page');
-        selectedLink.setAttribute('aria-selected', 'true');
+      // Set aria-current and aria-selected to the clicked link
+      var selectedLink = document.getElementById('link-' + year);
+      if (selectedLink) {
+          selectedLink.setAttribute('aria-current', 'page');
+          selectedLink.setAttribute('aria-selected', 'true');
+      }
+
+      fetch(`/rendertable/${year}`)
+          .then(response => response.text())
+          .then(data => {
+              document.getElementById('yearlytable-container').innerHTML = data;
+          })
+          .catch(error => console.error('Error fetching partial content:', error));
     }
 
-    fetch(`/rendertable/${year}`)
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('yearlytable-container').innerHTML = data;
-        })
-        .catch(error => console.error('Error fetching partial content:', error));
-   }
+    /* Delegated listener for year tab clicks to survive any DOM updates */
+    document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
+      const yearLink = e.target.closest('.year-link');
+      if (!yearLink) return;
+      e.preventDefault();
+      const year = yearLink.getAttribute('data-year');
+      if (year) {
+        updateYear(Number(year));
+      }
+    });
 
-/* No DOMContentLoaded work is needed: the selected year's table, headings and
-   aria-current/aria-selected state are all rendered server side by
-   stationdetails/controller.js. updateYear only runs on a tab click. */
+    /* No DOMContentLoaded work is needed: the selected year's table, headings and
+       aria-current/aria-selected state are all rendered server side by
+       stationdetails/controller.js. updateYear only runs on a tab click. */
 
-   // Delegated listener for download buttons to survive innerHTML swaps
-   document.getElementById('yearlytable-container')?.addEventListener('click', (e) => {
-     const target = e.target.closest('#download-all-hourly, #download-all-daily, #download-all-annual, .download-pollutant');
-     if (!target) return;
-     e.preventDefault();
+    // Delegated listener for download buttons to survive innerHTML swaps
+    document.getElementById('yearlytable-container')?.addEventListener('click', (e) => {
+      const target = e.target.closest('#download-all-hourly, #download-all-daily, #download-all-annual, .download-pollutant');
+      if (!target) return;
+      e.preventDefault();
 
-     if (target.classList.contains('download-pollutant')) {
-       const pollutant = target.getAttribute('data-pollutant');
-       const frequency = target.getAttribute('data-frequency');
-       getAPIstn_details1(pollutant, frequency);
-       return;
-     }
+      if (target.classList.contains('download-pollutant')) {
+        const pollutant = target.getAttribute('data-pollutant');
+        const frequency = target.getAttribute('data-frequency');
+        getAPIstn_details1(pollutant, frequency);
+        return;
+      }
 
-     const frequencyById = {
-       'download-all-hourly': 'Hourly',
-       'download-all-daily': 'Daily',
-       'download-all-annual': 'Annual'
-     };
-     getAPIstn_details1('AllPollutants', frequencyById[target.id]);
-   });
+      const frequencyById = {
+        'download-all-hourly': 'Hourly',
+        'download-all-daily': 'Daily',
+        'download-all-annual': 'Annual'
+      };
+      getAPIstn_details1('AllPollutants', frequencyById[target.id]);
+    });
        </script>

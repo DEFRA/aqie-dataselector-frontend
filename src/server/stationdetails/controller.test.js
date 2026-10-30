@@ -1,5 +1,10 @@
-import { stationDetailsController } from './controller.js'
+import {
+  stationDetailsController,
+  graphSummaryController,
+  buildViewGraphSummary
+} from './controller.js'
 import axios from 'axios'
+import { config } from '~/src/config/config.js'
 
 jest.mock('axios')
 
@@ -91,6 +96,35 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
+  it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
+    request.params.download = undefined
+    config.set('featureFlags.viewGraphSummary', true)
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        viewGraphSummary: {
+          buttonText: 'View graph and pollutant summary',
+          href: expect.stringContaining('period=last7days')
+        }
+      })
+    )
+  })
+
+  it('should not include graph summary CTA when the feature flag is off', async () => {
+    request.params.download = undefined
+    config.set('featureFlags.viewGraphSummary', false)
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ viewGraphSummary: null })
+    )
+  })
+
   it('should handle download requests and set downloadresult', async () => {
     request.params.download = 2024
     request.params.pollutant = 'NO2'
@@ -139,6 +173,40 @@ describe('stationDetailsController.handler', () => {
       })
     )
     expect(h.code).toHaveBeenCalledWith(404)
+  })
+
+  it('should render the view for a trusted deep link with no referer, consuming the flag', async () => {
+    request.method = 'get'
+    request.payload = undefined
+    request.headers = {}
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'urban',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2', 'PM10']
+    }
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'single',
+        SiteId: 'site123',
+        deepLinkTrusted: true
+      }
+      return session[key]
+    })
+
+    const result = await stationDetailsController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('deepLinkTrusted', false)
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ hrefq: '/multiplelocations' })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
   })
 
   it('should return 404 if monitoring result is missing', async () => {
@@ -398,6 +466,125 @@ describe('stationDetailsController.handler', () => {
       'stationdetails/index',
       expect.objectContaining({
         maptoggletips: null
+      })
+    )
+  })
+})
+
+describe('buildViewGraphSummary', () => {
+  const buildRequest = ({ session = {}, query, payload, method } = {}) => ({
+    method,
+    query,
+    payload,
+    yar: { get: jest.fn((key) => session[key]), set: jest.fn() }
+  })
+
+  beforeEach(() => {
+    config.set('featureFlags.viewGraphSummary', true)
+  })
+
+  it('returns null when the feature flag is off', () => {
+    config.set('featureFlags.viewGraphSummary', false)
+
+    expect(buildViewGraphSummary(buildRequest())).toBeNull()
+  })
+
+  it.each([
+    ['last24hours', 'last24hours'],
+    ['daily', 'last24hours'],
+    ['daqi', 'last24hours'],
+    ['last7days', 'last7days'],
+    ['year', 'last7days']
+  ])('maps the %s period to %s', (period, expected) => {
+    const result = buildViewGraphSummary(
+      buildRequest({ query: { period }, session: { SiteId: 'site1' } })
+    )
+
+    expect(result.href).toBe(
+      `/stationdetails/graph-summary?stationId=site1&period=${expected}`
+    )
+  })
+
+  it('reads the period from the payload', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ payload: { period: 'daily' }, session: { SiteId: 's' } })
+    )
+
+    expect(result.href).toContain('period=last24hours')
+  })
+
+  it('defaults to last7days when a year is selected', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ session: { SiteId: 's', selectedYear: 2024 } })
+    )
+
+    expect(result.href).toContain('period=last7days')
+  })
+
+  it('defaults to last24hours when no period or year is known', () => {
+    const result = buildViewGraphSummary(
+      buildRequest({ session: { SiteId: 's' } })
+    )
+
+    expect(result.href).toContain('period=last24hours')
+  })
+
+  it('uses and stores the station id from a POST payload', () => {
+    const request = buildRequest({
+      method: 'post',
+      payload: { stationId: 'posted' }
+    })
+
+    const result = buildViewGraphSummary(request)
+
+    expect(result.href).toContain('stationId=posted')
+    expect(request.yar.set).toHaveBeenCalledWith('SiteId', 'posted')
+  })
+
+  it('uses an empty station id when none is available', () => {
+    const result = buildViewGraphSummary(buildRequest())
+
+    expect(result.href).toContain('stationId=&')
+  })
+})
+
+describe('graphSummaryController.handler', () => {
+  const h = { view: jest.fn().mockReturnValue('view') }
+  const station = { id: 'site1' }
+  const buildRequest = (query) => ({
+    query,
+    yar: {
+      get: jest.fn((key) => ({ stationdetails: station, SiteId: 'sess' })[key])
+    }
+  })
+
+  it('renders the graph summary view using query values', () => {
+    const result = graphSummaryController.handler(
+      buildRequest({ stationId: 'q1', period: 'last7days' }),
+      h
+    )
+
+    expect(result).toBe('view')
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/graph-summary',
+      expect.objectContaining({
+        stationdetails: station,
+        stationId: 'q1',
+        period: 'last7days',
+        periodLabel: 'last 7 days'
+      })
+    )
+  })
+
+  it('falls back to the session station and last 24 hours', () => {
+    graphSummaryController.handler(buildRequest(undefined), h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/graph-summary',
+      expect.objectContaining({
+        stationId: 'sess',
+        period: 'last24hours',
+        periodLabel: 'last 24 hours'
       })
     )
   })
