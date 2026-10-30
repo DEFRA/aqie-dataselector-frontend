@@ -115,7 +115,18 @@ export function setDownloadDatasourceOverrideForLast7Days(request) {
 // Zones are only available for AURN (near real-time) data.
 
 export function isZoneSelection(request) {
-  return request.yar.get('Location') === 'Zone'
+  const location = request.yar.get('Location')
+
+  return location === 'Zone' || location === 'Agglomeration'
+}
+export function getZoneAgglomerationWarningText(request) {
+  const location = request.yar.get('Location')
+
+  if (location === 'Agglomeration') {
+    return 'Only the Automatic Urban and Rural Network is available for agglomerations'
+  }
+
+  return 'Only the Automatic Urban and Rural Network is available for zones'
 }
 
 function getZoneCategoryType(request) {

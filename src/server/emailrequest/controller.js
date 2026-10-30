@@ -29,6 +29,7 @@ function isInvalidEmailResponse(data) {
 async function invokeEmailRequestDev(emailRequestParameters) {
   try {
     const url = config.get('emailDevUrl')
+
     const { payload } = await Wreck.post(url, {
       payload: JSON.stringify(emailRequestParameters),
       headers: {
@@ -199,6 +200,7 @@ const getPollutantIDForNetwork = (datasourceGroups, dataSource, networkId) => {
 // Build the station count parameters from session, applying any pending dataSource.
 const buildStationCountParameters = (request) => {
   const dataSourceFromQuery = request.yar.get('pendingDataSource')
+  let params = {}
   if (dataSourceFromQuery) {
     request.yar.set('selectedDatasourceType', dataSourceFromQuery)
     request.yar.clear('pendingDataSource')
@@ -227,7 +229,7 @@ const buildStationCountParameters = (request) => {
       : ''
   }
 
-  const params = {
+  params = {
     pollutantName:
       pendingPollutantID ||
       networkPollutantID ||
@@ -247,17 +249,46 @@ const buildStationCountParameters = (request) => {
     params.Region = ''
     params.regiontype = 'Region'
   }
+
+  // Agglomerations: the selected IDs go in AgglomerationId and Region is left empty
+  if (regionType === 'Agglomeration') {
+    params = {
+      pollutantName:
+        pendingPollutantID ||
+        networkPollutantID ||
+        toSinglePollutantID(selectedPollutantID),
+      dataSource: selectedDataSource,
+      networkId: selectedDataSource === 'NON-AURN' ? pendingNetworkId : '',
+      Region: '',
+      regiontype: 'Agglomeration',
+      AgglomerationId: request.yar.get('selectedAgglomerationIDs') || '',
+      Year: request.yar.get('finalyear1'),
+      dataselectorfiltertype: 'dataSelectorHourly',
+      dataselectordownloadtype: 'dataSelectorMultiple',
+      email: request.yar.get('email')
+    }
+  }
+
   request.yar.clear('pendingPollutantID')
   request.yar.clear('pendingNetworkId')
+
   return params
 }
 
 const hasMissingRequiredParams = (params) =>
   REQUIRED_PARAMS.some((param) => {
-    // Zones send RegionId with an empty Region
-    const key =
-      param === 'Region' && params.regiontype === 'Region' ? 'RegionId' : param
+    let key = param
+
+    if (param === 'Region') {
+      if (params.regiontype === 'Region') {
+        key = 'RegionId'
+      } else if (params.regiontype === 'Agglomeration') {
+        key = 'AgglomerationId'
+      }
+    }
+
     const value = params[key]
+
     return value === null || value === undefined || value === ''
   })
 

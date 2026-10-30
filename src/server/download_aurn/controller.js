@@ -305,6 +305,22 @@ function buildApiParams(request, dataSource, selectedyear) {
       dataselectordownloadtype: 'dataSelectorSingle'
     }
   }
+  if (request.yar.get('Location') === 'Agglomeration') {
+    return {
+      pollutantName:
+        networkPollutantID || request.yar.get('selectedPollutantID'),
+      dataSource,
+      networkId,
+      RegionId: '',
+      Region: '',
+      AgglomerationID: request.yar.get('selectedAgglomerationIDs') || '',
+      regiontype: 'Agglomeration',
+      Days: days,
+      Year: selectedyear,
+      dataselectorfiltertype: 'dataSelectorHourly',
+      dataselectordownloadtype: 'dataSelectorSingle'
+    }
+  }
 
   return {
     pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),

@@ -10,7 +10,7 @@ import {
   isZoneWithoutAurn,
   shouldShowZoneNonAurnError,
   setDownloadDatasourceOverrideForZones
-} from './datasource-category.js'
+} from '~/src/server/customdataset/datasource-category.js'
 
 const AURN_GROUP = {
   category: 'Near real-time data from Defra',

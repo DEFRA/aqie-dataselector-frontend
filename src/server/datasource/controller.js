@@ -113,6 +113,7 @@ async function fetchDatasourceDev(body, pollutantID) {
     logger.info(
       `Datasource API returned ${result.length} items for pollutantID ${pollutantID}`
     )
+
     return result
   } catch (error) {
     logger.error(
