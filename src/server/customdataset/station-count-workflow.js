@@ -219,6 +219,19 @@ function buildStationCountParameters(request, finalyear) {
       dataselectordownloadtype: ''
     }
   }
+  if (request.yar.get('Location') === 'Agglomeration') {
+    return {
+      pollutantName: pollutantID,
+      dataSource,
+      RegionId: '',
+      Region: '',
+      AgglomerationID: request.yar.get('selectedAgglomerationIDs') || '',
+      regiontype: 'Agglomeration',
+      Year: finalyear,
+      dataselectorfiltertype: 'dataSelectorCount',
+      dataselectordownloadtype: ''
+    }
+  }
 
   if (isCountry) {
     return {

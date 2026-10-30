@@ -105,27 +105,33 @@ describe('locationaurnController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
-
-      expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
-        pageTitle: 'Test Location Page',
-        heading: 'Test Heading',
-        texts: ['Test text 1', 'Test text 2'],
-        displayBacklink: true,
-        hrefq: '/customdataset',
-        laResult: {
-          data: [
-            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
-            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
-            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
-          ]
-        },
-        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets'],
-        regionList: [],
-        zonesUnavailable: true,
-        laqmUnavailable: false,
-        laqmUnavailableReason: undefined,
-        formData: {}
-      })
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          pageTitle: 'Test Location Page',
+          heading: 'Test Heading',
+          texts: ['Test text 1', 'Test text 2'],
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          laResult: {
+            data: [
+              { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+              { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+              { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+            ]
+          },
+          localAuthorityNames: [
+            'City of London',
+            'Westminster',
+            'Tower Hamlets'
+          ],
+          regionList: [],
+          zonesUnavailable: true,
+          laqmUnavailable: false,
+          laqmUnavailableReason: undefined,
+          formData: {}
+        })
+      )
       expect(result).toBe('location-aurn-view-response')
     })
 

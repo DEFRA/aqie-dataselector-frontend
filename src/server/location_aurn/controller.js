@@ -37,10 +37,13 @@ const SESSION_SELECTED_LOCATION_LOWER = 'selectedlocation'
 const SESSION_SELECTED_LA_IDS = 'selectedLAIDs'
 const SESSION_SELECTED_ZONES = 'selectedZones'
 const SESSION_SELECTED_ZONE_IDS = 'selectedZoneIDs'
+const SESSION_SELECTED_AGGLOMERATIONS = 'selectedAgglomerations'
+const SESSION_SELECTED_AGGLOMERATION_IDS = 'selectedAgglomerationIDs'
 
 // Form field names and error anchor IDs
 const FIELD_LOCAL_AUTHORITY = 'local-authority'
 const ANCHOR_ZONE_FIRST = '#zone-1'
+const ANCHOR_AGGLOMERATION_FIRST = '#agglomeration-1'
 const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 const ANCHOR_SELECTED_LOCATIONS = '#selected-locations'
 
@@ -91,11 +94,18 @@ function handleBadPayload(laqmCache, logger) {
 
 // Form data from the saved location type, or null when it can't be used
 function formDataFromLocationType(selectedLocation, selections) {
-  const { selectedCountries, selectedLocalAuthorities, selectedZones } =
-    selections
-
+  const {
+    selectedCountries,
+    selectedLocalAuthorities,
+    selectedZones,
+    selectedAgglomerations
+  } = selections
   if (selectedLocation === 'Zone' && selectedZones) {
     return { location: 'zones', zone: selectedZones }
+  }
+
+  if (selectedLocation === 'Agglomeration' && selectedAgglomerations) {
+    return { location: 'agglomerations', agglomeration: selectedAgglomerations }
   }
 
   if (selectedLocation === 'Country' && selectedCountries) {
@@ -137,13 +147,15 @@ function determineFormDataFromSession(
   selectedCountries,
   selectedLocalAuthorities,
   selectedlocations,
-  selectedZones = null
+  selectedZones = null,
+  selectedAgglomerations = null
 ) {
   return (
     formDataFromLocationType(selectedLocation, {
       selectedCountries,
       selectedLocalAuthorities,
-      selectedZones
+      selectedZones,
+      selectedAgglomerations
     }) ?? formDataFromLocationNames(selectedlocations)
   )
 }
@@ -261,6 +273,9 @@ function buildViewContext(
     localAuthorityNames,
     regionList: request?.app?.regionList ?? [],
     zonesUnavailable: (request?.app?.regionList ?? []).length === 0,
+    agglomerationList: request?.app?.agglomerationList ?? [],
+    agglomerationsUnavailable:
+      (request?.app?.agglomerationList ?? []).length === 0,
     laqmUnavailable: laqmMetadata.unavailable,
     laqmUnavailableReason: laqmMetadata.reason
   }
@@ -291,13 +306,17 @@ function handleGetRequest(request, h, laContext, laqmMetadata, backUrl) {
   const selectedlocations = request.yar.get(SESSION_SELECTED_LOCATION_LOWER)
   const selectedLocalAuthorities = request.yar.get(SESSION_SELECTED_LOCATIONS)
   const selectedZones = request.yar.get(SESSION_SELECTED_ZONES)
+  const selectedAgglomerations = request.yar.get(
+    SESSION_SELECTED_AGGLOMERATIONS
+  )
 
   const formData = determineFormDataFromSession(
     selectedLocation,
     selectedCountries,
     selectedLocalAuthorities,
     selectedlocations,
-    selectedZones
+    selectedZones,
+    selectedAgglomerations
   )
   const isNoJs = isNoJsRequest(request)
   const templatePath = getTemplatePath(isNoJs)
@@ -451,15 +470,83 @@ function validateZones(payload, regionList, errors) {
   return matched
 }
 
-function handlePostZones(regions, request) {
-  const names = regions.map((r) => r.name)
-  request.yar.set(SESSION_SELECTED_ZONES, names)
-  request.yar.set(SESSION_SELECTED_ZONE_IDS, regions.map((r) => r.id).join(','))
-  request.yar.set(SESSION_SELECTED_LOCATION, 'Zones: ' + names.join(', '))
-  request.yar.set(SESSION_LOCATION, 'Zone')
-  request.yar.set(SESSION_SELECTED_LOCATION_LOWER, names)
+function validateAgglomerations(payload, agglomerationList, errors) {
+  const addError = (text) => {
+    errors.list.push({
+      text,
+      href: ANCHOR_AGGLOMERATION_FIRST
+    })
+
+    errors.details.agglomeration = text
+
+    return null
+  }
+
+  if (agglomerationList.length === 0) {
+    return addError(
+      'Agglomerations are currently unavailable. Try again later.'
+    )
+  }
+
+  const selected = toArray(payload.agglomeration)
+
+  if (selected.length === 0) {
+    return addError('Select at least one agglomeration')
+  }
+
+  const byName = new Map(
+    agglomerationList.map((a) => [a.name.toLowerCase(), a])
+  )
+
+  const matched = []
+
+  for (const name of selected) {
+    const agglomeration = byName.get(name.trim().toLowerCase())
+
+    if (!agglomeration) {
+      return addError('Select agglomerations from the list')
+    }
+
+    if (!matched.includes(agglomeration)) {
+      matched.push(agglomeration)
+    }
+  }
+
+  return matched
 }
 
+function handlePostAgglomerations(agglomerations, request) {
+  const names = agglomerations.map((a) => a.name)
+
+  request.yar.set(SESSION_SELECTED_AGGLOMERATIONS, names)
+
+  request.yar.set(
+    SESSION_SELECTED_AGGLOMERATION_IDS,
+    agglomerations.map((a) => a.id).join(',')
+  )
+
+  request.yar.set(
+    SESSION_SELECTED_LOCATION,
+    'Agglomerations: ' + names.join(', ')
+  )
+
+  request.yar.set(SESSION_LOCATION, 'Agglomeration')
+
+  request.yar.set(SESSION_SELECTED_LOCATION_LOWER, names)
+}
+function handlePostZones(regions, request) {
+  const names = regions.map((r) => r.name)
+
+  request.yar.set(SESSION_SELECTED_ZONES, names)
+
+  request.yar.set(SESSION_SELECTED_ZONE_IDS, regions.map((r) => r.id).join(','))
+
+  request.yar.set(SESSION_SELECTED_LOCATION, 'Zones: ' + names.join(', '))
+
+  request.yar.set(SESSION_LOCATION, 'Zone')
+
+  request.yar.set(SESSION_SELECTED_LOCATION_LOWER, names)
+}
 function processZonesPost(
   payload,
   request,
@@ -500,6 +587,38 @@ function handlePostLocalAuthorities(payload, request, laResult) {
   request.yar.set(SESSION_SELECTED_LA_IDS, selectedLAIDs.join(','))
   request.yar.set(SESSION_LOCATION, 'LocalAuthority')
   request.yar.set(SESSION_SELECTED_LOCATION_LOWER, selectedLocations)
+}
+
+function processAgglomerationsPost(
+  payload,
+  request,
+  h,
+  laContext,
+  laqmMetadata,
+  backUrl,
+  errors
+) {
+  const agglomerations = validateAgglomerations(
+    payload,
+    request.app?.agglomerationList ?? [],
+    errors
+  )
+  if (!agglomerations) {
+    return handlePostValidationError(
+      request,
+      h,
+      {
+        laResult: laContext.laResult,
+        localAuthorityNames: laContext.localAuthorityNames,
+        laqmMetadata,
+        backUrl,
+        payload
+      },
+      errors
+    )
+  }
+  handlePostAgglomerations(agglomerations, request)
+  return h.redirect(backUrl)
 }
 
 function handlePostValidationError(request, h, context, errors) {
@@ -643,6 +762,17 @@ function handlePostRequest(
 
   if (payload.location === 'zones') {
     return processZonesPost(
+      payload,
+      request,
+      h,
+      laContext,
+      laqmMetadata,
+      backUrl,
+      errors
+    )
+  }
+  if (payload.location === 'agglomerations') {
+    return processAgglomerationsPost(
       payload,
       request,
       h,
@@ -809,6 +939,31 @@ async function fetchRegionListDev() {
     return []
   }
 }
+async function fetchAgglomerationListDev() {
+  try {
+    const { payload } = await Wreck.get(
+      config.get('agglomerationMasterDevUrl'),
+      {
+        headers: {
+          'x-api-key': config.get('DevApiKey')
+        },
+        json: true
+      }
+    )
+
+    const list = Array.isArray(payload) ? payload : []
+
+    logger.info(
+      `Fetched ${list.length} agglomerations from agglomeration master API`
+    )
+
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch agglomeration list: ${errMsg(error)}`)
+
+    return []
+  }
+}
 
 async function fetchRegionListProd() {
   try {
@@ -821,11 +976,35 @@ async function fetchRegionListProd() {
     return []
   }
 }
+async function fetchAgglomerationListProd() {
+  try {
+    const response = await axios.get(config.get('agglomerationMasterApiUrl'))
+
+    const list = Array.isArray(response.data) ? response.data : []
+
+    logger.info(
+      `Fetched ${list.length} agglomerations from agglomeration master API`
+    )
+
+    return list
+  } catch (error) {
+    logger.error(`Failed to fetch agglomeration list: ${errMsg(error)}`)
+
+    return []
+  }
+}
 
 // Map each API item to { id, name } so the view and validation do not depend
 // on the exact field names the region master API returns.
 const REGION_NAME_KEYS = ['regionName', 'RegionName', 'region_Name', 'name']
 const REGION_ID_KEYS = ['regionID', 'regionId', 'RegionID', 'region_ID', 'id']
+const AGGLOMERATION_NAME_KEYS = [
+  'agglomerationRegion',
+  'AgglomerationRegion',
+  'name'
+]
+
+const AGGLOMERATION_ID_KEYS = ['agglomerationId', 'AgglomerationId', 'id']
 
 function pickField(item, keys) {
   const key = keys.find((k) => item[k] !== undefined && item[k] !== null)
@@ -851,12 +1030,49 @@ export function normaliseRegionList(list) {
     .filter(Boolean)
     .sort((a, b) => a.name.localeCompare(b.name))
 }
+export function normaliseAgglomerationList(list) {
+  return list
+    .map((item) => {
+      if (typeof item === 'string') {
+        return {
+          id: item,
+          name: item
+        }
+      }
+
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+
+      const name = pickField(item, AGGLOMERATION_NAME_KEYS)
+
+      if (!name) {
+        return null
+      }
+
+      const id = pickField(item, AGGLOMERATION_ID_KEYS) ?? name
+
+      return {
+        id: String(id),
+        name: String(name).trim()
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
 
 export async function fetchRegionList() {
   const list = config.get('isDevelopment')
     ? await fetchRegionListDev()
     : await fetchRegionListProd()
   return normaliseRegionList(list)
+}
+
+export async function fetchAgglomerationList() {
+  const list = config.get('isDevelopment')
+    ? await fetchAgglomerationListDev()
+    : await fetchAgglomerationListProd()
+  return normaliseAgglomerationList(list)
 }
 
 export const locationaurnController = {
@@ -869,11 +1085,17 @@ export const locationaurnController = {
       request.yar.set('osnameapiresult', '')
     }
 
-    const [laResult, regionList] = await Promise.all([
+    const [laResult, regionList, agglomerationList] = await Promise.all([
       invokeLocalAuthority(),
-      fetchRegionList()
+      fetchRegionList(),
+      fetchAgglomerationList()
     ])
-    request.app = { ...request.app, regionList }
+    request.app = {
+      ...request.app,
+      regionList,
+      agglomerationList
+    }
+
     const localAuthorityNames = getLocalAuthorityNames(laResult)
     const laqmUnavailable = Boolean(laResult?._meta?.unavailable)
     const laqmUnavailableReason = laResult?._meta?.reason
