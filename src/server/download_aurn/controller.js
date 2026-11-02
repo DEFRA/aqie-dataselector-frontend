@@ -282,56 +282,59 @@ function buildApiParams(request, dataSource, selectedyear) {
     requestedNetworkName
   )
 
+  return {
+    pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),
+    dataSource,
+    networkId,
+    ...buildLocationParams(request),
+    Days: resolveDays(request),
+    Year: selectedyear,
+    dataselectorfiltertype: 'dataSelectorHourly',
+    dataselectordownloadtype: 'dataSelectorSingle'
+  }
+}
+
+/**
+ * The Days value for the API — '7days' when the user chose "last 7 days".
+ * @param {object} request - the Hapi request
+ * @returns {string}
+ */
+function resolveDays(request) {
   const normalizedTimeSelectionMode = String(
     request.yar.get('TimeSelectionMode') || ''
   )
     .toLowerCase()
     .replace(/[\s_-]/g, '')
-  const days = normalizedTimeSelectionMode === 'last7days' ? '7days' : ''
+  return normalizedTimeSelectionMode === 'last7days' ? '7days' : ''
+}
+
+/**
+ * The location-specific part of the API request body.
+ * @param {object} request - the Hapi request
+ * @returns {object}
+ */
+function buildLocationParams(request) {
+  const location = request.yar.get('Location')
 
   // Zones: the selected region IDs go in RegionId and Region is left empty
-  if (request.yar.get('Location') === 'Zone') {
+  if (location === 'Zone') {
     return {
-      pollutantName:
-        networkPollutantID || request.yar.get('selectedPollutantID'),
-      dataSource,
-      networkId,
       RegionId: request.yar.get('selectedZoneIDs') || '',
       Region: '',
-      regiontype: 'Region',
-      Days: days,
-      Year: selectedyear,
-      dataselectorfiltertype: 'dataSelectorHourly',
-      dataselectordownloadtype: 'dataSelectorSingle'
+      regiontype: 'Region'
     }
   }
-  if (request.yar.get('Location') === 'Agglomeration') {
+  if (location === 'Agglomeration') {
     return {
-      pollutantName:
-        networkPollutantID || request.yar.get('selectedPollutantID'),
-      dataSource,
-      networkId,
       RegionId: '',
       Region: '',
       AgglomerationID: request.yar.get('selectedAgglomerationIDs') || '',
-      regiontype: 'Agglomeration',
-      Days: days,
-      Year: selectedyear,
-      dataselectorfiltertype: 'dataSelectorHourly',
-      dataselectordownloadtype: 'dataSelectorSingle'
+      regiontype: 'Agglomeration'
     }
   }
-
   return {
-    pollutantName: networkPollutantID || request.yar.get('selectedPollutantID'),
-    dataSource,
-    networkId,
     Region: resolveRegion(request),
-    regiontype: request.yar.get('Location'),
-    Days: days,
-    Year: selectedyear,
-    dataselectorfiltertype: 'dataSelectorHourly',
-    dataselectordownloadtype: 'dataSelectorSingle'
+    regiontype: location
   }
 }
 

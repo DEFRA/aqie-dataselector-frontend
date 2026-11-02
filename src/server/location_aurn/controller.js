@@ -723,6 +723,13 @@ function processLocalAuthoritiesPost(
   return h.redirect(backUrl)
 }
 
+const LOCATION_POST_HANDLERS = {
+  countries: processCountriesPost,
+  zones: processZonesPost,
+  agglomerations: processAgglomerationsPost,
+  la: processLocalAuthoritiesPost
+}
+
 function handlePostRequest(
   request,
   h,
@@ -748,43 +755,11 @@ function handlePostRequest(
     )
   }
 
-  if (payload.location === 'countries') {
-    return processCountriesPost(
-      payload,
-      request,
-      h,
-      laContext,
-      laqmMetadata,
-      backUrl,
-      errors
-    )
-  }
-
-  if (payload.location === 'zones') {
-    return processZonesPost(
-      payload,
-      request,
-      h,
-      laContext,
-      laqmMetadata,
-      backUrl,
-      errors
-    )
-  }
-  if (payload.location === 'agglomerations') {
-    return processAgglomerationsPost(
-      payload,
-      request,
-      h,
-      laContext,
-      laqmMetadata,
-      backUrl,
-      errors
-    )
-  }
-
-  if (payload.location === 'la') {
-    return processLocalAuthoritiesPost(
+  const processPost = Object.hasOwn(LOCATION_POST_HANDLERS, payload.location)
+    ? LOCATION_POST_HANDLERS[payload.location]
+    : null
+  if (processPost) {
+    return processPost(
       payload,
       request,
       h,

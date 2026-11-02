@@ -284,6 +284,8 @@ const hasMissingRequiredParams = (params) =>
         key = 'RegionId'
       } else if (params.regiontype === 'Agglomeration') {
         key = 'AgglomerationId'
+      } else {
+        key = 'Region'
       }
     }
 
