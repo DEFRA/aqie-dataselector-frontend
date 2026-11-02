@@ -18,7 +18,8 @@ import {
   setDownloadDatasourceOverrideForLast7Days,
   shouldShowZoneWarning,
   shouldShowZoneNonAurnError,
-  setDownloadDatasourceOverrideForZones
+  setDownloadDatasourceOverrideForZones,
+  getZoneAgglomerationWarningText
 } from '~/src/server/customdataset/datasource-category.js'
 import {
   handlePollutantsFromParams,
@@ -30,8 +31,8 @@ import { handleStationCountCalculation } from '~/src/server/customdataset/statio
 const CUSTOMDATASET_VIEW = 'customdataset/index'
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
-const ZONE_WARNING_TEXT =
-  'Only the Automatic Urban and Rural Network is available for zones'
+// const ZONE_WARNING_TEXT =
+//   'Only the Automatic Urban and Rural Network is available for zones'
 const NO_STATIONS_ERROR_MESSAGE =
   'No monitoring stations are available for your selection. Please try:'
 const CHANGE_TIME_PERIOD_TEXT = 'Change time period'
@@ -166,7 +167,7 @@ function renderBothZeroView(request, h, backUrl) {
     showLast7DaysWarning: shouldShowLast7DaysDatasourceWarning(request),
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
     showZoneWarning: shouldShowZoneWarning(request),
-    zoneWarningText: ZONE_WARNING_TEXT,
+    zoneWarningText: getZoneAgglomerationWarningText(request),
     displayBacklink: true,
     hrefq: backUrl,
     error: true,
@@ -186,6 +187,17 @@ function renderCustomDatasetView(request, h, backUrl) {
   )
   const showOtherOnlyError = shouldShowOtherOnlyTimePeriodError(request)
 
+  const showZoneOrAgglomerationWarning =
+    !showOtherOnlyError && shouldShowZoneWarning(request)
+
+  const datasourceType = getDatasourceCategoryType(request)
+
+  const showLast7DaysWarning =
+    !showOtherOnlyError &&
+    !showZoneOrAgglomerationWarning &&
+    datasourceType === 'both' &&
+    shouldShowLast7DaysDatasourceWarning(request)
+
   return h.view(CUSTOMDATASET_VIEW, {
     pageTitle: englishNew.custom.pageTitle,
     heading: englishNew.custom.heading,
@@ -196,11 +208,15 @@ function renderCustomDatasetView(request, h, backUrl) {
     stationcount: request.yar.get('nooflocation'),
     datasourceGroups: request.yar.get('datasourceGroups') || [],
     datasourceCategoryType: getDatasourceCategoryType(request),
-    showLast7DaysWarning:
-      !showOtherOnlyError && shouldShowLast7DaysDatasourceWarning(request),
+
+    showLast7DaysWarning,
+
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
-    showZoneWarning: !showOtherOnlyError && shouldShowZoneWarning(request),
-    zoneWarningText: ZONE_WARNING_TEXT,
+
+    showZoneWarning: showZoneOrAgglomerationWarning,
+
+    zoneWarningText: getZoneAgglomerationWarningText(request),
+
     displayBacklink: true,
     hrefq: backUrl,
     ...(showOtherOnlyError ? getOtherOnlyTimePeriodErrorViewModel() : {})
@@ -224,7 +240,7 @@ function renderZoneNonAurnView(request, h, backUrl) {
     showLast7DaysWarning: false,
     last7DaysWarningText: LAST7DAYS_WARNING_TEXT,
     showZoneWarning: false,
-    zoneWarningText: ZONE_WARNING_TEXT,
+    zoneWarningText: getZoneAgglomerationWarningText(request),
     displayBacklink: true,
     hrefq: backUrl,
     error: true,

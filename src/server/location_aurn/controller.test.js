@@ -105,27 +105,33 @@ describe('locationaurnController', () => {
       expect(mockRequest.yar.set).toHaveBeenCalledWith('searchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('fullSearchQuery', null)
       expect(mockRequest.yar.set).toHaveBeenCalledWith('osnameapiresult', '')
-
-      expect(mockH.view).toHaveBeenCalledWith('location_aurn/index', {
-        pageTitle: 'Test Location Page',
-        heading: 'Test Heading',
-        texts: ['Test text 1', 'Test text 2'],
-        displayBacklink: true,
-        hrefq: '/customdataset',
-        laResult: {
-          data: [
-            { 'Local Authority Name': 'City of London', 'LA ID': '1' },
-            { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
-            { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
-          ]
-        },
-        localAuthorityNames: ['City of London', 'Westminster', 'Tower Hamlets'],
-        regionList: [],
-        zonesUnavailable: true,
-        laqmUnavailable: false,
-        laqmUnavailableReason: undefined,
-        formData: {}
-      })
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          pageTitle: 'Test Location Page',
+          heading: 'Test Heading',
+          texts: ['Test text 1', 'Test text 2'],
+          displayBacklink: true,
+          hrefq: '/customdataset',
+          laResult: {
+            data: [
+              { 'Local Authority Name': 'City of London', 'LA ID': '1' },
+              { 'Local Authority Name': 'Westminster', 'LA ID': '2' },
+              { 'Local Authority Name': 'Tower Hamlets', 'LA ID': '3' }
+            ]
+          },
+          localAuthorityNames: [
+            'City of London',
+            'Westminster',
+            'Tower Hamlets'
+          ],
+          regionList: [],
+          zonesUnavailable: true,
+          laqmUnavailable: false,
+          laqmUnavailableReason: undefined,
+          formData: {}
+        })
+      )
       expect(result).toBe('location-aurn-view-response')
     })
 
@@ -1292,6 +1298,304 @@ describe('locationaurnController', () => {
         expect.objectContaining({
           formData: { location: 'zones', zone: ['Greater London'] }
         })
+      )
+    })
+  })
+
+  describe('agglomerations', () => {
+    const agglomerations = [
+      { agglomerationId: 5, agglomerationRegion: 'Tyneside' },
+      { agglomerationId: 3, agglomerationRegion: 'Greater Manchester' },
+      { AgglomerationId: 8, AgglomerationRegion: ' Bristol Urban Area ' }
+    ]
+    const normalised = [
+      { id: '8', name: 'Bristol Urban Area' },
+      { id: '3', name: 'Greater Manchester' },
+      { id: '5', name: 'Tyneside' }
+    ]
+
+    async function getAxios() {
+      return (await import('axios')).default ?? (await import('axios'))
+    }
+
+    async function getWreck() {
+      return (
+        (await import('@hapi/wreck')).default ?? (await import('@hapi/wreck'))
+      )
+    }
+
+    async function loadWithAgglomerations(
+      data = agglomerations,
+      isDevelopment = false
+    ) {
+      await loadController()
+      const base = mockConfigGet.getMockImplementation()
+      mockConfigGet.mockImplementation((key) => {
+        if (key === 'isDevelopment') return isDevelopment
+        if (key === 'agglomerationMasterApiUrl') return 'agglomeration-url'
+        if (key === 'agglomerationMasterDevUrl') return 'agglomeration-dev-url'
+        if (key === 'DevApiKey') return 'dev-key'
+        return base(key)
+      })
+      const axios = await getAxios()
+      axios.get.mockImplementation((url) =>
+        Promise.resolve({ data: url === 'agglomeration-url' ? data : [] })
+      )
+      mockRequest.method = 'post'
+    }
+
+    afterEach(async () => {
+      const axios = await getAxios()
+      axios.get.mockReset()
+      axios.get.mockResolvedValue({ data: [] })
+      const Wreck = await getWreck()
+      Wreck.get.mockReset()
+      Wreck.get.mockResolvedValue({ payload: [] })
+    })
+
+    it('saves selected agglomerations and IDs to session and redirects', async () => {
+      await loadWithAgglomerations()
+      mockRequest.payload = {
+        location: 'agglomerations',
+        agglomeration: ['tyneside ', 'Greater Manchester', 'Tyneside']
+      }
+
+      const result = await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedAgglomerations',
+        ['Tyneside', 'Greater Manchester']
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedAgglomerationIDs',
+        '5,3'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION,
+        'Agglomerations: Tyneside, Greater Manchester'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_LOCATION,
+        'Agglomeration'
+      )
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        SESSION_SELECTED_LOCATION_LOWER,
+        ['Tyneside', 'Greater Manchester']
+      )
+      expect(result).toBe('redirect-response')
+    })
+
+    it('accepts a single agglomeration as a string', async () => {
+      await loadWithAgglomerations()
+      mockRequest.payload = {
+        location: 'agglomerations',
+        agglomeration: 'Bristol Urban Area'
+      }
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockRequest.yar.set).toHaveBeenCalledWith(
+        'selectedAgglomerationIDs',
+        '8'
+      )
+      expect(mockH.redirect).toHaveBeenCalledWith('/customdataset')
+    })
+
+    it.each([
+      [
+        'no agglomeration is selected',
+        agglomerations,
+        { location: 'agglomerations', agglomeration: ['  '] },
+        'Select at least one agglomeration'
+      ],
+      [
+        'an unknown agglomeration is submitted',
+        agglomerations,
+        { location: 'agglomerations', agglomeration: ['Atlantis'] },
+        'Select agglomerations from the list'
+      ],
+      [
+        'the agglomeration API returned nothing',
+        [],
+        { location: 'agglomerations', agglomeration: ['Tyneside'] },
+        'Agglomerations are currently unavailable. Try again later.'
+      ]
+    ])('shows an error when %s', async (_label, data, payload, message) => {
+      await loadWithAgglomerations(data)
+      mockRequest.payload = payload
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.redirect).not.toHaveBeenCalled()
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          errors: {
+            list: [{ text: message, href: '#agglomeration-1' }],
+            details: { agglomeration: message }
+          }
+        })
+      )
+    })
+
+    it('passes the normalised agglomeration list to the view', async () => {
+      await loadWithAgglomerations()
+      mockRequest.method = 'get'
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          agglomerationList: normalised,
+          agglomerationsUnavailable: false
+        })
+      )
+    })
+
+    it('flags agglomerations unavailable when the API fails', async () => {
+      await loadWithAgglomerations()
+      const axios = await getAxios()
+      axios.get.mockImplementation((url) =>
+        url === 'agglomeration-url'
+          ? Promise.reject(new Error('network down'))
+          : Promise.resolve({ data: [] })
+      )
+      mockRequest.method = 'get'
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          agglomerationList: [],
+          agglomerationsUnavailable: true
+        })
+      )
+    })
+
+    it('returns an empty list for a non-array payload', async () => {
+      await loadWithAgglomerations({ unexpected: true })
+      mockRequest.method = 'get'
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({ agglomerationList: [] })
+      )
+    })
+
+    it('uses Wreck with the dev API key in development', async () => {
+      await loadWithAgglomerations(agglomerations, true)
+      const Wreck = await getWreck()
+      Wreck.get.mockImplementation((url) =>
+        Promise.resolve({
+          payload: url === 'agglomeration-dev-url' ? agglomerations : []
+        })
+      )
+      mockRequest.method = 'get'
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(Wreck.get).toHaveBeenCalledWith(
+        'agglomeration-dev-url',
+        expect.objectContaining({ headers: { 'x-api-key': 'dev-key' } })
+      )
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({ agglomerationList: normalised })
+      )
+    })
+
+    it.each([
+      ['fails', () => Promise.reject(new Error('refused'))],
+      ['returns a non-array payload', () => Promise.resolve({ payload: {} })]
+    ])(
+      'returns an empty list when the dev API %s',
+      async (_label, response) => {
+        await loadWithAgglomerations(agglomerations, true)
+        const Wreck = await getWreck()
+        Wreck.get.mockImplementation((url) =>
+          url === 'agglomeration-dev-url'
+            ? response()
+            : Promise.resolve({ payload: [] })
+        )
+        mockRequest.method = 'get'
+
+        await locationaurnController.handler(mockRequest, mockH)
+
+        expect(mockH.view).toHaveBeenCalledWith(
+          'location_aurn/index',
+          expect.objectContaining({
+            agglomerationList: [],
+            agglomerationsUnavailable: true
+          })
+        )
+      }
+    )
+
+    it('prepopulates agglomerations from session on GET', async () => {
+      await loadWithAgglomerations()
+      mockRequest.method = 'get'
+      mockRequest.yar.get.mockImplementation((key) => {
+        if (key === SESSION_LOCATION) return 'Agglomeration'
+        if (key === 'selectedAgglomerations') return ['Tyneside']
+        return null
+      })
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({
+          formData: { location: 'agglomerations', agglomeration: ['Tyneside'] }
+        })
+      )
+    })
+  })
+
+  describe('normaliseAgglomerationList', () => {
+    it('handles strings, alternative keys and drops invalid items', async () => {
+      await loadController()
+      const { normaliseAgglomerationList } = await import('./controller.js')
+
+      expect(
+        normaliseAgglomerationList([
+          'Leeds',
+          { id: 4, name: 'Cardiff' },
+          { agglomerationRegion: 'Sheffield' },
+          { agglomerationId: 9 },
+          null,
+          42
+        ])
+      ).toEqual([
+        { id: '4', name: 'Cardiff' },
+        { id: 'Leeds', name: 'Leeds' },
+        { id: 'Sheffield', name: 'Sheffield' }
+      ])
+    })
+  })
+
+  describe('region list from the dev API', () => {
+    it.each([
+      ['fails', () => Promise.reject(new Error('refused'))],
+      ['returns a non-array payload', () => Promise.resolve({ payload: {} })]
+    ])('returns an empty region list when it %s', async (_label, response) => {
+      await loadController()
+      const base = mockConfigGet.getMockImplementation()
+      mockConfigGet.mockImplementation((key) =>
+        key === 'isDevelopment' ? true : base(key)
+      )
+      const Wreck =
+        (await import('@hapi/wreck')).default ?? (await import('@hapi/wreck'))
+      Wreck.get.mockImplementationOnce(response)
+
+      await locationaurnController.handler(mockRequest, mockH)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'location_aurn/index',
+        expect.objectContaining({ regionList: [], zonesUnavailable: true })
       )
     })
   })

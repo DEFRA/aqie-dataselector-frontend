@@ -1,7 +1,9 @@
 import { downloadAurnstatusController } from './controller.js'
 import axios from 'axios'
+import Wreck from '@hapi/wreck'
 import { config } from '~/src/config/config.js'
 jest.mock('axios')
+jest.mock('@hapi/wreck', () => ({ post: jest.fn() }))
 jest.mock('~/src/config/config.js')
 
 describe('downloadAurnstatusController', () => {
@@ -340,4 +342,87 @@ describe('downloadAurnstatusController', () => {
       })
     })
   })
+})
+
+describe('downloadAurnstatusController in development', () => {
+  let mockRequest
+  let mockH
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+
+    config.get.mockImplementation((key) => {
+      if (key === 'isDevelopment') return true
+      if (key === 'pollingDevUrl') return 'https://dev.example.com/status'
+      if (key === 'DevApiKey') return 'dev-key'
+      return undefined
+    })
+
+    mockRequest = {
+      params: { jobID: 'dev-job' },
+      yar: { get: jest.fn(), set: jest.fn() }
+    }
+    mockH = {
+      response: jest.fn().mockReturnThis(),
+      type: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+  })
+
+  it('polls the dev URL with the API key and saves a completed result', async () => {
+    Wreck.post.mockResolvedValue({
+      payload: { status: 'Completed', resultUrl: 'https://s3/file.zip' }
+    })
+
+    await downloadAurnstatusController.handler(mockRequest, mockH)
+
+    expect(Wreck.post).toHaveBeenCalledWith('https://dev.example.com/status', {
+      payload: JSON.stringify({ jobID: 'dev-job' }),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'dev-key' },
+      json: true
+    })
+    expect(axios.post).not.toHaveBeenCalled()
+    expect(mockRequest.yar.set).toHaveBeenCalledWith(
+      'downloadaurnresult',
+      'https://s3/file.zip'
+    )
+    expect(mockH.response).toHaveBeenCalledWith({
+      status: 'Completed',
+      resultUrl: 'https://s3/file.zip',
+      viewData: null
+    })
+  })
+
+  it('returns a null resultUrl while the job is still running', async () => {
+    Wreck.post.mockResolvedValue({ payload: { status: 'Processing' } })
+
+    await downloadAurnstatusController.handler(mockRequest, mockH)
+
+    expect(mockRequest.yar.set).not.toHaveBeenCalled()
+    expect(mockH.response).toHaveBeenCalledWith({
+      status: 'Processing',
+      resultUrl: null,
+      viewData: null
+    })
+  })
+
+  it.each([
+    ['an Error', new Error('refused')],
+    ['a non-Error value', 'refused']
+  ])(
+    'returns a 500 error response when the dev call rejects with %s',
+    async (_label, rejection) => {
+      Wreck.post.mockRejectedValue(rejection)
+
+      await downloadAurnstatusController.handler(mockRequest, mockH)
+
+      expect(mockH.response).toHaveBeenCalledWith({
+        error: true,
+        statusCode: 500,
+        redirectUrl: '/problem-with-service',
+        message: 'Status check failed'
+      })
+      expect(mockH.code).toHaveBeenCalledWith(200)
+    }
+  )
 })
