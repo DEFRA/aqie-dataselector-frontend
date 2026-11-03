@@ -1,4 +1,4 @@
-{% from "toggletip/macro.njk" import toggletip %}
+{% from "partials/aq-table-macros.njk" import limitToggletip, aboveLimitTag, exceedanceCell %}
 
 {#
   Yearly air pollution levels table + download links.
@@ -15,36 +15,10 @@
 
   Limit values and toggletip copy come from the pollutantToggletips,
   dataCaptureToggletip and lowDataCaptureThreshold nunjucks globals
-  (src/server/data/en/pollutant-toggletips.js).
+  (src/server/data/en/pollutant-toggletips.js). limitToggletip, aboveLimitTag
+  and exceedanceCell are shared with last7daystable.njk - see
+  partials/aq-table-macros.njk.
 #}
-
-{#-------------------------------------------------------------------------
-  Reusable markup
---------------------------------------------------------------------------#}
-{% macro limitToggletip(entry) %}
-  {{ toggletip('', entry.label, entry.text, 'Trend') }}
-{% endmacro %}
-
-{% macro aboveLimitTag() %}
-  <span class="defra-aq-levels-table__cell--data">
-    <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Above limit</strong>
-  </span>
-{% endmacro %}
-
-{#
-  An exceedance cell: the count, plus its toggletip and an "Above limit" tag
-  when the pollutant has an allowance and the count is over it.
-#}
-{% macro exceedanceCell(modifier, count, entry) %}
-  <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--{{ modifier }}">
-    {% if entry %}
-      <span class="defra-aq-value-with-tip">{{ count }}{{ limitToggletip(entry) }}</span>
-      {% if entry.limit and count > entry.limit %}{{ aboveLimitTag() }}{% endif %}
-    {% else %}
-      {{ count }}
-    {% endif %}
-  </td>
-{% endmacro %}
 
 {% macro downloadLink(pollutantKey, pollutantLabel, frequency, actionText, isAllPollutants=false) %}
   {% if isAllPollutants %}
@@ -117,12 +91,13 @@
 
               {# Annual average. A null limit means the pollutant has no UK limit value. #}
               <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
-                {{ data.annualcount }}
                 {% if data.annualcount != '-' and limits.annual %}
-                  <span class="defra-aq-value-with-tip">µg/m3{{ limitToggletip(limits.annual) }}</span>
+                  <span class="defra-aq-value-with-tip">{{ data.annualcount }} µg/m3{{ limitToggletip(limits.annual) }}</span>
                   {% if limits.annual.limit and data.annualcount > limits.annual.limit and not lowDataCapture %}
                     {{ aboveLimitTag() }}
                   {% endif %}
+                {% else %}
+                  {{ data.annualcount }}
                 {% endif %}
               </td>
 

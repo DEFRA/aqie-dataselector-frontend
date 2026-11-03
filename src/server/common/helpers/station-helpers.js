@@ -1,10 +1,7 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import axios from 'axios'
 import { config } from '~/src/config/config.js'
-import {
-  YEAR_2017,
-  YEAR_2018
-} from '~/src/server/common/constants/magic-numbers.js'
+import { YEAR_2017 } from '~/src/server/common/constants/magic-numbers.js'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { getJson } from '~/src/server/common/helpers/api-client.js'
@@ -169,6 +166,29 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
+ * Fetches a station's hourly pollutant history for the last 7 days from
+ * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
+ * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
+ * `summary` block carries the figures the 7-day table shows (average, data
+ * capture, exceedances); they are calculated by aqie-back-end, not here.
+ * @param {{ siteId: string }} params
+ * @returns {Promise<{siteId: string, period: string, from: string, to: string,
+ *   truncated: boolean,
+ *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
+ *   summary?: {daqiIndex: number|null, pollutants: Record<string, object>}}|null>}
+ */
+export async function fetchLast7DaysSummary({ siteId }) {
+  const result = await getJson({
+    devUrlKey: 'monitoringStationHistoryDevUrl',
+    urlKey: 'monitoringStationHistoryUrl',
+    path: '',
+    params: { siteId, period: '7d' },
+    label: 'Monitoring station history API'
+  })
+  return result ?? null
+}
+
+/**
  * The current calendar year. Templates compare the selected year against this
  * to decide whether a year is complete ("1 January to 31 December") or still
  * running ("1 January to <today>").
@@ -179,13 +199,13 @@ export function getCurrentYear() {
 }
 
 /**
- * Generates an array of years from 2018 to the current year.
+ * Generates an array of years from the current year down to 2018 (newest first).
  * @returns {number[]}
  */
 export function buildYearsArray() {
   return Array.from(
     { length: getCurrentYear() - YEAR_2017 },
-    (_, i) => YEAR_2018 + i
+    (_, i) => getCurrentYear() - i
   )
 }
 

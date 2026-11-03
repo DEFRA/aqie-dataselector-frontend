@@ -1,0 +1,55 @@
+{% from "toggletip/macro.njk" import toggletip %}
+{% set mapToggletip %}
+  {{ toggletip(
+    '',
+    'More information about ' + stationdetails.siteType,
+    maptoggletips
+    ,
+    'Trend'
+  )}}
+{% endset %}
+
+{#
+  Station heading + summary features list, shared by stationdetails/index.njk
+  and stationdetails/last-7-days.njk so both tabs show an identical header.
+  Expects: stationdetails, updatedTime, maplocation, maptoggletips.
+#}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <h1 class="govuk-heading-xl govuk-!-margin-bottom-1">{{stationdetails.name}}</h1>
+
+    <strong class="govuk-tag status-tag govuk-tag--green">
+      Active
+    </strong>
+    <p class="status-description govuk-!-margin-top-3" id="status">Latest at {{updatedTime}}</p>
+  </div>
+</div>
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <dl class="defra-aq-features__list govuk-!-margin-top-3">
+      <div class="defra-aq-features__item" >
+        <dt class="defra-aq-features__key " >Monitoring network</dt>
+        <dd class="defra-aq-features__value govuk-body" >Automatic Urban and Rural Network (AURN)</dd>
+      </div>
+      <div class="defra-aq-features__item" >
+        <dt class="defra-aq-features__key " >Region</dt>
+        <dd class="defra-aq-features__value govuk-body" >{{stationdetails.region}}</dd>
+      </div>
+      <div class="defra-aq-features__item" >
+        <dt class="defra-aq-features__key ">Site type</dt>
+
+        <dd class="defra-aq-features__value govuk-body defra-aq-features__value--wrap">
+          <span class="defra-aq-value-with-tip">
+            <span class="defra-aq-features__value-text">{{ stationdetails.siteType }}</span>
+            <span class="defra-aq-features__value-tip">{{ mapToggletip | safe }}</span>
+          </span>
+
+          <p class="govuk-body govuk-!-margin-top-1">
+            <a href={{maplocation}} class="govuk-link" target="_blank">View on Google Maps (opens in new tab)</a>
+          </p>
+        </dd>
+
+      </div>
+    </dl>
+  </div>
+</div>
