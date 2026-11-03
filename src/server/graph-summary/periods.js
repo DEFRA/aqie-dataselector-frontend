@@ -1,17 +1,28 @@
-import {
-  ONE_DAY_MS,
-  DAYS_IN_SEVEN_DAYS
-} from '~/src/server/common/constants/magic-numbers.js'
+import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
 
+// A range period shows "<first day> to <last day>"; the others a single date.
 const PERIODS = [
-  { key: 'last24hours', days: 1 },
-  { key: 'last7days', days: DAYS_IN_SEVEN_DAYS }
+  {
+    key: 'last24hours',
+    historyPeriod: HISTORY_PERIOD.LAST_24_HOURS,
+    isRange: false
+  },
+  {
+    key: 'last7days',
+    historyPeriod: HISTORY_PERIOD.LAST_7_DAYS,
+    isRange: true
+  }
 ]
 
 const PERIOD_KEYS = PERIODS.map(({ key }) => key)
 const DEFAULT_PERIOD = PERIOD_KEYS[0]
 
 // UTC, like the readings and the rest of the station pages.
+const dayMonthFormat = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'UTC',
+  day: 'numeric',
+  month: 'long'
+})
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
   day: 'numeric',
@@ -19,26 +30,44 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric'
 })
 
-function startOfUtcDay(date) {
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+function toDate(stamp) {
+  if (!stamp) {
+    return null
+  }
+  const date = new Date(stamp)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 /**
- * Formats the calendar days a period covers, ending today: a single date for
- * the last 24 hours, "<first day> to <today>" for longer periods. An unknown
- * period is treated as the default one.
+ * The aqie-back-end history period that backs a page period.
  * @param {string} period
- * @param {Date} [now]
- * @returns {string}
+ * @returns {string|undefined}
  */
-function formatPeriodDates(period, now = new Date()) {
-  const { days } = PERIODS.find(({ key }) => key === period) ?? PERIODS[0]
-  const end = startOfUtcDay(now)
-  const start = end - (days - 1) * ONE_DAY_MS
-
-  return start === end
-    ? dateFormat.format(end)
-    : `${dateFormat.format(start)} to ${dateFormat.format(end)}`
+function historyPeriodFor(period) {
+  return PERIODS.find(({ key }) => key === period)?.historyPeriod
 }
 
-export { PERIOD_KEYS, DEFAULT_PERIOD, formatPeriodDates }
+/**
+ * Formats the calendar days the readings cover: a single date for the last 24
+ * hours (the day of the latest reading), "<first day> to <last day> <year>" for
+ * longer periods, as on the parent station page's tabs. The window comes from
+ * aqie-back-end, so the dates match the data rather than the clock.
+ * @param {string} period
+ * @param {{ periodStart?: string, periodEnd?: string }} [window] as returned by
+ *   resolveStationHistory
+ * @returns {string} empty when the window is not known
+ */
+function formatPeriodDates(period, { periodStart, periodEnd } = {}) {
+  const definition = PERIODS.find(({ key }) => key === period)
+  const start = toDate(periodStart)
+  const end = toDate(periodEnd)
+  if (!definition || !end || (definition.isRange && !start)) {
+    return ''
+  }
+
+  return definition.isRange
+    ? `${dayMonthFormat.format(start)} to ${dateFormat.format(end)}`
+    : dateFormat.format(end)
+}
+
+export { PERIOD_KEYS, DEFAULT_PERIOD, historyPeriodFor, formatPeriodDates }

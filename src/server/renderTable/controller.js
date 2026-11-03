@@ -1,8 +1,11 @@
 import nunjucks from 'nunjucks'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { fetchYearTable } from '~/src/server/common/helpers/station-helpers.js'
+import {
+  fetchYearTable,
+  resolveStationHistory
+} from '~/src/server/common/helpers/station-helpers.js'
+import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
 import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
-import { resolveLast7Days } from '~/src/server/stationdetails/controller.js'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 import {
   HTTP_OK,
@@ -13,7 +16,9 @@ const logger = createLogger()
 
 async function renderLast7DaysPartial(request, h) {
   const station = request.yar.get('stationdetails')
-  const last7Days = station ? await resolveLast7Days(station) : {}
+  const last7Days = station
+    ? await resolveStationHistory(station, HISTORY_PERIOD.LAST_7_DAYS)
+    : {}
   const durationText =
     last7Days.pollutants?.length && last7Days.periodStart && last7Days.periodEnd
       ? `${formatDate(last7Days.periodStart, 'd MMMM')} to ${formatDate(last7Days.periodEnd, 'd MMMM yyyy')}`

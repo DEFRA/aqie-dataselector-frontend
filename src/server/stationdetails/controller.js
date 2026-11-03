@@ -10,10 +10,10 @@ import {
   buildYearsArray,
   formatCurrentDate,
   fetchYearTable,
-  fetchLast7DaysSummary,
+  resolveStationHistory,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
-import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
+import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
@@ -303,7 +303,10 @@ const last7DaysController = {
     const lat = station.location.coordinates[0]
     const lon = station.location.coordinates[1]
 
-    const last7Days = await resolveLast7Days(station)
+    const last7Days = await resolveStationHistory(
+      station,
+      HISTORY_PERIOD.LAST_7_DAYS
+    )
     const updatedTime = parseDateFormat(
       last7Days.latestReadingAt ?? new Date().toISOString()
     )
@@ -328,26 +331,4 @@ const last7DaysController = {
   }
 }
 
-/**
- * Fetches and summarises the 7-day pollutant history for a station, or
- * returns an empty-state marker when it can't: `noMapping` when the station
- * has no AURN siteId (so aqie-back-end can't be called at all), or neither
- * flag set when the call itself failed - last7daystable.njk reads these to
- * show the right message instead of a generic error.
- * @param {object} station
- * @returns {Promise<object>}
- */
-async function resolveLast7Days(station) {
-  if (!station.siteId) {
-    return { noMapping: true }
-  }
-
-  const history = await fetchLast7DaysSummary({ siteId: station.siteId })
-  if (!history) {
-    return {}
-  }
-
-  return summariseStationHistory(history, station.pollutants)
-}
-
-export { stationDetailsController, last7DaysController, resolveLast7Days }
+export { stationDetailsController, last7DaysController }

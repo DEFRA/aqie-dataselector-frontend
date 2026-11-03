@@ -30,6 +30,26 @@ const TOGGLETIP_TEXT =
   'Data capture under 75% is low. We do not calculate the average when data capture is low.'
 
 describe('last7daystable.njk low data capture behaviour', () => {
+  it('shows the data verification banner above the table, using the shared banner component', () => {
+    const $ = render({ pollutants: [row()] })
+
+    const banner = $('.app-verification-banner')
+    expect(banner).toHaveLength(1)
+    expect(banner.text().trim()).toBe('Data has not been checked and verified')
+    expect(banner.nextAll('.table-scroll-container')).toHaveLength(1)
+    expect($('.govuk-inset-text.not-verified')).toHaveLength(0)
+  })
+
+  it('shows the UK legal limits text without a link', () => {
+    const $ = render({ pollutants: [row()] })
+
+    const hint = $('#last7days-hint')
+    expect(hint.text().trim()).toBe(
+      'The pollution levels shown are measured against UK legal limits.'
+    )
+    expect(hint.find('a')).toHaveLength(0)
+  })
+
   it('uses table-scroll-container to match the year tables', () => {
     const $ = render({ pollutants: [row()] })
 

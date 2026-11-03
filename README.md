@@ -84,9 +84,11 @@ The application only injects the GTM script when a user has accepted analytics c
 
 | Environment variable         | Default | Description                                                                                                                                                                                              |
 | ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details pages (with and without JavaScript) and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details pages (with and without JavaScript) and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
 
 The flag is read at startup, so restart the server after changing it.
+
+It is off by default, so a release does not show the feature in an environment until the variable is set to `true` there. Any value other than `false` turns it on, including `0`, `no` and an empty value, so leave the variable unset to keep it off. `.env.example` turns it on for local development.
 
 ### Graph and pollutant summary page
 
@@ -98,7 +100,7 @@ The flag is read at startup, so restart the server after changing it.
 | `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                         |
 | `nojs`      | no       | `true` when the user came from the no-JavaScript station page, so that Back returns to that page. Defaults to `false`.                         |
 
-The page works without JavaScript: the tabs are links and nothing is drawn client side. The date or date range under the heading is worked out from the server clock, in UTC, so it is not yet tied to the readings shown. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
+The page works without JavaScript: the tabs are links and nothing is drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC): the day of the latest reading for the last 24 hours, and 7 complete days for the last 7 days. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
 
 ## Proxy
 
@@ -139,8 +141,8 @@ When running `aqie-dataselector-frontend` locally (on `http://localhost:3010` vi
    docker compose up --build -d
    ```
 
-2. **`aqie-back-end` (Port `3001`)** — **Required for `/stationdetails/last-7-days`**
-   - Serves `GET /monitoringStationHistory?siteId=<AURN_siteId>&period=7d`, which provides the hourly pollutant readings and 7-day summary figures (averages, data capture %, and hourly/daily exceedances) for the **Last 7 days** tab.
+2. **`aqie-back-end` (Port `3001`)** — **Required for `/stationdetails/last-7-days`, and for the dates on `/stationdetails/graph-summary`**
+   - Serves `GET /monitoringStationHistory?siteId=<AURN_siteId>&period=<24h|7d>`, which provides the hourly pollutant readings and summary figures (averages, data capture %, and hourly/daily exceedances) for the **Last 7 days** tab, and the window of readings that the graph and pollutant summary page shows as its dates.
    - Requires the station's AURN `siteId` supplied by `aqie-monitoringstation-backend`.
 
    ```bash

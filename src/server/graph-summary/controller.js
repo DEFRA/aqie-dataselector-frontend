@@ -1,7 +1,9 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { renderNotFound } from '~/src/server/common/helpers/navigation-helpers.js'
+import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
 import {
   PERIOD_KEYS,
+  historyPeriodFor,
   formatPeriodDates
 } from '~/src/server/graph-summary/periods.js'
 import {
@@ -38,7 +40,7 @@ function buildPeriodTabs({ stationId, period, nojs }) {
  * already been validated and defaulted by graphSummaryQuerySchema.
  */
 const graphSummaryController = {
-  handler: (request, h) => {
+  handler: async (request, h) => {
     const { stationId, period, nojs } = request.query
     const station = findSessionStation(request, stationId)
     if (!station) {
@@ -53,11 +55,15 @@ const graphSummaryController = {
 
     const content = english.graphsummary
     const heading = `${content.periods[period]}: ${station.name}`
+    const history = await resolveStationHistory(
+      station,
+      historyPeriodFor(period)
+    )
 
     return h.view('graph-summary/index', {
       pageTitle: heading,
       heading,
-      dates: formatPeriodDates(period),
+      dates: formatPeriodDates(period, history),
       periodNavigationLabel: content.periodNavigationLabel,
       periodTabs: buildPeriodTabs({ stationId: station.id, period, nojs }),
       verificationBanner: content.verificationBanner,

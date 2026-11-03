@@ -59,11 +59,16 @@ describe('graph summary page', () => {
   })
 
   it('shows the date below the heading', () => {
-    const $ = render({ dates: '15 September 2026 to 21 September 2026' })
+    const $ = render({ dates: '15 September to 21 September 2026' })
 
-    expect($('h1 + p').text().trim()).toBe(
-      '15 September 2026 to 21 September 2026'
-    )
+    expect($('h1 + p').text().trim()).toBe('15 September to 21 September 2026')
+  })
+
+  it('shows no date line when the dates are not known', () => {
+    const $ = render({ dates: '' })
+
+    expect($('h1 + p')).toHaveLength(0)
+    expect($('h1 + nav[aria-label="Time period"]')).toHaveLength(1)
   })
 
   it('offers the last 24 hours and the last 7 days as links in a labelled navigation', () => {

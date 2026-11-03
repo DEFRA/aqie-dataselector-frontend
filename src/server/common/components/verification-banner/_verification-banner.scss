@@ -1,11 +1,11 @@
 @use "govuk-frontend" as *;
 
 // A tinted panel with a heavy left border. The meaning is carried by the text,
-// so it does not rely on the colour alone.
+// so it does not rely on the colour alone. The tint is the prototype's.
 .app-verification-banner {
   margin-bottom: govuk-spacing(6);
   padding: govuk-spacing(3) govuk-spacing(4);
   border-left: govuk-spacing(2) solid govuk-colour("orange");
-  background-color: govuk-tint(govuk-colour("orange"), 70%);
+  background-color: #f9e2d7;
   color: $govuk-text-colour;
 }

@@ -1,0 +1,82 @@
+{% from "partials/aq-table-macros.njk" import limitToggletip, exceedanceCell %}
+
+{#
+  Pollutant summary table for one history period.
+
+  params:
+    rows             one per pollutant, as summariseStationHistory returns them
+                     (common/helpers/last-7-days-summary.js): { pollutantName,
+                     dataCapturePercentage, lowDataCapture, average, dailyCount,
+                     hourlyCount }. A withheld average arrives as '-'.
+    period           '24h' or '7d' (common/constants/history-period.js); picks
+                     the columns from the summaryTableColumns global
+    id               id of the table element
+    limitToggletips  default true. false shows plain figures, with no limit
+                     toggletips and no "Above limit" tags. The low data capture
+                     toggletip stays either way, as it explains a withheld
+                     average.
+
+  The limit toggletips reuse pollutantToggletips[name].annual (average),
+  .daily and last7DaysLimits[name].hourly (src/server/data/en/) - the year
+  table's copy, which is worded for the 7-day table, so only that table turns
+  them on for now.
+#}
+{% macro pollutantSummaryTable(params) %}
+  {% set columns = summaryTableColumns[params.period] %}
+  {% set showLimits = params.limitToggletips !== false %}
+
+  <div class="table-scroll-container">
+    <table id="{{ params.id }}" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+      <thead class="defra-aq-levels-table__head">
+        <tr class="defra-aq-levels-table__row">
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
+          {% for column in columns %}
+            <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--{{ column.key }} defra-aq-levels-table__cell--{{ column.key }}-title">{{ column.title }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody class="defra-aq-levels-table__body">
+        {% for data in params.rows %}
+          {% set annualLimit = pollutantToggletips[data.pollutantName].annual if showLimits else false %}
+          {% set dailyLimit = pollutantToggletips[data.pollutantName].daily if showLimits else false %}
+          {% set hourlyLimit = last7DaysLimits[data.pollutantName].hourly if showLimits else false %}
+
+          <tr class="defra-aq-levels-table__row">
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
+              {{ data.pollutantName }}
+              {% if data.lowDataCapture %}
+                <span class="defra-aq-levels-table__cell--data">
+                  <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
+                </span>
+              {% endif %}
+              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
+                {% if data.lowDataCapture %}
+                  <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
+                {% endif %}
+              </span>
+            </td>
+
+            {% for column in columns %}
+              {% if column.key == 'average' %}
+                <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
+                  {% if data.average == '-' %}
+                    {{ data.average }}
+                  {% elif annualLimit %}
+                    <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3{{ limitToggletip(annualLimit) }}</span>
+                  {% else %}
+                    {{ data.average }} µg/m3
+                  {% endif %}
+                </td>
+              {% elif column.key == 'daily' %}
+                {{ exceedanceCell('daily', data.dailyCount, dailyLimit) }}
+              {% else %}
+                {{ exceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
