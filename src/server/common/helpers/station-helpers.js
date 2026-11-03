@@ -194,7 +194,8 @@ export async function fetchStationHistory({ siteId, period }) {
  * empty-state marker when it can't: `noMapping` when the station has no AURN
  * siteId (so aqie-back-end can't be called at all), or an empty object when
  * the call itself failed. The summary tables read these to show the right
- * message instead of a generic error.
+ * message instead of a generic error. `history` is the raw response, for
+ * callers that need the hourly series as well as the summary.
  * @param {object} station a station from the session's search results
  * @param {string} period a HISTORY_PERIOD value
  * @returns {Promise<object>}
@@ -212,7 +213,7 @@ export async function resolveStationHistory(station, period) {
     return {}
   }
 
-  return summariseStationHistory(history, station.pollutants)
+  return { ...summariseStationHistory(history, station.pollutants), history }
 }
 
 /**

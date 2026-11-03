@@ -100,7 +100,15 @@ It is off by default, so a release does not show the feature in an environment u
 | `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                         |
 | `nojs`      | no       | `true` when the user came from the no-JavaScript station page, so that Back returns to that page. Defaults to `false`.                         |
 
-The page works without JavaScript: the tabs are links and nothing is drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC): the day of the latest reading for the last 24 hours, and 7 complete days for the last 7 days. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
+The page works without JavaScript: the tabs are links, and the graph is the only thing drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC): the day of the latest reading for the last 24 hours, and 7 complete days for the last 7 days. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
+
+The page makes one call to `GET /monitoringStationHistory` and uses the response three times:
+
+- **View pollutant summary:** a collapsed section with the shared summary table (`partials/pollutant-summary-table.njk`). It shows plain figures, without the limit toggletips of the station page.
+- **View graph: hourly data:** one line for each pollutant the station measures. The series are embedded in the page as JSON and drawn by `src/client/javascripts/pollutant-graph.js` using the `d3-*` modules. That code is a separate webpack chunk, so only this page downloads it. The graph stays hidden unless it can be drawn.
+- **View hourly data as a table:** the same readings in a collapsed table, in UTC. It is the text equivalent of the graph, and what users without JavaScript get.
+
+Each pollutant has a colour and a line style, so colour is not the only cue. They are set in `src/server/graph-summary/pollutant-styles.js`.
 
 ## Proxy
 

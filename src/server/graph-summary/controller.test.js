@@ -16,22 +16,28 @@ const ROW = {
   dailyCount: 'no legal limit',
   hourlyCount: 'no legal limit'
 }
+const RAW_HISTORY = {
+  pollutants: { PM25: [{ time: '2026-09-21T10:00:00.000Z', value: 12 }] }
+}
 const LAST_24_HOURS = {
   periodStart: '2026-09-20T12:00:00.000Z',
   periodEnd: '2026-09-21T11:00:00.000Z',
-  pollutants: [ROW]
+  pollutants: [ROW],
+  history: RAW_HISTORY
 }
 const LAST_7_DAYS = {
   periodStart: '2026-09-14T00:00:00.000Z',
   periodEnd: '2026-09-20T23:00:00.000Z',
-  pollutants: [ROW]
+  pollutants: [ROW],
+  history: RAW_HISTORY
 }
 
 describe('graphSummaryController.handler', () => {
   const station = {
     id: 'BirminghamA4540Roadside',
     name: 'Birmingham A4540 Roadside',
-    siteId: 'UKA00315'
+    siteId: 'UKA00315',
+    pollutants: ['PM2.5']
   }
   const otherStation = { id: 'LondonMarylebone', name: 'London Marylebone' }
 
@@ -92,6 +98,13 @@ describe('graphSummaryController.handler', () => {
         legalLimits:
           'The pollution levels shown are measured against UK legal limits.'
       },
+      graph: expect.objectContaining({
+        heading: 'View graph: hourly data',
+        message: null,
+        chart: expect.objectContaining({
+          legend: [{ name: 'PM2.5', colour: '#0b0c0c', dash: null }]
+        })
+      }),
       displayBacklink: true,
       hrefq: '/stationdetails'
     })
@@ -162,7 +175,8 @@ describe('graphSummaryController.handler', () => {
         expect.objectContaining({
           heading: 'Last 7 days: Birmingham A4540 Roadside',
           dates: '',
-          summary: expect.objectContaining({ rows: [] })
+          summary: expect.objectContaining({ rows: [] }),
+          graph: expect.objectContaining({ chart: null, table: null })
         })
       )
     }

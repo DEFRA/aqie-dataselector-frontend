@@ -1,0 +1,55 @@
+@use "govuk-frontend" as *;
+
+.app-pollutant-graph__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: govuk-spacing(2) govuk-spacing(5);
+  margin: 0 0 govuk-spacing(3);
+  padding: 0;
+  list-style: none;
+}
+
+.app-pollutant-graph__legend-item {
+  @include govuk-font($size: 16);
+
+  display: inline-flex;
+  align-items: center;
+  gap: govuk-spacing(2);
+  color: $govuk-text-colour;
+}
+
+.app-pollutant-graph__swatch {
+  flex: 0 0 auto;
+}
+
+.app-pollutant-graph__canvas {
+  position: relative;
+}
+
+.app-pollutant-graph__canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.app-pollutant-graph__axis text,
+.app-pollutant-graph__axis-title {
+  fill: $govuk-text-colour;
+  font-family: $govuk-font-family;
+  font-size: 14px;
+}
+
+.app-pollutant-graph__axis .tick line,
+.app-pollutant-graph__axis .domain {
+  stroke: $govuk-border-colour;
+}
+
+.app-pollutant-graph__grid .tick line {
+  stroke: $govuk-border-colour;
+  stroke-opacity: 0.4;
+}
+
+.app-pollutant-graph__line {
+  fill: none;
+  stroke-width: 2;
+}

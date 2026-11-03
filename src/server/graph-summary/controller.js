@@ -7,6 +7,7 @@ import {
   formatPeriodDates
 } from '~/src/server/graph-summary/periods.js'
 import { buildPollutantSummary } from '~/src/server/graph-summary/summary.js'
+import { buildPollutantGraph } from '~/src/server/graph-summary/graph.js'
 import {
   buildGraphSummaryHref,
   buildStationPageHref
@@ -67,6 +68,7 @@ const graphSummaryController = {
       periodTabs: buildPeriodTabs({ stationId: station.id, period, nojs }),
       verificationBanner: content.verificationBanner,
       summary: buildPollutantSummary(history, historyPeriod),
+      graph: buildPollutantGraph(history.history, station.pollutants),
       displayBacklink: true,
       hrefq: buildStationPageHref({ stationId: station.id, nojs })
     })

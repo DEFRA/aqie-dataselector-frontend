@@ -152,7 +152,8 @@ describe('resolveStationHistory', () => {
           dailyCount: 'no legal limit',
           hourlyCount: 'no legal limit'
         }
-      ]
+      ],
+      history
     })
   })
 

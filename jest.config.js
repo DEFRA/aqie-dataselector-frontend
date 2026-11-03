@@ -70,12 +70,14 @@ export default {
   ],
   coverageDirectory: '<rootDir>/coverage',
   transform: {
-    '^.+\\.js$': 'babel-jest'
+    '^.+\\.m?js$': 'babel-jest'
   },
   transformIgnorePatterns: [
     `node_modules/(?!${[
       '@defra/hapi-tracing', // Supports ESM only
-      'node-fetch' // Supports ESM only
+      'node-fetch', // Supports ESM only
+      'd3-[a-z-]+', // Support ESM only
+      'internmap' // Supports ESM only, used by d3-array
     ].join('|')}/)`
   ]
 }

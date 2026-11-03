@@ -31,6 +31,24 @@ const row = (overrides) => ({
   ...overrides
 })
 
+const GRAPH = {
+  heading: 'View graph: hourly data',
+  message: null,
+  chart: {
+    unitText: 'The unit µg/m³ stands for micrograms per cubic metre of air.',
+    legalLimits: 'Pollution levels are measured against UK legal limits.',
+    legendLabel: 'Pollutants in the graph',
+    legend: [{ name: 'PM2.5', colour: '#0b0c0c', dash: null }],
+    dataJson: '{"unit":"µg/m³","series":[]}'
+  },
+  table: {
+    title: 'View hourly data as a table',
+    caption: 'Hourly readings in µg/m³',
+    head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
+    rows: [[{ text: '3 Nov 2026, 10:00' }, { text: '5.2', format: 'numeric' }]]
+  }
+}
+
 function render(overrides = {}) {
   return load(
     environment.render('graph-summary/index.njk', {
@@ -58,6 +76,7 @@ function render(overrides = {}) {
         message: null,
         legalLimits: LEGAL_LIMITS
       },
+      graph: GRAPH,
       displayBacklink: true,
       hrefq: '/stationdetails',
       // layout context
@@ -139,32 +158,33 @@ describe('graph summary page', () => {
   it('shows the UK legal limits text beneath the summary table, without a link', () => {
     const $ = render()
 
-    const legalLimits = $('p:contains("UK legal limits")')
+    const legalLimits = $('p:contains("The pollution levels shown")')
     expect(legalLimits).toHaveLength(1)
     expect(legalLimits.text().trim()).toBe(LEGAL_LIMITS)
     expect(legalLimits.find('a')).toHaveLength(0)
     expect(
-      $('details .table-scroll-container ~ p:contains("UK legal limits")')
+      $('#pollutant-summary-table')
+        .parent()
+        .nextAll('p:contains("UK legal limits")')
     ).toHaveLength(1)
   })
 
   describe('pollutant summary section', () => {
     const headings = ($) =>
-      $('details thead th')
+      $('#pollutant-summary-table thead th')
         .map((_i, th) => $(th).text().trim())
         .get()
 
     it('is an expandable section below the verification banner, collapsed by default', () => {
       const $ = render()
 
-      const details = $('details.govuk-details')
-      expect(details).toHaveLength(1)
+      const details = $('details.govuk-details').first()
       expect(details.attr('open')).toBeUndefined()
       expect(details.find('summary').text().trim()).toBe(
         'View pollutant summary'
       )
       expect(
-        $('.app-verification-banner ~ details.govuk-details')
+        $('.app-verification-banner').next('details.govuk-details')
       ).toHaveLength(1)
     })
 
@@ -211,7 +231,7 @@ describe('graph summary page', () => {
         }
       })
 
-      const rows = $('details tbody tr')
+      const rows = $('#pollutant-summary-table tbody tr')
       expect(rows).toHaveLength(2)
       expect(rows.eq(0).text()).toContain('PM10')
       expect(rows.eq(0).text()).toContain('Data capture: 98%')
@@ -222,7 +242,7 @@ describe('graph summary page', () => {
     it('shows plain figures, with no limit toggletips', () => {
       const $ = render()
 
-      expect($('details td .defra-toggletip')).toHaveLength(0)
+      expect($('#pollutant-summary-table td .defra-toggletip')).toHaveLength(0)
     })
 
     it('shows the message instead of the table when there are no rows', () => {
@@ -236,11 +256,75 @@ describe('graph summary page', () => {
         }
       })
 
-      expect($('details table')).toHaveLength(0)
-      expect($('details p').text().trim()).toBe(
+      expect($('#pollutant-summary-table')).toHaveLength(0)
+      expect($('details').first().find('p').text().trim()).toBe(
         'Could not load the pollutant summary for this period.'
       )
-      expect($('p:contains("UK legal limits")')).toHaveLength(0)
+      expect($('p:contains("The pollution levels shown")')).toHaveLength(0)
+    })
+  })
+
+  describe('graph section', () => {
+    it('has the section heading below the pollutant summary', () => {
+      const $ = render()
+
+      const heading = $('details.govuk-details').first().next('h2')
+      expect(heading).toHaveLength(1)
+      expect(heading.text().trim()).toBe('View graph: hourly data')
+    })
+
+    it('has the graph, hidden until it is drawn, below the heading', () => {
+      const $ = render()
+
+      const graph = $('h2 + [data-module="app-pollutant-graph"]')
+      expect(graph).toHaveLength(1)
+      expect(graph.attr('hidden')).toBeDefined()
+      expect(graph.find('.app-pollutant-graph__legend li').text()).toContain(
+        'PM2.5'
+      )
+    })
+
+    it('has the hourly data as a table in a collapsed section below the graph', () => {
+      const $ = render()
+
+      const details = $('[data-module="app-pollutant-graph"]').next(
+        'details.govuk-details'
+      )
+      expect(details).toHaveLength(1)
+      expect(details.attr('open')).toBeUndefined()
+      expect(details.find('summary').text().trim()).toBe(
+        'View hourly data as a table'
+      )
+      expect(details.find('caption').text().trim()).toBe(
+        'Hourly readings in µg/m³'
+      )
+      expect(
+        details
+          .find('thead th')
+          .map((_i, th) => $(th).text().trim())
+          .get()
+      ).toEqual(['Time (UTC)', 'PM2.5'])
+      expect(details.find('tbody th').text().trim()).toBe('3 Nov 2026, 10:00')
+      expect(details.find('tbody td').text().trim()).toBe('5.2')
+    })
+
+    it('shows a message instead of the graph and table when there is nothing to draw', () => {
+      const $ = render({
+        graph: {
+          heading: 'View graph: hourly data',
+          message: 'There are no hourly readings to show for this period.',
+          chart: null,
+          table: null
+        }
+      })
+
+      const heading = $('details.govuk-details').first().next('h2')
+      expect(heading.text().trim()).toBe('View graph: hourly data')
+      expect(heading.next('p').text().trim()).toBe(
+        'There are no hourly readings to show for this period.'
+      )
+      expect($('[data-module="app-pollutant-graph"]')).toHaveLength(0)
+      expect($('details.govuk-details')).toHaveLength(1)
     })
   })
 

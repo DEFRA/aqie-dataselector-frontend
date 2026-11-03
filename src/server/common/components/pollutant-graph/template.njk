@@ -1,0 +1,20 @@
+<div class="app-pollutant-graph" data-module="app-pollutant-graph" data-testid="app-pollutant-graph" hidden>
+  <p class="govuk-body-s">{{ params.unitText }}</p>
+
+  <ul class="app-pollutant-graph__legend" role="list" aria-label="{{ params.legendLabel }}">
+    {% for item in params.legend %}
+      <li class="app-pollutant-graph__legend-item">
+        <svg class="app-pollutant-graph__swatch" width="26" height="8" aria-hidden="true" focusable="false">
+          <line x1="0" y1="4" x2="26" y2="4" stroke="{{ item.colour }}" stroke-width="3"{% if item.dash %} stroke-dasharray="{{ item.dash }}"{% endif %}></line>
+        </svg>
+        <span>{{ item.name }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <div class="app-pollutant-graph__canvas" data-graph-canvas></div>
+
+  <p class="govuk-body-s">{{ params.legalLimits }}</p>
+
+  <script type="application/json" data-graph-data>{{ params.dataJson | safe }}</script>
+</div>
