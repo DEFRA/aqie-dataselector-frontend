@@ -210,7 +210,12 @@ export const english = {
     periodNavigationLabel: 'Time period',
     verificationBanner: 'Data has not been checked and verified',
     legalLimits:
-      'The pollution levels shown are measured against UK legal limits.'
+      'The pollution levels shown are measured against UK legal limits.',
+    summary: {
+      title: 'View pollutant summary',
+      noData: 'Could not load the pollutant summary for this period.',
+      noMapping: 'The pollutant summary is not available for this station.'
+    }
   },
   phaseBanner: {
     paragraphs: {

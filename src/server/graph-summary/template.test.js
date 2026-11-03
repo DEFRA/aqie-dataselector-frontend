@@ -2,6 +2,8 @@ import path from 'node:path'
 import nunjucks from 'nunjucks'
 import { load } from 'cheerio'
 
+import * as globals from '~/src/config/nunjucks/globals/globals.js'
+
 const environment = new nunjucks.Environment(
   new nunjucks.FileSystemLoader([
     path.resolve('node_modules/govuk-frontend/dist'),
@@ -11,9 +13,23 @@ const environment = new nunjucks.Environment(
   ]),
   { autoescape: true, trimBlocks: true, lstripBlocks: true }
 )
-environment.addGlobal('govukRebrand', true)
+Object.entries(globals).forEach(([name, value]) =>
+  environment.addGlobal(name, value)
+)
 
 const HEADING = 'Last 24 hours: Birmingham A4540 Roadside'
+const LEGAL_LIMITS =
+  'The pollution levels shown are measured against UK legal limits.'
+
+const row = (overrides) => ({
+  pollutantName: 'PM2.5',
+  dataCapturePercentage: 100,
+  lowDataCapture: false,
+  average: 12,
+  dailyCount: 'no legal limit',
+  hourlyCount: 'no legal limit',
+  ...overrides
+})
 
 function render(overrides = {}) {
   return load(
@@ -35,8 +51,13 @@ function render(overrides = {}) {
         }
       ],
       verificationBanner: 'Data has not been checked and verified',
-      legalLimits:
-        'The pollution levels shown are measured against UK legal limits.',
+      summary: {
+        title: 'View pollutant summary',
+        period: '24h',
+        rows: [row()],
+        message: null,
+        legalLimits: LEGAL_LIMITS
+      },
       displayBacklink: true,
       hrefq: '/stationdetails',
       // layout context
@@ -115,15 +136,112 @@ describe('graph summary page', () => {
     expect(banner.text().trim()).toBe('Data has not been checked and verified')
   })
 
-  it('shows the UK legal limits text without a link', () => {
+  it('shows the UK legal limits text beneath the summary table, without a link', () => {
     const $ = render()
 
     const legalLimits = $('p:contains("UK legal limits")')
     expect(legalLimits).toHaveLength(1)
-    expect(legalLimits.text().trim()).toBe(
-      'The pollution levels shown are measured against UK legal limits.'
-    )
+    expect(legalLimits.text().trim()).toBe(LEGAL_LIMITS)
     expect(legalLimits.find('a')).toHaveLength(0)
+    expect(
+      $('details .table-scroll-container ~ p:contains("UK legal limits")')
+    ).toHaveLength(1)
+  })
+
+  describe('pollutant summary section', () => {
+    const headings = ($) =>
+      $('details thead th')
+        .map((_i, th) => $(th).text().trim())
+        .get()
+
+    it('is an expandable section below the verification banner, collapsed by default', () => {
+      const $ = render()
+
+      const details = $('details.govuk-details')
+      expect(details).toHaveLength(1)
+      expect(details.attr('open')).toBeUndefined()
+      expect(details.find('summary').text().trim()).toBe(
+        'View pollutant summary'
+      )
+      expect(
+        $('.app-verification-banner ~ details.govuk-details')
+      ).toHaveLength(1)
+    })
+
+    it('has the 24 hour average and hourly exceedances columns for the last 24 hours', () => {
+      const $ = render()
+
+      expect(headings($)).toEqual([
+        'Pollutant',
+        '24 hour average',
+        'Hourly exceedances'
+      ])
+    })
+
+    it('has the average, daily and hourly exceedances columns for the last 7 days', () => {
+      const $ = render({
+        summary: {
+          title: 'View pollutant summary',
+          period: '7d',
+          rows: [row()],
+          message: null,
+          legalLimits: LEGAL_LIMITS
+        }
+      })
+
+      expect(headings($)).toEqual([
+        'Pollutant',
+        'Average',
+        'Daily exceedances',
+        'Hourly exceedances'
+      ])
+    })
+
+    it('shows each pollutant with its data capture, and no legal limit where none applies', () => {
+      const $ = render({
+        summary: {
+          title: 'View pollutant summary',
+          period: '24h',
+          rows: [
+            row({ pollutantName: 'PM10', dataCapturePercentage: 98 }),
+            row({ pollutantName: 'Nitrogen dioxide', hourlyCount: 1 })
+          ],
+          message: null,
+          legalLimits: LEGAL_LIMITS
+        }
+      })
+
+      const rows = $('details tbody tr')
+      expect(rows).toHaveLength(2)
+      expect(rows.eq(0).text()).toContain('PM10')
+      expect(rows.eq(0).text()).toContain('Data capture: 98%')
+      expect(rows.eq(0).text()).toContain('no legal limit')
+      expect(rows.eq(1).find('td').last().text().trim()).toBe('1')
+    })
+
+    it('shows plain figures, with no limit toggletips', () => {
+      const $ = render()
+
+      expect($('details td .defra-toggletip')).toHaveLength(0)
+    })
+
+    it('shows the message instead of the table when there are no rows', () => {
+      const $ = render({
+        summary: {
+          title: 'View pollutant summary',
+          period: '24h',
+          rows: [],
+          message: 'Could not load the pollutant summary for this period.',
+          legalLimits: LEGAL_LIMITS
+        }
+      })
+
+      expect($('details table')).toHaveLength(0)
+      expect($('details p').text().trim()).toBe(
+        'Could not load the pollutant summary for this period.'
+      )
+      expect($('p:contains("UK legal limits")')).toHaveLength(0)
+    })
   })
 
   it('has a Back link to the station page', () => {

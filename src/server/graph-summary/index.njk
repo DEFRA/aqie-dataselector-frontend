@@ -1,5 +1,7 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "verification-banner/macro.njk" import appVerificationBanner %}
+{% from "partials/pollutant-summary-table.njk" import pollutantSummaryTable %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -22,7 +24,16 @@
 
       {{ appVerificationBanner({ text: verificationBanner }) }}
 
-      <p class="govuk-body-s">{{ legalLimits }}</p>
+      {% set summaryHtml %}
+        {% if summary.rows.length %}
+          {{ pollutantSummaryTable({ rows: summary.rows, period: summary.period, id: 'pollutant-summary-table', limitToggletips: false }) }}
+          <p class="govuk-body-s">{{ summary.legalLimits }}</p>
+        {% else %}
+          <p class="govuk-body">{{ summary.message }}</p>
+        {% endif %}
+      {% endset %}
+
+      {{ govukDetails({ summaryText: summary.title, html: summaryHtml }) }}
     </div>
   </div>
 {% endblock %}

@@ -8,15 +8,23 @@ jest.mock('~/src/server/common/helpers/station-helpers.js', () => ({
 }))
 
 // The windows are as resolveStationHistory returns them: the time each end hour began.
+const ROW = {
+  pollutantName: 'PM2.5',
+  dataCapturePercentage: 100,
+  lowDataCapture: false,
+  average: 12,
+  dailyCount: 'no legal limit',
+  hourlyCount: 'no legal limit'
+}
 const LAST_24_HOURS = {
   periodStart: '2026-09-20T12:00:00.000Z',
   periodEnd: '2026-09-21T11:00:00.000Z',
-  pollutants: []
+  pollutants: [ROW]
 }
 const LAST_7_DAYS = {
   periodStart: '2026-09-14T00:00:00.000Z',
   periodEnd: '2026-09-20T23:00:00.000Z',
-  pollutants: []
+  pollutants: [ROW]
 }
 
 describe('graphSummaryController.handler', () => {
@@ -76,8 +84,14 @@ describe('graphSummaryController.handler', () => {
         }
       ],
       verificationBanner: 'Data has not been checked and verified',
-      legalLimits:
-        'The pollution levels shown are measured against UK legal limits.',
+      summary: {
+        title: 'View pollutant summary',
+        period: '24h',
+        rows: [ROW],
+        message: null,
+        legalLimits:
+          'The pollution levels shown are measured against UK legal limits.'
+      },
       displayBacklink: true,
       hrefq: '/stationdetails'
     })
@@ -99,6 +113,7 @@ describe('graphSummaryController.handler', () => {
         pageTitle: 'Last 7 days: Birmingham A4540 Roadside',
         heading: 'Last 7 days: Birmingham A4540 Roadside',
         dates: '14 September to 20 September 2026',
+        summary: expect.objectContaining({ period: '7d', rows: [ROW] }),
         periodTabs: [
           expect.objectContaining({ label: 'Last 24 hours', isCurrent: false }),
           expect.objectContaining({ label: 'Last 7 days', isCurrent: true })
@@ -146,7 +161,8 @@ describe('graphSummaryController.handler', () => {
         'graph-summary/index',
         expect.objectContaining({
           heading: 'Last 7 days: Birmingham A4540 Roadside',
-          dates: ''
+          dates: '',
+          summary: expect.objectContaining({ rows: [] })
         })
       )
     }

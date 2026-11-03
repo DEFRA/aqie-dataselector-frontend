@@ -6,6 +6,7 @@ import {
   historyPeriodFor,
   formatPeriodDates
 } from '~/src/server/graph-summary/periods.js'
+import { buildPollutantSummary } from '~/src/server/graph-summary/summary.js'
 import {
   buildGraphSummaryHref,
   buildStationPageHref
@@ -55,10 +56,8 @@ const graphSummaryController = {
 
     const content = english.graphsummary
     const heading = `${content.periods[period]}: ${station.name}`
-    const history = await resolveStationHistory(
-      station,
-      historyPeriodFor(period)
-    )
+    const historyPeriod = historyPeriodFor(period)
+    const history = await resolveStationHistory(station, historyPeriod)
 
     return h.view('graph-summary/index', {
       pageTitle: heading,
@@ -67,7 +66,7 @@ const graphSummaryController = {
       periodNavigationLabel: content.periodNavigationLabel,
       periodTabs: buildPeriodTabs({ stationId: station.id, period, nojs }),
       verificationBanner: content.verificationBanner,
-      legalLimits: content.legalLimits,
+      summary: buildPollutantSummary(history, historyPeriod),
       displayBacklink: true,
       hrefq: buildStationPageHref({ stationId: station.id, nojs })
     })
