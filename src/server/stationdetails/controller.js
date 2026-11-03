@@ -11,9 +11,11 @@ import {
   formatCurrentDate,
   fetchYearTable,
   fetchLast7DaysSummary,
+  fetchDaqiSummary,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
 import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
+import { summariseDaqiHistory } from '~/src/server/common/helpers/daqi-summary.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
@@ -292,6 +294,13 @@ const stationDetailsController = {
     })
     request.yar.set('tabledata', tabledata)
 
+    const isYearRoute = Boolean(
+      request.params?.year || request.params?.download
+    )
+    const activePeriod = isYearRoute ? 'year' : 'daqi'
+    const daqi =
+      activePeriod === 'daqi' ? await resolveDaqi(stationDetails) : {}
+
     // Prepare view data
     const viewGraphSummary = buildViewGraphSummary(request)
 
@@ -313,6 +322,8 @@ const stationDetailsController = {
       selectedYear,
       tabledata,
       finalyear: selectedYear,
+      activePeriod,
+      daqi,
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request),
       viewGraphSummary
@@ -401,6 +412,26 @@ async function resolveLast7Days(station) {
   return summariseStationHistory(history, station.pollutants)
 }
 
+/**
+ * Fetches and summarises the current DAQI figures for a station, or returns an
+ * empty-state marker (`noMapping: true` when the station has no AURN siteId,
+ * or `{}` when the upstream call fails).
+ * @param {object} station
+ * @returns {Promise<object>}
+ */
+async function resolveDaqi(station) {
+  if (!station.siteId) {
+    return { noMapping: true }
+  }
+
+  const history = await fetchDaqiSummary({ siteId: station.siteId })
+  if (!history) {
+    return {}
+  }
+
+  return summariseDaqiHistory(history, station.pollutants)
+}
+
 const graphSummaryController = {
   handler: (request, h) => {
     const station = request.yar.get('stationdetails')
@@ -422,6 +453,7 @@ export {
   stationDetailsController,
   last7DaysController,
   resolveLast7Days,
+  resolveDaqi,
   graphSummaryController,
   buildViewGraphSummary
 }

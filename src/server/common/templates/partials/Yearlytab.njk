@@ -8,15 +8,20 @@
     'Trend'
   )}}
 {% endset %}
+{% set isDaqi = activePeriod == 'daqi' %}
 
+{% if isDaqi %}
+<h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">{{ daqiContent.heading }}</h2>
+{% else %}
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
-    
-     
-     
+{% endif %}
+
 {# The current year is still running, so its data only goes up to today.
    Every earlier year is complete. Loose == so a string or numeric year both
    match currentYear. #}
-{% if selectedYear == currentYear %}
+{% if isDaqi %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{% if daqi.measuredAt %}{{ daqi.measuredAt | formatDate('d MMMM yyyy') }}{% else %}{{ currentdate }} {{ currentYear }}{% endif %}</p>
+{% elif selectedYear == currentYear %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to 31 December</p>
@@ -25,6 +30,14 @@
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
   <li class="moj-sub-navigation__item">
+    <a class="moj-sub-navigation__link" id="link-daqi" href="/stationdetails/daqi" role="tab"
+    {% if isDaqi %}
+    aria-current="page" aria-selected="true"
+    {% else %}
+    aria-selected="false"
+    {% endif %}>{{ daqiContent.tabLabel }}</a>
+  </li>
+  <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-last-7-days" href="/stationdetails/last-7-days" role="tab" aria-selected="false">Last 7 days</a>
   </li>
   {% for year in years %}
@@ -32,7 +45,7 @@
  <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
  role="tab" aria-controls="panel-{{ year }}"
  data-year="{{ year }}"
- {% if year == selectedYear %}
+ {% if not isDaqi and year == selectedYear %}
  aria-current="page" aria-selected="true"
  {% else %}
  aria-selected="false"
@@ -45,7 +58,11 @@
           
           </nav>
             <div id="yearlytable-container">
-  {% include "partials/yearlytable.njk" %}
+  {% if isDaqi %}
+    {% include "partials/daqitable.njk" %}
+  {% else %}
+    {% include "partials/yearlytable.njk" %}
+  {% endif %}
   <noscript>
     <div class="no-js-warning">
       <p>JavaScript is disabled. You are viewing the default data for the selected year.</p>
@@ -59,6 +76,9 @@
        month name as the server-rendered markup. */
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
+    var DAQI_HEADING = {{ daqiContent.heading | dump | safe }};
+    var DAQI_DEFAULT_DATE = {{ (currentdate + ' ' + currentYear) | dump | safe }};
+    var DAQI_NO_DATA_MESSAGE = {{ daqiContent.noDataMessage | dump | safe }};
     var LAST_7_DAYS_HEADING = {{ last7DaysContent.heading | dump | safe }};
     var LAST_7_DAYS_NO_DATA_MESSAGE = {{ last7DaysContent.noDataMessage | dump | safe }};
 
@@ -105,6 +125,32 @@
           .catch(error => console.error('Error fetching partial content:', error));
     }
 
+    function updateDaqi() {
+      document.getElementById('airpollution-heading').textContent = DAQI_HEADING;
+      setActiveTab(document.getElementById('link-daqi'));
+
+      fetch('/rendertable/daqi')
+          .then(response => {
+              if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+              }
+              return response.text();
+          })
+          .then(data => {
+              document.getElementById('yearlytable-container').innerHTML = data;
+              var durationValue = document.getElementById('daqi-duration-value');
+              var durationEl = document.getElementById('duration_current');
+              if (durationEl) {
+                durationEl.textContent = durationValue ? durationValue.textContent : DAQI_DEFAULT_DATE;
+                durationEl.style.display = '';
+              }
+          })
+          .catch(error => {
+              console.error('Error fetching partial content:', error);
+              showTableError(DAQI_NO_DATA_MESSAGE);
+          });
+    }
+
     function updateLast7Days() {
       document.getElementById('airpollution-heading').textContent = LAST_7_DAYS_HEADING;
       setActiveTab(document.getElementById('link-last-7-days'));
@@ -136,8 +182,15 @@
           });
     }
 
-    /* Delegated listener for year and Last 7 days tab clicks to survive any DOM updates */
+    /* Delegated listener for DAQI, Last 7 days and year tab clicks to survive any DOM updates */
     document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
+      const daqiLink = e.target.closest('#link-daqi');
+      if (daqiLink) {
+        e.preventDefault();
+        updateDaqi();
+        return;
+      }
+
       const last7DaysLink = e.target.closest('#link-last-7-days');
       if (last7DaysLink) {
         e.preventDefault();
@@ -153,10 +206,6 @@
         updateYear(Number(year));
       }
     });
-
-    /* No DOMContentLoaded work is needed: the selected year's table, headings and
-       aria-current/aria-selected state are all rendered server side by
-       stationdetails/controller.js. updateYear only runs on a tab click. */
 
     // Delegated listener for download buttons to survive innerHTML swaps
     document.getElementById('yearlytable-container')?.addEventListener('click', (e) => {
@@ -178,4 +227,88 @@
       };
       getAPIstn_details1('AllPollutants', frequencyById[target.id]);
     });
+
+    /*
+     * Keep table toggletips inside the viewport across all tabs (DAQI, Last 7
+     * days and years).
+     */
+    (function () {
+      if (window.aqTableToggletipsBound) return;
+      window.aqTableToggletipsBound = true;
+
+      var PINNED_CLASS = 'defra-toggletip__info--pinned';
+      var EDGE_GAP = 8;
+      var TIP_GAP = 4;
+      var MIN_SPACE_ABOVE = 140;
+
+      function cssNumber(element, property, fallback) {
+        var value = parseFloat(
+          getComputedStyle(element).getPropertyValue(property)
+        );
+        return isNaN(value) ? fallback : value;
+      }
+
+      function tableToggletipFor(node) {
+        if (!node || !node.closest) return null;
+        var button = node.closest('.defra-toggletip__button');
+        if (!button || !button.closest('.table-scroll-container')) return null;
+        var toggletip = button.closest('.defra-toggletip');
+        var info = toggletip && toggletip.querySelector('.defra-toggletip__info');
+        return info ? { button: button, info: info } : null;
+      }
+
+      function reposition(event) {
+        var parts = tableToggletipFor(event.target);
+        if (!parts) return;
+
+        var rect = parts.button.getBoundingClientRect();
+        if (!rect.width) return;
+
+        var infoWidth = cssNumber(parts.info, '--toggletip-info-width', 200);
+        var buttonOffset = cssNumber(parts.info, '--toggletip-info-offset', 85);
+
+        var leftPos = Math.max(EDGE_GAP, rect.left - buttonOffset);
+        if (leftPos + infoWidth > window.innerWidth - EDGE_GAP) {
+          leftPos = window.innerWidth - infoWidth - EDGE_GAP;
+        }
+
+        parts.info.classList.add(PINNED_CLASS);
+        var style = parts.info.style;
+        style.left = leftPos + 'px';
+
+        if (rect.top >= MIN_SPACE_ABOVE) {
+          style.top = 'auto';
+          style.bottom = window.innerHeight - rect.top + TIP_GAP + 'px';
+        } else {
+          style.top = rect.bottom + TIP_GAP + 'px';
+          style.bottom = 'auto';
+        }
+      }
+
+      function reset(event) {
+        var parts = tableToggletipFor(event.target);
+        if (!parts) return;
+        if (event.relatedTarget && parts.button.contains(event.relatedTarget)) return;
+        parts.info.classList.remove(PINNED_CLASS);
+        parts.info.style.cssText = '';
+      }
+
+      document.addEventListener('mouseover', reposition);
+      document.addEventListener('focusin', reposition);
+      document.addEventListener('mouseout', reset);
+      document.addEventListener('focusout', reset);
+    })();
+
+    function getAPIstn_details1(pollutants, freq) {
+      fetch('/downloaddata/' + encodeURIComponent(pollutants) + '/' + encodeURIComponent(freq))
+        .then(function (response) { return response.text(); })
+        .then(function (url) {
+          if (url) {
+            window.location.href = url;
+          }
+        })
+        .catch(function (error) {
+          console.error('Error fetching partial content:', error);
+        });
+    }
        </script>

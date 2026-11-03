@@ -83,6 +83,76 @@ describe('rendertablecontroller.handler', () => {
     expect(request.yar.set).toHaveBeenCalledWith('selectedYear', 2024)
   })
 
+  it('renders daqi partial with formatted date when year is daqi', async () => {
+    request.params = { year: 'daqi' }
+    request.yar.get = jest.fn((key) => {
+      if (key === 'stationdetails') {
+        return {
+          localSiteID: 'site123',
+          siteId: 'UKA00315',
+          pollutants: ['PM2.5']
+        }
+      }
+      return undefined
+    })
+    axios.get.mockResolvedValue({
+      data: {
+        to: '2026-10-30T12:00:00.000Z',
+        summary: {
+          measuredAt: '2026-10-30T12:00:00.000Z',
+          pollutants: {
+            PM25: {
+              daqi: {
+                concentration: 12.2,
+                index: 2,
+                measuredAt: '2026-10-30T12:00:00.000Z',
+                averagingPeriod: '24-hour mean'
+              }
+            }
+          }
+        }
+      }
+    })
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/daqitable.njk',
+      expect.objectContaining({
+        daqi: expect.objectContaining({
+          pollutants: [
+            expect.objectContaining({
+              pollutantName: 'PM2.5',
+              average: 12,
+              daqiIndex: 2,
+              daqiBand: 'low',
+              averagingPeriod: '24 hour average'
+            })
+          ]
+        }),
+        durationText: '30 October 2026'
+      })
+    )
+    expect(h.response).toHaveBeenCalledWith('<table>content</table>')
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
+  it('renders daqi partial with fallback date when stationdetails is missing', async () => {
+    request.params = { year: 'daqi' }
+    request.yar.get = jest.fn(() => null)
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/daqitable.njk',
+      expect.objectContaining({
+        daqi: {},
+        durationText: expect.any(String)
+      })
+    )
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
   it('renders last-7-days partial with formatted duration when year is last-7-days', async () => {
     request.params = { year: 'last-7-days' }
     request.yar.get = jest.fn((key) => {
