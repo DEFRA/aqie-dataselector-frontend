@@ -189,6 +189,24 @@ export async function fetchLast7DaysSummary({ siteId }) {
 }
 
 /**
+ * Fetches a station's recent pollutant history (24h window) from aqie-back-end's
+ * GET /monitoringStationHistory so the `summary.pollutants[code].daqi` block
+ * carries the current DAQI concentration and 1-10 index for each pollutant.
+ * @param {{ siteId: string }} params
+ * @returns {Promise<object|null>}
+ */
+export async function fetchDaqiSummary({ siteId }) {
+  const result = await getJson({
+    devUrlKey: 'monitoringStationHistoryDevUrl',
+    urlKey: 'monitoringStationHistoryUrl',
+    path: '',
+    params: { siteId, period: '24h' },
+    label: 'Monitoring station history API'
+  })
+  return result ?? null
+}
+
+/**
  * The current calendar year. Templates compare the selected year against this
  * to decide whether a year is complete ("1 January to 31 December") or still
  * running ("1 January to <today>").

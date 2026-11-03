@@ -1,6 +1,7 @@
 import {
   fetchStationByLocation,
-  fetchLast7DaysSummary
+  fetchLast7DaysSummary,
+  fetchDaqiSummary
 } from './station-helpers.js'
 import { getJson } from '~/src/server/common/helpers/api-client.js'
 
@@ -96,6 +97,40 @@ describe('fetchLast7DaysSummary', () => {
     getJson.mockResolvedValue(null)
 
     const result = await fetchLast7DaysSummary({ siteId: 'UKA00315' })
+
+    expect(result).toBeNull()
+  })
+})
+
+describe('fetchDaqiSummary', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('requests the monitoring station history endpoint with period 24h for the given siteId', async () => {
+    const history = {
+      from: '2026-10-29T12:00:00.000Z',
+      to: '2026-10-30T11:00:00.000Z',
+      pollutants: {}
+    }
+    getJson.mockResolvedValue(history)
+
+    const result = await fetchDaqiSummary({ siteId: 'UKA00315' })
+
+    expect(getJson).toHaveBeenCalledWith({
+      devUrlKey: 'monitoringStationHistoryDevUrl',
+      urlKey: 'monitoringStationHistoryUrl',
+      path: '',
+      params: { siteId: 'UKA00315', period: '24h' },
+      label: 'Monitoring station history API'
+    })
+    expect(result).toEqual(history)
+  })
+
+  it('returns null when the API call fails', async () => {
+    getJson.mockResolvedValue(null)
+
+    const result = await fetchDaqiSummary({ siteId: 'UKA00315' })
 
     expect(result).toBeNull()
   })
