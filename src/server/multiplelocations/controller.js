@@ -6,6 +6,11 @@ import {
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { postJson } from '~/src/server/common/helpers/api-client.js'
 
+import {
+  HTTP_BAD_REQUEST,
+  HTTP_INTERNAL_SERVER_ERROR
+} from '~/src/server/common/constants/magic-numbers.js'
+
 const logger = createLogger()
 
 const SEARCH_LOCATION_URL = '/search-location'
@@ -152,10 +157,21 @@ async function resolveLocations(request, searchValue) {
     return cached.getOSPlaces
   }
 
-  const result = await invokeOsNameAPI(searchValue)
+  let result
+  try {
+    result = await invokeOsNameAPI(searchValue)
+  } catch (error) {
+    // Unmatched queries (e.g. nonsense, Ireland) come back as client errors
+    const status = error?.response?.status
+    if (status >= HTTP_BAD_REQUEST && status < HTTP_INTERNAL_SERVER_ERROR) {
+      logger.warn(`OS Names API found no match for query (status ${status})`)
+      return []
+    }
+    throw error
+  }
   if (result !== null) {
     request.yar.set('osnameapiresult', result)
-    return result.getOSPlaces
+    return result.getOSPlaces ?? []
   }
   // API call failed; empty list routes to the "not found" view
   return []

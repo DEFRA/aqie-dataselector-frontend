@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
 import {
@@ -9,8 +10,10 @@ import {
   buildYearsArray,
   formatCurrentDate,
   fetchYearTable,
+  fetchLast7DaysSummary,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
+import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
@@ -230,7 +233,10 @@ const stationDetailsController = {
     // Fetch the year table server side so the first paint shows real data.
     // Without this Yearlytab has to fire a follow-up /rendertable request on
     // load, costing an extra round trip and flashing an empty table.
-    const selectedYear = request.yar.get('selectedYear')
+    if (request.params?.year) {
+      request.yar.set('selectedYear', request.params.year)
+    }
+    const selectedYear = request.params?.year || request.yar.get('selectedYear')
     const tabledata = await fetchYearTable({
       siteId: stationDetails.localSiteID,
       year: selectedYear
@@ -265,4 +271,83 @@ const stationDetailsController = {
   }
 }
 
-export { stationDetailsController }
+/**
+ * Hapi route handler for /stationdetails/last-7-days. Resolves the requested
+ * station the same way as /stationdetails, fetches its 7-day pollutant
+ * history from aqie-back-end (requires the station's AURN-form siteId - see
+ * LAST_7_DAYS_FROM_AQIE_BACKEND_PLAN.md) and renders the 7-day tab.
+ * @param {object} request
+ * @param {object} h
+ * @returns {Promise<object>} Hapi response
+ */
+const last7DaysController = {
+  handler: async (request, h) => {
+    const accessDenied = checkAccessDenied(request, h)
+    if (accessDenied) {
+      return accessDenied
+    }
+
+    const stationId = resolveStationId(request)
+    const { response: stationError, station } = resolveStation(
+      request,
+      stationId,
+      h
+    )
+    if (stationError) {
+      return stationError
+    }
+
+    request.yar.set('stationdetails', station)
+
+    const years = buildYearsArray()
+    const lat = station.location.coordinates[0]
+    const lon = station.location.coordinates[1]
+
+    const last7Days = await resolveLast7Days(station)
+    const updatedTime = parseDateFormat(
+      last7Days.latestReadingAt ?? new Date().toISOString()
+    )
+
+    const viewData = {
+      pageTitle: last7DaysContent.pageTitle,
+      serviceName: english.stationdetails.serviceName,
+      stationdetails: station,
+      maplocation: buildMapLocation(lat, lon),
+      updatedTime,
+      displayBacklink: true,
+      fullSearchQuery: request.yar.get('fullSearchQuery')?.value,
+      maptoggletips: getToggletip(station.siteType),
+      years,
+      selectedYear: request.yar.get('selectedYear'),
+      activePeriod: 'last7days',
+      last7Days,
+      hrefq: resolveStationHrefq(request)
+    }
+
+    return h.view('stationdetails/last-7-days', viewData)
+  }
+}
+
+/**
+ * Fetches and summarises the 7-day pollutant history for a station, or
+ * returns an empty-state marker when it can't: `noMapping` when the station
+ * has no AURN siteId (so aqie-back-end can't be called at all), or neither
+ * flag set when the call itself failed - last7daystable.njk reads these to
+ * show the right message instead of a generic error.
+ * @param {object} station
+ * @returns {Promise<object>}
+ */
+async function resolveLast7Days(station) {
+  if (!station.siteId) {
+    return { noMapping: true }
+  }
+
+  const history = await fetchLast7DaysSummary({ siteId: station.siteId })
+  if (!history) {
+    return {}
+  }
+
+  return summariseStationHistory(history, station.pollutants)
+}
+
+export { stationDetailsController, last7DaysController, resolveLast7Days }

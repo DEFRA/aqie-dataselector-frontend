@@ -316,6 +316,64 @@ describe('multipleLocationsController', () => {
     expect(result).toBe('redirected')
   })
 
+  it.each([
+    ['egertre', 404],
+    ['Ireland', 400]
+  ])(
+    'renders the not found view when the OS Names API returns %s as HTTP %s',
+    async (query, status) => {
+      const apiError = Object.assign(new Error('Request failed'), {
+        response: { status }
+      })
+      axios.post
+        .mockRejectedValueOnce(apiError)
+        .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+      const yar = mockYar({
+        fullSearchQuery: { value: query },
+        locationMiles: '10',
+        hasSpecialCharacter: false,
+        osnameapiresult: undefined
+      })
+      const h = mockH()
+
+      await multipleLocationsController.handler(
+        { yar, payload: { fullSearchQuery: query, locationMiles: '10' } },
+        h
+      )
+
+      expect(h.view).toHaveBeenCalledWith(
+        'multiplelocations/nolocation',
+        expect.any(Object)
+      )
+      expect(h.redirect).not.toHaveBeenCalled()
+    }
+  )
+
+  it('renders the not found view when the OS Names response has no getOSPlaces', async () => {
+    axios.post
+      .mockResolvedValueOnce({ data: {} })
+      .mockResolvedValueOnce({ data: { getmonitoringstation: [] } })
+
+    const yar = mockYar({
+      fullSearchQuery: { value: 'egertre' },
+      locationMiles: '10',
+      hasSpecialCharacter: false,
+      osnameapiresult: undefined
+    })
+    const h = mockH()
+
+    await multipleLocationsController.handler(
+      { yar, payload: { fullSearchQuery: 'egertre', locationMiles: '10' } },
+      h
+    )
+
+    expect(h.view).toHaveBeenCalledWith(
+      'multiplelocations/nolocation',
+      expect.any(Object)
+    )
+  })
+
   it('should handle pollutant name mapping for GR25, GE10, GR10', async () => {
     // One location, so the station view renders - that is the only view the
     // pollutant map is passed to.
