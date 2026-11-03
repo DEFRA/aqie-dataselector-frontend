@@ -728,6 +728,61 @@ width: 100%;
   white-space: nowrap;
 }
 
+// Official Defra 1-10 DAQI scale colours (matches aqie-maps-frontend .aq-daqi-scale__band)
+.govuk-tag.aq-daqi-band-tag {
+  white-space: nowrap;
+
+  &--1 {
+    background-color: #9cff9c;
+    color: #0b0c0c;
+  }
+
+  &--2 {
+    background-color: #31ff00;
+    color: #0b0c0c;
+  }
+
+  &--3 {
+    background-color: #31cf00;
+    color: #0b0c0c;
+  }
+
+  &--4 {
+    background-color: #ffff00;
+    color: #0b0c0c;
+  }
+
+  &--5 {
+    background-color: #ffcf00;
+    color: #0b0c0c;
+  }
+
+  &--6 {
+    background-color: #ff9a00;
+    color: #0b0c0c;
+  }
+
+  &--7 {
+    background-color: #ff9292;
+    color: #0b0c0c;
+  }
+
+  &--8 {
+    background-color: #ff0000;
+    color: #ffffff;
+  }
+
+  &--9 {
+    background-color: #990000;
+    color: #ffffff;
+  }
+
+  &--10 {
+    background-color: #ce30ff;
+    color: #ffffff;
+  }
+}
+
 .defra-aq-features__value--wrap {
   @media (max-width: 640px) {
     .defra-aq-value-with-tip {
