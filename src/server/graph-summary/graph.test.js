@@ -104,6 +104,16 @@ describe('buildPollutantGraph', () => {
       expect(data.series.map(({ code }) => code)).toEqual(['PM25', 'PM10'])
     })
 
+    it('has the texts the tooltip and keyboard users need', () => {
+      const data = readData(buildPollutantGraph(HISTORY, STATION_POLLUTANTS))
+
+      expect(data.verificationStatus).toBe('Unverified')
+      expect(data.noReading).toBe('No data')
+      expect(data.keyboardHint).toBe(
+        'Use the left and right arrow keys to move between hours.'
+      )
+    })
+
     it('has [time in ms, reading] points, oldest first, keeping a missing reading as null', () => {
       const data = readData(buildPollutantGraph(HISTORY, STATION_POLLUTANTS))
 

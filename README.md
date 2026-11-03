@@ -110,6 +110,8 @@ The page makes one call to `GET /monitoringStationHistory` and uses the response
 
 Each pollutant has a colour and a line style, so colour is not the only cue. They are set in `src/server/graph-summary/pollutant-styles.js`.
 
+Pointing at the graph, tapping it, or using the left and right arrow keys (Home, End and Escape too) once it has focus, shows the readings for the nearest hour in a tooltip, with a line and a dot on each pollutant. This is `src/client/javascripts/pollutant-graph-tooltip.js`. The verification status in the tooltip is fixed text, `graphsummary.graph.verificationStatus` in the page copy, not read from the data.
+
 ## Proxy
 
 We are using forward-proxy which is set up by default. To make use of this: `import { fetch } from 'undici'` then because of the `setGlobalDispatcher(new ProxyAgent(proxyUrl))` calls will use the ProxyAgent Dispatcher

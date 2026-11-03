@@ -224,6 +224,8 @@ export const english = {
       legendLabel: 'Pollutants in the graph',
       chartLabel: 'Line chart of hourly readings in µg/m³ for',
       chartHint: 'The same readings are in the table below the graph.',
+      keyboardHint: 'Use the left and right arrow keys to move between hours.',
+      verificationStatus: 'Unverified',
       noData: 'There are no hourly readings to show for this period.',
       table: {
         title: 'View hourly data as a table',

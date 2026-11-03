@@ -3,6 +3,7 @@ import { scaleLinear, scaleUtc } from 'd3-scale'
 import { line } from 'd3-shape'
 import { axisBottom, axisLeft } from 'd3-axis'
 import { extent, max } from 'd3-array'
+import GraphTooltip from './pollutant-graph-tooltip.js'
 
 const HEIGHT = 360
 const MARGIN = { top: 24, right: 18, bottom: 44, left: 44 }
@@ -111,7 +112,8 @@ class PollutantGraph {
     }
   }
 
-  draw({ unit, label, series }) {
+  draw(data) {
+    const { unit, label, series } = data
     const width = Math.max(this.$canvas.clientWidth || DEFAULT_WIDTH, MIN_WIDTH)
     const plotWidth = width - MARGIN.left - MARGIN.right
     const bottom = HEIGHT - MARGIN.bottom
@@ -140,6 +142,21 @@ class PollutantGraph {
     this.drawTimeAxis(svg, x, width, bottom)
     this.drawValueAxis(svg, y, unit)
     this.drawLines(svg, series, x, y)
+
+    new GraphTooltip({
+      $canvas: this.$canvas,
+      svg,
+      x,
+      y,
+      width,
+      plot: {
+        left: MARGIN.left,
+        right: width - MARGIN.right,
+        top: MARGIN.top,
+        bottom
+      },
+      data
+    }).attach()
   }
 
   drawGrid(svg, y, plotWidth) {

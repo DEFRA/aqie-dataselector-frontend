@@ -108,6 +108,9 @@ function buildPollutantGraph(history, stationPollutants = []) {
   const data = {
     unit: UNIT,
     label: `${content.chartLabel} ${listFormat.format(names)}. ${content.chartHint}`,
+    keyboardHint: content.keyboardHint,
+    verificationStatus: content.verificationStatus,
+    noReading: content.table.noReading,
     series
   }
 
