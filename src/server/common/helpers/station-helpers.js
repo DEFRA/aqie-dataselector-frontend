@@ -166,44 +166,55 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
- * Fetches a station's hourly pollutant history for the last 7 days from
+ * Fetches a station's hourly pollutant history for one period from
  * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
  * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
- * `summary` block carries the figures the 7-day table shows (average, data
- * capture, exceedances); they are calculated by aqie-back-end, not here.
- * @param {{ siteId: string }} params
+ * `summary` block carries the figures the tabs show (average, data capture,
+ * exceedances, DAQI); they are calculated by aqie-back-end, not here.
+ * @param {{ siteId: string, period: '24h'|'7d' }} params
  * @returns {Promise<{siteId: string, period: string, from: string, to: string,
  *   truncated: boolean,
  *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
  *   summary?: {daqiIndex: number|null, pollutants: Record<string, object>}}|null>}
  */
-export async function fetchLast7DaysSummary({ siteId }) {
+async function fetchStationHistory({ siteId, period }) {
   const result = await getJson({
     devUrlKey: 'monitoringStationHistoryDevUrl',
     urlKey: 'monitoringStationHistoryUrl',
     path: '',
-    params: { siteId, period: '7d' },
+    params: { siteId, period },
     label: 'Monitoring station history API'
   })
   return result ?? null
 }
 
 /**
- * Fetches a station's recent pollutant history (24h window) from aqie-back-end's
- * GET /monitoringStationHistory so the `summary.pollutants[code].daqi` block
- * carries the current DAQI concentration and 1-10 index for each pollutant.
+ * The station's last 7 days of history, for the "Last 7 days" tab.
  * @param {{ siteId: string }} params
- * @returns {Promise<object|null>}
+ * @returns {ReturnType<typeof fetchStationHistory>}
  */
-export async function fetchDaqiSummary({ siteId }) {
-  const result = await getJson({
-    devUrlKey: 'monitoringStationHistoryDevUrl',
-    urlKey: 'monitoringStationHistoryUrl',
-    path: '',
-    params: { siteId, period: '24h' },
-    label: 'Monitoring station history API'
-  })
-  return result ?? null
+export function fetchLast7DaysSummary({ siteId }) {
+  return fetchStationHistory({ siteId, period: '7d' })
+}
+
+/**
+ * The station's last 24 hours of history, for the "Last 24 hours" tab.
+ * @param {{ siteId: string }} params
+ * @returns {ReturnType<typeof fetchStationHistory>}
+ */
+export function fetchLast24HoursSummary({ siteId }) {
+  return fetchStationHistory({ siteId, period: '24h' })
+}
+
+/**
+ * The station's last 24 hours of history, whose
+ * `summary.pollutants[code].daqi` block carries the current DAQI
+ * concentration and 1-10 index for each pollutant, for the DAQI tab.
+ * @param {{ siteId: string }} params
+ * @returns {ReturnType<typeof fetchStationHistory>}
+ */
+export function fetchDaqiSummary({ siteId }) {
+  return fetchStationHistory({ siteId, period: '24h' })
 }
 
 /**
