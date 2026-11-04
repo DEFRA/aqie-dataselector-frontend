@@ -11,6 +11,7 @@ import {
   formatCurrentDate,
   fetchYearTable,
   fetchLast7DaysSummary,
+  fetchLast24HoursSummary,
   fetchDaqiSummary,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
@@ -202,135 +203,157 @@ async function performDownloadIfRequested(request, apiParams, h) {
 }
 
 /**
- * Hapi route handler for /stationdetails. Resolves the requested station,
- * optionally performs a download, and renders the station details view.
+ * Resolves the requested station, optionally performs a download, and renders
+ * the station details view. Year and download routes always open the year tab;
+ * every other route opens `tabPeriod`.
  * @param {object} request
  * @param {object} h
+ * @param {'daqi'|'last24hours'} [tabPeriod] the tab opened when the route is
+ *   not a year or download route
  * @returns {Promise<object>} Hapi response
  */
-const stationDetailsController = {
-  handler: async (request, h) => {
-    const accessDenied = checkAccessDenied(request, h)
-    if (accessDenied) {
-      return accessDenied
-    }
+async function handleStationDetails(request, h, tabPeriod = 'daqi') {
+  const accessDenied = checkAccessDenied(request, h)
+  if (accessDenied) {
+    return accessDenied
+  }
 
-    // Clear previous session values
-    request.yar.set('errors', '')
-    request.yar.set('errorMessage', '')
-    request.yar.set('downloadresult', '')
+  // Clear previous session values
+  request.yar.set('errors', '')
+  request.yar.set('errorMessage', '')
+  request.yar.set('downloadresult', '')
 
-    const stationDetailsView = 'stationdetails/index'
+  const stationDetailsView = 'stationdetails/index'
 
-    // Get station ID from POST payload or session
-    const stationId = resolveStationId(request)
+  // Get station ID from POST payload or session
+  const stationId = resolveStationId(request)
 
-    setDownloadSessionParams(request)
+  setDownloadSessionParams(request)
 
-    // Validate request and session data
-    const { response: stationError, station } = resolveStation(
-      request,
-      stationId,
-      h
-    )
-    if (stationError) {
-      return stationError
-    }
+  // Validate request and session data
+  const { response: stationError, station } = resolveStation(
+    request,
+    stationId,
+    h
+  )
+  if (stationError) {
+    return stationError
+  }
 
-    request.yar.set('stationdetails', station)
-    const stationDetails = request.yar.get('stationdetails')
+  request.yar.set('stationdetails', station)
+  const stationDetails = request.yar.get('stationdetails')
 
-    // Prepare date and location info
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const formattedDate = yesterday.toISOString().split('.')[0] + 'Z'
-    request.yar.set('latesttime', formattedDate)
-    const updatedTime = parseDateFormat(formattedDate)
+  // Prepare date and location info
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const formattedDate = yesterday.toISOString().split('.')[0] + 'Z'
+  request.yar.set('latesttime', formattedDate)
+  const updatedTime = parseDateFormat(formattedDate)
 
-    // Generate years array dynamically from 2018 to current year
-    const years = buildYearsArray()
+  // Generate years array dynamically from 2018 to current year
+  const years = buildYearsArray()
 
-    const currentDate = formatCurrentDate()
-    const lat = stationDetails.location.coordinates[0]
-    const lon = stationDetails.location.coordinates[1]
-    const mapLocation = buildMapLocation(lat, lon)
+  const currentDate = formatCurrentDate()
+  const lat = stationDetails.location.coordinates[0]
+  const lon = stationDetails.location.coordinates[1]
+  const mapLocation = buildMapLocation(lat, lon)
 
-    const fullSearchQuery = request.yar.get('fullSearchQuery')?.value
+  const fullSearchQuery = request.yar.get('fullSearchQuery')?.value
 
-    // Prepare API parameters
-    const apiParams = {
-      region: stationDetails.region,
-      siteType: stationDetails.siteType,
-      sitename: stationDetails.name,
-      siteId: stationDetails.localSiteID,
-      latitude: lat.toString(),
-      longitude: lon.toString(),
-      year: request.yar.get('selectedYear'),
-      downloadpollutant: request.yar.get('downloadPollutant'),
-      downloadpollutanttype: request.yar.get('downloadFrequency'),
-      stationreaddate: stationDetails.updated
-    }
+  // Prepare API parameters
+  const apiParams = {
+    region: stationDetails.region,
+    siteType: stationDetails.siteType,
+    sitename: stationDetails.name,
+    siteId: stationDetails.localSiteID,
+    latitude: lat.toString(),
+    longitude: lon.toString(),
+    year: request.yar.get('selectedYear'),
+    downloadpollutant: request.yar.get('downloadPollutant'),
+    downloadpollutanttype: request.yar.get('downloadFrequency'),
+    stationreaddate: stationDetails.updated
+  }
 
-    // Handle download request
-    const downloadError = await performDownloadIfRequested(
-      request,
-      apiParams,
-      h
-    )
-    if (downloadError) {
-      return downloadError
-    }
+  // Handle download request
+  const downloadError = await performDownloadIfRequested(request, apiParams, h)
+  if (downloadError) {
+    return downloadError
+  }
 
-    // Fetch the year table server side so the first paint shows real data.
-    // Without this Yearlytab has to fire a follow-up /rendertable request on
-    // load, costing an extra round trip and flashing an empty table.
-    if (request.params?.year) {
-      request.yar.set('selectedYear', request.params.year)
-    }
-    const selectedYear = request.params?.year || request.yar.get('selectedYear')
-    const tabledata = await fetchYearTable({
+  if (request.params?.year) {
+    request.yar.set('selectedYear', request.params.year)
+  }
+  const selectedYear = request.params?.year || request.yar.get('selectedYear')
+
+  const isYearRoute = Boolean(request.params?.year || request.params?.download)
+  const activePeriod = isYearRoute ? 'year' : tabPeriod
+
+  // Fetch the year table server side so the first paint shows real data.
+  // Without this Yearlytab has to fire a follow-up /rendertable request on
+  // load, costing an extra round trip and flashing an empty table. The other
+  // tabs don't show it, so they skip the upstream call.
+  let tabledata
+  if (activePeriod === 'year') {
+    tabledata = await fetchYearTable({
       siteId: stationDetails.localSiteID,
       year: selectedYear
     })
     request.yar.set('tabledata', tabledata)
-
-    const isYearRoute = Boolean(
-      request.params?.year || request.params?.download
-    )
-    const activePeriod = isYearRoute ? 'year' : 'daqi'
-    const daqi =
-      activePeriod === 'daqi' ? await resolveDaqi(stationDetails) : {}
-
-    // Prepare view data
-    const viewGraphSummary = buildViewGraphSummary(request)
-
-    const viewData = {
-      pageTitle: english.stationdetails.pageTitle,
-      title: english.stationdetails.title,
-      serviceName: english.stationdetails.serviceName,
-      stationdetails: stationDetails,
-      maplocation: mapLocation,
-      updatedTime,
-      displayBacklink: true,
-      fullSearchQuery,
-      apiparams: apiParams,
-      years,
-      currentdate: currentDate,
-      currentYear: getCurrentYear(),
-      pollutantKeys: stationDetails.pollutants,
-      maptoggletips: getToggletip(stationDetails.siteType),
-      selectedYear,
-      tabledata,
-      finalyear: selectedYear,
-      activePeriod,
-      daqi,
-      downloadresult: request.yar.get('downloadresult'),
-      hrefq: resolveStationHrefq(request),
-      viewGraphSummary
-    }
-
-    return h.view(stationDetailsView, viewData)
   }
+
+  const daqi = activePeriod === 'daqi' ? await resolveDaqi(stationDetails) : {}
+  const last24Hours =
+    activePeriod === 'last24hours'
+      ? await resolveLast24Hours(stationDetails)
+      : {}
+
+  // Prepare view data
+  const viewGraphSummary = buildViewGraphSummary(request)
+
+  const viewData = {
+    pageTitle: english.stationdetails.pageTitle,
+    title: english.stationdetails.title,
+    serviceName: english.stationdetails.serviceName,
+    stationdetails: stationDetails,
+    maplocation: mapLocation,
+    updatedTime,
+    displayBacklink: true,
+    fullSearchQuery,
+    apiparams: apiParams,
+    years,
+    currentdate: currentDate,
+    currentYear: getCurrentYear(),
+    pollutantKeys: stationDetails.pollutants,
+    maptoggletips: getToggletip(stationDetails.siteType),
+    selectedYear,
+    tabledata,
+    finalyear: selectedYear,
+    activePeriod,
+    daqi,
+    last24Hours,
+    downloadresult: request.yar.get('downloadresult'),
+    hrefq: resolveStationHrefq(request),
+    viewGraphSummary
+  }
+
+  return h.view(stationDetailsView, viewData)
+}
+
+/**
+ * Hapi route handler for /stationdetails, which opens on the Daily Air Quality
+ * Index tab (or the year tab for the year and download routes).
+ */
+const stationDetailsController = {
+  handler: (request, h) => handleStationDetails(request, h)
+}
+
+/**
+ * Hapi route handler for /stationdetails/last-24-hours, the same page opened
+ * on the Last 24 hours tab. This is the no-JavaScript fallback for the tab's
+ * link and makes the tab linkable.
+ */
+const last24HoursController = {
+  handler: (request, h) => handleStationDetails(request, h, 'last24hours')
 }
 
 /**
@@ -413,6 +436,27 @@ async function resolveLast7Days(station) {
 }
 
 /**
+ * Fetches and summarises the last 24 hours of pollutant history for a station,
+ * or returns an empty-state marker (`noMapping: true` when the station has no
+ * AURN siteId, or `{}` when the upstream call fails) - last24hourstable.njk
+ * reads these to show the right message instead of a generic error.
+ * @param {object} station
+ * @returns {Promise<object>}
+ */
+async function resolveLast24Hours(station) {
+  if (!station.siteId) {
+    return { noMapping: true }
+  }
+
+  const history = await fetchLast24HoursSummary({ siteId: station.siteId })
+  if (!history) {
+    return {}
+  }
+
+  return summariseStationHistory(history, station.pollutants)
+}
+
+/**
  * Fetches and summarises the current DAQI figures for a station, or returns an
  * empty-state marker (`noMapping: true` when the station has no AURN siteId,
  * or `{}` when the upstream call fails).
@@ -451,8 +495,10 @@ const graphSummaryController = {
 
 export {
   stationDetailsController,
+  last24HoursController,
   last7DaysController,
   resolveLast7Days,
+  resolveLast24Hours,
   resolveDaqi,
   graphSummaryController,
   buildViewGraphSummary

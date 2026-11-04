@@ -9,18 +9,24 @@
   )}}
 {% endset %}
 {% set isDaqi = activePeriod == 'daqi' %}
+{% set isLast24Hours = activePeriod == 'last24hours' %}
+{% set isYear = not isDaqi and not isLast24Hours %}
 
 {% if isDaqi %}
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">{{ daqiContent.heading }}</h2>
+{% elif isLast24Hours %}
+<h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">{{ last24HoursContent.heading }}</h2>
 {% else %}
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">Air pollution levels in {{selectedYear}}</h2>
 {% endif %}
 
 {# The current year is still running, so its data only goes up to today.
    Every earlier year is complete. Loose == so a string or numeric year both
-   match currentYear. #}
+   match currentYear. The Last 24 hours date stamp is always today's date. #}
 {% if isDaqi %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{% if daqi.measuredAt %}{{ daqi.measuredAt | formatDate('d MMMM yyyy') }}{% else %}{{ currentdate }} {{ currentYear }}{% endif %}</p>
+{% elif isLast24Hours %}
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{{ currentdate }} {{ currentYear }}</p>
 {% elif selectedYear == currentYear %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">1 January to {{currentdate}}</p>
 {% else %}
@@ -38,6 +44,14 @@
     {% endif %}>{{ daqiContent.tabLabel }}</a>
   </li>
   <li class="moj-sub-navigation__item">
+    <a class="moj-sub-navigation__link" id="link-last-24-hours" href="/stationdetails/last-24-hours" role="tab"
+    {% if isLast24Hours %}
+    aria-current="page" aria-selected="true"
+    {% else %}
+    aria-selected="false"
+    {% endif %}>{{ last24HoursContent.tabLabel }}</a>
+  </li>
+  <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-last-7-days" href="/stationdetails/last-7-days" role="tab" aria-selected="false">Last 7 days</a>
   </li>
   {% for year in years %}
@@ -45,7 +59,7 @@
  <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
  role="tab" aria-controls="panel-{{ year }}"
  data-year="{{ year }}"
- {% if not isDaqi and year == selectedYear %}
+ {% if isYear and year == selectedYear %}
  aria-current="page" aria-selected="true"
  {% else %}
  aria-selected="false"
@@ -60,6 +74,8 @@
             <div id="yearlytable-container">
   {% if isDaqi %}
     {% include "partials/daqitable.njk" %}
+  {% elif isLast24Hours %}
+    {% include "partials/last24hourstable.njk" %}
   {% else %}
     {% include "partials/yearlytable.njk" %}
   {% endif %}
@@ -77,8 +93,10 @@
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
     var DAQI_HEADING = {{ daqiContent.heading | dump | safe }};
-    var DAQI_DEFAULT_DATE = {{ (currentdate + ' ' + currentYear) | dump | safe }};
+    var TODAY_LONG_DATE = {{ (currentdate + ' ' + currentYear) | dump | safe }};
     var DAQI_NO_DATA_MESSAGE = {{ daqiContent.noDataMessage | dump | safe }};
+    var LAST_24_HOURS_HEADING = {{ last24HoursContent.heading | dump | safe }};
+    var LAST_24_HOURS_NO_DATA_MESSAGE = {{ last24HoursContent.noDataMessage | dump | safe }};
     var LAST_7_DAYS_HEADING = {{ last7DaysContent.heading | dump | safe }};
     var LAST_7_DAYS_NO_DATA_MESSAGE = {{ last7DaysContent.noDataMessage | dump | safe }};
 
@@ -141,13 +159,44 @@
               var durationValue = document.getElementById('daqi-duration-value');
               var durationEl = document.getElementById('duration_current');
               if (durationEl) {
-                durationEl.textContent = durationValue ? durationValue.textContent : DAQI_DEFAULT_DATE;
+                durationEl.textContent = durationValue ? durationValue.textContent : TODAY_LONG_DATE;
                 durationEl.style.display = '';
               }
           })
           .catch(error => {
               console.error('Error fetching partial content:', error);
               showTableError(DAQI_NO_DATA_MESSAGE);
+          });
+    }
+
+    function updateLast24Hours() {
+      document.getElementById('airpollution-heading').textContent = LAST_24_HOURS_HEADING;
+      setActiveTab(document.getElementById('link-last-24-hours'));
+
+      // The date stamp is today's date whether or not the table loads.
+      var durationEl = document.getElementById('duration_current');
+      if (durationEl) {
+        durationEl.textContent = TODAY_LONG_DATE;
+        durationEl.style.display = '';
+      }
+
+      fetch('/rendertable/last-24-hours')
+          .then(response => {
+              if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+              }
+              return response.text();
+          })
+          .then(data => {
+              document.getElementById('yearlytable-container').innerHTML = data;
+              var durationValue = document.getElementById('last24hours-duration-value');
+              if (durationEl && durationValue) {
+                durationEl.textContent = durationValue.textContent;
+              }
+          })
+          .catch(error => {
+              console.error('Error fetching partial content:', error);
+              showTableError(LAST_24_HOURS_NO_DATA_MESSAGE);
           });
     }
 
@@ -182,12 +231,19 @@
           });
     }
 
-    /* Delegated listener for DAQI, Last 7 days and year tab clicks to survive any DOM updates */
+    /* Delegated listener for DAQI, Last 24 hours, Last 7 days and year tab clicks to survive any DOM updates */
     document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
       const daqiLink = e.target.closest('#link-daqi');
       if (daqiLink) {
         e.preventDefault();
         updateDaqi();
+        return;
+      }
+
+      const last24HoursLink = e.target.closest('#link-last-24-hours');
+      if (last24HoursLink) {
+        e.preventDefault();
+        updateLast24Hours();
         return;
       }
 

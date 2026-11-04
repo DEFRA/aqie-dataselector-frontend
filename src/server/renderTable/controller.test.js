@@ -153,6 +153,79 @@ describe('rendertablecontroller.handler', () => {
     expect(h.code).toHaveBeenCalledWith(200)
   })
 
+  it('renders last-24-hours partial with the 24 hour figures and todays date', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-11-03T12:00:00.000Z'))
+    request.params = { year: 'last-24-hours' }
+    request.yar.get = jest.fn((key) => {
+      if (key === 'stationdetails') {
+        return {
+          localSiteID: 'site123',
+          siteId: 'UKA00315',
+          pollutants: ['PM2.5']
+        }
+      }
+      return undefined
+    })
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-11-02T12:00:00.000Z',
+        to: '2026-11-03T11:00:00.000Z',
+        pollutants: {},
+        summary: {
+          pollutants: {
+            PM25: {
+              periodAverage: 11.6,
+              dataCapture: {
+                validHours: 24,
+                expectedHours: 24,
+                capturePercentage: 100,
+                isLowDataCapture: false
+              },
+              dailyExceedances: null,
+              hourlyExceedances: null
+            }
+          }
+        }
+      }
+    })
+
+    try {
+      await rendertablecontroller.handler(request, h)
+    } finally {
+      jest.useRealTimers()
+    }
+
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining('period=24h')
+    )
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/last24hourstable.njk',
+      {
+        last24Hours: expect.objectContaining({
+          pollutants: [
+            expect.objectContaining({ pollutantName: 'PM2.5', average: 12 })
+          ]
+        }),
+        durationText: '3 November 2026'
+      }
+    )
+    expect(h.response).toHaveBeenCalledWith('<table>content</table>')
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
+  it('renders last-24-hours partial with an empty state when stationdetails is missing', async () => {
+    request.params = { year: 'last-24-hours' }
+    request.yar.get = jest.fn(() => null)
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(nunjucks.render).toHaveBeenCalledWith(
+      'partials/last24hourstable.njk',
+      { last24Hours: {}, durationText: expect.any(String) }
+    )
+    expect(h.code).toHaveBeenCalledWith(200)
+  })
+
   it('renders last-7-days partial with formatted duration when year is last-7-days', async () => {
     request.params = { year: 'last-7-days' }
     request.yar.get = jest.fn((key) => {

@@ -4,6 +4,7 @@ import { fetchYearTable } from '~/src/server/common/helpers/station-helpers.js'
 import {
   buildViewGraphSummary,
   resolveLast7Days,
+  resolveLast24Hours,
   resolveDaqi
 } from '~/src/server/stationdetails/controller.js'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
@@ -13,6 +14,21 @@ import {
 } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
+
+async function renderLast24HoursPartial(request, h) {
+  const station = request.yar.get('stationdetails')
+  const last24Hours = station ? await resolveLast24Hours(station) : {}
+  // The Last 24 hours date stamp is always today's date, not the date of the
+  // newest reading.
+  const durationText = formatDate(new Date(), 'd MMMM yyyy')
+
+  const partialContent = nunjucks.render('partials/last24hourstable.njk', {
+    last24Hours,
+    durationText
+  })
+
+  return h.response(partialContent).code(HTTP_OK)
+}
 
 async function renderDaqiPartial(request, h) {
   const station = request.yar.get('stationdetails')
@@ -51,6 +67,10 @@ const rendertablecontroller = {
     try {
       if (request.params.year === 'daqi') {
         return await renderDaqiPartial(request, h)
+      }
+
+      if (request.params.year === 'last-24-hours') {
+        return await renderLast24HoursPartial(request, h)
       }
 
       if (request.params.year === 'last-7-days') {
