@@ -1,0 +1,92 @@
+{% from "partials/aq-table-macros.njk" import limitToggletip, exceedanceCell %}
+
+{#
+  Last 24 hours air pollution levels table.
+
+  `last24Hours` comes from stationdetails/controller.js (resolveLast24Hours):
+  { periodStart, periodEnd, latestReadingAt, pollutants: [{ pollutantName,
+  dataCapturePercentage, lowDataCapture, average, dailyCount, hourlyCount }] },
+  mapped from aqie-back-end's /monitoringStationHistory `summary` by
+  last-7-days-summary.js (the same mapping serves both periods; `dailyCount`
+  is simply not shown here). The back end decides whether an average exists
+  (75% data capture); a withheld average arrives as '-' and `lowDataCapture` is
+  true, so the tag and the dash always agree.
+
+  The average column's toggletip reuses pollutantToggletips[name].annual
+  (src/server/data/en/pollutant-toggletips.js). Hourly exceedances use
+  last24HoursLimits[name].hourly (src/server/data/en/last-24-hours.js): the same
+  copy as the year table, minus its annual `limit`, so no "Above limit" tag is
+  ever drawn against a single day's count. Pollutants with no hourly limit
+  (PM2.5, PM10, ozone) arrive as 'no legal limit' and render as plain text.
+
+  The heading and date are rendered by Yearlytab.njk, above the period nav, so
+  this partial starts at the notice banner. When fetched as a partial by the
+  tab's click handler, `durationText` (today's date) is passed along in a hidden
+  span for the handler to copy into the date stamp.
+#}
+
+{% if durationText %}
+  <span id="last24hours-duration-value" class="display-none">{{ durationText }}</span>
+{% endif %}
+
+{% if last24Hours.pollutants.length %}
+
+  <div class="govuk-inset-text not-verified">{{ last24HoursContent.notice }}</div>
+
+  <div class="table-scroll-container">
+    <table id="last24hourstable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+      <thead class="defra-aq-levels-table__head">
+        <tr class="defra-aq-levels-table__row">
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">24 hour average</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
+        </tr>
+      </thead>
+
+      <tbody class="defra-aq-levels-table__body">
+        {% for data in last24Hours.pollutants %}
+          {% set hourlyLimit = last24HoursLimits[data.pollutantName].hourly %}
+          {% set annualLimit = pollutantToggletips[data.pollutantName].annual %}
+          {% set lowDataCapture = data.lowDataCapture %}
+
+          <tr class="defra-aq-levels-table__row">
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
+              {{ data.pollutantName }}
+              {% if lowDataCapture %}
+                <span class="defra-aq-levels-table__cell--data">
+                  <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
+                </span>
+              {% endif %}
+              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
+                {% if lowDataCapture %}
+                  <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
+                {% endif %}
+              </span>
+            </td>
+
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
+              {% if data.average != '-' and annualLimit %}
+                <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3{{ limitToggletip(annualLimit) }}</span>
+              {% else %}
+                {{ data.average }}
+              {% endif %}
+            </td>
+
+            {{ exceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p id="last24hours-hint" class="govuk-hint">The pollution levels shown are measured against <a href="{{ last24HoursContent.legalLimitsUrl }}" class="govuk-link">UK legal limits</a>.</p>
+
+{% elif last24Hours.noMapping %}
+
+  <div class="govuk-inset-text">{{ last24HoursContent.noMappingMessage }}</div>
+
+{% else %}
+
+  <div class="govuk-inset-text">{{ last24HoursContent.noDataMessage }}</div>
+
+{% endif %}
