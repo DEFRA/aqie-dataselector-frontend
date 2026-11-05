@@ -18,7 +18,7 @@ async function renderDaqiPartial(request, h) {
   const station = request.yar.get('stationdetails')
   const daqi = station ? await resolveDaqi(station) : {}
   const durationText = formatDate(
-    daqi.measuredAt ?? new Date().toISOString(),
+    daqi.periodDate ?? new Date().toISOString(),
     'd MMMM yyyy'
   )
 

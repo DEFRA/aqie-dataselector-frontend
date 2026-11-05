@@ -166,41 +166,24 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
- * Fetches a station's hourly pollutant history for the last 7 days from
- * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
- * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
- * `summary` block carries the figures the 7-day table shows (average, data
- * capture, exceedances); they are calculated by aqie-back-end, not here.
- * @param {{ siteId: string }} params
+ * Fetches a station's pollutant history from aqie-back-end's
+ * GET /monitoringStationHistory (requires the AURN-form siteId, e.g.
+ * "UKA00315" - the short localSiteID form 400s). The response's `summary`
+ * block carries the figures the DAQI and 7-day tables show (DAQI index,
+ * average, data capture, exceedances); they are calculated by aqie-back-end,
+ * not here.
+ * @param {{ siteId: string, period: '24h'|'7d' }} params
  * @returns {Promise<{siteId: string, period: string, from: string, to: string,
  *   truncated: boolean,
  *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
  *   summary?: {daqiIndex: number|null, pollutants: Record<string, object>}}|null>}
  */
-export async function fetchLast7DaysSummary({ siteId }) {
+export async function fetchStationHistory({ siteId, period }) {
   const result = await getJson({
     devUrlKey: 'monitoringStationHistoryDevUrl',
     urlKey: 'monitoringStationHistoryUrl',
     path: '',
-    params: { siteId, period: '7d' },
-    label: 'Monitoring station history API'
-  })
-  return result ?? null
-}
-
-/**
- * Fetches a station's recent pollutant history (24h window) from aqie-back-end's
- * GET /monitoringStationHistory so the `summary.pollutants[code].daqi` block
- * carries the current DAQI concentration and 1-10 index for each pollutant.
- * @param {{ siteId: string }} params
- * @returns {Promise<object|null>}
- */
-export async function fetchDaqiSummary({ siteId }) {
-  const result = await getJson({
-    devUrlKey: 'monitoringStationHistoryDevUrl',
-    urlKey: 'monitoringStationHistoryUrl',
-    path: '',
-    params: { siteId, period: '24h' },
+    params: { siteId, period },
     label: 'Monitoring station history API'
   })
   return result ?? null

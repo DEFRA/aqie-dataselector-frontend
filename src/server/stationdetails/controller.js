@@ -10,8 +10,7 @@ import {
   buildYearsArray,
   formatCurrentDate,
   fetchYearTable,
-  fetchLast7DaysSummary,
-  fetchDaqiSummary,
+  fetchStationHistory,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
 import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
@@ -281,25 +280,32 @@ const stationDetailsController = {
       return downloadError
     }
 
-    // Fetch the year table server side so the first paint shows real data.
-    // Without this Yearlytab has to fire a follow-up /rendertable request on
-    // load, costing an extra round trip and flashing an empty table.
     if (request.params?.year) {
       request.yar.set('selectedYear', request.params.year)
     }
     const selectedYear = request.params?.year || request.yar.get('selectedYear')
-    const tabledata = await fetchYearTable({
-      siteId: stationDetails.localSiteID,
-      year: selectedYear
-    })
-    request.yar.set('tabledata', tabledata)
 
     const isYearRoute = Boolean(
       request.params?.year || request.params?.download
     )
     const activePeriod = isYearRoute ? 'year' : 'daqi'
-    const daqi =
-      activePeriod === 'daqi' ? await resolveDaqi(stationDetails) : {}
+
+    // Only fetch what the active tab shows. The year table is fetched server
+    // side so a year page's first paint has real data - without it Yearlytab
+    // has to fire a follow-up /rendertable request on load, costing an extra
+    // round trip and flashing an empty table. The DAQI page never shows it.
+    const [tabledata, daqi] = await Promise.all([
+      isYearRoute
+        ? fetchYearTable({
+            siteId: stationDetails.localSiteID,
+            year: selectedYear
+          })
+        : null,
+      isYearRoute ? {} : resolveDaqi(stationDetails)
+    ])
+    if (isYearRoute) {
+      request.yar.set('tabledata', tabledata)
+    }
 
     // Prepare view data
     const viewGraphSummary = buildViewGraphSummary(request)
@@ -404,7 +410,10 @@ async function resolveLast7Days(station) {
     return { noMapping: true }
   }
 
-  const history = await fetchLast7DaysSummary({ siteId: station.siteId })
+  const history = await fetchStationHistory({
+    siteId: station.siteId,
+    period: '7d'
+  })
   if (!history) {
     return {}
   }
@@ -424,7 +433,10 @@ async function resolveDaqi(station) {
     return { noMapping: true }
   }
 
-  const history = await fetchDaqiSummary({ siteId: station.siteId })
+  const history = await fetchStationHistory({
+    siteId: station.siteId,
+    period: '24h'
+  })
   if (!history) {
     return {}
   }

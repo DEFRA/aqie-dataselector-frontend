@@ -156,8 +156,48 @@ describe('summariseDaqiHistory', () => {
 
     expect(result).toEqual({
       measuredAt: null,
+      periodDate: null,
       latestReadingAt: null,
       pollutants: []
     })
+  })
+
+  it('accepts a DAQI index sent as a string', () => {
+    const result = summariseDaqiHistory(
+      history({ PM25: daqiSummaryFor({ index: '4' }) }),
+      ['PM2.5']
+    )
+
+    expect(result.pollutants[0].daqiBand).toBe('moderate')
+  })
+
+  it.each(['', null, 'high', 4.5])(
+    'gives no band for the unusable index %p',
+    (index) => {
+      const result = summariseDaqiHistory(
+        history({ PM25: daqiSummaryFor({ index }) }),
+        ['PM2.5']
+      )
+
+      expect(result.pollutants[0].daqiBand).toBeNull()
+    }
+  )
+
+  it('exposes periodDate as the start of the hour measuredAt ends, so midnight stamps stay on the previous day', () => {
+    const result = summariseDaqiHistory(
+      history(
+        { PM25: daqiSummaryFor() },
+        {
+          summary: {
+            measuredAt: '2026-10-31T00:00:00.000Z',
+            pollutants: { PM25: daqiSummaryFor() }
+          }
+        }
+      ),
+      ['PM2.5']
+    )
+
+    expect(result.measuredAt).toBe('2026-10-31T00:00:00.000Z')
+    expect(result.periodDate).toBe('2026-10-30T23:00:00.000Z')
   })
 })

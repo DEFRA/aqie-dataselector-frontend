@@ -6,16 +6,12 @@
  * Display rounding of the average happens here at the last step.
  */
 
-const NOT_APPLICABLE = '-'
-
-/** aqie-back-end's pollutant keys to the display names daqitable.njk uses. */
-const POLLUTANT_DISPLAY_NAMES = {
-  PM25: 'PM2.5',
-  PM10: 'PM10',
-  NO2: 'Nitrogen dioxide',
-  O3: 'Ozone',
-  SO2: 'Sulphur dioxide'
-}
+import {
+  NOT_APPLICABLE,
+  POLLUTANT_DISPLAY_NAMES,
+  displayAverage,
+  startOfHourEndingAt
+} from '~/src/server/common/helpers/history-summary-shared.js'
 
 /** Averaging period copy per pollutant display name, per acceptance criteria. */
 const POLLUTANT_AVERAGING_PERIODS = {
@@ -41,17 +37,12 @@ const DAQI_BAND_BY_INDEX = [
   'very high'
 ]
 
-function displayAverage(concentration) {
-  return concentration === null || concentration === undefined
-    ? NOT_APPLICABLE
-    : Math.round(concentration)
-}
-
 function daqiBandLabel(index) {
-  if (!Number.isInteger(index)) {
+  const level = Number(index)
+  if (!Number.isInteger(level)) {
     return null
   }
-  return DAQI_BAND_BY_INDEX[index] ?? null
+  return DAQI_BAND_BY_INDEX[level] ?? null
 }
 
 function toDaqiRow(code, summary) {
@@ -77,7 +68,9 @@ function toDaqiRow(code, summary) {
  * }> } }} history aqie-back-end's /monitoringStationHistory response.
  * @param {string[]} stationPollutants display names the station actually
  *   monitors (station.pollutants).
- * @returns {{ measuredAt: string|null, latestReadingAt: string|null, pollutants: object[] }}
+ * @returns {{ measuredAt: string|null, periodDate: string|null, latestReadingAt: string|null, pollutants: object[] }}
+ *   `periodDate` is the start of the hour `measuredAt` ends, i.e. the day the
+ *   page should label.
  */
 function summariseDaqiHistory(history, stationPollutants = []) {
   const rowsByDisplayName = new Map(
@@ -94,6 +87,7 @@ function summariseDaqiHistory(history, stationPollutants = []) {
 
   return {
     measuredAt,
+    periodDate: startOfHourEndingAt(measuredAt),
     latestReadingAt,
     pollutants: stationPollutants
       .filter((name) => rowsByDisplayName.has(name))

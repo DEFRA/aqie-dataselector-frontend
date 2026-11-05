@@ -188,7 +188,7 @@ describe('stationDetailsController.handler', () => {
     )
   })
 
-  it('should return empty daqi object when fetchDaqiSummary fails', async () => {
+  it('should return empty daqi object when the station history fetch fails', async () => {
     const stationWithSiteId = {
       id: 'site123',
       siteId: 'UKA00315',
@@ -218,6 +218,73 @@ describe('stationDetailsController.handler', () => {
         daqi: {}
       })
     )
+  })
+
+  describe('what is fetched for the active tab', () => {
+    const stationWithSiteId = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      localSiteID: 'LOCAL1',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5']
+    }
+
+    beforeEach(() => {
+      request.yar.get = jest.fn(
+        (key) =>
+          ({
+            MonitoringstResult: { getmonitoringstation: [stationWithSiteId] },
+            stationdetails: stationWithSiteId,
+            selectedYear: 2024,
+            SiteId: 'site123'
+          })[key]
+      )
+      axios.get.mockResolvedValue({ data: { summary: { pollutants: {} } } })
+      axios.post.mockResolvedValue({ data: { some: 'data' } })
+    })
+
+    it('does not fetch the year table on the DAQI view', async () => {
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.post).not.toHaveBeenCalled()
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('period=24h')
+      )
+      expect(request.yar.set).not.toHaveBeenCalledWith(
+        'tabledata',
+        expect.anything()
+      )
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ activePeriod: 'daqi', tabledata: null })
+      )
+    })
+
+    it('fetches the year table, and not the DAQI history, on a year route', async () => {
+      request.params.year = '2023'
+
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.get).not.toHaveBeenCalled()
+      expect(axios.post).toHaveBeenCalledTimes(1)
+      expect(axios.post.mock.calls[0][1]).toEqual(
+        expect.objectContaining({ siteId: 'LOCAL1', year: '2023' })
+      )
+      expect(request.yar.set).toHaveBeenCalledWith('tabledata', {
+        some: 'data'
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({
+          activePeriod: 'year',
+          tabledata: { some: 'data' },
+          daqi: {}
+        })
+      )
+    })
   })
 
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {

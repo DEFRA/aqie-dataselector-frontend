@@ -14,6 +14,8 @@ const daqiContent = {
   pageTitle: 'Daily Air Quality Index',
   tabLabel: 'Daily Air Quality Index',
   heading: 'Air pollution summary: Daily Air Quality Index (DAQI)',
+  noScriptMessage:
+    'JavaScript is disabled. You are viewing the latest Daily Air Quality Index (DAQI) data.',
   notice: 'Data has not been checked and verified',
   noDataMessage:
     'Could not load Daily Air Quality Index data for this station.',
