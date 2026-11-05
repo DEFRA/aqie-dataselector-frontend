@@ -9,6 +9,8 @@ export {
   last7DaysLimits
 } from '~/src/server/data/en/last-7-days.js'
 
+export { daqiContent, daqiColumnToggletip } from '~/src/server/data/en/daqi.js'
+
 const govukRebrand = true
 
 export { govukRebrand }
