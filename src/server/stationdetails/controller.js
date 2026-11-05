@@ -201,6 +201,97 @@ async function performDownloadIfRequested(request, apiParams, h) {
 }
 
 /**
+ * Resets per-request session values left over from earlier visits.
+ * @param {object} request
+ * @returns {void}
+ */
+function clearPreviousSessionValues(request) {
+  request.yar.set('errors', '')
+  request.yar.set('errorMessage', '')
+  request.yar.set('downloadresult', '')
+}
+
+/**
+ * Builds the parameters used by the download API and passed to the view.
+ * @param {object} request
+ * @param {object} stationDetails
+ * @param {string[]} coordinates - [latitude, longitude]
+ * @returns {object}
+ */
+function buildApiParams(request, stationDetails, [lat, lon]) {
+  return {
+    region: stationDetails.region,
+    siteType: stationDetails.siteType,
+    sitename: stationDetails.name,
+    siteId: stationDetails.localSiteID,
+    latitude: lat.toString(),
+    longitude: lon.toString(),
+    year: request.yar.get('selectedYear'),
+    downloadpollutant: request.yar.get('downloadPollutant'),
+    downloadpollutanttype: request.yar.get('downloadFrequency'),
+    stationreaddate: stationDetails.updated
+  }
+}
+
+/**
+ * Stores yesterday's timestamp in the session and returns the formatted
+ * "updated" time for display.
+ * @param {object} request
+ * @returns {string}
+ */
+function resolveUpdatedTime(request) {
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const formattedDate = yesterday.toISOString().split('.')[0] + 'Z'
+  request.yar.set('latesttime', formattedDate)
+  return parseDateFormat(formattedDate)
+}
+
+/**
+ * Resolves the selected year from the route, persisting it to the session
+ * when present.
+ * @param {object} request
+ * @returns {string|undefined}
+ */
+function resolveSelectedYear(request) {
+  const routeYear = request.params?.year
+  if (routeYear) {
+    request.yar.set('selectedYear', routeYear)
+    return routeYear
+  }
+  return request.yar.get('selectedYear')
+}
+
+/**
+ * Only fetches what the active tab shows. The year table is fetched server
+ * side so a year page's first paint has real data - without it Yearlytab
+ * has to fire a follow-up /rendertable request on load, costing an extra
+ * round trip and flashing an empty table. The DAQI page never shows it.
+ * @param {object} request
+ * @param {object} stationDetails
+ * @param {boolean} isYearRoute
+ * @param {string|undefined} selectedYear
+ * @returns {Promise<{tabledata: object|null, daqi: object}>}
+ */
+async function fetchTabData(
+  request,
+  stationDetails,
+  isYearRoute,
+  selectedYear
+) {
+  if (!isYearRoute) {
+    return { tabledata: null, daqi: await resolveDaqi(stationDetails) }
+  }
+
+  const tabledata = await fetchYearTable({
+    siteId: stationDetails.localSiteID,
+    year: selectedYear
+  })
+  request.yar.set('tabledata', tabledata)
+  return { tabledata, daqi: {} }
+}
+
+/**
  * Hapi route handler for /stationdetails. Resolves the requested station,
  * optionally performs a download, and renders the station details view.
  * @param {object} request
@@ -214,19 +305,11 @@ const stationDetailsController = {
       return accessDenied
     }
 
-    // Clear previous session values
-    request.yar.set('errors', '')
-    request.yar.set('errorMessage', '')
-    request.yar.set('downloadresult', '')
+    clearPreviousSessionValues(request)
 
-    const stationDetailsView = 'stationdetails/index'
-
-    // Get station ID from POST payload or session
     const stationId = resolveStationId(request)
-
     setDownloadSessionParams(request)
 
-    // Validate request and session data
     const { response: stationError, station } = resolveStation(
       request,
       stationId,
@@ -239,38 +322,10 @@ const stationDetailsController = {
     request.yar.set('stationdetails', station)
     const stationDetails = request.yar.get('stationdetails')
 
-    // Prepare date and location info
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    const formattedDate = yesterday.toISOString().split('.')[0] + 'Z'
-    request.yar.set('latesttime', formattedDate)
-    const updatedTime = parseDateFormat(formattedDate)
+    const updatedTime = resolveUpdatedTime(request)
+    const coordinates = stationDetails.location.coordinates
+    const apiParams = buildApiParams(request, stationDetails, coordinates)
 
-    // Generate years array dynamically from 2018 to current year
-    const years = buildYearsArray()
-
-    const currentDate = formatCurrentDate()
-    const lat = stationDetails.location.coordinates[0]
-    const lon = stationDetails.location.coordinates[1]
-    const mapLocation = buildMapLocation(lat, lon)
-
-    const fullSearchQuery = request.yar.get('fullSearchQuery')?.value
-
-    // Prepare API parameters
-    const apiParams = {
-      region: stationDetails.region,
-      siteType: stationDetails.siteType,
-      sitename: stationDetails.name,
-      siteId: stationDetails.localSiteID,
-      latitude: lat.toString(),
-      longitude: lon.toString(),
-      year: request.yar.get('selectedYear'),
-      downloadpollutant: request.yar.get('downloadPollutant'),
-      downloadpollutanttype: request.yar.get('downloadFrequency'),
-      stationreaddate: stationDetails.updated
-    }
-
-    // Handle download request
     const downloadError = await performDownloadIfRequested(
       request,
       apiParams,
@@ -280,62 +335,41 @@ const stationDetailsController = {
       return downloadError
     }
 
-    if (request.params?.year) {
-      request.yar.set('selectedYear', request.params.year)
-    }
-    const selectedYear = request.params?.year || request.yar.get('selectedYear')
-
+    const selectedYear = resolveSelectedYear(request)
     const isYearRoute = Boolean(
       request.params?.year || request.params?.download
     )
-    const activePeriod = isYearRoute ? 'year' : 'daqi'
+    const { tabledata, daqi } = await fetchTabData(
+      request,
+      stationDetails,
+      isYearRoute,
+      selectedYear
+    )
 
-    // Only fetch what the active tab shows. The year table is fetched server
-    // side so a year page's first paint has real data - without it Yearlytab
-    // has to fire a follow-up /rendertable request on load, costing an extra
-    // round trip and flashing an empty table. The DAQI page never shows it.
-    const [tabledata, daqi] = await Promise.all([
-      isYearRoute
-        ? fetchYearTable({
-            siteId: stationDetails.localSiteID,
-            year: selectedYear
-          })
-        : null,
-      isYearRoute ? {} : resolveDaqi(stationDetails)
-    ])
-    if (isYearRoute) {
-      request.yar.set('tabledata', tabledata)
-    }
-
-    // Prepare view data
-    const viewGraphSummary = buildViewGraphSummary(request)
-
-    const viewData = {
+    return h.view('stationdetails/index', {
       pageTitle: english.stationdetails.pageTitle,
       title: english.stationdetails.title,
       serviceName: english.stationdetails.serviceName,
       stationdetails: stationDetails,
-      maplocation: mapLocation,
+      maplocation: buildMapLocation(...coordinates),
       updatedTime,
       displayBacklink: true,
-      fullSearchQuery,
+      fullSearchQuery: request.yar.get('fullSearchQuery')?.value,
       apiparams: apiParams,
-      years,
-      currentdate: currentDate,
+      years: buildYearsArray(),
+      currentdate: formatCurrentDate(),
       currentYear: getCurrentYear(),
       pollutantKeys: stationDetails.pollutants,
       maptoggletips: getToggletip(stationDetails.siteType),
       selectedYear,
       tabledata,
       finalyear: selectedYear,
-      activePeriod,
+      activePeriod: isYearRoute ? 'year' : 'daqi',
       daqi,
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request),
-      viewGraphSummary
-    }
-
-    return h.view(stationDetailsView, viewData)
+      viewGraphSummary: buildViewGraphSummary(request)
+    })
   }
 }
 
