@@ -82,6 +82,35 @@ export async function invokeDownload(apiParameters, logger) {
     }
   }
 }
+const NO_LEGAL_LIMIT = 'no legal limit'
+
+/**
+ * The yearly table API returns 'n/a' for pollutants with no daily or hourly
+ * legal limit; show 'no legal limit' instead. Anything else is left untouched.
+ * @param {any} tabledata
+ * @returns {any}
+ */
+export function labelNoLegalLimit(tabledata) {
+  if (!Array.isArray(tabledata)) {
+    return tabledata
+  }
+
+  const relabel = (count) =>
+    typeof count === 'string' && count.trim().toLowerCase() === 'n/a'
+      ? NO_LEGAL_LIMIT
+      : count
+
+  return tabledata.map((row) =>
+    row && typeof row === 'object'
+      ? {
+          ...row,
+          dailyCount: relabel(row.dailyCount),
+          hourlyCount: relabel(row.hourlyCount)
+        }
+      : row
+  )
+}
+
 /**
  * Calls the table data API.
  * @param {object} params
@@ -100,7 +129,7 @@ export async function invokeTable(params) {
         },
         json: true
       })
-      return payload
+      return labelNoLegalLimit(payload)
     } catch (error) {
       loggers.error(`InvokeTable API error (local): ${error.message}`)
       return null
@@ -109,7 +138,7 @@ export async function invokeTable(params) {
     // dev / test / prod environments: use axios with config URL
     try {
       const response = await axios.post(config.get('Table_URL'), params)
-      return response.data
+      return labelNoLegalLimit(response.data)
     } catch (error) {
       return error
     }
