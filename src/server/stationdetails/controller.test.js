@@ -107,9 +107,184 @@ describe('stationDetailsController.handler', () => {
       'stationdetails/index',
       expect.objectContaining({
         selectedYear: '2023',
-        finalyear: '2023'
+        finalyear: '2023',
+        activePeriod: 'year'
       })
     )
+  })
+
+  it('should default activePeriod to daqi and resolve DAQI summary when station has siteId', async () => {
+    const stationWithSiteId = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5', 'Nitrogen dioxide']
+    }
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [stationWithSiteId] },
+        stationdetails: stationWithSiteId,
+        selectedYear: 2024,
+        SiteId: 'site123'
+      }
+      return session[key]
+    })
+    axios.get.mockResolvedValue({
+      data: {
+        to: '2026-10-30T12:00:00.000Z',
+        summary: {
+          measuredAt: '2026-10-30T12:00:00.000Z',
+          pollutants: {
+            PM25: {
+              daqi: {
+                concentration: 12.1,
+                index: 2,
+                measuredAt: '2026-10-30T12:00:00.000Z',
+                averagingPeriod: '24-hour mean'
+              }
+            },
+            NO2: {
+              daqi: {
+                concentration: 201.4,
+                index: 4,
+                measuredAt: '2026-10-30T12:00:00.000Z',
+                averagingPeriod: '1-hour mean'
+              }
+            }
+          }
+        }
+      }
+    })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'daqi',
+        daqi: expect.objectContaining({
+          measuredAt: '2026-10-30T12:00:00.000Z',
+          pollutants: [
+            expect.objectContaining({
+              pollutantName: 'PM2.5',
+              average: 12,
+              daqiIndex: 2,
+              daqiBand: 'low',
+              averagingPeriod: '24 hour average'
+            }),
+            expect.objectContaining({
+              pollutantName: 'Nitrogen dioxide',
+              average: 201,
+              daqiIndex: 4,
+              daqiBand: 'moderate',
+              averagingPeriod: 'Hourly average'
+            })
+          ]
+        })
+      })
+    )
+  })
+
+  it('should return empty daqi object when the station history fetch fails', async () => {
+    const stationWithSiteId = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5']
+    }
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [stationWithSiteId] },
+        stationdetails: stationWithSiteId,
+        selectedYear: 2024,
+        SiteId: 'site123'
+      }
+      return session[key]
+    })
+    axios.get.mockRejectedValue(new Error('network error'))
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'daqi',
+        daqi: {}
+      })
+    )
+  })
+
+  describe('what is fetched for the active tab', () => {
+    const stationWithSiteId = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      localSiteID: 'LOCAL1',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5']
+    }
+
+    beforeEach(() => {
+      request.yar.get = jest.fn(
+        (key) =>
+          ({
+            MonitoringstResult: { getmonitoringstation: [stationWithSiteId] },
+            stationdetails: stationWithSiteId,
+            selectedYear: 2024,
+            SiteId: 'site123'
+          })[key]
+      )
+      axios.get.mockResolvedValue({ data: { summary: { pollutants: {} } } })
+      axios.post.mockResolvedValue({ data: { some: 'data' } })
+    })
+
+    it('does not fetch the year table on the DAQI view', async () => {
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.post).not.toHaveBeenCalled()
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('period=24h')
+      )
+      expect(request.yar.set).not.toHaveBeenCalledWith(
+        'tabledata',
+        expect.anything()
+      )
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ activePeriod: 'daqi', tabledata: null })
+      )
+    })
+
+    it('fetches the year table, and not the DAQI history, on a year route', async () => {
+      request.params.year = '2023'
+
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.get).not.toHaveBeenCalled()
+      expect(axios.post).toHaveBeenCalledTimes(1)
+      expect(axios.post.mock.calls[0][1]).toEqual(
+        expect.objectContaining({ siteId: 'LOCAL1', year: '2023' })
+      )
+      expect(request.yar.set).toHaveBeenCalledWith('tabledata', {
+        some: 'data'
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({
+          activePeriod: 'year',
+          tabledata: { some: 'data' },
+          daqi: {}
+        })
+      )
+    })
   })
 
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {

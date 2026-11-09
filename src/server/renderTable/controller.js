@@ -3,7 +3,8 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { fetchYearTable } from '~/src/server/common/helpers/station-helpers.js'
 import {
   buildViewGraphSummary,
-  resolveLast7Days
+  resolveLast7Days,
+  resolveDaqi
 } from '~/src/server/stationdetails/controller.js'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 import {
@@ -12,6 +13,22 @@ import {
 } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
+
+async function renderDaqiPartial(request, h) {
+  const station = request.yar.get('stationdetails')
+  const daqi = station ? await resolveDaqi(station) : {}
+  const durationText = formatDate(
+    daqi.periodDate ?? new Date().toISOString(),
+    'd MMMM yyyy'
+  )
+
+  const partialContent = nunjucks.render('partials/daqitable.njk', {
+    daqi,
+    durationText
+  })
+
+  return h.response(partialContent).code(HTTP_OK)
+}
 
 async function renderLast7DaysPartial(request, h) {
   const station = request.yar.get('stationdetails')
@@ -32,6 +49,10 @@ async function renderLast7DaysPartial(request, h) {
 const rendertablecontroller = {
   handler: async (request, h) => {
     try {
+      if (request.params.year === 'daqi') {
+        return await renderDaqiPartial(request, h)
+      }
+
       if (request.params.year === 'last-7-days') {
         return await renderLast7DaysPartial(request, h)
       }

@@ -1,0 +1,65 @@
+// Official Defra 1-10 DAQI scale colours 
+//
+// SonarCloud rule css:S7924 (text/background contrast) is deliberately
+// suppressed for this file in sonar-project.properties
+// (sonar.issue.ignore.multicriteria.e1). These background/text pairs are the
+// legally defined DAQI colours, so they cannot be altered to meet our usual
+// contrast standard (bands 8 and 10 white-on-colour fall short).
+//
+// Mitigation: the band is never conveyed by colour alone. Each tag always
+// shows the band number and its text label (Low/Moderate/High/Very high).
+//
+// Keep only DAQI colour pairs in this file so the suppression stays narrow.
+.govuk-tag.aq-daqi-band-tag {
+  white-space: nowrap;
+
+  &--1 {
+    background-color: #9cff9c;
+    color: #0b0c0c;
+  }
+
+  &--2 {
+    background-color: #31ff00;
+    color: #0b0c0c;
+  }
+
+  &--3 {
+    background-color: #31cf00;
+    color: #0b0c0c;
+  }
+
+  &--4 {
+    background-color: #ffff00;
+    color: #0b0c0c;
+  }
+
+  &--5 {
+    background-color: #ffcf00;
+    color: #0b0c0c;
+  }
+
+  &--6 {
+    background-color: #ff9a00;
+    color: #0b0c0c;
+  }
+
+  &--7 {
+    background-color: #ff9292;
+    color: #0b0c0c;
+  }
+
+  &--8 {
+    background-color: #ff0000;
+    color: #ffffff;
+  }
+
+  &--9 {
+    background-color: #990000;
+    color: #ffffff;
+  }
+
+  &--10 {
+    background-color: #ce30ff;
+    color: #ffffff;
+  }
+}
