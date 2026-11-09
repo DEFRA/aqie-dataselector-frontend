@@ -728,6 +728,7 @@ width: 100%;
   white-space: nowrap;
 }
 
+// DAQI band colours live in _daqi.scss (see the note there).
 .defra-aq-features__value--wrap {
   @media (max-width: 640px) {
     .defra-aq-value-with-tip {

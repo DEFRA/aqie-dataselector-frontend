@@ -1,6 +1,6 @@
 import {
   fetchStationByLocation,
-  fetchLast7DaysSummary,
+  fetchStationHistory,
   invokeTable,
   labelNoLegalLimit
 } from './station-helpers.js'
@@ -166,35 +166,41 @@ describe('fetchStationByLocation', () => {
   })
 })
 
-describe('fetchLast7DaysSummary', () => {
+describe('fetchStationHistory', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  it('requests the monitoring station history endpoint for the given siteId', async () => {
-    const history = {
-      from: '2026-08-19T00:00:00.000Z',
-      to: '2026-08-25T23:00:00.000Z',
-      pollutants: {}
+  it.each(['7d', '24h'])(
+    'requests the monitoring station history endpoint for the given siteId and period %s',
+    async (period) => {
+      const history = {
+        from: '2026-10-29T12:00:00.000Z',
+        to: '2026-10-30T11:00:00.000Z',
+        pollutants: {}
+      }
+      getJson.mockResolvedValue(history)
+
+      const result = await fetchStationHistory({ siteId: 'UKA00315', period })
+
+      expect(getJson).toHaveBeenCalledWith({
+        devUrlKey: 'monitoringStationHistoryDevUrl',
+        urlKey: 'monitoringStationHistoryUrl',
+        path: '',
+        params: { siteId: 'UKA00315', period },
+        label: 'Monitoring station history API'
+      })
+      expect(result).toEqual(history)
     }
-    getJson.mockResolvedValue(history)
-
-    const result = await fetchLast7DaysSummary({ siteId: 'UKA00315' })
-
-    expect(getJson).toHaveBeenCalledWith({
-      devUrlKey: 'monitoringStationHistoryDevUrl',
-      urlKey: 'monitoringStationHistoryUrl',
-      path: '',
-      params: { siteId: 'UKA00315', period: '7d' },
-      label: 'Monitoring station history API'
-    })
-    expect(result).toEqual(history)
-  })
+  )
 
   it('returns null when the API call fails', async () => {
     getJson.mockResolvedValue(null)
 
-    const result = await fetchLast7DaysSummary({ siteId: 'UKA00315' })
+    const result = await fetchStationHistory({
+      siteId: 'UKA00315',
+      period: '24h'
+    })
 
     expect(result).toBeNull()
   })
