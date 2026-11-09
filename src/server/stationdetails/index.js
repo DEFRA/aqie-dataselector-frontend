@@ -20,6 +20,11 @@ const configureRoutes = (server) => {
     },
     {
       method: 'GET',
+      path: '/stationdetails/daqi',
+      ...stationDetailsController
+    },
+    {
+      method: 'GET',
       path: '/stationdetails/year/{year}',
       ...stationDetailsController
     },

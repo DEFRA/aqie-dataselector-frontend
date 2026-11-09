@@ -9,9 +9,8 @@
      #yearlytable-container with innerHTML when the year tab changes
 
   Scripts inserted via innerHTML never execute, so the behaviour below is
-  bound once (on the initial render) and must keep working against markup
-  that is replaced later - hence the delegated listeners and the global
-  getAPIstn_details1 used by the download links' onclick attributes.
+  bound once (by Yearlytab.njk on the initial render) and must keep working
+  against markup that is replaced later - hence its delegated listeners.
 
   Limit values and toggletip copy come from the pollutantToggletips,
   dataCaptureToggletip and lowDataCaptureThreshold nunjucks globals
@@ -166,112 +165,11 @@
 
 {% endif %}
 
-{# Only the full page render needs these. On the /rendertable partial route the
-   response is injected with innerHTML, where <script> tags never execute, so
-   sending them would be ~3KB of dead payload on every year change. The
-   handlers bound on the initial render keep working against the new markup. #}
+{# The toggletip positioning and getAPIstn_details1 scripts live in
+   Yearlytab.njk, which wraps this table on every full page render. The
+   /rendertable partial is injected with innerHTML, where <script> tags never
+   execute, so only the one-off download redirect below is page-render only. #}
 {% if not isPartial %}
-
-<script nonce="{{ nonce }}">
-  /*
-   * Keep table toggletips inside the viewport.
-   *
-   * Listeners are delegated from `document` so they survive
-   * #yearlytable-container being replaced with innerHTML on a year change.
-   */
-  (function () {
-    if (window.aqTableToggletipsBound) return
-    window.aqTableToggletipsBound = true
-
-    var PINNED_CLASS = 'defra-toggletip__info--pinned'
-    var EDGE_GAP = 8
-    var TIP_GAP = 4
-    var MIN_SPACE_ABOVE = 140
-
-    /* The tip's width and its offset from the button are defined in
-       _main.scss as custom properties on .defra-toggletip__info. Reading them
-       back means restyling the toggletip cannot silently mispostion it. */
-    function cssNumber(element, property, fallback) {
-      var value = parseFloat(
-        getComputedStyle(element).getPropertyValue(property)
-      )
-      return isNaN(value) ? fallback : value
-    }
-
-    function tableToggletipFor(node) {
-      if (!node || !node.closest) return null
-      var button = node.closest('.defra-toggletip__button')
-      if (!button || !button.closest('.table-scroll-container')) return null
-      var toggletip = button.closest('.defra-toggletip')
-      var info = toggletip && toggletip.querySelector('.defra-toggletip__info')
-      return info ? { button: button, info: info } : null
-    }
-
-    function reposition(event) {
-      var parts = tableToggletipFor(event.target)
-      if (!parts) return
-
-      var rect = parts.button.getBoundingClientRect()
-      if (!rect.width) return // not visible yet
-
-      var infoWidth = cssNumber(parts.info, '--toggletip-info-width', 200)
-      var buttonOffset = cssNumber(parts.info, '--toggletip-info-offset', 85)
-
-      var leftPos = Math.max(EDGE_GAP, rect.left - buttonOffset)
-      if (leftPos + infoWidth > window.innerWidth - EDGE_GAP) {
-        leftPos = window.innerWidth - infoWidth - EDGE_GAP
-      }
-
-      // position/right/z-index come from PINNED_CLASS; only the coordinates,
-      // which depend on where the button ended up, have to be inline.
-      parts.info.classList.add(PINNED_CLASS)
-      var style = parts.info.style
-      style.left = leftPos + 'px'
-
-      if (rect.top >= MIN_SPACE_ABOVE) {
-        style.top = 'auto'
-        style.bottom = window.innerHeight - rect.top + TIP_GAP + 'px'
-      } else {
-        style.top = rect.bottom + TIP_GAP + 'px'
-        style.bottom = 'auto'
-      }
-    }
-
-    function reset(event) {
-      var parts = tableToggletipFor(event.target)
-      if (!parts) return
-      // Ignore moves between the button and its own children.
-      if (event.relatedTarget && parts.button.contains(event.relatedTarget)) return
-      parts.info.classList.remove(PINNED_CLASS)
-      parts.info.style.cssText = ''
-    }
-
-    document.addEventListener('mouseover', reposition)
-    document.addEventListener('focusin', reposition)
-    document.addEventListener('mouseout', reset)
-    document.addEventListener('focusout', reset)
-  })()
-</script>
-
-<script nonce="{{ nonce }}">
-  /*
-   * Called from the download links' onclick. Must stay global: the markup
-   * that references it is re-injected with innerHTML on a year change,
-   * while this script only ever runs on the initial page render.
-   */
-  function getAPIstn_details1(pollutants, freq) {
-    fetch('/downloaddata/' + encodeURIComponent(pollutants) + '/' + encodeURIComponent(freq))
-      .then(function (response) { return response.text() })
-      .then(function (url) {
-        if (url) {
-          window.location.href = url
-        }
-      })
-      .catch(function (error) {
-        console.error('Error fetching partial content:', error)
-      })
-  }
-</script>
 
 {% if downloadresult %}
   <script nonce="{{ nonce }}">
