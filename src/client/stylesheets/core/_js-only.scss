@@ -1,0 +1,9 @@
+// Content that needs JavaScript. The GOV.UK template adds .js-enabled to <body>
+// when scripts run, so this stays hidden for users without JavaScript.
+.aq-js-only {
+  display: none;
+}
+
+.js-enabled .aq-js-only {
+  display: block;
+}

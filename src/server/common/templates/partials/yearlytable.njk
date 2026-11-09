@@ -110,8 +110,11 @@
     </div>
   </div>
 
+  {# The graph summary page is for JavaScript users only, so aq-js-only hides
+     this button when JavaScript is off. It is done in CSS because this markup
+     is also swapped in with innerHTML, where scripts never run. #}
   {% if viewGraphSummary %}
-    <div class="govuk-!-margin-top-6 govuk-!-margin-bottom-6">
+    <div class="aq-js-only govuk-!-margin-top-6 govuk-!-margin-bottom-6">
       <a
         href="{{ viewGraphSummary.href }}"
         class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-0"
