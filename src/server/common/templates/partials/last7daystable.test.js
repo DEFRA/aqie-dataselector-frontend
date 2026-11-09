@@ -113,3 +113,49 @@ describe('last7daystable.njk low data capture behaviour', () => {
     ).toBe('-')
   })
 })
+
+describe('last7daystable.njk page content', () => {
+  const HINT =
+    'The pollution levels shown are measured against UK legal limits.'
+
+  it('shows the not-verified notice above the table', () => {
+    const $ = render({ pollutants: [row()] })
+
+    expect($('.govuk-inset-text.not-verified').text().trim()).toBe(
+      'Data has not been checked and verified'
+    )
+  })
+
+  it('shows the legal limits hint once, below the table, with its own id', () => {
+    const $ = render({ pollutants: [row()] })
+    const hint = $('#last7days-hint')
+
+    expect(hint).toHaveLength(1)
+    expect(hint.text().trim()).toBe(HINT)
+    expect(hint.hasClass('govuk-hint')).toBe(true)
+    expect($('#daqi-hint')).toHaveLength(0)
+    expect($('#last7daystable').parent().next().attr('id')).toBe(
+      'last7days-hint'
+    )
+  })
+
+  it('renders the noMapping message without the table or hint', () => {
+    const $ = render({ noMapping: true })
+
+    expect($('.govuk-inset-text').text().trim()).toBe(
+      'The last 7 days view is not available for this station.'
+    )
+    expect($('#last7daystable')).toHaveLength(0)
+    expect($('#last7days-hint')).toHaveLength(0)
+  })
+
+  it('renders the noData message without the table or hint when there are no pollutants', () => {
+    const $ = render({ pollutants: [] })
+
+    expect($('.govuk-inset-text').text().trim()).toBe(
+      'Could not load data for the last 7 days.'
+    )
+    expect($('#last7daystable')).toHaveLength(0)
+    expect($('#last7days-hint')).toHaveLength(0)
+  })
+})

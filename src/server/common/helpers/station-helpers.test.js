@@ -1,12 +1,111 @@
 import {
   fetchStationByLocation,
-  fetchStationHistory
+  fetchStationHistory,
+  invokeTable,
+  labelNoLegalLimit
 } from './station-helpers.js'
+import axios from 'axios'
+import { config } from '~/src/config/config.js'
 import { getJson } from '~/src/server/common/helpers/api-client.js'
 
+jest.mock('axios')
 jest.mock('~/src/server/common/helpers/api-client.js', () => ({
   getJson: jest.fn()
 }))
+
+describe('labelNoLegalLimit', () => {
+  it("replaces 'n/a' daily and hourly counts with 'no legal limit'", () => {
+    const rows = [
+      { pollutantName: 'PM2.5', dailyCount: 'n/a', hourlyCount: 'n/a' },
+      { pollutantName: 'PM10', dailyCount: '2', hourlyCount: 'n/a' },
+      {
+        pollutantName: 'Nitrogen dioxide',
+        dailyCount: 'n/a',
+        hourlyCount: '1'
+      },
+      { pollutantName: 'Ozone', dailyCount: 'n/a', hourlyCount: 'n/a' }
+    ]
+
+    expect(labelNoLegalLimit(rows)).toEqual([
+      {
+        pollutantName: 'PM2.5',
+        dailyCount: 'no legal limit',
+        hourlyCount: 'no legal limit'
+      },
+      {
+        pollutantName: 'PM10',
+        dailyCount: '2',
+        hourlyCount: 'no legal limit'
+      },
+      {
+        pollutantName: 'Nitrogen dioxide',
+        dailyCount: 'no legal limit',
+        hourlyCount: '1'
+      },
+      {
+        pollutantName: 'Ozone',
+        dailyCount: 'no legal limit',
+        hourlyCount: 'no legal limit'
+      }
+    ])
+  })
+
+  it('keeps zero counts as they are', () => {
+    const rows = [{ dailyCount: '0', hourlyCount: 0 }]
+
+    expect(labelNoLegalLimit(rows)).toEqual(rows)
+  })
+
+  it('returns non-array data unchanged', () => {
+    const error = new Error('boom')
+
+    expect(labelNoLegalLimit(null)).toBeNull()
+    expect(labelNoLegalLimit(error)).toBe(error)
+    expect(labelNoLegalLimit({})).toEqual({})
+  })
+})
+
+describe('invokeTable', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest
+      .spyOn(config, 'get')
+      .mockImplementation((key) =>
+        key === 'isDevelopment' ? false : 'http://table-api'
+      )
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("labels 'n/a' exceedance counts returned by the API", async () => {
+    axios.post.mockResolvedValue({
+      data: [{ pollutantName: 'Ozone', dailyCount: 'n/a', hourlyCount: 'n/a' }]
+    })
+
+    const result = await invokeTable({ siteId: 'ABC', year: '2023' })
+
+    expect(axios.post).toHaveBeenCalledWith('http://table-api', {
+      siteId: 'ABC',
+      year: '2023'
+    })
+    expect(result).toEqual([
+      {
+        pollutantName: 'Ozone',
+        dailyCount: 'no legal limit',
+        hourlyCount: 'no legal limit'
+      }
+    ])
+  })
+
+  it('returns the error when the API call fails', async () => {
+    const error = new Error('network')
+    axios.post.mockRejectedValue(error)
+
+    expect(await invokeTable({ siteId: 'ABC', year: '2023' })).toBe(error)
+  })
+})
 
 describe('fetchStationByLocation', () => {
   beforeEach(() => {
