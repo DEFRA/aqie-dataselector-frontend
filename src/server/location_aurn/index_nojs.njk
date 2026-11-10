@@ -202,6 +202,59 @@
               </div>
             </div>
 
+            <!-- Agglomerations -->
+            {% if formData.agglomeration is string %}
+              {% set selectedAgglomerations = [formData.agglomeration] %}
+            {% else %}
+              {% set selectedAgglomerations = formData.agglomeration or [] %}
+            {% endif %}
+            <div class="govuk-radios__item">
+              <input class="govuk-radios__input"
+                     id="location-5"
+                     name="location"
+                     type="radio"
+                     value="agglomerations"
+                     data-aria-controls="conditional-location-5"
+                     {% if formData.location == "agglomerations" %}checked{% endif %}>
+              <label class="govuk-label govuk-radios__label" for="location-5">
+                Agglomerations
+              </label>
+              <div class="govuk-hint govuk-radios__hint">
+                Choose one or more UK air quality agglomerations<br>
+                Only the Automatic Urban and Rural Network is available for agglomerations
+              </div>
+            </div>
+
+            <div class="govuk-radios__conditional {% if formData.location != "agglomerations" %}govuk-radios__conditional--hidden{% endif %}" id="conditional-location-5">
+              <div class="govuk-form-group {% if errors.details.agglomeration %}govuk-form-group--error{% endif %}">
+                {% if errors.details.agglomeration %}
+                <p id="agglomeration-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.details.agglomeration }}
+                </p>
+                {% endif %}
+                {% if agglomerationList and agglomerationList | length %}
+                <fieldset class="govuk-fieldset" {% if errors.details.agglomeration %}aria-describedby="agglomeration-error"{% endif %}>
+                  <legend class="govuk-fieldset__legend govuk-visually-hidden">Select agglomerations</legend>
+                  <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
+                    {% for agglomeration in agglomerationList %}
+                    <div class="govuk-checkboxes__item">
+                      <input class="govuk-checkboxes__input"
+                             id="agglomeration-{{ loop.index }}"
+                             name="agglomeration"
+                             type="checkbox"
+                             value="{{ agglomeration.name }}"
+                             {% if agglomeration.name in selectedAgglomerations %}checked{% endif %}>
+                      <label class="govuk-label govuk-checkboxes__label" for="agglomeration-{{ loop.index }}">{{ agglomeration.name }}</label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </fieldset>
+                {% else %}
+                <p class="govuk-body" id="agglomeration-1">Agglomerations are not currently available. Choose countries, zones, local authorities or try again later.</p>
+                {% endif %}
+              </div>
+            </div>
+
             <!-- Local authority -->
             <div class="govuk-radios__item">
               <input class="govuk-radios__input"

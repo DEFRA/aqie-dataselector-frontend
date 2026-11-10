@@ -349,11 +349,14 @@ function getDownloadCategoryType(request) {
   )
 }
 
-// Zones + NON-AURN (no AURN network): no stations — stay on customdataset,
-// which shows the zone "Change location" error, instead of the download page
+// Zones/agglomerations + NON-AURN (no AURN network): no stations — stay on
+// customdataset, which shows the "Change location" error, instead of the
+// download page
 function isZoneWithoutAurn(request) {
+  const location = request.yar.get('Location')
+
   return (
-    request.yar.get('Location') === 'Zone' &&
+    (location === 'Zone' || location === 'Agglomeration') &&
     !hasAurnNetwork(request.yar.get('datasourceGroups'))
   )
 }
