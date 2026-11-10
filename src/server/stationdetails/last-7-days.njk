@@ -15,9 +15,11 @@
 
 <nav class="moj-sub-navigation" aria-label="Sub navigation">
   <ul class="moj-sub-navigation__list">
+    {% if viewDaqiTab %}
     <li class="moj-sub-navigation__item">
       <a class="moj-sub-navigation__link" href="/stationdetails/daqi">{{ daqiContent.tabLabel }}</a>
     </li>
+    {% endif %}
     <li class="moj-sub-navigation__item">
       <a class="moj-sub-navigation__link" href="/stationdetails/last-7-days" aria-current="page">Last 7 days</a>
     </li>

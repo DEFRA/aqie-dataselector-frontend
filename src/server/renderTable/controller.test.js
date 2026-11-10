@@ -27,6 +27,21 @@ describe('rendertablecontroller.handler', () => {
       }
     }
     nunjucks.render.mockReturnValue('<table>content</table>')
+    config.set('featureFlags.viewDaqiTab', true)
+  })
+
+  afterEach(() => {
+    config.set('featureFlags.viewDaqiTab', false)
+  })
+
+  it('returns 404 for the daqi partial when the DAQI tab flag is off', async () => {
+    config.set('featureFlags.viewDaqiTab', false)
+    request.params = { year: 'daqi' }
+
+    await rendertablecontroller.handler(request, h)
+
+    expect(h.code).toHaveBeenCalledWith(404)
+    expect(nunjucks.render).not.toHaveBeenCalled()
   })
 
   it('renders table with valid data', async () => {

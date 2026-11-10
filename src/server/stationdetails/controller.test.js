@@ -64,6 +64,31 @@ describe('stationDetailsController.handler', () => {
     }
 
     jest.clearAllMocks()
+    config.set('featureFlags.viewDaqiTab', true)
+  })
+
+  afterEach(() => {
+    config.set('featureFlags.viewDaqiTab', false)
+  })
+
+  it('should show the year view and skip DAQI when the DAQI tab flag is off', async () => {
+    config.set('featureFlags.viewDaqiTab', false)
+    request.params.download = undefined
+    axios.post.mockResolvedValue({ data: { some: 'data' } })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(axios.get).not.toHaveBeenCalledWith(
+      expect.stringContaining('period=24h')
+    )
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'year',
+        viewDaqiTab: false,
+        daqi: {}
+      })
+    )
   })
 
   it('should render the view for non-download requests', async () => {

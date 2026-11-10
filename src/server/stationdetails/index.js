@@ -20,11 +20,6 @@ const configureRoutes = (server) => {
     },
     {
       method: 'GET',
-      path: '/stationdetails/daqi',
-      ...stationDetailsController
-    },
-    {
-      method: 'GET',
       path: '/stationdetails/year/{year}',
       ...stationDetailsController
     },
@@ -39,6 +34,14 @@ const configureRoutes = (server) => {
       ...stationDetailsController
     }
   ])
+
+  if (config.get('featureFlags.viewDaqiTab')) {
+    server.route({
+      method: 'GET',
+      path: '/stationdetails/daqi',
+      ...stationDetailsController
+    })
+  }
 
   if (config.get('featureFlags.viewGraphSummary')) {
     server.route({

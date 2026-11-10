@@ -8,7 +8,7 @@
     'Trend'
   )}}
 {% endset %}
-{% set isDaqi = activePeriod == 'daqi' %}
+{% set isDaqi = viewDaqiTab and activePeriod == 'daqi' %}
 
 {% if isDaqi %}
 <h2 id="airpollution-heading" class="govuk-heading-l govuk-!-margin-top-6 govuk-!-margin-bottom-2">{{ daqiContent.heading }}</h2>
@@ -29,6 +29,7 @@
  <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
+  {% if viewDaqiTab %}
   <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-daqi" href="/stationdetails/daqi" role="tab"
     {% if isDaqi %}
@@ -37,6 +38,7 @@
     aria-selected="false"
     {% endif %}>{{ daqiContent.tabLabel }}</a>
   </li>
+  {% endif %}
   <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-last-7-days" href="/stationdetails/last-7-days" role="tab" aria-selected="false">Last 7 days</a>
   </li>
@@ -76,9 +78,11 @@
        month name as the server-rendered markup. */
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
+    {% if viewDaqiTab %}
     var DAQI_HEADING = {{ daqiContent.heading | dump | safe }};
     var DAQI_DEFAULT_DATE = {{ (currentdate + ' ' + currentYear) | dump | safe }};
     var DAQI_NO_DATA_MESSAGE = {{ daqiContent.noDataMessage | dump | safe }};
+    {% endif %}
     var LAST_7_DAYS_HEADING = {{ last7DaysContent.heading | dump | safe }};
     var LAST_7_DAYS_NO_DATA_MESSAGE = {{ last7DaysContent.noDataMessage | dump | safe }};
 
@@ -163,6 +167,7 @@
           });
     }
 
+    {% if viewDaqiTab %}
     function updateDaqi() {
       loadTab({
         heading: DAQI_HEADING,
@@ -173,6 +178,7 @@
         noDataMessage: DAQI_NO_DATA_MESSAGE
       });
     }
+    {% endif %}
 
     function updateLast7Days() {
       loadTab({
@@ -187,12 +193,14 @@
 
     /* Delegated listener for DAQI, Last 7 days and year tab clicks to survive any DOM updates */
     document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
+      {% if viewDaqiTab %}
       const daqiLink = e.target.closest('#link-daqi');
       if (daqiLink) {
         e.preventDefault();
         updateDaqi();
         return;
       }
+      {% endif %}
 
       const last7DaysLink = e.target.closest('#link-last-7-days');
       if (last7DaysLink) {
