@@ -119,9 +119,9 @@ export const config = convict({
   },
   featureFlags: {
     viewGraphSummary: {
-      doc: 'Show the view graph and pollutant summary CTA on station detail pages',
+      doc: 'Show the view graph and pollutant summary CTA on station detail pages and serve its destination page. Off unless explicitly enabled for the environment',
       format: Boolean,
-      default: true,
+      default: false,
       env: 'VIEW_GRAPH_SUMMARY_ENABLED'
     },
     viewDaqiTab: {
