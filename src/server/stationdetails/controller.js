@@ -336,9 +336,9 @@ const stationDetailsController = {
     }
 
     const selectedYear = resolveSelectedYear(request)
-    const isYearRoute = Boolean(
-      request.params?.year || request.params?.download
-    )
+    const viewDaqiTab = config.get('featureFlags.viewDaqiTab')
+    const isYearRoute =
+      !viewDaqiTab || Boolean(request.params?.year || request.params?.download)
     const { tabledata, daqi } = await fetchTabData(
       request,
       stationDetails,
@@ -365,6 +365,7 @@ const stationDetailsController = {
       tabledata,
       finalyear: selectedYear,
       activePeriod: isYearRoute ? 'year' : 'daqi',
+      viewDaqiTab,
       daqi,
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request),
@@ -422,6 +423,7 @@ const last7DaysController = {
       years,
       selectedYear: request.yar.get('selectedYear'),
       activePeriod: 'last7days',
+      viewDaqiTab: config.get('featureFlags.viewDaqiTab'),
       last7Days,
       hrefq: resolveStationHrefq(request)
     }

@@ -9,8 +9,10 @@ import {
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 import {
   HTTP_OK,
+  HTTP_NOT_FOUND,
   HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+import { config } from '~/src/config/config.js'
 
 const logger = createLogger()
 
@@ -50,6 +52,9 @@ const rendertablecontroller = {
   handler: async (request, h) => {
     try {
       if (request.params.year === 'daqi') {
+        if (!config.get('featureFlags.viewDaqiTab')) {
+          return h.response('Not found').code(HTTP_NOT_FOUND)
+        }
         return await renderDaqiPartial(request, h)
       }
 

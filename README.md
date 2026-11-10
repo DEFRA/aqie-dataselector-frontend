@@ -82,9 +82,10 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                               |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details page and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
+| Environment variable         | Default | Description                                                                                                                                                                                                               |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `true`  | Shows the "View graph and pollutant summary" button on the station details page and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled.                                                 |
+| `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled. |
 
 The flag is read at startup, so restart the server after changing it.
 

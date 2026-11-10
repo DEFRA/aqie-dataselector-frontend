@@ -21,12 +21,42 @@ function render(context) {
       currentYear: 2026,
       currentdate: '5 November',
       daqi: {},
+      viewDaqiTab: true,
       ...context
     })
   )
 }
 
 describe('Yearlytab.njk', () => {
+  describe('DAQI tab feature flag', () => {
+    it('shows the DAQI tab and its script when the flag is on', () => {
+      const $ = render({ activePeriod: 'daqi' })
+
+      expect($('#link-daqi')).toHaveLength(1)
+      expect($('script').html()).toContain('updateDaqi')
+    })
+
+    it('hides the DAQI tab and its script when the flag is off', () => {
+      const $ = render({
+        viewDaqiTab: false,
+        activePeriod: 'year',
+        selectedYear: 2025
+      })
+
+      expect($('#link-daqi')).toHaveLength(0)
+      expect($('script').html()).not.toContain('updateDaqi')
+      expect($('#link-last-7-days')).toHaveLength(1)
+    })
+
+    it('ignores a daqi active period when the flag is off', () => {
+      const $ = render({ viewDaqiTab: false, activePeriod: 'daqi' })
+
+      expect($('#airpollution-heading').text()).toContain(
+        'Air pollution levels'
+      )
+    })
+  })
+
   describe('year tabs', () => {
     it.each([
       ['DAQI view', { activePeriod: 'daqi' }],
