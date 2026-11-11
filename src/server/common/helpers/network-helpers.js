@@ -2,6 +2,8 @@
  * Shared network helpers for AURN / NON-AURN datasource handling.
  */
 
+const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
+
 /**
  * Build a comma-separated list of unique network IDs for the
  * "Other data from Defra" (NON-AURN) group within the provided datasource
@@ -37,7 +39,7 @@ export function getNonAurnNetworkIdCsv(datasourceGroups) {
 export function getNearRealtimeNetworks(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   const nearRealtimeGroup = groups.find(
-    (g) => g?.category === 'Near real-time data from Defra'
+    (g) => g?.category === CATEGORY_NEAR_REALTIME
   )
   const networks = Array.isArray(nearRealtimeGroup?.networks)
     ? nearRealtimeGroup.networks
@@ -78,7 +80,7 @@ export function hasAurnNetwork(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   return groups.some(
     (g) =>
-      g?.category === 'Near real-time data from Defra' &&
+      g?.category === CATEGORY_NEAR_REALTIME &&
       Array.isArray(g.networks) &&
       g.networks.some(isAurnNetwork)
   )
@@ -92,7 +94,7 @@ export function hasNonAurnNearRealtimeNetwork(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   return groups.some(
     (g) =>
-      g?.category === 'Near real-time data from Defra' &&
+      g?.category === CATEGORY_NEAR_REALTIME &&
       Array.isArray(g.networks) &&
       g.networks.some((network) => !isAurnNetwork(network))
   )
@@ -105,7 +107,7 @@ export function hasNonAurnNearRealtimeNetwork(datasourceGroups) {
 export function getAurnOnlyNearRealtimeGroups(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   return groups
-    .filter((g) => g?.category === 'Near real-time data from Defra')
+    .filter((g) => g?.category === CATEGORY_NEAR_REALTIME)
     .map((g) => ({
       ...g,
       networks: (Array.isArray(g.networks) ? g.networks : []).filter(
@@ -148,7 +150,7 @@ export function getDownloadNearRealtimeNetworks(request) {
 export function getAurnPollutantIds(datasourceGroups) {
   const groups = Array.isArray(datasourceGroups) ? datasourceGroups : []
   const ids = groups
-    .filter((g) => g?.category === 'Near real-time data from Defra')
+    .filter((g) => g?.category === CATEGORY_NEAR_REALTIME)
     .flatMap((g) => (Array.isArray(g.networks) ? g.networks : []))
     .filter((network) => typeof network === 'object' && isAurnNetwork(network))
     .flatMap((network) => String(network.pollutantID || '').split(','))

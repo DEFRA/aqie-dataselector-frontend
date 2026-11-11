@@ -190,52 +190,67 @@ export function groupDatasources(flat) {
 
 // Re-trigger the station count with the new datasource type when all the
 // required selection data is present in the session.
+// Location part of the station count params for the selected location type
+function getLocationParams(request) {
+  const location = request.yar.get('Location')
+
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (location === 'Zone') {
+    return {
+      RegionId: request.yar.get('selectedZoneIDs') || '',
+      Region: '',
+      regiontype: 'Region'
+    }
+  }
+  // Agglomerations: the selected IDs go in AgglomerationID
+  if (location === 'Agglomeration') {
+    return {
+      AgglomerationID: request.yar.get('selectedAgglomerationIDs') || '',
+      RegionId: '',
+      Region: '',
+      regiontype: 'Agglomeration'
+    }
+  }
+  if (location === 'Country') {
+    return {
+      Region: request.yar.get('selectedlocation').join(','),
+      regiontype: 'Country'
+    }
+  }
+  return {
+    Region: request.yar.get('selectedLAIDs'),
+    regiontype: 'LocalAuthority'
+  }
+}
+
+// Zones and agglomerations only have AURN data: count only the AURN network's
+// pollutants, falling back to all selected pollutants if it has no IDs
+function getCountPollutants(request, datasourceGroups, isZone) {
+  const aurnPollutantIds = isZone ? getAurnPollutantIds(datasourceGroups) : []
+  return aurnPollutantIds.length > 0
+    ? aurnPollutantIds.join(',')
+    : request.yar.get('selectedPollutantID')
+}
+
 async function recalculateStationCount(request, datasourceType) {
   const finalyear = request.yar.get('finalyear1')
   const pollutantID = request.yar.get('selectedPollutantID')
   const selectedlocation = request.yar.get('selectedlocation')
-  const selectedLAIDs = request.yar.get('selectedLAIDs')
-  const isCountry = request.yar.get('Location') === 'Country'
 
   if (!(finalyear && pollutantID && selectedlocation)) {
     return
   }
 
+  const location = request.yar.get('Location')
+  const isZone = location === 'Zone' || location === 'Agglomeration'
   const postDatasourceGroups = request.yar.get('datasourceGroups') || []
   const nonAurnNetworkId = getNonAurnNetworkIdCsv(postDatasourceGroups)
   const baseParams = {
-    pollutantName: pollutantID,
-    Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
-    regiontype: isCountry ? 'Country' : 'LocalAuthority',
+    pollutantName: getCountPollutants(request, postDatasourceGroups, isZone),
+    ...getLocationParams(request),
     Year: finalyear,
     dataselectorfiltertype: DATASOURCE_COUNT_FILTER_TYPE,
     dataselectordownloadtype: ''
-  }
-  const location = request.yar.get('Location')
-  const isZone = location === 'Zone' || location === 'Agglomeration'
-
-  // Zones: the selected region IDs go in RegionId and Region is left empty
-  if (location === 'Zone') {
-    baseParams.RegionId = request.yar.get('selectedZoneIDs') || ''
-    baseParams.Region = ''
-    baseParams.regiontype = 'Region'
-  }
-  // Agglomerations: the selected IDs go in AgglomerationID
-  if (location === 'Agglomeration') {
-    baseParams.AgglomerationID =
-      request.yar.get('selectedAgglomerationIDs') || ''
-    baseParams.RegionId = ''
-    baseParams.Region = ''
-    baseParams.regiontype = 'Agglomeration'
-  }
-
-  // Zones and agglomerations only have AURN data: count only the AURN
-  // network's pollutants and skip the NON-AURN count
-  const aurnPollutantIds = isZone
-    ? getAurnPollutantIds(postDatasourceGroups)
-    : []
-  if (aurnPollutantIds.length > 0) {
-    baseParams.pollutantName = aurnPollutantIds.join(',')
   }
 
   try {

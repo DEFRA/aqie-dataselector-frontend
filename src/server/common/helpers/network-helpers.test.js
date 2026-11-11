@@ -1,11 +1,135 @@
 import {
   getNonAurnNetworkIdCsv,
   getNearRealtimeNetworks,
-  hasAurnNetwork
+  hasAurnNetwork,
+  hasNonAurnNearRealtimeNetwork,
+  getAurnOnlyNearRealtimeGroups,
+  getDownloadNearRealtimeNetworks,
+  getAurnPollutantIds
 } from './network-helpers.js'
 
 const NEAR_REALTIME = 'Near real-time data from Defra'
 const OTHER = 'Other data from Defra'
+
+const AURN = {
+  name: 'Automatic Urban and Rural Network (AURN)',
+  pollutantID: '1'
+}
+const AHC = { name: 'Automatic Hydrocarbon Network', pollutantID: '2' }
+
+describe('hasNonAurnNearRealtimeNetwork', () => {
+  it('is true when another near real-time network is listed with AURN', () => {
+    expect(
+      hasNonAurnNearRealtimeNetwork([
+        { category: NEAR_REALTIME, networks: [AURN, AHC] }
+      ])
+    ).toBe(true)
+  })
+
+  it.each([
+    ['AURN only', [{ category: NEAR_REALTIME, networks: [AURN] }]],
+    ['other data only', [{ category: OTHER, networks: [AHC] }]],
+    ['a near real-time group without networks', [{ category: NEAR_REALTIME }]],
+    ['no groups', undefined]
+  ])('is false for %s', (_label, groups) => {
+    expect(hasNonAurnNearRealtimeNetwork(groups)).toBe(false)
+  })
+})
+
+describe('getAurnOnlyNearRealtimeGroups', () => {
+  it('keeps only the near real-time group with its AURN networks', () => {
+    expect(
+      getAurnOnlyNearRealtimeGroups([
+        { category: NEAR_REALTIME, networks: [AHC, AURN] },
+        { category: OTHER, networks: [{ id: 'ukeap' }] }
+      ])
+    ).toEqual([{ category: NEAR_REALTIME, networks: [AURN] }])
+  })
+
+  it('handles a group without networks and no groups', () => {
+    expect(getAurnOnlyNearRealtimeGroups([{ category: NEAR_REALTIME }])).toEqual(
+      [{ category: NEAR_REALTIME, networks: [] }]
+    )
+    expect(getAurnOnlyNearRealtimeGroups(undefined)).toEqual([])
+  })
+})
+
+describe('getDownloadNearRealtimeNetworks', () => {
+  const stationCounts = [
+    { name: AHC.name, isAurn: false, count: 3 },
+    { name: AURN.name, isAurn: true, count: 5 }
+  ]
+  const makeRequest = (session) => ({ yar: { get: (key) => session[key] } })
+
+  it.each(['Zone', 'Agglomeration'])(
+    'keeps only AURN networks and counts for %s',
+    (location) => {
+      expect(
+        getDownloadNearRealtimeNetworks(
+          makeRequest({
+            Location: location,
+            datasourceGroups: [{ category: NEAR_REALTIME, networks: [AHC, AURN] }],
+            nearRealtimeStationCounts: stationCounts
+          })
+        )
+      ).toEqual({
+        networks: [{ name: AURN.name, isAurn: true }],
+        stationCounts: [stationCounts[1]]
+      })
+    }
+  )
+
+  it('keeps every network and count for other locations', () => {
+    expect(
+      getDownloadNearRealtimeNetworks(
+        makeRequest({
+          Location: 'Country',
+          datasourceGroups: [{ category: NEAR_REALTIME, networks: [AHC, AURN] }],
+          nearRealtimeStationCounts: stationCounts
+        })
+      )
+    ).toEqual({
+      networks: [
+        { name: AHC.name, isAurn: false },
+        { name: AURN.name, isAurn: true }
+      ],
+      stationCounts
+    })
+  })
+
+  it('leaves non-array station counts unchanged for a zone', () => {
+    expect(
+      getDownloadNearRealtimeNetworks(makeRequest({ Location: 'Zone' }))
+    ).toEqual({ networks: [], stationCounts: undefined })
+  })
+})
+
+describe('getAurnPollutantIds', () => {
+  it('returns unique, trimmed AURN pollutant IDs only', () => {
+    expect(
+      getAurnPollutantIds([
+        {
+          category: NEAR_REALTIME,
+          networks: [
+            { ...AURN, pollutantID: ' 1, 3,1,' },
+            { abbreviation: 'AURN', pollutantID: '4' },
+            AHC,
+            'AURN'
+          ]
+        },
+        { category: OTHER, networks: [{ ...AURN, pollutantID: '9' }] }
+      ])
+    ).toEqual(['1', '3', '4'])
+  })
+
+  it.each([
+    ['an AURN network without a pollutant ID', [{ category: NEAR_REALTIME, networks: [{ name: AURN.name }] }]],
+    ['a near real-time group without networks', [{ category: NEAR_REALTIME }]],
+    ['no groups', undefined]
+  ])('returns an empty list for %s', (_label, groups) => {
+    expect(getAurnPollutantIds(groups)).toEqual([])
+  })
+})
 
 describe('getNearRealtimeNetworks', () => {
   it('returns the near real-time networks from the datasource API', () => {

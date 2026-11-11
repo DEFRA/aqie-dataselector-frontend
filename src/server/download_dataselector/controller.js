@@ -311,7 +311,6 @@ function getValidationContext(request) {
 function buildSuccessViewData(
   request,
   backUrl,
-  datasourceGroups,
   validation,
   hasOtherDataSource,
   aurnPollutantID
@@ -385,7 +384,6 @@ export const downloadDataselectorController = {
     const successViewData = buildSuccessViewData(
       request,
       backUrl,
-      datasourceGroups,
       validation,
       hasOtherDataSource,
       aurnPollutantID
