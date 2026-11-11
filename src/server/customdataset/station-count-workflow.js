@@ -1,5 +1,8 @@
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  getAurnPollutantIds,
+  getNonAurnNetworkIdCsv
+} from '~/src/server/common/helpers/network-helpers.js'
 import {
   invokeStationCount,
   isStationCountError,
@@ -73,20 +76,19 @@ function getNearRealtimeNetworkSelections(datasourceGroups) {
   return selections
 }
 
-function getSelectedPollutantIds(request) {
-  const raw = String(request.yar.get('selectedPollutantID') || '')
-  if (!raw) {
-    return []
-  }
-
+function splitIds(values) {
   return Array.from(
     new Set(
-      raw
-        .split(',')
+      values
+        .flatMap((value) => String(value || '').split(','))
         .map((id) => id.trim())
         .filter(Boolean)
     )
   )
+}
+
+function getSelectedPollutantIds(request) {
+  return splitIds([request.yar.get('selectedPollutantID')])
 }
 
 async function getAurnFallbackCountByPollutants(baseParams, pollutantIds) {
@@ -272,8 +274,18 @@ export async function handleStationCountCalculation(request) {
   const baseParams = buildStationCountParameters(request, finalyear)
   const datasourceGroups = request.yar.get('datasourceGroups') || []
 
-  const nearRealtimeSelections =
-    getNearRealtimeNetworkSelections(datasourceGroups)
+  // Zones and agglomerations only have AURN data: count only the AURN
+  // network's pollutants, and skip other near real-time and NON-AURN networks.
+  // Falls back to all selected pollutants if the AURN network has no IDs.
+  const isZone = isZoneSelection(request)
+  const aurnPollutantIds = isZone ? getAurnPollutantIds(datasourceGroups) : []
+  if (aurnPollutantIds.length > 0) {
+    baseParams.pollutantName = aurnPollutantIds.join(',')
+  }
+
+  const nearRealtimeSelections = getNearRealtimeNetworkSelections(
+    datasourceGroups
+  ).filter((network) => !isZone || network.isAurn)
 
   const nearRealtimeStationCounts = await buildNearRealtimeStationCounts(
     baseParams,
@@ -288,9 +300,9 @@ export async function handleStationCountCalculation(request) {
     (g) => g.category === 'Near real-time data from Defra'
   )
 
-  const hasNonAurnDatasource = datasourceGroups.some(
-    (g) => g.category === 'Other data from Defra'
-  )
+  const hasNonAurnDatasource =
+    !isZone &&
+    datasourceGroups.some((g) => g.category === 'Other data from Defra')
   // const [aurnCount, nonAurnCount] = await Promise.all([
   //   invokeStationCount(aurnStationCountParams),
   //   invokeStationCount(nonAurnStationCountParams)
@@ -309,7 +321,10 @@ export async function handleStationCountCalculation(request) {
     nonAurnCountPromise
   ])
 
-  const selectedPollutantIds = getSelectedPollutantIds(request)
+  const selectedPollutantIds =
+    aurnPollutantIds.length > 0
+      ? aurnPollutantIds
+      : getSelectedPollutantIds(request)
   const aurnDisplayCount = await resolveAurnDisplayCount(
     baseParams,
     aurnCount,
@@ -328,7 +343,7 @@ export async function handleStationCountCalculation(request) {
 
   const ukeapNetworks = buildUkeapNetworks(nonAurnCount, datasourceGroups)
 
-  if (isZoneSelection(request)) {
+  if (isZone) {
     ukeapNetworks.length = 0
   }
 

@@ -2,7 +2,11 @@
 // datasource categories were chosen (near real-time, other, or both) and sets
 // the download page overrides for "last 7 days" and zone selections.
 
-import { hasAurnNetwork } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  hasAurnNetwork,
+  hasNonAurnNearRealtimeNetwork,
+  getAurnOnlyNearRealtimeGroups
+} from '~/src/server/common/helpers/network-helpers.js'
 
 export const OTHERONLY = 'other-only'
 const BOTH = 'both'
@@ -135,9 +139,19 @@ function getZoneCategoryType(request) {
     : null
 }
 
-// Zone + both AURN and other data: warn that only AURN is available
+// Zone + both AURN and other data, or AURN plus another near real-time
+// network (e.g. Automatic Hydrocarbon Network): warn that only AURN is available
 export function shouldShowZoneWarning(request) {
-  return getZoneCategoryType(request) === BOTH
+  if (getZoneCategoryType(request) === BOTH) {
+    return true
+  }
+
+  const groups = request.yar.get('datasourceGroups') || []
+  return (
+    isZoneSelection(request) &&
+    hasAurnNetwork(groups) &&
+    hasNonAurnNearRealtimeNetwork(groups)
+  )
 }
 
 // Zone + no AURN network (other data, or non-AURN near real-time networks
@@ -153,13 +167,14 @@ export function shouldShowZoneNonAurnError(request) {
   return hasLocationSelected(request) && isZoneWithoutAurn(request)
 }
 
-// Zone + both: download page shows only the AURN (near real-time) tab
+// Zone + warning: download page shows only the near real-time tab, with only
+// the AURN network in it
 export function setDownloadDatasourceOverrideForZones(request) {
   if (!shouldShowZoneWarning(request)) {
     return
   }
   setNearRealtimeOnlyDownload(
     request,
-    request.yar.get('datasourceGroups') || []
+    getAurnOnlyNearRealtimeGroups(request.yar.get('datasourceGroups') || [])
   )
 }

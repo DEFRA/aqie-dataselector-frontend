@@ -24,6 +24,10 @@ const OTHER_GROUP = {
   category: 'Other data from Defra',
   networks: [{ id: 'ukeap' }]
 }
+const AURN_AND_AHC_GROUP = {
+  category: 'Near real-time data from Defra',
+  networks: [...AURN_GROUP.networks, ...AHC_GROUP.networks]
+}
 
 // Request with a session backed by a plain object
 function makeRequest(session = {}) {
@@ -201,9 +205,23 @@ describe('zones', () => {
       ).toBe(true)
     })
 
+    it.each(['Zone', 'Agglomeration'])(
+      'is true for a %s with AURN and another near real-time network',
+      (location) => {
+        expect(
+          shouldShowZoneWarning(
+            makeRequest(
+              zoneSession([AURN_AND_AHC_GROUP], { Location: location })
+            )
+          )
+        ).toBe(true)
+      }
+    )
+
     it.each([
       ['AURN only', [AURN_GROUP]],
       ['other data only', [OTHER_GROUP]],
+      ['non-AURN near real-time only', [AHC_GROUP]],
       ['no groups', undefined]
     ])('is false for a zone with %s', (_label, groups) => {
       expect(shouldShowZoneWarning(makeRequest(zoneSession(groups)))).toBe(
@@ -211,13 +229,13 @@ describe('zones', () => {
       )
     })
 
-    it('is false for countries with both datasource types', () => {
+    it.each([
+      ['both datasource types', [AURN_GROUP, OTHER_GROUP]],
+      ['AURN and another near real-time network', [AURN_AND_AHC_GROUP]]
+    ])('is false for countries with %s', (_label, groups) => {
       expect(
         shouldShowZoneWarning(
-          makeRequest({
-            Location: 'Country',
-            datasourceGroups: [AURN_GROUP, OTHER_GROUP]
-          })
+          makeRequest({ Location: 'Country', datasourceGroups: groups })
         )
       ).toBe(false)
     })
@@ -301,6 +319,26 @@ describe('zones', () => {
         selectedDatasourceType: 'AURN'
       })
     })
+
+    it.each([
+      ['zone', 'Zone', [AURN_AND_AHC_GROUP]],
+      ['zone', 'Zone', [AURN_AND_AHC_GROUP, OTHER_GROUP]],
+      ['agglomeration', 'Agglomeration', [AURN_AND_AHC_GROUP]]
+    ])(
+      'keeps only the AURN network for a %s with another near real-time network',
+      (_label, location, groups) => {
+        const session = zoneSession(groups, { Location: location })
+
+        setDownloadDatasourceOverrideForZones(makeRequest(session))
+
+        expect(session).toMatchObject({
+          downloadDatasourceGroups: [AURN_GROUP],
+          downloadDatasourceCategoryType: 'near-realtime-only',
+          downloadForceNearRealtimeOnly: true,
+          selectedDatasourceType: 'AURN'
+        })
+      }
+    )
 
     it.each([
       ['a zone with AURN only', zoneSession([AURN_GROUP])],
