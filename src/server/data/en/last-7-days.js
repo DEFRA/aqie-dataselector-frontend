@@ -2,8 +2,7 @@
  * Content for the "Last 7 days" tab (partials/last7daystable.njk).
  *
  * The average, daily-exceedance and hourly-exceedance toggletips reuse
- * pollutant-toggletips.js's `annual`/`daily`/`hourly` entries directly (same
- * copy as the year table, per designer guidance).
+ * pollutant-toggletips.js's `annual`/`daily`/`hourly` entries directly
  *
  * Exposed to templates as nunjucks globals - see src/config/nunjucks/globals.
  */
