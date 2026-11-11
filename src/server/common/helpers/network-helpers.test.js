@@ -47,9 +47,9 @@ describe('getAurnOnlyNearRealtimeGroups', () => {
   })
 
   it('handles a group without networks and no groups', () => {
-    expect(getAurnOnlyNearRealtimeGroups([{ category: NEAR_REALTIME }])).toEqual(
-      [{ category: NEAR_REALTIME, networks: [] }]
-    )
+    expect(
+      getAurnOnlyNearRealtimeGroups([{ category: NEAR_REALTIME }])
+    ).toEqual([{ category: NEAR_REALTIME, networks: [] }])
     expect(getAurnOnlyNearRealtimeGroups(undefined)).toEqual([])
   })
 })
@@ -68,7 +68,9 @@ describe('getDownloadNearRealtimeNetworks', () => {
         getDownloadNearRealtimeNetworks(
           makeRequest({
             Location: location,
-            datasourceGroups: [{ category: NEAR_REALTIME, networks: [AHC, AURN] }],
+            datasourceGroups: [
+              { category: NEAR_REALTIME, networks: [AHC, AURN] }
+            ],
             nearRealtimeStationCounts: stationCounts
           })
         )
@@ -84,7 +86,9 @@ describe('getDownloadNearRealtimeNetworks', () => {
       getDownloadNearRealtimeNetworks(
         makeRequest({
           Location: 'Country',
-          datasourceGroups: [{ category: NEAR_REALTIME, networks: [AHC, AURN] }],
+          datasourceGroups: [
+            { category: NEAR_REALTIME, networks: [AHC, AURN] }
+          ],
           nearRealtimeStationCounts: stationCounts
         })
       )
@@ -123,7 +127,10 @@ describe('getAurnPollutantIds', () => {
   })
 
   it.each([
-    ['an AURN network without a pollutant ID', [{ category: NEAR_REALTIME, networks: [{ name: AURN.name }] }]],
+    [
+      'an AURN network without a pollutant ID',
+      [{ category: NEAR_REALTIME, networks: [{ name: AURN.name }] }]
+    ],
     ['a near real-time group without networks', [{ category: NEAR_REALTIME }]],
     ['no groups', undefined]
   ])('returns an empty list for %s', (_label, groups) => {
