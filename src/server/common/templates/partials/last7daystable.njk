@@ -11,12 +11,10 @@
   data capture); a withheld average arrives as '-' and `lowDataCapture` is true,
   so the tag and the dash always agree.
 
-  The average column's toggletip reuses pollutantToggletips[name].annual, and
-  the daily exceedances column reuses pollutantToggletips[name].daily
+  The average, daily exceedances and hourly exceedances columns' toggletips
+  reuse pollutantToggletips[name].annual / .daily / .hourly
   (src/server/data/en/pollutant-toggletips.js) - same copy as the year table,
-  per designer guidance. Hourly exceedances are separate, from the
-  last7DaysLimits nunjucks global (src/server/data/en/last-7-days.js) -
-  placeholder copy pending confirmed designer wording.
+  per designer guidance.
 
   The heading and date range are rendered by stationdetails/last-7-days.njk,
   above the period nav, so this partial starts at the notice banner.
@@ -43,7 +41,7 @@
 
       <tbody class="defra-aq-levels-table__body">
         {% for data in last7Days.pollutants %}
-          {% set hourlyLimit = last7DaysLimits[data.pollutantName].hourly %}
+          {% set hourlyLimit = pollutantToggletips[data.pollutantName].hourly %}
           {% set dailyLimit = pollutantToggletips[data.pollutantName].daily %}
           {% set annualLimit = pollutantToggletips[data.pollutantName].annual %}
           {% set lowDataCapture = data.lowDataCapture %}

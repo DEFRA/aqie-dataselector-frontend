@@ -114,6 +114,27 @@ describe('last7daystable.njk low data capture behaviour', () => {
   })
 })
 
+describe('last7daystable.njk hourly exceedance toggletips', () => {
+  it.each([
+    [
+      'Nitrogen dioxide',
+      'Hourly nitrogen dioxide levels must not go above 200 micrograms per cubic metre (µg/m³) more than 18 times in a calendar year (when rounded to a whole number).'
+    ],
+    [
+      'Sulphur dioxide',
+      'Hourly sulphur dioxide levels must not go above 350 micrograms per cubic metre (µg/m³) more than 24 times in a calendar year (when rounded to a whole number).'
+    ]
+  ])('shows the shared %s copy', (pollutantName, text) => {
+    const $ = render({
+      pollutants: [row({ pollutantName, hourlyCount: 0 })]
+    })
+
+    expect(
+      $('#last7daystable tbody .defra-aq-levels-table__cell--hourly').html()
+    ).toContain(text)
+  })
+})
+
 describe('last7daystable.njk page content', () => {
   const HINT =
     'The pollution levels shown are measured against UK legal limits.'
