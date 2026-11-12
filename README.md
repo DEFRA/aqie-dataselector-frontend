@@ -11,6 +11,13 @@ This service is to find air quality monitoring stations for the location provide
 - [Server-side Caching](#server-side-caching)
 - [Redis](#redis)
 - [Google Analytics](#google-analytics)
+- [Using the graph: an accessibility guide](#using-the-graph-an-accessibility-guide)
+  - [Read the readings without the graph](#read-the-readings-without-the-graph)
+  - [Use the graph with a keyboard](#use-the-graph-with-a-keyboard)
+  - [Use the graph with a mouse or a touchscreen](#use-the-graph-with-a-mouse-or-a-touchscreen)
+  - [Tell the pollutants apart](#tell-the-pollutants-apart)
+  - [Times, gaps and status](#times-gaps-and-status)
+  - [Zoom, small screens and no JavaScript](#zoom-small-screens-and-no-javascript)
 - [Local Development](#local-development)
   - [Dependent Services (`aqie-monitoringstation-backend` & `aqie-back-end`)](#dependent-services-aqie-monitoringstation-backend--aqie-back-end)
   - [Environment Variables](#environment-variables)
@@ -108,9 +115,60 @@ The page makes one call to `GET /monitoringStationHistory` and uses the response
 - **View graph: hourly data:** one line for each pollutant the station measures. The series are embedded in the page as JSON and drawn by `src/client/javascripts/pollutant-graph.js` using the `d3-*` modules. That code is a separate webpack chunk, so only this page downloads it. The graph stays hidden unless it can be drawn.
 - **View hourly data as a table:** the same readings in a collapsed table, in UTC. It is the text equivalent of the graph, and what users without JavaScript get.
 
-Each pollutant has a colour and a line style, so colour is not the only cue. They are set in `src/server/graph-summary/pollutant-styles.js`.
+Each pollutant has a colour and a line style (solid, dashed, dotted or dash and dot). Two pollutants share the solid style, so the key and the tooltip also name each one in text. They are set in `src/server/graph-summary/pollutant-styles.js`.
 
 Pointing at the graph, tapping it, or using the left and right arrow keys (Home, End and Escape too) once it has focus, shows the readings for the nearest hour in a tooltip, with a line and a dot on each pollutant. This is `src/client/javascripts/pollutant-graph-tooltip.js`. The verification status in the tooltip is fixed text, `graphsummary.graph.verificationStatus` in the page copy, not read from the data.
+
+## Using the graph: an accessibility guide
+
+The graph shows a station's hourly readings for each pollutant it measures, for the last 24 hours or the last 7 days. Everything the graph shows is also on the page as text and tables.
+
+### Read the readings without the graph
+
+- Select **View hourly data as a table** under the graph. It opens a table with a row for each hour and a column for each pollutant. It has every reading the graph shows, and it works with a keyboard, a screen reader and without JavaScript.
+- Select **View pollutant summary** above the graph for a short table for each pollutant: the average, how often it went over a legal limit (where there is one) and how much of the data was captured.
+
+### Use the graph with a keyboard
+
+1. Press Tab to move through the page. The graph comes after the "Last 24 hours" and "Last 7 days" tabs and the "View pollutant summary" section. When you reach it, it gets a yellow outline with a black inner edge, and a box shows the latest hour.
+2. Press the left arrow to go back an hour and the right arrow to go forward an hour.
+3. Press Home to jump to the first hour and End to jump to the last.
+4. Press Escape to hide the box. The next arrow key press brings it back and carries on from the hour you were on.
+5. Press Tab to move on.
+
+The box shows the date and time (in UTC), each pollutant's reading with its unit (µg/m³), and the status of the data. The graph is labelled "Use the left and right arrow keys to move between hours", and the box is set up so a screen reader can read it out as you move. If your screen reader does not read the box out, use the table instead.
+
+### Use the graph with a mouse or a touchscreen
+
+- **Mouse or trackpad:** move the pointer across the graph. A line follows it to the nearest hour, with a dot on each pollutant's line and a box with the readings. Move the pointer away to hide the box.
+- **Touchscreen:** tap the graph, or drag a finger along it. The box stays until you tap somewhere else. You can still scroll the page up and down with a finger over the graph.
+
+### Tell the pollutants apart
+
+Each pollutant has its own colour and line pattern. The key above the graph shows them, and the box names each pollutant in words.
+
+| Pollutant        | Colour    | Line pattern |
+| ---------------- | --------- | ------------ |
+| PM2.5            | Black     | Solid        |
+| PM10             | Turquoise | Dashed       |
+| Nitrogen dioxide | Dark pink | Solid        |
+| Ozone            | Blue      | Dotted       |
+| Sulphur dioxide  | Orange    | Dash and dot |
+
+PM2.5 and nitrogen dioxide are both solid lines, so use the box or the table to be sure which is which. The orange sulphur dioxide line is the palest. If it is hard to see, use the table.
+
+### Times, gaps and status
+
+- All times are in UTC. In the UK summer, clocks are an hour ahead of UTC.
+- A break in a line means there is no reading for that hour. The box says "No data" for that pollutant.
+- The page says the data has not been checked and verified, and the box shows its status, currently "Unverified".
+
+### Zoom, small screens and no JavaScript
+
+- You can zoom the page in your browser. If you resize the window or turn your phone sideways, reload the page so the graph is redrawn to fit.
+- Without JavaScript the graph is not shown. The tabs, the summary and the hourly table all still work.
+
+**Note for the team:** this guide describes how the page is built. It has not been checked with specific screen readers yet, so confirm the screen reader advice before sharing it outside the team. Keep it in step with `src/server/graph-summary/pollutant-styles.js` (colours and patterns) and `src/client/javascripts/pollutant-graph-tooltip.js` (keys and the box) if either changes.
 
 ## Proxy
 
