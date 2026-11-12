@@ -1,9 +1,9 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
-{% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "verification-banner/macro.njk" import appVerificationBanner %}
 {% from "pollutant-graph/macro.njk" import appPollutantGraph %}
 {% from "partials/pollutant-summary-table.njk" import pollutantSummaryTable %}
+{% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -42,19 +42,7 @@
       {% if graph.chart %}
         {{ appPollutantGraph(graph.chart) }}
 
-        {% set tableHtml %}
-          <div class="table-scroll-container">
-            {{ govukTable({
-              caption: graph.table.caption,
-              captionClasses: "govuk-table__caption--s",
-              firstCellIsHeader: true,
-              head: graph.table.head,
-              rows: graph.table.rows
-            }) }}
-          </div>
-        {% endset %}
-
-        {{ govukDetails({ summaryText: graph.table.title, html: tableHtml }) }}
+        {{ hourlyReadingsDetails({ title: graph.table.title, table: graph.table }) }}
       {% else %}
         <p class="govuk-body">{{ graph.message }}</p>
       {% endif %}

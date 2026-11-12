@@ -233,6 +233,16 @@ export const english = {
         timeHeading: 'Time (UTC)',
         noReading: 'No data'
       }
+    },
+    hourlyReadings: {
+      titles: {
+        last24hours: 'View hourly data for the last 24 hours',
+        last7days: 'View hourly data for the last 7 days'
+      },
+      captions: {
+        last24hours: 'Hourly readings in µg/m³ for the last 24 hours',
+        last7days: 'Hourly readings in µg/m³ for the last 7 days'
+      }
     }
   },
   phaseBanner: {

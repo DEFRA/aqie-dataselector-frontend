@@ -89,9 +89,9 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                                                              |
-| ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details pages (with and without JavaScript) and registers the `/stationdetails/graph-summary` route. When `false`, both are disabled. |
+| Environment variable         | Default | Description                                                                                                                                                                                                                                               |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, shows the hourly readings in its place on the no-JavaScript station page, and registers the `/stationdetails/graph-summary` route. When `false`, all three are disabled. |
 
 The flag is read at startup, so restart the server after changing it.
 
@@ -101,11 +101,11 @@ It is off by default, so a release does not show the feature in an environment u
 
 `GET /stationdetails/graph-summary` is reached from the "View graph and pollutant summary" button on a station page. It takes these query parameters:
 
-| Parameter   | Required | Description                                                                                                                                    |
-| ----------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stationId` | yes      | The station's `id` from the user's search results in the session. A station the user has not searched for, or an expired session, gives a 404. |
-| `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                         |
-| `nojs`      | no       | `true` when the user came from the no-JavaScript station page, so that Back returns to that page. Defaults to `false`.                         |
+| Parameter   | Required | Description                                                                                                                                         |
+| ----------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stationId` | yes      | The station's `id` from the user's search results in the session. A station the user has not searched for, or an expired session, gives a 404.      |
+| `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                              |
+| `nojs`      | no       | `true` makes Back return to the no-JavaScript station page. That page no longer links here, so nothing in the app sets it now. Defaults to `false`. |
 
 The page works without JavaScript: the tabs are links, and the graph is the only thing drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC): the day of the latest reading for the last 24 hours, and 7 complete days for the last 7 days. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
 
@@ -114,6 +114,8 @@ The page makes one call to `GET /monitoringStationHistory` and uses the response
 - **View pollutant summary:** a collapsed section with the shared summary table (`partials/pollutant-summary-table.njk`). It shows plain figures, without the limit toggletips of the station page.
 - **View graph: hourly data:** one line for each pollutant the station measures. The series are embedded in the page as JSON and drawn by `src/client/javascripts/pollutant-graph.js` using the `d3-*` modules. That code is a separate webpack chunk, so only this page downloads it. The graph stays hidden unless it can be drawn.
 - **View hourly data as a table:** the same readings in a collapsed table, in UTC. It is the text equivalent of the graph, and what users without JavaScript get.
+
+The no-JavaScript station page (`/stationDetailsNojs/...`) has no graph button, as the graph needs JavaScript. In its place it has two collapsed sections with the hourly readings table, one for the last 24 hours and one for the last 7 days, each with the "Data has not been checked and verified" text above the table. `src/server/graph-summary/hourly-readings.js` fetches both periods, at the same time as the page's own table, and `partials/hourly-readings-table.njk` renders them, as it does on the graph page. A period is left out when the station has no AURN `siteId` or its call fails, and none are shown when the flag is off.
 
 Each pollutant has a colour and a line style (solid, dashed, dotted or dash and dot). Two pollutants share the solid style, so the key and the tooltip also name each one in text. They are set in `src/server/graph-summary/pollutant-styles.js`.
 
@@ -126,6 +128,7 @@ The graph shows a station's hourly readings for each pollutant it measures, for 
 ### Read the readings without the graph
 
 - Select **View hourly data as a table** under the graph. It opens a table with a row for each hour and a column for each pollutant. It has every reading the graph shows, and it works with a keyboard, a screen reader and without JavaScript.
+- On the station page without JavaScript, select **View hourly data for the last 24 hours** or **View hourly data for the last 7 days**. Each opens a table like the one above.
 - Select **View pollutant summary** above the graph for a short table for each pollutant: the average, how often it went over a legal limit (where there is one) and how much of the data was captured.
 
 ### Use the graph with a keyboard
@@ -166,7 +169,7 @@ PM2.5 and nitrogen dioxide are both solid lines, so use the box or the table to 
 ### Zoom, small screens and no JavaScript
 
 - You can zoom the page in your browser. If you resize the window or turn your phone sideways, reload the page so the graph is redrawn to fit.
-- Without JavaScript the graph is not shown. The tabs, the summary and the hourly table all still work.
+- Without JavaScript the graph is not shown. On the graph page the tabs, the summary and the hourly table all still work. On the station page the hourly data for the last 24 hours and the last 7 days is in collapsed sections.
 
 **Note for the team:** this guide describes how the page is built. It has not been checked with specific screen readers yet, so confirm the screen reader advice before sharing it outside the team. Keep it in step with `src/server/graph-summary/pollutant-styles.js` (colours and patterns) and `src/client/javascripts/pollutant-graph-tooltip.js` (keys and the box) if either changes.
 

@@ -13,7 +13,7 @@ import {
   isInternalNavigation,
   renderNotFound
 } from '~/src/server/common/helpers/navigation-helpers.js'
-import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
+import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 
 function handleDownloadParams(request) {
   if (request.params.download) {
@@ -72,7 +72,13 @@ async function maybeHandleDownloadRequest(
   request.yar.set('downloadresult', downloadResult)
 }
 
-function buildViewData(request, stationDetails, mapLocation, dateContext) {
+function buildViewData(
+  request,
+  stationDetails,
+  mapLocation,
+  dateContext,
+  hourlyReadings
+) {
   return {
     pageTitle: english.stationdetails.pageTitle,
     title: english.stationdetails.title,
@@ -93,10 +99,7 @@ function buildViewData(request, stationDetails, mapLocation, dateContext) {
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
         : `/location/${request?.yar?.get('locationID')}`,
-    viewGraphSummary: buildViewGraphSummary({
-      stationId: stationDetails.id,
-      nojs: true
-    })
+    hourlyReadings
   }
 }
 
@@ -168,7 +171,11 @@ const stationDetailsNojsController = {
       year: request.yar.get('selectedYear')
     }
 
-    const tabledata = await invokeTable(apiparamsTable)
+    // The hourly readings take their own API calls, so they run alongside the table's
+    const [tabledata, hourlyReadings] = await Promise.all([
+      invokeTable(apiparamsTable),
+      buildHourlyReadings(stationDetails)
+    ])
 
     if (isEmptyTableData(tabledata)) {
       request.yar.set('tabledata', null)
@@ -183,13 +190,19 @@ const stationDetailsNojsController = {
       logger
     )
 
-    const viewData = buildViewData(request, stationDetails, mapLocation, {
-      updatedTime,
-      years,
-      currentDate,
-      currentYear,
-      fullSearchQuery
-    })
+    const viewData = buildViewData(
+      request,
+      stationDetails,
+      mapLocation,
+      {
+        updatedTime,
+        years,
+        currentDate,
+        currentYear,
+        fullSearchQuery
+      },
+      hourlyReadings
+    )
     request.yar.set('viewData', viewData)
 
     return h.view('stationDetailsNojs/index', viewData)
