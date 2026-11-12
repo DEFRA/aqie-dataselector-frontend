@@ -1,5 +1,5 @@
 import { URL } from 'node:url'
-import { ProxyAgent } from 'undici'
+import { ProxyAgent, fetch as undiciFetch } from 'undici'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 
 import { config } from '~/src/config/config.js'
@@ -62,9 +62,11 @@ function proxyFetch(url, options) {
     `Fetching: ${url.toString()} via the proxy: ${proxy?.url.origin}:${proxy.port}`
   )
 
-  return fetch(url, {
+  // Use undici's own fetch with its ProxyAgent. Node's built-in fetch bundles
+  // its own undici version (8.x on Node 26), which rejects a ProxyAgent from
+  // the npm undici package with "fetch failed: invalid onError method".
+  return undiciFetch(url, {
     ...options,
-    // @ts-expect-error dispatcher has not been added to types
     dispatcher: proxy.proxyAgent
   })
 }
