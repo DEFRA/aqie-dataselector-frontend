@@ -1,4 +1,5 @@
 {% from "partials/aq-table-macros.njk" import limitToggletip %}
+{% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
 
 {#
   Daily Air Quality Index (DAQI) air pollution summary table.
@@ -72,4 +73,15 @@
 
   <div class="govuk-inset-text">{{ daqiContent.noDataMessage }}</div>
 
+{% endif %}
+
+{# The graph needs JavaScript, so without it this stands in for the graph
+   button. <noscript> keeps it out of the page for everyone else. It is only
+   given on a full page load, not when the tab is swapped in with innerHTML. #}
+{% if hourlyReadings %}
+  <noscript>
+    <div class="govuk-!-margin-top-6">
+      {{ hourlyReadingsDetails(hourlyReadings) }}
+    </div>
+  </noscript>
 {% endif %}

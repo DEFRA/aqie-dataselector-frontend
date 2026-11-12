@@ -1,55 +1,36 @@
 import { config } from '~/src/config/config.js'
 import { english } from '~/src/server/data/en/homecontent.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
-import {
-  PERIOD_KEYS,
-  historyPeriodFor
-} from '~/src/server/graph-summary/periods.js'
 import { buildPollutantGraph } from '~/src/server/graph-summary/graph.js'
 
-const logger = createLogger()
-
 /**
- * The hourly readings for the last 24 hours and the last 7 days as tables, for
- * the no-JavaScript station page. That page has no graph button, so this gives
- * its users the data the graph page would. The two periods are fetched
- * together. A period with no readings (no AURN site id, a failed call or an
- * empty response) is left out, and so is everything when the feature is off.
- * @param {object} station a station from the session's search results
- * @returns {Promise<Array<{ period: string, title: string, verificationBanner: string, table: object }>>}
+ * One period's hourly readings as a collapsed table, for the station page's
+ * Daily Air Quality Index and Last 7 days tabs. Without JavaScript those tabs
+ * have no graph button, so this gives their users the data the graph page would.
+ * It is built from the history the tab has already fetched, so it costs no
+ * extra API call. There is nothing when the feature is off or the history has
+ * no readings for the station's pollutants.
+ * @param {object|undefined} history the raw /monitoringStationHistory response
+ * @param {string[]} [stationPollutants] display names the station measures
+ * @param {string} period a graph page period: last24hours or last7days
+ * @returns {{ period: string, title: string, verificationBanner: string, table: object } | null}
  */
-async function buildHourlyReadings(station) {
+function buildHourlyReadings(history, stationPollutants, period) {
   if (!config.get('featureFlags.viewGraphSummary')) {
-    return []
+    return null
+  }
+
+  const { table } = buildPollutantGraph(history, stationPollutants)
+  if (!table) {
+    return null
   }
 
   const { hourlyReadings, verificationBanner } = english.graphsummary
-  const sections = await Promise.all(
-    PERIOD_KEYS.map(async (period) => {
-      try {
-        const { history } = await resolveStationHistory(
-          station,
-          historyPeriodFor(period)
-        )
-        const { table } = buildPollutantGraph(history, station.pollutants)
-        return (
-          table && {
-            period,
-            title: hourlyReadings.titles[period],
-            verificationBanner,
-            table: { ...table, caption: hourlyReadings.captions[period] }
-          }
-        )
-      } catch (error) {
-        // The readings are extra to the page, so a bad response must not break it
-        logger.warn(`Hourly readings error (${period}): ${error.message}`)
-        return null
-      }
-    })
-  )
-
-  return sections.filter(Boolean)
+  return {
+    period,
+    title: hourlyReadings.titles[period],
+    verificationBanner,
+    table: { ...table, caption: hourlyReadings.captions[period] }
+  }
 }
 
 export { buildHourlyReadings }

@@ -1,6 +1,5 @@
 import { stationDetailsNojsController } from '~/src/server/stationDetailsNojs/controller.js'
 import { english } from '~/src/server/data/en/homecontent.js'
-import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 import {
   parseDateFormat,
   getToggletip,
@@ -37,7 +36,6 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
 jest.mock('~/src/server/data/en/homecontent.js')
 jest.mock('~/src/server/common/helpers/station-helpers.js')
 jest.mock('~/src/server/common/helpers/navigation-helpers.js')
-jest.mock('~/src/server/graph-summary/hourly-readings.js')
 
 describe('stationDetailsNojsController', () => {
   let mockRequest
@@ -60,7 +58,6 @@ describe('stationDetailsNojsController', () => {
     parseDateFormat.mockReturnValue('12:00 pm on 21 June 2026')
     getToggletip.mockReturnValue('Urban traffic toggletip')
     invokeTable.mockResolvedValue({ rows: [{ data: 'test' }] })
-    buildHourlyReadings.mockResolvedValue([])
     invokeDownload.mockResolvedValue({ result: 'downloaded' })
     buildMapLocation.mockReturnValue(
       'https://www.google.co.uk/maps?q=51.5,-0.1'
@@ -559,56 +556,6 @@ describe('stationDetailsNojsController', () => {
           title: { title1: 'Stations summary details' }
         })
       )
-    })
-
-    describe('hourly readings', () => {
-      const READINGS = [
-        {
-          period: 'last24hours',
-          title: 'View hourly data for the last 24 hours',
-          verificationBanner: 'Data has not been checked and verified',
-          table: { caption: 'Hourly readings', head: [], rows: [] }
-        }
-      ]
-
-      it('should pass the hourly readings of the station to the view', async () => {
-        buildHourlyReadings.mockResolvedValue(READINGS)
-
-        await stationDetailsNojsController.handler(mockRequest, mockH)
-
-        expect(buildHourlyReadings).toHaveBeenCalledWith(mockStation)
-        expect(mockH.view).toHaveBeenCalledWith(
-          'stationDetailsNojs/index',
-          expect.objectContaining({ hourlyReadings: READINGS })
-        )
-      })
-
-      it('should pass no hourly readings when there are none', async () => {
-        await stationDetailsNojsController.handler(mockRequest, mockH)
-
-        expect(mockH.view).toHaveBeenCalledWith(
-          'stationDetailsNojs/index',
-          expect.objectContaining({ hourlyReadings: [] })
-        )
-      })
-
-      it('should start the hourly readings without waiting for the table', () => {
-        invokeTable.mockReturnValue(new Promise(() => undefined))
-
-        // The table never arrives, so the handler stays pending
-        const pending = stationDetailsNojsController.handler(mockRequest, mockH)
-
-        expect(buildHourlyReadings).toHaveBeenCalledWith(mockStation)
-        expect(pending).toBeInstanceOf(Promise)
-      })
-
-      it('should not pass a graph button, as it is for JavaScript users', async () => {
-        await stationDetailsNojsController.handler(mockRequest, mockH)
-
-        expect(mockH.view.mock.calls[0][1]).not.toHaveProperty(
-          'viewGraphSummary'
-        )
-      })
     })
 
     it('should handle station with different siteType', async () => {

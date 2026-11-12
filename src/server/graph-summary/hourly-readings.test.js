@@ -1,31 +1,15 @@
 import { config } from '~/src/config/config.js'
-import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
-import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
 import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 
-jest.mock('~/src/server/common/helpers/logging/logger-options.js', () => ({
-  loggerOptions: { enabled: true, ignorePaths: [], redact: { paths: [] } }
-}))
-jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
-  createLogger: jest.fn(() => ({ warn: jest.fn() }))
-}))
-jest.mock('~/src/server/common/helpers/station-helpers.js')
+const POLLUTANTS = ['PM2.5', 'PM10']
 
-const STATION = {
-  id: 'a',
-  siteId: 'UKA00315',
-  pollutants: ['PM2.5', 'PM10']
-}
-
-const readings = {
-  history: {
-    pollutants: {
-      PM25: [
-        { time: '2026-11-03T10:00:00.000Z', value: 5.2 },
-        { time: '2026-11-03T11:00:00.000Z', value: null }
-      ],
-      PM10: [{ time: '2026-11-03T10:00:00.000Z', value: 12.26 }]
-    }
+const HISTORY = {
+  pollutants: {
+    PM25: [
+      { time: '2026-11-03T10:00:00.000Z', value: 5.2 },
+      { time: '2026-11-03T11:00:00.000Z', value: null }
+    ],
+    PM10: [{ time: '2026-11-03T10:00:00.000Z', value: 12.26 }]
   }
 }
 
@@ -35,56 +19,40 @@ describe('buildHourlyReadings', () => {
   const flag = config.get('featureFlags.viewGraphSummary')
 
   beforeEach(() => {
-    jest.clearAllMocks()
     config.set('featureFlags.viewGraphSummary', true)
-    resolveStationHistory.mockResolvedValue(readings)
   })
 
   afterAll(() => {
     config.set('featureFlags.viewGraphSummary', flag)
   })
 
-  it('has nothing, and fetches nothing, when the feature is off', async () => {
+  it('has nothing when the feature is off', () => {
     config.set('featureFlags.viewGraphSummary', false)
 
-    expect(await buildHourlyReadings(STATION)).toEqual([])
-    expect(resolveStationHistory).not.toHaveBeenCalled()
+    expect(buildHourlyReadings(HISTORY, POLLUTANTS, 'last24hours')).toBeNull()
   })
 
-  it('fetches the history of both periods', async () => {
-    await buildHourlyReadings(STATION)
-
-    expect(resolveStationHistory).toHaveBeenCalledTimes(2)
-    expect(resolveStationHistory).toHaveBeenCalledWith(
-      STATION,
-      HISTORY_PERIOD.LAST_24_HOURS
-    )
-    expect(resolveStationHistory).toHaveBeenCalledWith(
-      STATION,
-      HISTORY_PERIOD.LAST_7_DAYS
-    )
-  })
-
-  it('has a section for each period, the last 24 hours first', async () => {
-    const sections = await buildHourlyReadings(STATION)
-
-    expect(sections.map(({ period, title }) => [period, title])).toEqual([
-      ['last24hours', 'View hourly data for the last 24 hours'],
-      ['last7days', 'View hourly data for the last 7 days']
-    ])
-  })
-
-  it('captions each table with its period', async () => {
-    const sections = await buildHourlyReadings(STATION)
-
-    expect(sections.map(({ table }) => table.caption)).toEqual([
-      'Hourly readings in µg/m³ for the last 24 hours',
+  it.each([
+    [
+      'last24hours',
+      'View hourly data for the last 24 hours',
+      'Hourly readings in µg/m³ for the last 24 hours'
+    ],
+    [
+      'last7days',
+      'View hourly data for the last 7 days',
       'Hourly readings in µg/m³ for the last 7 days'
-    ])
+    ]
+  ])('is titled and captioned for the %s period', (period, title, caption) => {
+    const readings = buildHourlyReadings(HISTORY, POLLUTANTS, period)
+
+    expect(readings.period).toBe(period)
+    expect(readings.title).toBe(title)
+    expect(readings.table.caption).toBe(caption)
   })
 
-  it('has a column for each pollutant and a row for each hour, in UTC', async () => {
-    const [{ table }] = await buildHourlyReadings(STATION)
+  it('has a column for each pollutant and a row for each hour, in UTC', () => {
+    const { table } = buildHourlyReadings(HISTORY, POLLUTANTS, 'last24hours')
 
     expect(cells(table.head)).toEqual(['Time (UTC)', 'PM2.5', 'PM10'])
     expect(table.rows.map(cells)).toEqual([
@@ -93,48 +61,26 @@ describe('buildHourlyReadings', () => {
     ])
   })
 
-  it('carries the verification banner text for the readings', async () => {
-    const sections = await buildHourlyReadings(STATION)
+  it('only has the pollutants the station measures', () => {
+    const { table } = buildHourlyReadings(HISTORY, ['PM10'], 'last24hours')
 
-    sections.forEach(({ verificationBanner }) =>
-      expect(verificationBanner).toBe('Data has not been checked and verified')
+    expect(cells(table.head)).toEqual(['Time (UTC)', 'PM10'])
+  })
+
+  it('carries the verification banner text for the readings', () => {
+    const readings = buildHourlyReadings(HISTORY, POLLUTANTS, 'last7days')
+
+    expect(readings.verificationBanner).toBe(
+      'Data has not been checked and verified'
     )
   })
 
-  it('leaves out a period whose call failed', async () => {
-    resolveStationHistory.mockImplementation((_station, period) =>
-      Promise.resolve(period === HISTORY_PERIOD.LAST_24_HOURS ? {} : readings)
-    )
-
-    const sections = await buildHourlyReadings(STATION)
-
-    expect(sections.map(({ period }) => period)).toEqual(['last7days'])
-  })
-
-  it('has nothing for a station with no AURN site id', async () => {
-    resolveStationHistory.mockResolvedValue({ noMapping: true })
-
-    expect(await buildHourlyReadings(STATION)).toEqual([])
-  })
-
-  it('has nothing when none of the station pollutants have readings', async () => {
-    const sections = await buildHourlyReadings({
-      ...STATION,
-      pollutants: ['Ozone']
-    })
-
-    expect(sections).toEqual([])
-  })
-
-  it('leaves out a period when its history cannot be read, rather than failing', async () => {
-    resolveStationHistory.mockImplementation((_station, period) =>
-      period === HISTORY_PERIOD.LAST_24_HOURS
-        ? Promise.reject(new Error('bad response'))
-        : Promise.resolve(readings)
-    )
-
-    const sections = await buildHourlyReadings(STATION)
-
-    expect(sections.map(({ period }) => period)).toEqual(['last7days'])
+  it.each([
+    ['there is no history', undefined, POLLUTANTS],
+    ['the history has no pollutants', {}, POLLUTANTS],
+    ['none of the station pollutants have readings', HISTORY, ['Ozone']],
+    ['the station has no pollutants', HISTORY, undefined]
+  ])('has nothing when %s', (_reason, history, pollutants) => {
+    expect(buildHourlyReadings(history, pollutants, 'last24hours')).toBeNull()
   })
 })

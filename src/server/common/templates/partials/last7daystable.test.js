@@ -7,13 +7,16 @@ import * as globals from '~/src/config/nunjucks/globals/globals.js'
 const templates = path.resolve(process.cwd(), 'src/server/common/templates')
 const components = path.resolve(process.cwd(), 'src/server/common/components')
 
-function render(last7Days) {
+function render(last7Days, extra = {}, options) {
   const env = nunjucks.configure(
     [path.resolve('node_modules/govuk-frontend/dist/'), templates, components],
     { autoescape: true, trimBlocks: true, lstripBlocks: true, noCache: true }
   )
   Object.entries(globals).forEach(([name, value]) => env.addGlobal(name, value))
-  return cheerio.load(env.render('partials/last7daystable.njk', { last7Days }))
+  return cheerio.load(
+    env.render('partials/last7daystable.njk', { last7Days, ...extra }),
+    options
+  )
 }
 
 const row = (overrides) => ({
@@ -190,5 +193,58 @@ describe('last7daystable.njk page content', () => {
     )
     expect($('#last7daystable')).toHaveLength(0)
     expect($('#last7days-hint')).toHaveLength(0)
+  })
+})
+
+describe('last7daystable.njk hourly readings for users without JavaScript', () => {
+  const HOURLY = {
+    period: 'last7days',
+    title: 'View hourly data for the last 7 days',
+    verificationBanner: 'Data has not been checked and verified',
+    table: {
+      caption: 'Hourly readings in µg/m³ for the last 7 days',
+      head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
+      rows: [
+        [{ text: '3 Nov 2026, 10:00' }, { text: '5.2', format: 'numeric' }]
+      ]
+    }
+  }
+  const last7Days = { pollutants: [row()] }
+  const WITHOUT_JAVASCRIPT = { scriptingEnabled: false }
+
+  it('has a collapsed section with the hourly table when JavaScript is off', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    const section = $('noscript details')
+    expect(section).toHaveLength(1)
+    expect(section.attr('open')).toBeUndefined()
+    expect(section.children('summary').text().trim()).toBe(HOURLY.title)
+    expect(section.find('table caption').text().trim()).toBe(
+      HOURLY.table.caption
+    )
+    expect(section.find('.app-verification-banner').text().trim()).toBe(
+      HOURLY.verificationBanner
+    )
+  })
+
+  it('puts the section after the 7-day table and its hint', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    expect($('#last7days-hint').nextAll('noscript')).toHaveLength(1)
+  })
+
+  it('keeps the section out of the page when JavaScript is on', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY })
+
+    expect($('noscript')).toHaveLength(1)
+    expect($('noscript details')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
+  })
+
+  it('has no section when there are no hourly readings, as when the tab is swapped in', () => {
+    const $ = render(last7Days, {}, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
   })
 })

@@ -3,6 +3,7 @@ import { config } from '~/src/config/config.js'
 import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
+import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 import {
   parseDateFormat,
   getToggletip,
@@ -320,6 +321,13 @@ const stationDetailsController = {
       activePeriod: isYearRoute ? 'year' : 'daqi',
       viewDaqiTab,
       daqi,
+      hourlyReadings: isYearRoute
+        ? null
+        : buildHourlyReadings(
+            daqi.history,
+            stationDetails.pollutants,
+            'last24hours'
+          ),
       downloadresult: request.yar.get('downloadresult'),
       hrefq: resolveStationHrefq(request),
       viewGraphSummary: buildViewGraphSummary({ stationId: stationDetails.id })
@@ -381,6 +389,11 @@ const last7DaysController = {
       activePeriod: 'last7days',
       viewDaqiTab: config.get('featureFlags.viewDaqiTab'),
       last7Days,
+      hourlyReadings: buildHourlyReadings(
+        last7Days.history,
+        station.pollutants,
+        'last7days'
+      ),
       hrefq: resolveStationHrefq(request)
     }
 
@@ -391,7 +404,8 @@ const last7DaysController = {
 /**
  * Fetches and summarises the current DAQI figures for a station, or returns an
  * empty-state marker (`noMapping: true` when the station has no AURN siteId,
- * or `{}` when the upstream call fails).
+ * or `{}` when the upstream call fails). `history` is the raw response, for the
+ * hourly readings.
  * @param {object} station
  * @returns {Promise<object>}
  */
@@ -408,7 +422,7 @@ async function resolveDaqi(station) {
     return {}
   }
 
-  return summariseDaqiHistory(history, station.pollutants)
+  return { ...summariseDaqiHistory(history, station.pollutants), history }
 }
 
 export { stationDetailsController, last7DaysController, resolveDaqi }

@@ -13,7 +13,6 @@ import {
   isInternalNavigation,
   renderNotFound
 } from '~/src/server/common/helpers/navigation-helpers.js'
-import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 
 function handleDownloadParams(request) {
   if (request.params.download) {
@@ -72,13 +71,7 @@ async function maybeHandleDownloadRequest(
   request.yar.set('downloadresult', downloadResult)
 }
 
-function buildViewData(
-  request,
-  stationDetails,
-  mapLocation,
-  dateContext,
-  hourlyReadings
-) {
+function buildViewData(request, stationDetails, mapLocation, dateContext) {
   return {
     pageTitle: english.stationdetails.pageTitle,
     title: english.stationdetails.title,
@@ -98,8 +91,7 @@ function buildViewData(
     hrefq:
       request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location/${request?.yar?.get('locationID')}`,
-    hourlyReadings
+        : `/location/${request?.yar?.get('locationID')}`
   }
 }
 
@@ -171,11 +163,7 @@ const stationDetailsNojsController = {
       year: request.yar.get('selectedYear')
     }
 
-    // The hourly readings take their own API calls, so they run alongside the table's
-    const [tabledata, hourlyReadings] = await Promise.all([
-      invokeTable(apiparamsTable),
-      buildHourlyReadings(stationDetails)
-    ])
+    const tabledata = await invokeTable(apiparamsTable)
 
     if (isEmptyTableData(tabledata)) {
       request.yar.set('tabledata', null)
@@ -190,19 +178,13 @@ const stationDetailsNojsController = {
       logger
     )
 
-    const viewData = buildViewData(
-      request,
-      stationDetails,
-      mapLocation,
-      {
-        updatedTime,
-        years,
-        currentDate,
-        currentYear,
-        fullSearchQuery
-      },
-      hourlyReadings
-    )
+    const viewData = buildViewData(request, stationDetails, mapLocation, {
+      updatedTime,
+      years,
+      currentDate,
+      currentYear,
+      fullSearchQuery
+    })
     request.yar.set('viewData', viewData)
 
     return h.view('stationDetailsNojs/index', viewData)
