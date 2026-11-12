@@ -7,7 +7,7 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 import {
-  getNearRealtimeNetworks,
+  getDownloadNearRealtimeNetworks,
   hasAurnNetwork
 } from '~/src/server/common/helpers/network-helpers.js'
 
@@ -311,7 +311,6 @@ function getValidationContext(request) {
 function buildSuccessViewData(
   request,
   backUrl,
-  datasourceGroups,
   validation,
   hasOtherDataSource,
   aurnPollutantID
@@ -319,6 +318,7 @@ function buildSuccessViewData(
   const rawUkeap = request.yar.get('nooflocationukeap')
   const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
   const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
+  const nearRealtime = getDownloadNearRealtimeNetworks(request)
 
   return {
     pageTitle: englishNew.custom.pageTitle,
@@ -333,8 +333,8 @@ function buildSuccessViewData(
     ukeapUnavailable,
     aurnPollutantID,
     nearRealtimeNetworkCounts: buildNearRealtimeNetworkCounts(
-      getNearRealtimeNetworks(datasourceGroups),
-      request.yar.get('nearRealtimeStationCounts'),
+      nearRealtime.networks,
+      nearRealtime.stationCounts,
       validation.numberOfLocations
     ),
     yearrange: request.yar.get('yearrange'),
@@ -384,7 +384,6 @@ export const downloadDataselectorController = {
     const successViewData = buildSuccessViewData(
       request,
       backUrl,
-      datasourceGroups,
       validation,
       hasOtherDataSource,
       aurnPollutantID

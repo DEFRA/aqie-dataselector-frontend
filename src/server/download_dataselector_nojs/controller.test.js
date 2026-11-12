@@ -642,6 +642,38 @@ describe('downloadDataselectornojsController near real-time networks', () => {
     ])
   })
 
+  it.each(['Zone', 'Agglomeration'])(
+    'shows only the AURN network for %s',
+    (location) => {
+      session.Location = location
+      session.nearRealtimeStationCounts = [
+        {
+          name: 'Automatic Hydrocarbon Network',
+          pollutantID: 'p2',
+          isAurn: false,
+          count: 3
+        },
+        {
+          name: 'Automatic Urban and Rural Network (AURN)',
+          pollutantID: 'p1',
+          isAurn: true,
+          count: 5
+        }
+      ]
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(viewModel().nearRealtimeNetworkCounts).toEqual([
+        {
+          name: 'Automatic Urban and Rural Network (AURN)',
+          isAurn: true,
+          pollutantID: 'p1',
+          count: 5
+        }
+      ])
+    }
+  )
+
   it('falls back to row order and the total count when no names match', () => {
     session.nearRealtimeStationCounts = [
       { name: 'Something else', pollutantID: 'a', count: 2 },

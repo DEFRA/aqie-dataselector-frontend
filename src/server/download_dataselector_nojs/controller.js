@@ -7,7 +7,7 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 import {
-  getNearRealtimeNetworks,
+  getDownloadNearRealtimeNetworks,
   hasAurnNetwork
 } from '~/src/server/common/helpers/network-helpers.js'
 
@@ -218,9 +218,10 @@ const buildViewData = (request, backUrl) => {
 
   const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
 
+  const nearRealtime = getDownloadNearRealtimeNetworks(request)
   const nearRealtimeNetworkCounts = buildNearRealtimeNetworkCounts(
-    getNearRealtimeNetworks(datasourceGroups),
-    request.yar.get('nearRealtimeStationCounts'),
+    nearRealtime.networks,
+    nearRealtime.stationCounts,
     getStationCount(request)
   )
 

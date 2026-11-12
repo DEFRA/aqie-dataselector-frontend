@@ -156,6 +156,61 @@ describe('handleStationCountCalculation', () => {
     expect(request.session.nooflocationukeap).toEqual([])
   })
 
+  it.each(['Zone', 'Agglomeration'])(
+    'counts only the AURN network pollutants for %s',
+    async (location) => {
+      mockCounts({ perPollutant: { p1: 5, p2: 3 } })
+      const request = makeRequest({
+        Location: location,
+        selectedPollutantID: 'p1,p2'
+      })
+
+      await handleStationCountCalculation(request)
+
+      const calls = invokeStationCount.mock.calls.map(([params]) => params)
+      expect(calls.every((params) => params.pollutantName === 'p1')).toBe(true)
+      expect(calls.some((params) => params.dataSource === 'NON-AURN')).toBe(
+        false
+      )
+      expect(request.session.nearRealtimeStationCounts).toEqual([
+        { name: 'AURN', pollutantID: 'p1', isAurn: true, count: 5 }
+      ])
+      expect(request.session.nooflocation).toBe(5)
+    }
+  )
+
+  it('uses all selected pollutants for a zone when the AURN network has no pollutant ID', async () => {
+    mockCounts()
+    const request = makeRequest({
+      Location: 'Zone',
+      selectedPollutantID: 'p1,p2',
+      datasourceGroups: [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'AURN' }]
+        }
+      ]
+    })
+
+    await handleStationCountCalculation(request)
+
+    expect(invokeStationCount).toHaveBeenCalledWith(
+      expect.objectContaining({ dataSource: 'AURN', pollutantName: 'p1,p2' })
+    )
+  })
+
+  it('keeps every near real-time network and pollutant for a country', async () => {
+    mockCounts()
+    const request = makeRequest({ selectedPollutantID: 'p1,p2' })
+
+    await handleStationCountCalculation(request)
+
+    expect(invokeStationCount).toHaveBeenCalledWith(
+      expect.objectContaining({ pollutantName: 'p1,p2', networkId: '' })
+    )
+    expect(request.session.nearRealtimeStationCounts).toHaveLength(2)
+  })
+
   it('builds agglomeration parameters', async () => {
     mockCounts()
     const request = makeRequest({

@@ -11,7 +11,10 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { config } from '~/src/config/config.js'
 import { networkData } from '~/src/server/data/en/networks.js'
 import { invokeStationCount } from '~/src/server/customdataset/controller.js'
-import { getNonAurnNetworkIdCsv } from '~/src/server/common/helpers/network-helpers.js'
+import {
+  getAurnPollutantIds,
+  getNonAurnNetworkIdCsv
+} from '~/src/server/common/helpers/network-helpers.js'
 
 const logger = createLogger()
 
@@ -187,48 +190,86 @@ export function groupDatasources(flat) {
 
 // Re-trigger the station count with the new datasource type when all the
 // required selection data is present in the session.
+// Location part of the station count params for the selected location type
+function getLocationParams(request) {
+  const location = request.yar.get('Location')
+
+  // Zones: the selected region IDs go in RegionId and Region is left empty
+  if (location === 'Zone') {
+    return {
+      RegionId: request.yar.get('selectedZoneIDs') || '',
+      Region: '',
+      regiontype: 'Region'
+    }
+  }
+  // Agglomerations: the selected IDs go in AgglomerationID
+  if (location === 'Agglomeration') {
+    return {
+      AgglomerationID: request.yar.get('selectedAgglomerationIDs') || '',
+      RegionId: '',
+      Region: '',
+      regiontype: 'Agglomeration'
+    }
+  }
+  if (location === 'Country') {
+    return {
+      Region: request.yar.get('selectedlocation').join(','),
+      regiontype: 'Country'
+    }
+  }
+  return {
+    Region: request.yar.get('selectedLAIDs'),
+    regiontype: 'LocalAuthority'
+  }
+}
+
+// Zones and agglomerations only have AURN data: count only the AURN network's
+// pollutants, falling back to all selected pollutants if it has no IDs
+function getCountPollutants(request, datasourceGroups, isZone) {
+  const aurnPollutantIds = isZone ? getAurnPollutantIds(datasourceGroups) : []
+  return aurnPollutantIds.length > 0
+    ? aurnPollutantIds.join(',')
+    : request.yar.get('selectedPollutantID')
+}
+
 async function recalculateStationCount(request, datasourceType) {
   const finalyear = request.yar.get('finalyear1')
   const pollutantID = request.yar.get('selectedPollutantID')
   const selectedlocation = request.yar.get('selectedlocation')
-  const selectedLAIDs = request.yar.get('selectedLAIDs')
-  const isCountry = request.yar.get('Location') === 'Country'
 
   if (!(finalyear && pollutantID && selectedlocation)) {
     return
   }
 
+  const location = request.yar.get('Location')
+  const isZone = location === 'Zone' || location === 'Agglomeration'
   const postDatasourceGroups = request.yar.get('datasourceGroups') || []
   const nonAurnNetworkId = getNonAurnNetworkIdCsv(postDatasourceGroups)
   const baseParams = {
-    pollutantName: pollutantID,
-    Region: isCountry ? selectedlocation.join(',') : selectedLAIDs,
-    regiontype: isCountry ? 'Country' : 'LocalAuthority',
+    pollutantName: getCountPollutants(request, postDatasourceGroups, isZone),
+    ...getLocationParams(request),
     Year: finalyear,
     dataselectorfiltertype: DATASOURCE_COUNT_FILTER_TYPE,
     dataselectordownloadtype: ''
   }
-  // Zones: the selected region IDs go in RegionId and Region is left empty
-  if (request.yar.get('Location') === 'Zone') {
-    baseParams.RegionId = request.yar.get('selectedZoneIDs') || ''
-    baseParams.Region = ''
-    baseParams.regiontype = 'Region'
-  }
+
   try {
     const [aurnCount, nonAurnCount] = await Promise.all([
       invokeStationCount({ ...baseParams, dataSource: AURN, networkId: '' }),
-      invokeStationCount({
-        ...baseParams,
-        dataSource: NON_AURN,
-        networkId: nonAurnNetworkId
-      })
+      isZone
+        ? []
+        : invokeStationCount({
+            ...baseParams,
+            dataSource: NON_AURN,
+            networkId: nonAurnNetworkId
+          })
     ])
     request.yar.set('stationCountAURN', aurnCount)
     request.yar.set('stationCountNONAURN', nonAurnCount)
     request.yar.set('nooflocationukeap', nonAurnCount)
     request.yar.set(
       'nooflocation',
-      datasourceType === NON_AURN ? nonAurnCount : aurnCount
+      datasourceType === NON_AURN && !isZone ? nonAurnCount : aurnCount
     )
   } catch (error) {
     logger.error(`Station count re-calculation failed: ${errMsg(error)}`)
