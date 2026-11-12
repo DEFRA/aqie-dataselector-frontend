@@ -24,6 +24,12 @@ describe('view graph summary link', () => {
     expect($('a').text().trim()).toBe('View graph and pollutant summary')
   })
 
+  it('is hidden when JavaScript is off, as the graph needs it', () => {
+    const $ = render({ viewGraphSummary })
+
+    expect($('a').parent().hasClass('aq-js-only')).toBe(true)
+  })
+
   it('is announced once, as a link: it has no heading and does not override its role', () => {
     const $ = render({ viewGraphSummary })
 

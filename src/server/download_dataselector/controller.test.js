@@ -485,6 +485,49 @@ describe('downloadDataselectorController', () => {
       )
     })
 
+    test.each(['Zone', 'Agglomeration'])(
+      'shows only the AURN network for %s + AURN and another near real-time network',
+      (location) => {
+        session.Location = location
+        session.downloadDatasourceCategoryType = 'near-realtime-only'
+        session.datasourceGroups = [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [
+              { name: 'Automatic Hydrocarbon Network' },
+              { name: 'Automatic Urban and Rural Network (AURN)' }
+            ]
+          }
+        ]
+        session.nearRealtimeStationCounts = [
+          {
+            name: 'Automatic Hydrocarbon Network',
+            pollutantID: '20',
+            isAurn: false,
+            count: 3
+          },
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            pollutantID: '10',
+            isAurn: true,
+            count: 5
+          }
+        ]
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.view).toBe('download_dataselector/index')
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            isAurn: true,
+            pollutantID: '10',
+            count: 5
+          }
+        ])
+      }
+    )
+
     test('renders time period and location error for Zone + AURN only when no stations are available', () => {
       session.downloadDatasourceCategoryType = 'near-realtime-only'
       session.nooflocation = 0
@@ -556,6 +599,90 @@ describe('downloadDataselectorController', () => {
       const result = downloadDataselectorController.handler(request, h)
 
       expect(result.model.nearRealtimeNetworkCounts).toEqual([])
+    })
+
+    describe('with per-network station counts', () => {
+      beforeEach(() => {
+        session.datasourceGroups = [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [
+              { name: 'Automatic Urban and Rural Network (AURN)' },
+              { name: 'Automatic Hydrocarbon Network' }
+            ]
+          }
+        ]
+      })
+
+      test('matches counts to networks by name, ignoring case and spacing', () => {
+        session.nearRealtimeStationCounts = [
+          {
+            name: 'automatic  hydrocarbon network ',
+            pollutantID: 'p2',
+            count: 3
+          },
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            pollutantID: 'p1',
+            count: '5'
+          }
+        ]
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          expect.objectContaining({ pollutantID: 'p1', count: 5 }),
+          expect.objectContaining({ pollutantID: 'p2', count: 3 })
+        ])
+      })
+
+      test('falls back to row order and the total count when no names match', () => {
+        session.nearRealtimeStationCounts = [
+          { name: 'Something else', pollutantID: 'a', count: 2 },
+          { count: 1 }
+        ]
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          expect.objectContaining({ pollutantID: 'a', count: 4 }),
+          expect.objectContaining({ pollutantID: '', count: 1 })
+        ])
+      })
+
+      test('uses the total count when matched networks all have zero', () => {
+        session.nearRealtimeStationCounts = [
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            pollutantID: 'p1',
+            count: 0
+          }
+        ]
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          expect.objectContaining({ pollutantID: 'p1', count: 4 }),
+          expect.objectContaining({ pollutantID: '', count: 0 })
+        ])
+      })
+
+      test('leaves zero counts when there is no total to fall back on', () => {
+        Object.assign(session, {
+          nooflocation: 0,
+          downloadDatasourceCategoryType: 'both',
+          nooflocationukeap: [{ networkType: 'UKEAP', count: 2 }],
+          nearRealtimeStationCounts: [{ name: 'Other', count: 0 }]
+        })
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.view).toBe('download_dataselector/index')
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          expect.objectContaining({ pollutantID: '', count: 0 }),
+          expect.objectContaining({ pollutantID: '', count: 0 })
+        ])
+      })
     })
   })
 })

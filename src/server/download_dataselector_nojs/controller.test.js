@@ -446,6 +446,51 @@ describe('downloadDataselectornojsController', () => {
       )
     })
 
+    it('redirects back to customdataset for Agglomeration + non-AURN near real-time only', () => {
+      request.yar.set('Location', 'Agglomeration')
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('datasourceGroups', [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [{ name: 'Automatic Hydrocarbon Network' }]
+        }
+      ])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(res).toBe('redirect-response')
+      expect(h.redirect).toHaveBeenCalledWith('/customdataset')
+      expect(h.view).not.toHaveBeenCalled()
+    })
+
+    it('redirects back to customdataset for Agglomeration + other data only', () => {
+      request.yar.set('Location', 'Agglomeration')
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+      request.yar.set('datasourceGroups', [
+        { category: 'Other data from Defra', networks: [{ id: 'ukeap' }] }
+      ])
+
+      const res = downloadDataselectornojsController.handler(request, h)
+
+      expect(res).toBe('redirect-response')
+      expect(h.redirect).toHaveBeenCalledWith('/customdataset')
+      expect(h.view).not.toHaveBeenCalled()
+    })
+
+    it('renders the AURN-only download page for Agglomeration + both', () => {
+      request.yar.set('Location', 'Agglomeration')
+      request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
+      request.yar.set('downloadForceNearRealtimeOnly', true)
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(h.view).toHaveBeenCalledWith(
+        'download_dataselector_nojs/index',
+        expect.objectContaining({ downloadForceNearRealtimeOnly: true })
+      )
+    })
+
     it('renders time period and location error for non-zone + non-AURN near real-time when no stations are available', () => {
       request.yar.set('Location', 'Country')
       request.yar.set('downloadDatasourceCategoryType', 'near-realtime-only')
@@ -517,6 +562,22 @@ describe('downloadDataselectornojsController', () => {
       }
     )
 
+    it('shows the time period error for last 7 days with other-only data', () => {
+      request.yar.set('downloadDatasourceCategoryType', 'other-only')
+      request.yar.set('TimeSelectionMode', 'last7days')
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'customdataset/index',
+        expect.objectContaining({
+          error: true,
+          errorref1: 'Change time period',
+          errorhref1: '/year-aurn/change'
+        })
+      )
+    })
+
     it('hides the AURN tab on GET for a non-AURN only pollutant', () => {
       request.method = 'get'
       request.yar.set('downloadDatasourceCategoryType', 'other-only')
@@ -527,6 +588,165 @@ describe('downloadDataselectornojsController', () => {
         'download_dataselector_nojs/index',
         expect.objectContaining({ aurnUnavailable: true })
       )
+    })
+  })
+})
+
+describe('downloadDataselectornojsController near real-time networks', () => {
+  let session
+  let request
+  let h
+
+  beforeEach(() => {
+    session = {
+      nooflocation: 4,
+      datasourceGroups: [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [
+            { name: 'Automatic Urban and Rural Network (AURN)' },
+            { name: 'Automatic Hydrocarbon Network', pollutantID: 'p2' }
+          ]
+        }
+      ]
+    }
+    request = {
+      method: 'get',
+      yar: {
+        get: jest.fn((k) => session[k]),
+        set: jest.fn((k, v) => {
+          session[k] = v
+        })
+      }
+    }
+    h = { view: jest.fn().mockReturnValue('view-response') }
+  })
+
+  const viewModel = () => h.view.mock.calls[0][1]
+
+  it('matches counts to networks by name, ignoring case and spacing', () => {
+    session.nearRealtimeStationCounts = [
+      { name: 'automatic  hydrocarbon network ', pollutantID: 'p2', count: 3 },
+      {
+        name: 'Automatic Urban and Rural Network (AURN)',
+        pollutantID: 'p1',
+        count: '5'
+      }
+    ]
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().nearRealtimeNetworkCounts).toEqual([
+      expect.objectContaining({ pollutantID: 'p1', count: 5 }),
+      expect.objectContaining({ pollutantID: 'p2', count: 3 })
+    ])
+  })
+
+  it.each(['Zone', 'Agglomeration'])(
+    'shows only the AURN network for %s',
+    (location) => {
+      session.Location = location
+      session.nearRealtimeStationCounts = [
+        {
+          name: 'Automatic Hydrocarbon Network',
+          pollutantID: 'p2',
+          isAurn: false,
+          count: 3
+        },
+        {
+          name: 'Automatic Urban and Rural Network (AURN)',
+          pollutantID: 'p1',
+          isAurn: true,
+          count: 5
+        }
+      ]
+
+      downloadDataselectornojsController.handler(request, h)
+
+      expect(viewModel().nearRealtimeNetworkCounts).toEqual([
+        {
+          name: 'Automatic Urban and Rural Network (AURN)',
+          isAurn: true,
+          pollutantID: 'p1',
+          count: 5
+        }
+      ])
+    }
+  )
+
+  it('falls back to row order and the total count when no names match', () => {
+    session.nearRealtimeStationCounts = [
+      { name: 'Something else', pollutantID: 'a', count: 2 },
+      { count: 1 }
+    ]
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().nearRealtimeNetworkCounts).toEqual([
+      expect.objectContaining({ pollutantID: 'a', count: 4 }),
+      expect.objectContaining({ pollutantID: '', count: 1 })
+    ])
+  })
+
+  it('uses the total count when matched networks all have zero', () => {
+    session.nearRealtimeStationCounts = [
+      {
+        name: 'Automatic Urban and Rural Network (AURN)',
+        pollutantID: 'p1',
+        count: 0
+      }
+    ]
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().nearRealtimeNetworkCounts[0]).toEqual(
+      expect.objectContaining({ pollutantID: 'p1', count: 4 })
+    )
+  })
+
+  it('leaves zero counts when there is no total to fall back on', () => {
+    session.nooflocation = 'not a number'
+    session.nearRealtimeStationCounts = [{ name: 'Other', count: 0 }]
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().nearRealtimeNetworkCounts).toEqual([
+      expect.objectContaining({ count: 0 }),
+      expect.objectContaining({ count: 0 })
+    ])
+    expect(viewModel().stationcount).toBe(0)
+  })
+
+  it('uses the first near real-time pollutant ID when there is no AURN network', () => {
+    session.datasourceGroups = [
+      {
+        category: 'Near real-time data from Defra',
+        networks: [{ name: 'Automatic Hydrocarbon Network', pollutantID: 'p2' }]
+      }
+    ]
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().aurnPollutantID).toBe('p2')
+  })
+
+  it('prefers the AURN network pollutant ID', () => {
+    session.datasourceGroups[0].networks[0].pollutantID = 'p1'
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel().aurnPollutantID).toBe('p1')
+  })
+
+  it('treats non-array datasource groups as empty', () => {
+    session.datasourceGroups = 'invalid'
+
+    downloadDataselectornojsController.handler(request, h)
+
+    expect(viewModel()).toMatchObject({
+      aurnPollutantID: '',
+      ukeapUnavailable: true,
+      nearRealtimeNetworkCounts: []
     })
   })
 })

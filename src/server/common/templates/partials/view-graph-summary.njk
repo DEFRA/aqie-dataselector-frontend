@@ -1,6 +1,6 @@
-{# Link to the graph and pollutant summary page, shared by the station pages. It is styled as a button but is deliberately a plain link with no heading and no role="button", so that screen readers announce it once, as a link. viewGraphSummary is null when the feature is off. #}
+{# Link to the graph and pollutant summary page, shared by the station pages. It is styled as a button but is deliberately a plain link with no heading and no role="button", so that screen readers announce it once, as a link. The graph needs JavaScript, so aq-js-only hides the link when JavaScript is off. It is done in CSS because this markup is also swapped in with innerHTML, where scripts never run. viewGraphSummary is null when the feature is off. #}
 {% if viewGraphSummary %}
-  <div class="govuk-!-margin-top-6 govuk-!-margin-bottom-6">
+  <div class="aq-js-only govuk-!-margin-top-6 govuk-!-margin-bottom-6">
     <a
       href="{{ viewGraphSummary.href }}"
       class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-0"

@@ -7,7 +7,7 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 import {
-  getNearRealtimeNetworks,
+  getDownloadNearRealtimeNetworks,
   hasAurnNetwork
 } from '~/src/server/common/helpers/network-helpers.js'
 
@@ -120,9 +120,11 @@ function isStationCountUnavailable(numberOfLocations, stationCountError) {
 }
 
 // Zone + NON-AURN (no AURN network) has no stations for a zone
-function isZoneWithoutAurn(request) {
+function isZoneOrAgglomerationWithoutAurn(request) {
+  const location = request.yar.get('Location')
+
   return (
-    request.yar.get('Location') === 'Zone' &&
+    (location === 'Zone' || location === 'Agglomeration') &&
     !hasAurnNetwork(request.yar.get('datasourceGroups'))
   )
 }
@@ -130,7 +132,7 @@ function isZoneWithoutAurn(request) {
 // Zone + NON-AURN: location only. Zone + AURN and all other locations:
 // both time period and location.
 function getMissingStationError(request) {
-  if (isZoneWithoutAurn(request)) {
+  if (isZoneOrAgglomerationWithoutAurn(request)) {
     return [
       'No monitoring stations are available for your selection. Please try:',
       'Change location',
@@ -309,7 +311,6 @@ function getValidationContext(request) {
 function buildSuccessViewData(
   request,
   backUrl,
-  datasourceGroups,
   validation,
   hasOtherDataSource,
   aurnPollutantID
@@ -317,6 +318,7 @@ function buildSuccessViewData(
   const rawUkeap = request.yar.get('nooflocationukeap')
   const ukeapNetworks = Array.isArray(rawUkeap) ? rawUkeap : []
   const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
+  const nearRealtime = getDownloadNearRealtimeNetworks(request)
 
   return {
     pageTitle: englishNew.custom.pageTitle,
@@ -331,8 +333,8 @@ function buildSuccessViewData(
     ukeapUnavailable,
     aurnPollutantID,
     nearRealtimeNetworkCounts: buildNearRealtimeNetworkCounts(
-      getNearRealtimeNetworks(datasourceGroups),
-      request.yar.get('nearRealtimeStationCounts'),
+      nearRealtime.networks,
+      nearRealtime.stationCounts,
       validation.numberOfLocations
     ),
     yearrange: request.yar.get('yearrange'),
@@ -360,10 +362,9 @@ export const downloadDataselectorController = {
 
     // Zones + NON-AURN: no stations — stay on customdataset, which
     // shows the zone "Change location" error, instead of the download page
-    if (isZoneWithoutAurn(request)) {
+    if (isZoneOrAgglomerationWithoutAurn(request)) {
       return h.redirect(backUrl)
     }
-
     const validation = getValidationContext(request)
     const errorModel = getValidationErrorModel(request, validation)
     if (errorModel) {
@@ -383,7 +384,6 @@ export const downloadDataselectorController = {
     const successViewData = buildSuccessViewData(
       request,
       backUrl,
-      datasourceGroups,
       validation,
       hasOtherDataSource,
       aurnPollutantID

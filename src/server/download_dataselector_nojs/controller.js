@@ -7,7 +7,7 @@
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import { networkDescriptions } from '~/src/server/data/en/network-descriptions.js'
 import {
-  getNearRealtimeNetworks,
+  getDownloadNearRealtimeNetworks,
   hasAurnNetwork
 } from '~/src/server/common/helpers/network-helpers.js'
 
@@ -218,9 +218,10 @@ const buildViewData = (request, backUrl) => {
 
   const ukeapUnavailable = !hasOtherDataSource || ukeapNetworks.length === 0
 
+  const nearRealtime = getDownloadNearRealtimeNetworks(request)
   const nearRealtimeNetworkCounts = buildNearRealtimeNetworkCounts(
-    getNearRealtimeNetworks(datasourceGroups),
-    request.yar.get('nearRealtimeStationCounts'),
+    nearRealtime.networks,
+    nearRealtime.stationCounts,
     getStationCount(request)
   )
 
@@ -349,11 +350,14 @@ function getDownloadCategoryType(request) {
   )
 }
 
-// Zones + NON-AURN (no AURN network): no stations — stay on customdataset,
-// which shows the zone "Change location" error, instead of the download page
+// Zones/agglomerations + NON-AURN (no AURN network): no stations — stay on
+// customdataset, which shows the "Change location" error, instead of the
+// download page
 function isZoneWithoutAurn(request) {
+  const location = request.yar.get('Location')
+
   return (
-    request.yar.get('Location') === 'Zone' &&
+    (location === 'Zone' || location === 'Agglomeration') &&
     !hasAurnNetwork(request.yar.get('datasourceGroups'))
   )
 }

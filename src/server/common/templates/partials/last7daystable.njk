@@ -29,7 +29,7 @@
 
   {{ pollutantSummaryTable({ rows: last7Days.pollutants, period: '7d', id: 'last7daystable' }) }}
 
-  <p id="last7days-hint" class="govuk-hint">The pollution levels shown are measured against UK legal limits.</p>
+  <p id="last7days-hint" class="govuk-hint">{{ last7DaysContent.legalLimitsHint }}</p>
 
 {% elif last7Days.noMapping %}
 

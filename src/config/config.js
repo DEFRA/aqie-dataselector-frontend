@@ -119,10 +119,16 @@ export const config = convict({
   },
   featureFlags: {
     viewGraphSummary: {
-      doc: 'Show the view graph and pollutant summary page and its CTA on station detail pages. Off unless set to true',
+      doc: 'Show the view graph and pollutant summary CTA on station detail pages and serve its destination page. Off unless explicitly enabled for the environment',
       format: Boolean,
       default: false,
       env: 'VIEW_GRAPH_SUMMARY_ENABLED'
+    },
+    viewDaqiTab: {
+      doc: 'Show the DAQI tab on station detail pages, make it the default view and serve its routes. Off unless explicitly enabled for the environment',
+      format: Boolean,
+      default: false,
+      env: 'VIEW_DAQI_TAB_ENABLED'
     }
   },
   session: {
@@ -352,6 +358,19 @@ export const config = convict({
     format: String,
     default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionRegionMaster`,
     env: 'REGION_MASTER_API_URL'
+  },
+  agglomerationMasterDevUrl: {
+    doc: 'Agglomeration master API URL for localhost development',
+    format: String,
+    default:
+      'https://ephemeral-protected.api.dev.cdp-int.defra.cloud/aqie-historicaldata-backend/AtomDataSelectionAgglomerationMaster',
+    env: 'AGGLOMERATION_MASTER_DEV_URL'
+  },
+  agglomerationMasterApiUrl: {
+    doc: 'Agglomeration master API URL for CDP environments',
+    format: String,
+    default: `https://aqie-historicaldata-backend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud/AtomDataSelectionAgglomerationMaster`,
+    env: 'AGGLOMERATION_MASTER_API_URL'
   },
   datasourceDevUrl: {
     doc: 'Datasource API URL for localhost development',

@@ -9,35 +9,17 @@
  * the average, which the acceptance criteria require to happen last.
  */
 
-const NOT_APPLICABLE = '-'
+import {
+  POLLUTANT_DISPLAY_NAMES,
+  displayAverage,
+  startOfHourEndingAt
+} from '~/src/server/common/helpers/history-summary-shared.js'
+
 const NO_LEGAL_LIMIT = 'no legal limit'
-const MS_PER_HOUR = 60 * 60 * 1000
 
-/**
- * aqie-back-end stamps each hour with the time it ends, so a window of seven
- * complete UTC days runs from 01:00 on the first day to 00:00 after the last.
- * The hour that ends at a stamp began an hour earlier, which puts it on the day
- * the page should label ("20 October to 26 October").
- */
-function startOfHourEndingAt(stamp) {
-  return stamp ? new Date(Date.parse(stamp) - MS_PER_HOUR).toISOString() : stamp
-}
-
-/** aqie-back-end's pollutant keys to the display names last7daystable.njk uses. */
-const POLLUTANT_DISPLAY_NAMES = {
-  PM25: 'PM2.5',
-  PM10: 'PM10',
-  NO2: 'Nitrogen dioxide',
-  O3: 'Ozone',
-  SO2: 'Sulphur dioxide'
-}
-
-/** An average withheld for low data capture arrives as null and is shown as '-'. */
-function displayAverage(periodAverage) {
-  return periodAverage === null || periodAverage === undefined
-    ? NOT_APPLICABLE
-    : Math.round(periodAverage)
-}
+// A window of seven complete UTC days runs from 01:00 on the first day to
+// 00:00 after the last, so periodStart/periodEnd shift each stamp back an hour
+// to land on the days the page labels ("20 October to 26 October").
 
 /** A null count means the pollutant has no legal limit of that kind. */
 function displayCount(count) {

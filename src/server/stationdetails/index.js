@@ -1,3 +1,4 @@
+import { config } from '~/src/config/config.js'
 import {
   stationDetailsController,
   last7DaysController
@@ -32,6 +33,14 @@ const configureRoutes = (server) => {
       ...stationDetailsController
     }
   ])
+
+  if (config.get('featureFlags.viewDaqiTab')) {
+    server.route({
+      method: 'GET',
+      path: '/stationdetails/daqi',
+      ...stationDetailsController
+    })
+  }
 }
 
 // Define the plugin

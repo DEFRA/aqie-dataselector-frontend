@@ -17,7 +17,7 @@
                      average.
 
   The limit toggletips reuse pollutantToggletips[name].annual (average),
-  .daily and last7DaysLimits[name].hourly (src/server/data/en/) - the year
+  .daily and .hourly (src/server/data/en/pollutant-toggletips.js) - the year
   table's copy, which is worded for the 7-day table, so only that table turns
   them on for now.
 #}
@@ -40,7 +40,7 @@
         {% for data in params.rows %}
           {% set annualLimit = pollutantToggletips[data.pollutantName].annual if showLimits else false %}
           {% set dailyLimit = pollutantToggletips[data.pollutantName].daily if showLimits else false %}
-          {% set hourlyLimit = last7DaysLimits[data.pollutantName].hourly if showLimits else false %}
+          {% set hourlyLimit = pollutantToggletips[data.pollutantName].hourly if showLimits else false %}
 
           <tr class="defra-aq-levels-table__row">
             <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">

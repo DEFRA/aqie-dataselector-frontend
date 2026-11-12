@@ -121,6 +121,16 @@ export function buildUkeapNetworks(nonAurnCount, datasourceGroups) {
   }
 
   const expectedNetworks = getExpectedNetworks(datasourceGroups)
+  if (typeof nonAurnCount === 'number' && expectedNetworks.length === 1) {
+    return [
+      {
+        networkType: expectedNetworks[0].name,
+        id: expectedNetworks[0].id,
+        pollutantID: expectedNetworks[0].pollutantID,
+        count: nonAurnCount
+      }
+    ]
+  }
 
   if (expectedNetworks.length === 0) {
     // No datasourceGroups info — use raw API result, filtering out Unknown
@@ -263,6 +273,7 @@ export async function invokeStationCount(stationcountparameters) {
         },
         json: true
       })
+
       return parseStationCountPayload(payload)
     } catch (error) {
       logger.error(`Station count API error (local): ${errMsg(error)}`)

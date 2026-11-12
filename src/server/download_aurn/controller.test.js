@@ -251,6 +251,58 @@ describe('downloadAurnController', () => {
       TEST_TIMEOUT_MS
     )
 
+    it.each([
+      ['selected IDs', '7,8', '7,8'],
+      ['no selected IDs', undefined, '']
+    ])(
+      'handles Agglomeration region type with %s',
+      async (_label, selectedAgglomerationIDs, expectedID) => {
+        mockRequest.yar.get.mockImplementation((key) => {
+          const values = {
+            selectedPollutantID: 'PM2.5',
+            selectedAgglomerationIDs,
+            selectedlocation: ['Tyneside'],
+            Location: 'Agglomeration'
+          }
+          return values[key]
+        })
+
+        axios.post.mockResolvedValueOnce({ data: 'job-agglomeration' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({
+            RegionId: '',
+            Region: '',
+            AgglomerationID: expectedID,
+            regiontype: 'Agglomeration'
+          })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
+    it(
+      'sends an empty RegionId for a Zone with no selected IDs',
+      async () => {
+        mockRequest.yar.get.mockImplementation((key) =>
+          key === 'Location' ? 'Zone' : undefined
+        )
+
+        axios.post.mockResolvedValueOnce({ data: 'job-zone-empty' })
+
+        await downloadAurnController.handler(mockRequest, mockH)
+
+        expect(axios.post).toHaveBeenCalledWith(
+          'https://api.example.com/download',
+          expect.objectContaining({ RegionId: '', regiontype: 'Region' })
+        )
+      },
+      TEST_TIMEOUT_MS
+    )
+
     it(
       'sends networkId for NON-AURN from datasource groups',
       async () => {
@@ -1173,6 +1225,69 @@ describe('downloadAurnController', () => {
       },
       TEST_TIMEOUT_MS
     )
+
+    describe('when the download names a near real-time network', () => {
+      const groups = [
+        {
+          category: 'Near real-time data from Defra',
+          networks: [
+            {
+              name: 'AURN',
+              fullName: 'Automatic Urban and Rural Network',
+              pollutantID: '11'
+            },
+            {
+              name: 'AHC',
+              fullName: 'Automatic  Hydrocarbon Network',
+              pollutantID: '22'
+            },
+            { fullName: 'Nameless Network', pollutantID: '33' }
+          ]
+        }
+      ]
+
+      it.each([
+        ['its short name', 'AHC', '22'],
+        [
+          'its full name, ignoring case and spacing',
+          ' automatic hydrocarbon   network ',
+          '22'
+        ],
+        ['a network with only a full name', 'Nameless Network', '33']
+      ])(
+        'uses the pollutantID of the network matched by %s',
+        async (_label, networkName, expected) => {
+          useDatasourceGroups(groups)
+          mockRequest.query = { networkName }
+          axios.post.mockResolvedValueOnce({ data: 'job-named-network' })
+
+          await downloadAurnController.handler(mockRequest, mockH)
+
+          expect(axios.post).toHaveBeenCalledWith(
+            'https://api.example.com/download',
+            expect.objectContaining({ pollutantName: expected, networkId: '' })
+          )
+        },
+        TEST_TIMEOUT_MS
+      )
+
+      it(
+        'falls back to the first network without an id when the name does not match',
+        async () => {
+          useDatasourceGroups(groups)
+          mockRequest.query = { networkName: 'Unknown Network' }
+          axios.post.mockResolvedValueOnce({ data: 'job-unmatched-network' })
+
+          await downloadAurnController.handler(mockRequest, mockH)
+
+          expect(axios.post).toHaveBeenCalledWith(
+            'https://api.example.com/download',
+            expect.objectContaining({ pollutantName: '11' })
+          )
+        },
+        TEST_TIMEOUT_MS
+      )
+    })
 
     it(
       'skips AURN networks that have an id and falls back to the selected pollutant',

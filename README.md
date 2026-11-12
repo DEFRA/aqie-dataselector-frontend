@@ -89,9 +89,12 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                                                                                                               |
-| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, shows the hourly readings in its place on the no-JavaScript station page, and registers the `/stationdetails/graph-summary` route. When `false`, all three are disabled. |
+| Environment variable         | Default | Description                                                                                                                                                                                                                 |
+| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only, and registers the `/stationdetails/graph-summary` route. When unset or `false`, both are disabled. |
+| `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.   |
+
+Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
 The flag is read at startup, so restart the server after changing it.
 

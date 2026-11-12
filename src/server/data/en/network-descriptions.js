@@ -40,5 +40,8 @@ export const networkDescriptions = {
   'PAH Digitel (solid phase)':
     'Solid phase particulate (PM10) data from PAH Digitel DHA-80 analysers (2007 to present).',
   'PAH Digitel (solid+vapour)':
-    'Solid phase and vapour particulate (PM10) data from PAH Digitel DHA-80 analysers (2007 to present).'
+    'Solid phase and vapour particulate (PM10) data from PAH Digitel DHA-80 analysers (2007 to present).',
+  'Black Carbon Network': 'Black carbon (BC) and UVPM measurements.',
+  'Black Smoke & SO2':
+    'Closed network. Historic daily measurements of black smoke and sulphur dioxide, growing out of UK National Survey that began in 1961.'
 }

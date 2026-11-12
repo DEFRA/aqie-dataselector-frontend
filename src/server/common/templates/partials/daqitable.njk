@@ -1,0 +1,75 @@
+{% from "partials/aq-table-macros.njk" import limitToggletip %}
+
+{#
+  Daily Air Quality Index (DAQI) air pollution summary table.
+
+  `daqi` comes from stationdetails/controller.js (resolveDaqi):
+  { measuredAt, latestReadingAt, pollutants: [{ pollutantName, average,
+  daqiIndex, daqiBand, averagingPeriod }] }, mapped from aqie-back-end's
+  GET /monitoringStationHistory `summary` by daqi-summary.js.
+#}
+
+{% if durationText %}
+  <span id="daqi-duration-value" class="display-none">{{ durationText }}</span>
+{% endif %}
+
+{% if daqi.pollutants.length %}
+
+  <div class="govuk-inset-text not-verified">{{ daqiContent.notice }}</div>
+
+  <div class="table-scroll-container">
+    <table id="daqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
+      <thead class="defra-aq-levels-table__head">
+        <tr class="defra-aq-levels-table__row">
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Average</th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">
+            <span class="defra-aq-value-with-tip">DAQI{{ limitToggletip(daqiColumnToggletip) }}</span>
+          </th>
+          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Averaging period</th>
+        </tr>
+      </thead>
+
+      <tbody class="defra-aq-levels-table__body">
+        {% for data in daqi.pollutants %}
+          <tr class="defra-aq-levels-table__row">
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
+              {{ data.pollutantName }}
+            </td>
+
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
+              {% if data.average != '-' %}
+                <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3</span>
+              {% else %}
+                {{ data.average }}
+              {% endif %}
+            </td>
+
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily">
+              {% if data.daqiIndex and data.daqiBand %}
+                <strong class="govuk-tag aq-daqi-band-tag aq-daqi-band-tag--{{ data.daqiIndex }}">{{ data.daqiIndex }} ({{ data.daqiBand }})</strong>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly">
+              {{ data.averagingPeriod }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p id="daqi-hint" class="govuk-hint">Learn more about the <a href="{{ daqiContent.learnMoreUrl }}" class="govuk-link">Daily Air Quality Index (DAQI)</a>.</p>
+
+{% elif daqi.noMapping %}
+
+  <div class="govuk-inset-text">{{ daqiContent.noMappingMessage }}</div>
+
+{% else %}
+
+  <div class="govuk-inset-text">{{ daqiContent.noDataMessage }}</div>
+
+{% endif %}

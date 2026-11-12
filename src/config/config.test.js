@@ -1,35 +1,39 @@
 describe('featureFlags.viewGraphSummary', () => {
-  const original = process.env.VIEW_GRAPH_SUMMARY_ENABLED
+  const originalValue = process.env.VIEW_GRAPH_SUMMARY_ENABLED
 
-  async function loadFlag(value) {
-    if (value === undefined) {
-      delete process.env.VIEW_GRAPH_SUMMARY_ENABLED
-    } else {
-      process.env.VIEW_GRAPH_SUMMARY_ENABLED = value
-    }
-
-    jest.resetModules()
+  // config.js reads process.env when it is first evaluated, so load it fresh
+  async function loadFlag() {
     const { config } = await import('~/src/config/config.js')
     return config.get('featureFlags.viewGraphSummary')
   }
 
+  beforeEach(() => {
+    jest.resetModules()
+  })
+
   afterEach(() => {
-    if (original === undefined) {
+    if (originalValue === undefined) {
       delete process.env.VIEW_GRAPH_SUMMARY_ENABLED
     } else {
-      process.env.VIEW_GRAPH_SUMMARY_ENABLED = original
+      process.env.VIEW_GRAPH_SUMMARY_ENABLED = originalValue
     }
   })
 
-  it('is off when the environment variable is not set', async () => {
-    expect(await loadFlag(undefined)).toBe(false)
+  it('is disabled when VIEW_GRAPH_SUMMARY_ENABLED is not set', async () => {
+    delete process.env.VIEW_GRAPH_SUMMARY_ENABLED
+
+    expect(await loadFlag()).toBe(false)
   })
 
-  it('is on when the environment variable is true', async () => {
-    expect(await loadFlag('true')).toBe(true)
+  it('is enabled when VIEW_GRAPH_SUMMARY_ENABLED is true', async () => {
+    process.env.VIEW_GRAPH_SUMMARY_ENABLED = 'true'
+
+    expect(await loadFlag()).toBe(true)
   })
 
-  it('is off when the environment variable is false', async () => {
-    expect(await loadFlag('false')).toBe(false)
+  it('is disabled when VIEW_GRAPH_SUMMARY_ENABLED is false', async () => {
+    process.env.VIEW_GRAPH_SUMMARY_ENABLED = 'false'
+
+    expect(await loadFlag()).toBe(false)
   })
 })

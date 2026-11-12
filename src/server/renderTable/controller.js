@@ -6,13 +6,32 @@ import {
 } from '~/src/server/common/helpers/station-helpers.js'
 import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
 import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
+import { resolveDaqi } from '~/src/server/stationdetails/controller.js'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
 import {
   HTTP_OK,
+  HTTP_NOT_FOUND,
   HTTP_INTERNAL_SERVER_ERROR
 } from '~/src/server/common/constants/magic-numbers.js'
+import { config } from '~/src/config/config.js'
 
 const logger = createLogger()
+
+async function renderDaqiPartial(request, h) {
+  const station = request.yar.get('stationdetails')
+  const daqi = station ? await resolveDaqi(station) : {}
+  const durationText = formatDate(
+    daqi.periodDate ?? new Date().toISOString(),
+    'd MMMM yyyy'
+  )
+
+  const partialContent = nunjucks.render('partials/daqitable.njk', {
+    daqi,
+    durationText
+  })
+
+  return h.response(partialContent).code(HTTP_OK)
+}
 
 async function renderLast7DaysPartial(request, h) {
   const station = request.yar.get('stationdetails')
@@ -35,6 +54,13 @@ async function renderLast7DaysPartial(request, h) {
 const rendertablecontroller = {
   handler: async (request, h) => {
     try {
+      if (request.params.year === 'daqi') {
+        if (!config.get('featureFlags.viewDaqiTab')) {
+          return h.response('Not found').code(HTTP_NOT_FOUND)
+        }
+        return await renderDaqiPartial(request, h)
+      }
+
       if (request.params.year === 'last-7-days') {
         return await renderLast7DaysPartial(request, h)
       }
