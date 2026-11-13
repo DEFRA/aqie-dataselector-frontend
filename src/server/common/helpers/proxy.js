@@ -46,7 +46,11 @@ function provideProxy() {
       uri: proxyUrl,
       keepAliveTimeout: 10,
       keepAliveMaxTimeout: 10,
-      allowH2: false
+      allowH2: false,
+      // ProxyAgent builds its proxy and tunnel connectors from these TLS
+      // options, not from the top-level allowH2, so pin them to HTTP/1.1 too.
+      proxyTls: { allowH2: false },
+      requestTls: { allowH2: false }
     }),
     httpAndHttpsProxyAgent: new HttpsProxyAgent(url)
   }
