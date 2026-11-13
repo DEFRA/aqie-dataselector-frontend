@@ -1,11 +1,17 @@
 import { URL } from 'node:url'
-import { ProxyAgent, fetch as undiciFetch } from 'undici'
+import { Agent, ProxyAgent, fetch as undiciFetch } from 'undici'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 
 import { config } from '~/src/config/config.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
+
+// undici 8 (and Node 26's bundled fetch) negotiate HTTP/2 by default. Some
+// upstreams (e.g. the LAQM portal) fail over h2 with
+// "ERR_HTTP2_ERROR Protocol error", so pin outbound requests to HTTP/1.1.
+const directAgent = new Agent({ allowH2: false })
+
 /**
  * @typedef Proxy
  * @property {URL} url
@@ -39,7 +45,8 @@ function provideProxy() {
     proxyAgent: new ProxyAgent({
       uri: proxyUrl,
       keepAliveTimeout: 10,
-      keepAliveMaxTimeout: 10
+      keepAliveMaxTimeout: 10,
+      allowH2: false
     }),
     httpAndHttpsProxyAgent: new HttpsProxyAgent(url)
   }
@@ -55,7 +62,7 @@ function proxyFetch(url, options) {
   const proxy = provideProxy()
 
   if (!proxy) {
-    return fetch(url, options)
+    return undiciFetch(url, { ...options, dispatcher: directAgent })
   }
 
   logger.debug(
