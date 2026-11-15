@@ -86,6 +86,7 @@ The application only injects the GTM script when a user has accepted analytics c
 | ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only, and registers the `/stationdetails/graph-summary` route. When unset or `false`, both are disabled. |
 | `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.   |
+| `SEARCH_ON_MAP_ENABLED`      | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden.  |
 
 Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
@@ -159,6 +160,11 @@ OS_NAMES_DEV_API_KEYS=<your-dev-api-key>
 
 # Google Tag Manager
 GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
+
+# Optional: the "Search on a map" link on the hub page needs the feature flag and the aqie-maps-frontend URL.
+# The URL defaults to https://aqie-maps-frontend.<ENVIRONMENT>.cdp-int.defra.cloud when ENVIRONMENT is set, so locally you need to set it
+MAPS_FRONT_END_URL=http://localhost:3000
+SEARCH_ON_MAP_ENABLED=true
 ```
 
 ### Setup
