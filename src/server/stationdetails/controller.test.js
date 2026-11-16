@@ -65,6 +65,31 @@ describe('stationDetailsController.handler', () => {
     }
 
     jest.clearAllMocks()
+    config.set('featureFlags.viewDaqiTab', true)
+  })
+
+  afterEach(() => {
+    config.set('featureFlags.viewDaqiTab', false)
+  })
+
+  it('should show the year view and skip DAQI when the DAQI tab flag is off', async () => {
+    config.set('featureFlags.viewDaqiTab', false)
+    request.params.download = undefined
+    axios.post.mockResolvedValue({ data: { some: 'data' } })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(axios.get).not.toHaveBeenCalledWith(
+      expect.stringContaining('period=24h')
+    )
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'year',
+        viewDaqiTab: false,
+        daqi: {}
+      })
+    )
   })
 
   it('should render the view for non-download requests', async () => {
@@ -189,7 +214,7 @@ describe('stationDetailsController.handler', () => {
     )
   })
 
-  it('should return empty daqi object when fetchDaqiSummary fails', async () => {
+  it('should return empty daqi object when the station history fetch fails', async () => {
     const stationWithSiteId = {
       id: 'site123',
       siteId: 'UKA00315',
@@ -219,6 +244,73 @@ describe('stationDetailsController.handler', () => {
         daqi: {}
       })
     )
+  })
+
+  describe('what is fetched for the active tab', () => {
+    const stationWithSiteId = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      localSiteID: 'LOCAL1',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5']
+    }
+
+    beforeEach(() => {
+      request.yar.get = jest.fn(
+        (key) =>
+          ({
+            MonitoringstResult: { getmonitoringstation: [stationWithSiteId] },
+            stationdetails: stationWithSiteId,
+            selectedYear: 2024,
+            SiteId: 'site123'
+          })[key]
+      )
+      axios.get.mockResolvedValue({ data: { summary: { pollutants: {} } } })
+      axios.post.mockResolvedValue({ data: { some: 'data' } })
+    })
+
+    it('does not fetch the year table on the DAQI view', async () => {
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.post).not.toHaveBeenCalled()
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.stringContaining('period=24h')
+      )
+      expect(request.yar.set).not.toHaveBeenCalledWith(
+        'tabledata',
+        expect.anything()
+      )
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ activePeriod: 'daqi', tabledata: null })
+      )
+    })
+
+    it('fetches the year table, and not the DAQI history, on a year route', async () => {
+      request.params.year = '2023'
+
+      await stationDetailsController.handler(request, h)
+
+      expect(axios.get).not.toHaveBeenCalled()
+      expect(axios.post).toHaveBeenCalledTimes(1)
+      expect(axios.post.mock.calls[0][1]).toEqual(
+        expect.objectContaining({ siteId: 'LOCAL1', year: '2023' })
+      )
+      expect(request.yar.set).toHaveBeenCalledWith('tabledata', {
+        some: 'data'
+      })
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({
+          activePeriod: 'year',
+          tabledata: { some: 'data' },
+          daqi: {}
+        })
+      )
+    })
   })
 
   it('should include tab-aware graph summary CTA metadata for the monitoring station summary', async () => {
@@ -787,6 +879,11 @@ describe('stationDetailsController tab selection', () => {
       }
     }
     jest.clearAllMocks()
+    config.set('featureFlags.viewDaqiTab', true)
+  })
+
+  afterEach(() => {
+    config.set('featureFlags.viewDaqiTab', false)
   })
 
   it('defaults to the Daily Air Quality Index tab without fetching the year table', async () => {
@@ -795,6 +892,18 @@ describe('stationDetailsController tab selection', () => {
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/index',
       expect.objectContaining({ activePeriod: 'daqi', last24Hours: {} })
+    )
+    expect(axios.post).not.toHaveBeenCalled()
+  })
+
+  it('opens the Last 24 hours tab on its own route, even when the DAQI tab flag is off', async () => {
+    config.set('featureFlags.viewDaqiTab', false)
+
+    await last24HoursController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ activePeriod: 'last24hours', daqi: {} })
     )
     expect(axios.post).not.toHaveBeenCalled()
   })

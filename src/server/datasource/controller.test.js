@@ -53,6 +53,7 @@ jest.mock('~/src/server/data/en/networks.js', () => ({
   }
 }))
 jest.mock('~/src/server/common/helpers/network-helpers.js', () => ({
+  ...jest.requireActual('~/src/server/common/helpers/network-helpers.js'),
   getNonAurnNetworkIdCsv: jest.fn(() => '101,102')
 }))
 jest.mock('~/src/server/customdataset/controller.js', () => ({
@@ -612,6 +613,90 @@ describe('datasourceController POST handler', () => {
         regiontype: 'Region'
       })
     )
+  })
+
+  describe('zones and agglomerations', () => {
+    const groups = [
+      {
+        category: 'Near real-time data from Defra',
+        networks: [
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            pollutantID: '40'
+          },
+          { name: 'Automatic Hydrocarbon Network', pollutantID: '39' }
+        ]
+      },
+      { category: 'Other data from Defra', networks: [{ id: 'ukeap' }] }
+    ]
+
+    const mockSession = (session) =>
+      request.yar.get.mockImplementation((key) => session[key] ?? null)
+
+    const baseSession = {
+      finalyear1: '2023',
+      selectedPollutantID: '40,39',
+      selectedlocation: ['Greater London'],
+      datasourceGroups: groups
+    }
+
+    it('builds Agglomeration params with AgglomerationID', async () => {
+      request.payload = { 'datasource-type': 'AURN' }
+      mockSession({
+        ...baseSession,
+        Location: 'Agglomeration',
+        selectedAgglomerationIDs: 'a1,a2'
+      })
+
+      await datasourceController.handler(request, h)
+
+      expect(invokeStationCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          AgglomerationID: 'a1,a2',
+          RegionId: '',
+          Region: '',
+          regiontype: 'Agglomeration'
+        })
+      )
+    })
+
+    it.each(['Zone', 'Agglomeration'])(
+      'counts only AURN pollutants and skips NON-AURN for %s',
+      async (location) => {
+        request.payload = { 'datasource-type': 'NON-AURN' }
+        mockSession({ ...baseSession, Location: location })
+        invokeStationCount.mockResolvedValue(7)
+
+        await datasourceController.handler(request, h)
+
+        expect(invokeStationCount).toHaveBeenCalledTimes(1)
+        expect(invokeStationCount).toHaveBeenCalledWith(
+          expect.objectContaining({ dataSource: 'AURN', pollutantName: '40' })
+        )
+        expect(request.yar.set).toHaveBeenCalledWith('nooflocationukeap', [])
+        expect(request.yar.set).toHaveBeenCalledWith('nooflocation', 7)
+      }
+    )
+
+    it('uses all selected pollutants for a zone when the AURN network has no pollutant ID', async () => {
+      request.payload = { 'datasource-type': 'AURN' }
+      mockSession({
+        ...baseSession,
+        Location: 'Zone',
+        datasourceGroups: [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [{ name: 'Automatic Urban and Rural Network (AURN)' }]
+          }
+        ]
+      })
+
+      await datasourceController.handler(request, h)
+
+      expect(invokeStationCount).toHaveBeenCalledWith(
+        expect.objectContaining({ pollutantName: '40,39' })
+      )
+    })
   })
 
   it('skips station count when finalyear1 is missing', async () => {

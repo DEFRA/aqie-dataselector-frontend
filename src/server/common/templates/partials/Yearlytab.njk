@@ -8,7 +8,7 @@
     'Trend'
   )}}
 {% endset %}
-{% set isDaqi = activePeriod == 'daqi' %}
+{% set isDaqi = viewDaqiTab and activePeriod == 'daqi' %}
 {% set isLast24Hours = activePeriod == 'last24hours' %}
 {% set isYear = not isDaqi and not isLast24Hours %}
 
@@ -24,7 +24,7 @@
    Every earlier year is complete. Loose == so a string or numeric year both
    match currentYear. The Last 24 hours date stamp is always today's date. #}
 {% if isDaqi %}
-<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{% if daqi.measuredAt %}{{ daqi.measuredAt | formatDate('d MMMM yyyy') }}{% else %}{{ currentdate }} {{ currentYear }}{% endif %}</p>
+<p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{% if daqi.periodDate %}{{ daqi.periodDate | formatDate('d MMMM yyyy') }}{% else %}{{ currentdate }} {{ currentYear }}{% endif %}</p>
 {% elif isLast24Hours %}
 <p id="duration_current" class="govuk-body govuk-!-margin-bottom-3">{{ currentdate }} {{ currentYear }}</p>
 {% elif selectedYear == currentYear %}
@@ -35,6 +35,7 @@
  <span id="selectedYear" class="display-none" >{{selectedYear}}</span>
 <nav class="moj-sub-navigation" aria-label="Sub navigation">  
   <ul class="moj-sub-navigation__list"  role="tablist">
+  {% if viewDaqiTab %}
   <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-daqi" href="/stationdetails/daqi" role="tab"
     {% if isDaqi %}
@@ -43,6 +44,7 @@
     aria-selected="false"
     {% endif %}>{{ daqiContent.tabLabel }}</a>
   </li>
+  {% endif %}
   <li class="moj-sub-navigation__item">
     <a class="moj-sub-navigation__link" id="link-last-24-hours" href="/stationdetails/last-24-hours" role="tab"
     {% if isLast24Hours %}
@@ -56,7 +58,7 @@
   </li>
   {% for year in years %}
     <li class="moj-sub-navigation__item">
- <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="javascript:void(0)" 
+ <a class="moj-sub-navigation__link year-link" id="link-{{ year }}" href="/stationdetails/year/{{ year }}" 
  role="tab" aria-controls="panel-{{ year }}"
  data-year="{{ year }}"
  {% if isYear and year == selectedYear %}
@@ -81,7 +83,7 @@
   {% endif %}
   <noscript>
     <div class="no-js-warning">
-      <p>JavaScript is disabled. You are viewing the default data for the selected year.</p>
+      <p>{% if isDaqi %}{{ daqiContent.noScriptMessage }}{% else %}JavaScript is disabled. You are viewing the default data for the selected year.{% endif %}</p>
     </div>
   </noscript>
 </div>
@@ -92,9 +94,11 @@
        month name as the server-rendered markup. */
     var CURRENT_YEAR = {{ currentYear | dump | safe }};
     var CURRENT_DATE = {{ currentdate | dump | safe }};
-    var DAQI_HEADING = {{ daqiContent.heading | dump | safe }};
     var TODAY_LONG_DATE = {{ (currentdate + ' ' + currentYear) | dump | safe }};
+    {% if viewDaqiTab %}
+    var DAQI_HEADING = {{ daqiContent.heading | dump | safe }};
     var DAQI_NO_DATA_MESSAGE = {{ daqiContent.noDataMessage | dump | safe }};
+    {% endif %}
     var LAST_24_HOURS_HEADING = {{ last24HoursContent.heading | dump | safe }};
     var LAST_24_HOURS_NO_DATA_MESSAGE = {{ last24HoursContent.noDataMessage | dump | safe }};
     var LAST_7_DAYS_HEADING = {{ last7DaysContent.heading | dump | safe }};
@@ -143,11 +147,22 @@
           .catch(error => console.error('Error fetching partial content:', error));
     }
 
-    function updateDaqi() {
-      document.getElementById('airpollution-heading').textContent = DAQI_HEADING;
-      setActiveTab(document.getElementById('link-daqi'));
+    /* Swaps in a server-rendered tab partial. The duration line comes from the
+       partial's hidden value span and is hidden when there is none, so a
+       failed load never leaves the previous tab's date range showing. */
+    function hideDuration() {
+      var durationEl = document.getElementById('duration_current');
+      if (durationEl) {
+        durationEl.textContent = '';
+        durationEl.style.display = 'none';
+      }
+    }
 
-      fetch('/rendertable/daqi')
+    function loadTab(options) {
+      document.getElementById('airpollution-heading').textContent = options.heading;
+      setActiveTab(document.getElementById(options.linkId));
+
+      fetch(options.url)
           .then(response => {
               if (!response.ok) {
                 throw new Error('HTTP ' + response.status);
@@ -156,89 +171,75 @@
           })
           .then(data => {
               document.getElementById('yearlytable-container').innerHTML = data;
-              var durationValue = document.getElementById('daqi-duration-value');
+              var durationValue = document.getElementById(options.durationValueId);
               var durationEl = document.getElementById('duration_current');
-              if (durationEl) {
-                durationEl.textContent = durationValue ? durationValue.textContent : TODAY_LONG_DATE;
-                durationEl.style.display = '';
-              }
+              if (!durationEl) return;
+              var text = durationValue ? durationValue.textContent : options.fallbackDuration;
+              durationEl.textContent = text;
+              durationEl.style.display = text ? '' : 'none';
           })
           .catch(error => {
               console.error('Error fetching partial content:', error);
-              showTableError(DAQI_NO_DATA_MESSAGE);
+              if (options.durationOnError) {
+                var durationEl = document.getElementById('duration_current');
+                if (durationEl) {
+                  durationEl.textContent = options.durationOnError;
+                  durationEl.style.display = '';
+                }
+              } else {
+                hideDuration();
+              }
+              showTableError(options.noDataMessage);
           });
     }
 
+    {% if viewDaqiTab %}
+    function updateDaqi() {
+      loadTab({
+        heading: DAQI_HEADING,
+        linkId: 'link-daqi',
+        url: '/rendertable/daqi',
+        durationValueId: 'daqi-duration-value',
+        fallbackDuration: TODAY_LONG_DATE,
+        noDataMessage: DAQI_NO_DATA_MESSAGE
+      });
+    }
+    {% endif %}
+
+    /* The Last 24 hours date stamp is today's date whether or not the table loads. */
     function updateLast24Hours() {
-      document.getElementById('airpollution-heading').textContent = LAST_24_HOURS_HEADING;
-      setActiveTab(document.getElementById('link-last-24-hours'));
-
-      // The date stamp is today's date whether or not the table loads.
-      var durationEl = document.getElementById('duration_current');
-      if (durationEl) {
-        durationEl.textContent = TODAY_LONG_DATE;
-        durationEl.style.display = '';
-      }
-
-      fetch('/rendertable/last-24-hours')
-          .then(response => {
-              if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-              }
-              return response.text();
-          })
-          .then(data => {
-              document.getElementById('yearlytable-container').innerHTML = data;
-              var durationValue = document.getElementById('last24hours-duration-value');
-              if (durationEl && durationValue) {
-                durationEl.textContent = durationValue.textContent;
-              }
-          })
-          .catch(error => {
-              console.error('Error fetching partial content:', error);
-              showTableError(LAST_24_HOURS_NO_DATA_MESSAGE);
-          });
+      loadTab({
+        heading: LAST_24_HOURS_HEADING,
+        linkId: 'link-last-24-hours',
+        url: '/rendertable/last-24-hours',
+        durationValueId: 'last24hours-duration-value',
+        fallbackDuration: TODAY_LONG_DATE,
+        durationOnError: TODAY_LONG_DATE,
+        noDataMessage: LAST_24_HOURS_NO_DATA_MESSAGE
+      });
     }
 
     function updateLast7Days() {
-      document.getElementById('airpollution-heading').textContent = LAST_7_DAYS_HEADING;
-      setActiveTab(document.getElementById('link-last-7-days'));
-
-      fetch('/rendertable/last-7-days')
-          .then(response => {
-              if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-              }
-              return response.text();
-          })
-          .then(data => {
-              document.getElementById('yearlytable-container').innerHTML = data;
-              var durationValue = document.getElementById('last7days-duration-value');
-              var durationEl = document.getElementById('duration_current');
-              if (durationEl) {
-                durationEl.textContent = durationValue ? durationValue.textContent : '';
-                durationEl.style.display = durationValue ? '' : 'none';
-              }
-          })
-          .catch(error => {
-              console.error('Error fetching partial content:', error);
-              var durationEl = document.getElementById('duration_current');
-              if (durationEl) {
-                durationEl.textContent = '';
-                durationEl.style.display = 'none';
-              }
-              showTableError(LAST_7_DAYS_NO_DATA_MESSAGE);
-          });
+      loadTab({
+        heading: LAST_7_DAYS_HEADING,
+        linkId: 'link-last-7-days',
+        url: '/rendertable/last-7-days',
+        durationValueId: 'last7days-duration-value',
+        fallbackDuration: '',
+        noDataMessage: LAST_7_DAYS_NO_DATA_MESSAGE
+      });
     }
 
     /* Delegated listener for DAQI, Last 24 hours, Last 7 days and year tab clicks to survive any DOM updates */
     document.querySelector('.moj-sub-navigation__list')?.addEventListener('click', (e) => {
+      {% if viewDaqiTab %}
       const daqiLink = e.target.closest('#link-daqi');
       if (daqiLink) {
         e.preventDefault();
         updateDaqi();
         return;
       }
+      {% endif %}
 
       const last24HoursLink = e.target.closest('#link-last-24-hours');
       if (last24HoursLink) {

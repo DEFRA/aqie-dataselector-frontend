@@ -17,105 +17,204 @@ function render(context) {
   env.addFilter('formatDate', formatDate)
   return cheerio.load(
     env.render('partials/Yearlytab.njk', {
-      years: [2026, 2025],
+      years: [2026, 2025, 2024],
       currentYear: 2026,
-      currentdate: '3 November',
-      selectedYear: 2026,
+      currentdate: '5 November',
       daqi: {},
-      last24Hours: {},
-      tabledata: null,
+      viewDaqiTab: true,
       ...context
     })
   )
 }
 
-const tabs = ($) =>
-  $('.moj-sub-navigation__link')
-    .map((_, el) => $(el).text().trim())
-    .get()
+describe('Yearlytab.njk', () => {
+  describe('DAQI tab feature flag', () => {
+    it('shows the DAQI tab and its script when the flag is on', () => {
+      const $ = render({ activePeriod: 'daqi' })
 
-const currentTab = ($) =>
-  $('.moj-sub-navigation__link[aria-current="page"]')
-    .map((_, el) => $(el).text().trim())
-    .get()
+      expect($('#link-daqi')).toHaveLength(1)
+      expect($('script').html()).toContain('updateDaqi')
+    })
 
-describe('Yearlytab.njk period tabs', () => {
-  it('lists Daily Air Quality Index, Last 24 hours, Last 7 days, then the years', () => {
-    const $ = render({ activePeriod: 'daqi' })
+    it('hides the DAQI tab and its script when the flag is off', () => {
+      const $ = render({
+        viewDaqiTab: false,
+        activePeriod: 'year',
+        selectedYear: 2025
+      })
 
-    expect(tabs($)).toEqual([
-      'Daily Air Quality Index',
-      'Last 24 hours',
-      'Last 7 days',
-      '2026',
-      '2025'
-    ])
+      expect($('#link-daqi')).toHaveLength(0)
+      expect($('script').html()).not.toContain('updateDaqi')
+      expect($('#link-last-7-days')).toHaveLength(1)
+    })
+
+    it('ignores a daqi active period when the flag is off', () => {
+      const $ = render({ viewDaqiTab: false, activePeriod: 'daqi' })
+
+      expect($('#airpollution-heading').text()).toContain(
+        'Air pollution levels'
+      )
+    })
   })
 
-  it('links the Last 24 hours tab to its own page', () => {
-    const $ = render({ activePeriod: 'daqi' })
+  describe('year tabs', () => {
+    it.each([
+      ['DAQI view', { activePeriod: 'daqi' }],
+      ['year view', { activePeriod: 'year', selectedYear: 2025 }]
+    ])(
+      'links each year to /stationdetails/year/{year} on the %s so they work without JavaScript',
+      (_name, context) => {
+        const $ = render(context)
 
-    expect($('#link-last-24-hours').attr('href')).toBe(
-      '/stationdetails/last-24-hours'
-    )
-  })
-
-  describe('when the Last 24 hours tab is active', () => {
-    const context = {
-      activePeriod: 'last24hours',
-      last24Hours: {
-        pollutants: [
-          {
-            pollutantName: 'PM2.5',
-            dataCapturePercentage: 100,
-            lowDataCapture: false,
-            average: 12,
-            dailyCount: 'no legal limit',
-            hourlyCount: 'no legal limit'
-          }
-        ]
+        expect(
+          $('.year-link')
+            .map((_i, el) => $(el).attr('href'))
+            .get()
+        ).toEqual([
+          '/stationdetails/year/2026',
+          '/stationdetails/year/2025',
+          '/stationdetails/year/2024'
+        ])
+        expect($('a[href^="javascript:"]')).toHaveLength(0)
       }
+    )
+
+    it('keeps the data-year attribute the click handler reads', () => {
+      const $ = render({ activePeriod: 'daqi' })
+
+      expect($('#link-2025').attr('data-year')).toBe('2025')
+    })
+  })
+
+  describe('DAQI date', () => {
+    it('shows the day the measured hour began, not the day its stamp falls on', () => {
+      // The hour ending at local midnight began the previous day.
+      const midnight = new Date(2026, 9, 31, 0, 0).toISOString()
+      const periodDate = new Date(2026, 9, 30, 23, 0).toISOString()
+      const $ = render({
+        activePeriod: 'daqi',
+        daqi: { measuredAt: midnight, periodDate, pollutants: [] }
+      })
+
+      expect($('#duration_current').text()).toBe('30 October 2026')
+    })
+
+    it('falls back to the current date when there is no measurement', () => {
+      const $ = render({ activePeriod: 'daqi', daqi: {} })
+
+      expect($('#duration_current').text()).toBe('5 November 2026')
+    })
+  })
+
+  describe('no-JavaScript message', () => {
+    it('does not claim to show a year on the DAQI view', () => {
+      const $ = render({ activePeriod: 'daqi', selectedYear: 2025 })
+
+      const message = $('noscript').text()
+      expect(message).toContain('Daily Air Quality Index')
+      expect(message).not.toContain('selected year')
+    })
+
+    it('keeps the selected-year message on a year view', () => {
+      const $ = render({ activePeriod: 'year', selectedYear: 2025 })
+
+      expect($('noscript').text()).toContain('selected year')
+    })
+  })
+
+  describe('scripts', () => {
+    it('declares the toggletip binding and getAPIstn_details1 once', () => {
+      const $ = render({
+        activePeriod: 'year',
+        selectedYear: 2025,
+        tabledata: null
+      })
+      const scripts = $('script')
+        .map((_i, el) => $(el).html())
+        .get()
+        .join('\n')
+
+      expect(scripts.match(/function getAPIstn_details1/g)).toHaveLength(1)
+      expect(scripts.match(/aqTableToggletipsBound = true/g)).toHaveLength(1)
+    })
+  })
+
+  describe('Last 24 hours tab', () => {
+    const last24Hours = {
+      pollutants: [
+        {
+          pollutantName: 'PM2.5',
+          dataCapturePercentage: 100,
+          lowDataCapture: false,
+          average: 12,
+          dailyCount: 'no legal limit',
+          hourlyCount: 'no legal limit'
+        }
+      ]
     }
+    const tabs = ($) =>
+      $('.moj-sub-navigation__link')
+        .map((_i, el) => $(el).text().trim())
+        .get()
+    const currentTab = ($) =>
+      $('.moj-sub-navigation__link[aria-current="page"]')
+        .map((_i, el) => $(el).text().trim())
+        .get()
 
-    it("sets the heading to 'Air pollution summary: last 24 hours'", () => {
-      const $ = render(context)
+    it('sits between the DAQI and Last 7 days tabs and links to its own page', () => {
+      const $ = render({ activePeriod: 'daqi' })
 
-      expect($('#airpollution-heading').text()).toBe(
-        'Air pollution summary: last 24 hours'
+      expect(tabs($)).toEqual([
+        'Daily Air Quality Index',
+        'Last 24 hours',
+        'Last 7 days',
+        '2026',
+        '2025',
+        '2024'
+      ])
+      expect($('#link-last-24-hours').attr('href')).toBe(
+        '/stationdetails/last-24-hours'
       )
     })
 
-    it('shows the current date as the date stamp', () => {
-      const $ = render(context)
+    it('is shown when the DAQI tab flag is off', () => {
+      const $ = render({ viewDaqiTab: false, activePeriod: 'last24hours' })
 
-      expect($('#duration_current').text()).toBe('3 November 2026')
+      expect($('#link-daqi')).toHaveLength(0)
+      expect($('#link-last-24-hours')).toHaveLength(1)
     })
 
-    it('marks only the Last 24 hours tab as current', () => {
-      const $ = render(context)
+    describe('when active', () => {
+      const context = { activePeriod: 'last24hours', last24Hours }
 
-      expect(currentTab($)).toEqual(['Last 24 hours'])
-      expect($('#link-last-24-hours').attr('aria-selected')).toBe('true')
+      it("sets the heading to 'Air pollution summary: last 24 hours'", () => {
+        const $ = render(context)
+
+        expect($('#airpollution-heading').text()).toBe(
+          'Air pollution summary: last 24 hours'
+        )
+      })
+
+      it('shows the current date as the date stamp', () => {
+        const $ = render(context)
+
+        expect($('#duration_current').text()).toBe('5 November 2026')
+      })
+
+      it('marks only the Last 24 hours tab as current', () => {
+        const $ = render({ ...context, selectedYear: 2025 })
+
+        expect(currentTab($)).toEqual(['Last 24 hours'])
+        expect($('#link-last-24-hours').attr('aria-selected')).toBe('true')
+      })
+
+      it('renders the 24 hour table, not the year or DAQI table', () => {
+        const $ = render(context)
+
+        expect($('#last24hourstable')).toHaveLength(1)
+        expect($('#daqitable')).toHaveLength(0)
+        expect($('#aqitable')).toHaveLength(0)
+      })
     })
-
-    it('renders the 24 hour table, not the year or DAQI table', () => {
-      const $ = render(context)
-
-      expect($('#last24hourstable')).toHaveLength(1)
-      expect($('#daqitable')).toHaveLength(0)
-      expect($('#aqitable')).toHaveLength(0)
-    })
-  })
-
-  it('marks only the Daily Air Quality Index tab as current when it is active', () => {
-    const $ = render({ activePeriod: 'daqi' })
-
-    expect(currentTab($)).toEqual(['Daily Air Quality Index'])
-  })
-
-  it('marks only the selected year as current on the year tab', () => {
-    const $ = render({ activePeriod: 'year', selectedYear: 2025 })
-
-    expect(currentTab($)).toEqual(['2025'])
   })
 })

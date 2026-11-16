@@ -113,3 +113,70 @@ describe('last7daystable.njk low data capture behaviour', () => {
     ).toBe('-')
   })
 })
+
+describe('last7daystable.njk hourly exceedance toggletips', () => {
+  it.each([
+    [
+      'Nitrogen dioxide',
+      'Hourly nitrogen dioxide levels must not go above 200 micrograms per cubic metre (µg/m³) more than 18 times in a calendar year (when rounded to a whole number).'
+    ],
+    [
+      'Sulphur dioxide',
+      'Hourly sulphur dioxide levels must not go above 350 micrograms per cubic metre (µg/m³) more than 24 times in a calendar year (when rounded to a whole number).'
+    ]
+  ])('shows the shared %s copy', (pollutantName, text) => {
+    const $ = render({
+      pollutants: [row({ pollutantName, hourlyCount: 0 })]
+    })
+
+    expect(
+      $('#last7daystable tbody .defra-aq-levels-table__cell--hourly').html()
+    ).toContain(text)
+  })
+})
+
+describe('last7daystable.njk page content', () => {
+  const HINT =
+    'The pollution levels shown are measured against UK legal limits.'
+
+  it('shows the not-verified notice above the table', () => {
+    const $ = render({ pollutants: [row()] })
+
+    expect($('.govuk-inset-text.not-verified').text().trim()).toBe(
+      'Data has not been checked and verified'
+    )
+  })
+
+  it('shows the legal limits hint once, below the table, with its own id', () => {
+    const $ = render({ pollutants: [row()] })
+    const hint = $('#last7days-hint')
+
+    expect(hint).toHaveLength(1)
+    expect(hint.text().trim()).toBe(HINT)
+    expect(hint.hasClass('govuk-hint')).toBe(true)
+    expect($('#daqi-hint')).toHaveLength(0)
+    expect($('#last7daystable').parent().next().attr('id')).toBe(
+      'last7days-hint'
+    )
+  })
+
+  it('renders the noMapping message without the table or hint', () => {
+    const $ = render({ noMapping: true })
+
+    expect($('.govuk-inset-text').text().trim()).toBe(
+      'The last 7 days view is not available for this station.'
+    )
+    expect($('#last7daystable')).toHaveLength(0)
+    expect($('#last7days-hint')).toHaveLength(0)
+  })
+
+  it('renders the noData message without the table or hint when there are no pollutants', () => {
+    const $ = render({ pollutants: [] })
+
+    expect($('.govuk-inset-text').text().trim()).toBe(
+      'Could not load data for the last 7 days.'
+    )
+    expect($('#last7daystable')).toHaveLength(0)
+    expect($('#last7days-hint')).toHaveLength(0)
+  })
+})

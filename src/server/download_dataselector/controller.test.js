@@ -485,6 +485,49 @@ describe('downloadDataselectorController', () => {
       )
     })
 
+    test.each(['Zone', 'Agglomeration'])(
+      'shows only the AURN network for %s + AURN and another near real-time network',
+      (location) => {
+        session.Location = location
+        session.downloadDatasourceCategoryType = 'near-realtime-only'
+        session.datasourceGroups = [
+          {
+            category: 'Near real-time data from Defra',
+            networks: [
+              { name: 'Automatic Hydrocarbon Network' },
+              { name: 'Automatic Urban and Rural Network (AURN)' }
+            ]
+          }
+        ]
+        session.nearRealtimeStationCounts = [
+          {
+            name: 'Automatic Hydrocarbon Network',
+            pollutantID: '20',
+            isAurn: false,
+            count: 3
+          },
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            pollutantID: '10',
+            isAurn: true,
+            count: 5
+          }
+        ]
+
+        const result = downloadDataselectorController.handler(request, h)
+
+        expect(result.view).toBe('download_dataselector/index')
+        expect(result.model.nearRealtimeNetworkCounts).toEqual([
+          {
+            name: 'Automatic Urban and Rural Network (AURN)',
+            isAurn: true,
+            pollutantID: '10',
+            count: 5
+          }
+        ])
+      }
+    )
+
     test('renders time period and location error for Zone + AURN only when no stations are available', () => {
       session.downloadDatasourceCategoryType = 'near-realtime-only'
       session.nooflocation = 0

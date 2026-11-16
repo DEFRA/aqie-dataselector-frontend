@@ -82,6 +82,35 @@ export async function invokeDownload(apiParameters, logger) {
     }
   }
 }
+const NO_LEGAL_LIMIT = 'no legal limit'
+
+/**
+ * The yearly table API returns 'n/a' for pollutants with no daily or hourly
+ * legal limit; show 'no legal limit' instead. Anything else is left untouched.
+ * @param {any} tabledata
+ * @returns {any}
+ */
+export function labelNoLegalLimit(tabledata) {
+  if (!Array.isArray(tabledata)) {
+    return tabledata
+  }
+
+  const relabel = (count) =>
+    typeof count === 'string' && count.trim().toLowerCase() === 'n/a'
+      ? NO_LEGAL_LIMIT
+      : count
+
+  return tabledata.map((row) =>
+    row && typeof row === 'object'
+      ? {
+          ...row,
+          dailyCount: relabel(row.dailyCount),
+          hourlyCount: relabel(row.hourlyCount)
+        }
+      : row
+  )
+}
+
 /**
  * Calls the table data API.
  * @param {object} params
@@ -100,7 +129,7 @@ export async function invokeTable(params) {
         },
         json: true
       })
-      return payload
+      return labelNoLegalLimit(payload)
     } catch (error) {
       loggers.error(`InvokeTable API error (local): ${error.message}`)
       return null
@@ -109,7 +138,7 @@ export async function invokeTable(params) {
     // dev / test / prod environments: use axios with config URL
     try {
       const response = await axios.post(config.get('Table_URL'), params)
-      return response.data
+      return labelNoLegalLimit(response.data)
     } catch (error) {
       return error
     }
@@ -166,18 +195,19 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
- * Fetches a station's hourly pollutant history for one period from
- * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
- * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
- * `summary` block carries the figures the tabs show (average, data capture,
- * exceedances, DAQI); they are calculated by aqie-back-end, not here.
+ * Fetches a station's pollutant history from aqie-back-end's
+ * GET /monitoringStationHistory (requires the AURN-form siteId, e.g.
+ * "UKA00315" - the short localSiteID form 400s). The response's `summary`
+ * block carries the figures the DAQI and 7-day tables show (DAQI index,
+ * average, data capture, exceedances); they are calculated by aqie-back-end,
+ * not here.
  * @param {{ siteId: string, period: '24h'|'7d' }} params
  * @returns {Promise<{siteId: string, period: string, from: string, to: string,
  *   truncated: boolean,
  *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
  *   summary?: {daqiIndex: number|null, pollutants: Record<string, object>}}|null>}
  */
-async function fetchStationHistory({ siteId, period }) {
+export async function fetchStationHistory({ siteId, period }) {
   const result = await getJson({
     devUrlKey: 'monitoringStationHistoryDevUrl',
     urlKey: 'monitoringStationHistoryUrl',
@@ -186,35 +216,6 @@ async function fetchStationHistory({ siteId, period }) {
     label: 'Monitoring station history API'
   })
   return result ?? null
-}
-
-/**
- * The station's last 7 days of history, for the "Last 7 days" tab.
- * @param {{ siteId: string }} params
- * @returns {ReturnType<typeof fetchStationHistory>}
- */
-export function fetchLast7DaysSummary({ siteId }) {
-  return fetchStationHistory({ siteId, period: '7d' })
-}
-
-/**
- * The station's last 24 hours of history, for the "Last 24 hours" tab.
- * @param {{ siteId: string }} params
- * @returns {ReturnType<typeof fetchStationHistory>}
- */
-export function fetchLast24HoursSummary({ siteId }) {
-  return fetchStationHistory({ siteId, period: '24h' })
-}
-
-/**
- * The station's last 24 hours of history, whose
- * `summary.pollutants[code].daqi` block carries the current DAQI
- * concentration and 1-10 index for each pollutant, for the DAQI tab.
- * @param {{ siteId: string }} params
- * @returns {ReturnType<typeof fetchStationHistory>}
- */
-export function fetchDaqiSummary({ siteId }) {
-  return fetchStationHistory({ siteId, period: '24h' })
 }
 
 /**
