@@ -76,8 +76,8 @@ describe('homeController', () => {
 
     homeController.handler(mockRequest, mockH)
 
-    // Verify all 11 session variables are set correctly
-    expect(mockRequest.yar.set).toHaveBeenCalledTimes(11)
+    // Verify all 12 session variables are set correctly
+    expect(mockRequest.yar.set).toHaveBeenCalledTimes(12)
 
     // Verify the order of calls
     expect(mockRequest.yar.set).toHaveBeenNthCalledWith(1, 'searchQuery', null)
@@ -118,6 +118,11 @@ describe('homeController', () => {
       11,
       'selectedlocation',
       ''
+    )
+    expect(mockRequest.yar.set).toHaveBeenNthCalledWith(
+      12,
+      'mapReturnSiteId',
+      null
     )
   })
 

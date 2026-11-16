@@ -1,5 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
+import { getMapReturnUrl } from '~/src/server/common/helpers/map-url.js'
 import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
@@ -51,6 +52,10 @@ function resolveStationId(request) {
  * @returns {string}
  */
 function resolveStationHrefq(request) {
+  const mapReturnUrl = getMapReturnUrl(request)
+  if (mapReturnUrl) {
+    return mapReturnUrl
+  }
   return request.yar.get('nooflocation') === 'single'
     ? `/multiplelocations`
     : `/location`

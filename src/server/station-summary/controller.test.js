@@ -55,6 +55,10 @@ describe('stationSummaryController.handler', () => {
     expect(request.yar.set).toHaveBeenCalledWith('nooflocation', 'single')
     expect(request.yar.set).toHaveBeenCalledWith('deepLinkTrusted', true)
     expect(request.yar.set).toHaveBeenCalledWith(
+      'mapReturnSiteId',
+      'TestStation'
+    )
+    expect(request.yar.set).toHaveBeenCalledWith(
       'selectedYear',
       expect.any(String)
     )

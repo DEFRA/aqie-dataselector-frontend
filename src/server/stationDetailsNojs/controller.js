@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { getMapReturnUrl } from '~/src/server/common/helpers/map-url.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
   parseDateFormat,
@@ -89,9 +90,10 @@ function buildViewData(request, stationDetails, mapLocation, dateContext) {
     selectedYear: request.yar.get('selectedYear'),
     tabledata: request.yar.get('tabledata'),
     hrefq:
-      request.yar.get('nooflocation') === 'single'
+      getMapReturnUrl(request) ??
+      (request.yar.get('nooflocation') === 'single'
         ? `/multiplelocations`
-        : `/location/${request?.yar?.get('locationID')}`
+        : `/location/${request?.yar?.get('locationID')}`)
   }
 }
 

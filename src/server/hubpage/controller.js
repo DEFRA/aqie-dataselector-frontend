@@ -5,22 +5,11 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
-import { config } from '~/src/config/config.js'
-
-/**
- * Returns the map page URL for this environment, or null when the feature is
- * off or the maps service is not configured, so the link is hidden instead of broken.
- */
-function buildMapUrl() {
-  if (!config.get('featureFlags.searchOnMap')) {
-    return null
-  }
-  const baseUrl = config.get('mapsFrontEnd.url')
-  return baseUrl ? `${baseUrl.replace(/\/+$/, '')}/map` : null
-}
+import { getMapUrlIfEnabled } from '~/src/server/common/helpers/map-url.js'
 
 export const hubController = {
   handler(request, h) {
+    request.yar.set('mapReturnSiteId', null)
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -60,7 +49,7 @@ export const hubController = {
     return h.view('hubpage/index', {
       pageTitle: englishNew.hub.pageTitle,
       texts: englishNew.hub.texts,
-      mapUrl: buildMapUrl()
+      mapUrl: getMapUrlIfEnabled()
     })
   }
 }

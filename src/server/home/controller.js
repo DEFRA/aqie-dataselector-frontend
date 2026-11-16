@@ -22,6 +22,7 @@ export const homeController = {
     request.yar.set('selectedpollutant', '')
     request.yar.set('selectedyear', '')
     request.yar.set('selectedlocation', '')
+    request.yar.set('mapReturnSiteId', null)
     return h.view('home/index', {
       pageTitle: home.pageTitle,
       heading: home.heading,
