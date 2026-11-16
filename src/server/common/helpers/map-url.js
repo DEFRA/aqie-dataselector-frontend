@@ -19,6 +19,16 @@ function getMapUrlIfEnabled() {
 }
 
 /**
+ * POST target for the station page's "View map of nearby monitoring stations"
+ * form, or null while the feature is off or no maps URL is configured.
+ * @returns {string|null}
+ */
+function getMapViewUrlIfEnabled() {
+  const mapUrl = getMapUrlIfEnabled()
+  return mapUrl ? `${mapUrl}/view` : null
+}
+
+/**
  * Map URL to use as a station page's Back link, only while the user is still
  * on the station they opened from the map (set by /station-summary).
  * @param {object} request
@@ -32,4 +42,9 @@ function getMapReturnUrl(request) {
   return null
 }
 
-export { getMapUrl, getMapUrlIfEnabled, getMapReturnUrl }
+export {
+  getMapUrl,
+  getMapUrlIfEnabled,
+  getMapViewUrlIfEnabled,
+  getMapReturnUrl
+}

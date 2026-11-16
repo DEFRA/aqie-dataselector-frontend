@@ -425,6 +425,48 @@ describe('stationDetailsController.handler', () => {
     expect(result).toBe(h.view.mock.results[0].value)
   })
 
+  it('should link Back to the map when the station was opened from the map', async () => {
+    const originalMapsUrl = config.get('mapsFrontEnd.url')
+    const originalFlag = config.get('featureFlags.searchOnMap')
+    config.set('mapsFrontEnd.url', 'https://maps.example')
+    config.set('featureFlags.searchOnMap', true)
+    request.method = 'get'
+    request.payload = undefined
+    request.headers = {}
+    const station = {
+      id: 'site123',
+      region: 'region1',
+      siteType: 'urban',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['NO2', 'PM10']
+    }
+    request.yar.get = jest.fn((key) => {
+      const session = {
+        MonitoringstResult: { getmonitoringstation: [station] },
+        stationdetails: station,
+        selectedYear: 2024,
+        nooflocation: 'single',
+        SiteId: 'site123',
+        mapReturnSiteId: 'site123',
+        deepLinkTrusted: true
+      }
+      return session[key]
+    })
+
+    await stationDetailsController.handler(request, h)
+    config.set('mapsFrontEnd.url', originalMapsUrl)
+    config.set('featureFlags.searchOnMap', originalFlag)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        hrefq: 'https://maps.example/map',
+        mapViewUrl: 'https://maps.example/map/view'
+      })
+    )
+  })
+
   it('should return 404 if monitoring result is missing', async () => {
     request.yar.get = jest.fn((key) => {
       const session = {
@@ -787,6 +829,23 @@ describe('last7DaysController.handler', () => {
       })
     )
     expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('passes the nearby stations map URL when search on a map is enabled', async () => {
+    const originalMapsUrl = config.get('mapsFrontEnd.url')
+    const originalFlag = config.get('featureFlags.searchOnMap')
+    config.set('mapsFrontEnd.url', 'https://maps.example')
+    config.set('featureFlags.searchOnMap', true)
+    axios.get.mockRejectedValue(new Error('fail'))
+
+    await last7DaysController.handler(request, h)
+    config.set('mapsFrontEnd.url', originalMapsUrl)
+    config.set('featureFlags.searchOnMap', originalFlag)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/last-7-days',
+      expect.objectContaining({ mapViewUrl: 'https://maps.example/map/view' })
+    )
   })
 
   it('shows the no-mapping state when the station has no AURN siteId', async () => {

@@ -2,6 +2,7 @@ import { config } from '~/src/config/config.js'
 import {
   getMapUrl,
   getMapUrlIfEnabled,
+  getMapViewUrlIfEnabled,
   getMapReturnUrl
 } from '~/src/server/common/helpers/map-url.js'
 
@@ -41,6 +42,20 @@ describe('map-url helpers', () => {
       config.set('mapsFrontEnd.url', 'https://maps.example')
       config.set('featureFlags.searchOnMap', true)
       expect(getMapUrlIfEnabled()).toBe('https://maps.example/map')
+    })
+  })
+
+  describe('getMapViewUrlIfEnabled', () => {
+    it('returns null when the flag is off', () => {
+      config.set('mapsFrontEnd.url', 'https://maps.example')
+      config.set('featureFlags.searchOnMap', false)
+      expect(getMapViewUrlIfEnabled()).toBeNull()
+    })
+
+    it('returns the map view POST target when the flag is on', () => {
+      config.set('mapsFrontEnd.url', 'https://maps.example/')
+      config.set('featureFlags.searchOnMap', true)
+      expect(getMapViewUrlIfEnabled()).toBe('https://maps.example/map/view')
     })
   })
 
