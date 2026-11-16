@@ -1,5 +1,6 @@
 import { config } from '~/src/config/config.js'
 import {
+  getMapsFrontEndBaseUrl,
   getMapUrl,
   getMapUrlIfEnabled,
   getMapViewUrlIfEnabled,
@@ -17,6 +18,18 @@ describe('map-url helpers', () => {
   afterEach(() => {
     config.set('mapsFrontEnd.url', originalUrl)
     config.set('featureFlags.searchOnMap', originalFlag)
+  })
+
+  describe('getMapsFrontEndBaseUrl', () => {
+    it('strips every trailing slash', () => {
+      config.set('mapsFrontEnd.url', 'https://maps.example///')
+      expect(getMapsFrontEndBaseUrl()).toBe('https://maps.example')
+    })
+
+    it('returns null when the URL is only slashes', () => {
+      config.set('mapsFrontEnd.url', '//')
+      expect(getMapsFrontEndBaseUrl()).toBeNull()
+    })
   })
 
   describe('getMapUrl', () => {

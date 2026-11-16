@@ -3,10 +3,10 @@
 
 import Blankie from 'blankie'
 import { cspDirectives } from '~/src/server/common/constants/csp-directives.js'
-import { config } from '~/src/config/config.js'
+import { getMapsFrontEndBaseUrl } from '~/src/server/common/helpers/map-url.js'
 
 // The station page's "View map of nearby monitoring stations" form posts to aqie-maps-frontend
-const mapsFrontEndUrl = config.get('mapsFrontEnd.url')?.replace(/\/+$/, '')
+const mapsFrontEndUrl = getMapsFrontEndBaseUrl()
 
 export const contentSecurityPolicy = {
   plugin: Blankie,

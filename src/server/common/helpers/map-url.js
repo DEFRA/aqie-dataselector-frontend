@@ -1,13 +1,30 @@
 import { config } from '~/src/config/config.js'
 
 /**
+ * The configured aqie-maps-frontend origin without trailing slashes, or null
+ * when the maps service is not configured. Trimmed with a loop rather than a
+ * regex, to avoid a backtracking-prone pattern.
+ * @returns {string|null}
+ */
+function getMapsFrontEndBaseUrl() {
+  let baseUrl = config.get('mapsFrontEnd.url')
+  if (!baseUrl) {
+    return null
+  }
+  while (baseUrl.endsWith('/')) {
+    baseUrl = baseUrl.slice(0, -1)
+  }
+  return baseUrl || null
+}
+
+/**
  * Returns the map page URL for this environment, or null when the maps
  * service is not configured.
  * @returns {string|null}
  */
 function getMapUrl() {
-  const baseUrl = config.get('mapsFrontEnd.url')
-  return baseUrl ? `${baseUrl.replace(/\/+$/, '')}/map` : null
+  const baseUrl = getMapsFrontEndBaseUrl()
+  return baseUrl ? `${baseUrl}/map` : null
 }
 
 /**
@@ -43,6 +60,7 @@ function getMapReturnUrl(request) {
 }
 
 export {
+  getMapsFrontEndBaseUrl,
   getMapUrl,
   getMapUrlIfEnabled,
   getMapViewUrlIfEnabled,
