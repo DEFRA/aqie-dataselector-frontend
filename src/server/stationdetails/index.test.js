@@ -54,4 +54,12 @@ describe('stationdetails routes', () => {
 
     expect(registeredRoutes().map(({ path }) => path)).toContain(DAQI_PATH)
   })
+
+  it('registers the Last 24 hours page whatever the DAQI tab flag', () => {
+    config.set('featureFlags.viewDaqiTab', false)
+
+    expect(registeredRoutes().map(({ path }) => path)).toContain(
+      '/stationdetails/last-24-hours'
+    )
+  })
 })

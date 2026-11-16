@@ -1,5 +1,6 @@
 import {
   stationDetailsController,
+  last24HoursController,
   last7DaysController,
   graphSummaryController,
   buildViewGraphSummary
@@ -682,6 +683,247 @@ describe('stationDetailsController.handler', () => {
       'stationdetails/index',
       expect.objectContaining({
         maptoggletips: null
+      })
+    )
+  })
+})
+
+describe('last24HoursController.handler', () => {
+  let h, request, station
+
+  const summary = (periodAverage, hourlyExceedances = null) => ({
+    periodAverage,
+    dataCapture: {
+      validHours: 24,
+      expectedHours: 24,
+      capturePercentage: 100,
+      isLowDataCapture: false
+    },
+    hourlyExceedances,
+    dailyExceedances: null
+  })
+
+  beforeEach(() => {
+    h = {
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+
+    station = {
+      id: 'site123',
+      siteId: 'UKA00315',
+      region: 'region1',
+      siteType: 'Urban Traffic',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5', 'Nitrogen dioxide']
+    }
+
+    request = {
+      method: 'get',
+      params: {},
+      payload: undefined,
+      headers: { referer: 'http://localhost:3010/stationdetails' },
+      info: { host: 'localhost:3010' },
+      yar: {
+        get: jest.fn((key) => {
+          const session = {
+            MonitoringstResult: { getmonitoringstation: [station] },
+            stationdetails: station,
+            selectedYear: 2024,
+            nooflocation: 'multiple',
+            SiteId: 'site123'
+          }
+          return session[key]
+        }),
+        set: jest.fn()
+      }
+    }
+
+    jest.clearAllMocks()
+  })
+
+  it('renders the station details view on the last 24 hours tab with the 24 hour figures', async () => {
+    axios.get.mockResolvedValue({
+      data: {
+        from: '2026-11-02T12:00:00.000Z',
+        to: '2026-11-03T11:00:00.000Z',
+        pollutants: {},
+        summary: {
+          pollutants: { PM25: summary(11.6), NO2: summary(150.2, 1) }
+        }
+      }
+    })
+
+    const result = await last24HoursController.handler(request, h)
+
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining('period=24h')
+    )
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining('siteId=UKA00315')
+    )
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'last24hours',
+        daqi: {},
+        last24Hours: expect.objectContaining({
+          pollutants: [
+            expect.objectContaining({
+              pollutantName: 'PM2.5',
+              average: 12,
+              dataCapturePercentage: 100,
+              hourlyCount: 'no legal limit'
+            }),
+            expect.objectContaining({
+              pollutantName: 'Nitrogen dioxide',
+              average: 150,
+              hourlyCount: 1
+            })
+          ]
+        })
+      })
+    )
+    expect(result).toBe(h.view.mock.results[0].value)
+  })
+
+  it('does not fetch the year table for a tab that does not show it', async () => {
+    axios.get.mockResolvedValue({ data: { pollutants: {}, summary: {} } })
+
+    await last24HoursController.handler(request, h)
+
+    expect(axios.post).not.toHaveBeenCalled()
+    expect(request.yar.set).not.toHaveBeenCalledWith(
+      'tabledata',
+      expect.anything()
+    )
+  })
+
+  it('shows the no-mapping state when the station has no AURN siteId', async () => {
+    delete station.siteId
+
+    await last24HoursController.handler(request, h)
+
+    expect(axios.get).not.toHaveBeenCalled()
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'last24hours',
+        last24Hours: { noMapping: true }
+      })
+    )
+  })
+
+  it('shows the no-data state when the upstream call fails', async () => {
+    axios.get.mockRejectedValue(new Error('fail'))
+
+    await last24HoursController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'last24hours',
+        last24Hours: {}
+      })
+    )
+  })
+
+  it('returns 404 if request has no valid referer (direct access)', async () => {
+    request.headers = {}
+
+    await last24HoursController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'error/index',
+      expect.objectContaining({ statusCode: '404' })
+    )
+    expect(h.code).toHaveBeenCalledWith(404)
+  })
+})
+
+describe('stationDetailsController tab selection', () => {
+  let h, request, station
+
+  beforeEach(() => {
+    h = {
+      view: jest.fn().mockReturnThis(),
+      response: jest.fn().mockReturnThis(),
+      code: jest.fn().mockReturnThis()
+    }
+    station = {
+      id: 'site123',
+      localSiteID: 'LOCAL1',
+      region: 'region1',
+      siteType: 'urban',
+      name: 'StationName',
+      location: { coordinates: [1.23, 4.56] },
+      pollutants: ['PM2.5']
+    }
+    request = {
+      method: 'get',
+      params: {},
+      headers: { referer: 'http://localhost:3010/location' },
+      info: { host: 'localhost:3010' },
+      yar: {
+        get: jest.fn(
+          (key) =>
+            ({
+              MonitoringstResult: { getmonitoringstation: [station] },
+              stationdetails: station,
+              SiteId: 'site123'
+            })[key]
+        ),
+        set: jest.fn()
+      }
+    }
+    jest.clearAllMocks()
+    config.set('featureFlags.viewDaqiTab', true)
+  })
+
+  afterEach(() => {
+    config.set('featureFlags.viewDaqiTab', false)
+  })
+
+  it('defaults to the Daily Air Quality Index tab without fetching the year table', async () => {
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ activePeriod: 'daqi', last24Hours: {} })
+    )
+    expect(axios.post).not.toHaveBeenCalled()
+  })
+
+  it('opens the Last 24 hours tab on its own route, even when the DAQI tab flag is off', async () => {
+    config.set('featureFlags.viewDaqiTab', false)
+
+    await last24HoursController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({ activePeriod: 'last24hours', daqi: {} })
+    )
+    expect(axios.post).not.toHaveBeenCalled()
+  })
+
+  it('fetches the year table for a year route', async () => {
+    request.params.year = '2025'
+    axios.post.mockResolvedValue({ data: [{ pollutantName: 'PM2.5' }] })
+
+    await stationDetailsController.handler(request, h)
+
+    expect(axios.post).toHaveBeenCalledTimes(1)
+    expect(request.yar.set).toHaveBeenCalledWith('tabledata', [
+      { pollutantName: 'PM2.5' }
+    ])
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'year',
+        daqi: {},
+        last24Hours: {}
       })
     )
   })
