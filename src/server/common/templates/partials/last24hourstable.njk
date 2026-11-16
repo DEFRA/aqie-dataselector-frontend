@@ -1,28 +1,15 @@
 {% from "partials/aq-table-macros.njk" import limitToggletip, exceedanceCell %}
 
 {#
-  Last 24 hours air pollution levels table.
-
-  `last24Hours` comes from stationdetails/controller.js (resolveLast24Hours):
-  { periodStart, periodEnd, latestReadingAt, pollutants: [{ pollutantName,
-  dataCapturePercentage, lowDataCapture, average, dailyCount, hourlyCount }] },
-  mapped from aqie-back-end's /monitoringStationHistory `summary` by
-  last-7-days-summary.js (the same mapping serves both periods; `dailyCount`
-  is simply not shown here). The back end decides whether an average exists
-  (75% data capture); a withheld average arrives as '-' and `lowDataCapture` is
-  true, so the tag and the dash always agree.
-
-  The average column's toggletip reuses pollutantToggletips[name].annual
-  (src/server/data/en/pollutant-toggletips.js). Hourly exceedances use
-  last24HoursLimits[name].hourly (src/server/data/en/last-24-hours.js): the same
-  copy as the year table, minus its annual `limit`, so no "Above limit" tag is
-  ever drawn against a single day's count. Pollutants with no hourly limit
-  (PM2.5, PM10, ozone) arrive as 'no legal limit' and render as plain text.
-
-  The heading and date are rendered by Yearlytab.njk, above the period nav, so
-  this partial starts at the notice banner. When fetched as a partial by the
-  tab's click handler, `durationText` (today's date) is passed along in a hidden
-  span for the handler to copy into the date stamp.
+  Last 24 hours air pollution levels table. Takes the same approach as
+  last7daystable.njk (same data shape, from resolveLast24Hours), with these
+  differences:
+  - `dailyCount` is not shown.
+  - Hourly exceedances use last24HoursLimits[name].hourly
+    (src/server/data/en/last-24-hours.js), which has no annual `limit`, so no
+    "Above limit" tag is drawn against a single day's count.
+  - The heading and date are rendered by Yearlytab.njk; `durationText` is
+    today's date.
 #}
 
 {% if durationText %}
