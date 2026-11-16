@@ -35,7 +35,8 @@ const last24HoursContent = {
   notice: 'Data has not been checked and verified',
   noDataMessage: 'Could not load data for the last 24 hours.',
   noMappingMessage: 'The last 24 hours view is not available for this station.',
-  legalLimitsUrl: 'https://www.gov.uk/guidance/air-pollution-uk-legal-limits'
+  legalLimitsHint:
+    'The pollution levels shown are measured against UK legal limits.'
 }
 
 export { last24HoursContent, last24HoursLimits }

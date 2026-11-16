@@ -150,15 +150,13 @@ describe('last24hourstable.njk', () => {
     )
   })
 
-  it('links the legal limits hint', () => {
+  it('shows the legal limits hint without a link', () => {
     const $ = render({ pollutants: [row()] })
 
     expect($('#last24hours-hint').text()).toBe(
       'The pollution levels shown are measured against UK legal limits.'
     )
-    expect($('#last24hours-hint a').attr('href')).toBe(
-      'https://www.gov.uk/guidance/air-pollution-uk-legal-limits'
-    )
+    expect($('#last24hours-hint a')).toHaveLength(0)
   })
 
   it("passes today's date to the tab's click handler when given one", () => {
