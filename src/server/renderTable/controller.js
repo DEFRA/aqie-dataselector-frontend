@@ -17,12 +17,14 @@ import { config } from '~/src/config/config.js'
 
 const logger = createLogger()
 
+const LONG_DATE_FORMAT = 'd MMMM yyyy'
+
 async function renderLast24HoursPartial(request, h) {
   const station = request.yar.get('stationdetails')
   const last24Hours = station ? await resolveLast24Hours(station) : {}
   // The Last 24 hours date stamp is always today's date, not the date of the
   // newest reading.
-  const durationText = formatDate(new Date(), 'd MMMM yyyy')
+  const durationText = formatDate(new Date(), LONG_DATE_FORMAT)
 
   const partialContent = nunjucks.render('partials/last24hourstable.njk', {
     last24Hours,
@@ -37,7 +39,7 @@ async function renderDaqiPartial(request, h) {
   const daqi = station ? await resolveDaqi(station) : {}
   const durationText = formatDate(
     daqi.periodDate ?? new Date().toISOString(),
-    'd MMMM yyyy'
+    LONG_DATE_FORMAT
   )
 
   const partialContent = nunjucks.render('partials/daqitable.njk', {
@@ -53,7 +55,7 @@ async function renderLast7DaysPartial(request, h) {
   const last7Days = station ? await resolveLast7Days(station) : {}
   const durationText =
     last7Days.pollutants?.length && last7Days.periodStart && last7Days.periodEnd
-      ? `${formatDate(last7Days.periodStart, 'd MMMM')} to ${formatDate(last7Days.periodEnd, 'd MMMM yyyy')}`
+      ? `${formatDate(last7Days.periodStart, 'd MMMM')} to ${formatDate(last7Days.periodEnd, LONG_DATE_FORMAT)}`
       : ''
 
   const partialContent = nunjucks.render('partials/last7daystable.njk', {
