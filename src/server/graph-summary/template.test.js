@@ -45,7 +45,7 @@ const GRAPH = {
     title: 'View hourly data as a table',
     caption: 'Hourly readings in µg/m³',
     head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
-    rows: [[{ text: '3 Nov 2026, 10:00' }, { text: '5.2', format: 'numeric' }]]
+    rows: [[{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }]]
   }
 }
 
@@ -304,7 +304,7 @@ describe('graph summary page', () => {
           .map((_i, th) => $(th).text().trim())
           .get()
       ).toEqual(['Time (UTC)', 'PM2.5'])
-      expect(details.find('tbody th').text().trim()).toBe('3 Nov 2026, 10:00')
+      expect(details.find('tbody th').text().trim()).toBe('10:00, 3 Nov 2026')
       expect(details.find('tbody td').text().trim()).toBe('5.2')
     })
 

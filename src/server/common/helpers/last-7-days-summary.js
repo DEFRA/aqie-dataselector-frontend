@@ -17,9 +17,9 @@ import {
 
 const NO_LEGAL_LIMIT = 'no legal limit'
 
-// A window of seven complete UTC days runs from 01:00 on the first day to
-// 00:00 after the last, so periodStart/periodEnd shift each stamp back an hour
-// to land on the days the page labels ("20 October to 26 October").
+// periodStart/periodEnd shift the window's first and last stamps back an hour,
+// to when those hours began, so the page labels the days the readings fall in
+// ("6 November to 13 November"). Only a stamp at midnight moves to another day.
 
 /** A null count means the pollutant has no legal limit of that kind. */
 function displayCount(count) {

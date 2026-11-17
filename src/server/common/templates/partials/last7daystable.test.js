@@ -200,12 +200,11 @@ describe('last7daystable.njk hourly readings for users without JavaScript', () =
   const HOURLY = {
     period: 'last7days',
     title: 'View hourly data for the last 7 days',
-    verificationBanner: 'Data has not been checked and verified',
     table: {
       caption: 'Hourly readings in µg/m³ for the last 7 days',
       head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
       rows: [
-        [{ text: '3 Nov 2026, 10:00' }, { text: '5.2', format: 'numeric' }]
+        [{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }]
       ]
     }
   }
@@ -222,9 +221,7 @@ describe('last7daystable.njk hourly readings for users without JavaScript', () =
     expect(section.find('table caption').text().trim()).toBe(
       HOURLY.table.caption
     )
-    expect(section.find('.app-verification-banner').text().trim()).toBe(
-      HOURLY.verificationBanner
-    )
+    expect(section.find('.app-verification-banner')).toHaveLength(0)
   })
 
   it('puts the section after the 7-day table and its hint', () => {

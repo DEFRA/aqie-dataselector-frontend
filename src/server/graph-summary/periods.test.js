@@ -27,26 +27,39 @@ describe('periods', () => {
     )
   })
 
-  // The window is the time each end hour began, as resolveStationHistory returns it.
+  // The window is the time each end hour began, as resolveStationHistory returns
+  // it. Both periods end at the latest hour, here the one ending at 10:00 on
+  // 13 November: the 24 hours start at 11:00 on 12 November, the 7 days at 11:00
+  // on 6 November.
   describe('formatPeriodDates', () => {
     const last24Hours = {
-      periodStart: '2026-09-20T12:00:00.000Z',
-      periodEnd: '2026-09-21T11:00:00.000Z'
+      periodStart: '2026-11-12T10:00:00.000Z',
+      periodEnd: '2026-11-13T09:00:00.000Z'
     }
     const last7Days = {
-      periodStart: '2026-09-14T00:00:00.000Z',
-      periodEnd: '2026-09-20T23:00:00.000Z'
+      periodStart: '2026-11-06T10:00:00.000Z',
+      periodEnd: '2026-11-13T09:00:00.000Z'
     }
 
-    it('shows a single date, the day of the latest reading, for the last 24 hours', () => {
+    it('shows both days of the window for the last 24 hours, as it starts yesterday', () => {
       expect(formatPeriodDates('last24hours', last24Hours)).toBe(
-        '21 September 2026'
+        '12 November to 13 November 2026'
       )
+    })
+
+    it('shows a single date for the last 24 hours when the window is within one day', () => {
+      // The latest hour ends at midnight, so the window is the whole of the 12th.
+      expect(
+        formatPeriodDates('last24hours', {
+          periodStart: '2026-11-12T00:00:00.000Z',
+          periodEnd: '2026-11-12T23:00:00.000Z'
+        })
+      ).toBe('12 November 2026')
     })
 
     it('shows the first and last day of the window for the last 7 days', () => {
       expect(formatPeriodDates('last7days', last7Days)).toBe(
-        '14 September to 20 September 2026'
+        '6 November to 13 November 2026'
       )
     })
 

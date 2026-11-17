@@ -176,9 +176,9 @@ describe('buildPollutantGraph', () => {
 
     it('has a row for each hour, oldest first, with the time in UTC', () => {
       expect(table().rows.map(([time]) => time.text)).toEqual([
-        '3 Nov 2026, 10:00',
-        '3 Nov 2026, 11:00',
-        '3 Nov 2026, 12:00'
+        '10:00, 3 Nov 2026',
+        '11:00, 3 Nov 2026',
+        '12:00, 3 Nov 2026'
       ])
     })
 

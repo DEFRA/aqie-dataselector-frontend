@@ -56,8 +56,8 @@ describe('buildHourlyReadings', () => {
 
     expect(cells(table.head)).toEqual(['Time (UTC)', 'PM2.5', 'PM10'])
     expect(table.rows.map(cells)).toEqual([
-      ['3 Nov 2026, 10:00', '5.2', '12.3'],
-      ['3 Nov 2026, 11:00', 'No data', 'No data']
+      ['10:00, 3 Nov 2026', '5.2', '12.3'],
+      ['11:00, 3 Nov 2026', 'No data', 'No data']
     ])
   })
 
@@ -67,12 +67,10 @@ describe('buildHourlyReadings', () => {
     expect(cells(table.head)).toEqual(['Time (UTC)', 'PM10'])
   })
 
-  it('carries the verification banner text for the readings', () => {
+  it('has no verification banner of its own, as the tab already has one', () => {
     const readings = buildHourlyReadings(HISTORY, POLLUTANTS, 'last7days')
 
-    expect(readings.verificationBanner).toBe(
-      'Data has not been checked and verified'
-    )
+    expect(readings).not.toHaveProperty('verificationBanner')
   })
 
   it.each([

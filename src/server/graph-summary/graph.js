@@ -6,15 +6,24 @@ const UNIT = 'µg/m³'
 const READING_DECIMALS = 10
 
 // UTC, like the readings and the rest of the station pages.
-const timeFormat = new Intl.DateTimeFormat('en-GB', {
+const clockFormat = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'UTC',
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23'
 })
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'UTC',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric'
+})
+
+/** The time before the date, like 10:00, 3 Nov 2026. */
+const formatTime = (time) => {
+  const date = new Date(time)
+  return `${clockFormat.format(date)}, ${dateFormat.format(date)}`
+}
 const listFormat = new Intl.ListFormat('en-GB', {
   style: 'long',
   type: 'conjunction'
@@ -68,7 +77,7 @@ function buildTable(series, content) {
       ...series.map(({ name }) => ({ text: name, format: 'numeric' }))
     ],
     rows: times.map((time) => [
-      { text: timeFormat.format(new Date(time)) },
+      { text: formatTime(time) },
       ...lookups.map((lookup) => {
         const value = lookup.get(time)
         return {

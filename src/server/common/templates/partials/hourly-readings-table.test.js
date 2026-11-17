@@ -25,8 +25,8 @@ const TABLE = {
   caption: 'Hourly readings in µg/m³ for the last 24 hours',
   head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
   rows: [
-    [{ text: '3 Nov 2026, 10:00' }, { text: '5.2', format: 'numeric' }],
-    [{ text: '3 Nov 2026, 11:00' }, { text: 'No data', format: 'numeric' }]
+    [{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }],
+    [{ text: '11:00, 3 Nov 2026' }, { text: 'No data', format: 'numeric' }]
   ]
 }
 
@@ -70,8 +70,8 @@ describe('hourly-readings-table partial', () => {
       ])
       .get()
     expect(rows).toEqual([
-      ['3 Nov 2026, 10:00', '5.2'],
-      ['3 Nov 2026, 11:00', 'No data']
+      ['10:00, 3 Nov 2026', '5.2'],
+      ['11:00, 3 Nov 2026', 'No data']
     ])
   })
 
@@ -81,23 +81,9 @@ describe('hourly-readings-table partial', () => {
     expect($('details .table-scroll-container table')).toHaveLength(1)
   })
 
-  it('has no verification banner unless it is given the text', () => {
+  it('has no verification banner', () => {
     const $ = render(PARAMS)
 
     expect($('.app-verification-banner')).toHaveLength(0)
-  })
-
-  it('shows the verification banner above the table when it is given the text', () => {
-    const $ = render({
-      ...PARAMS,
-      verificationBanner: 'Data has not been checked and verified'
-    })
-
-    expect($('details .app-verification-banner').text().trim()).toBe(
-      'Data has not been checked and verified'
-    )
-    expect(
-      $('details .app-verification-banner').nextAll('.table-scroll-container')
-    ).toHaveLength(1)
   })
 })

@@ -12,7 +12,7 @@ import { buildPollutantGraph } from '~/src/server/graph-summary/graph.js'
  * @param {object|undefined} history the raw /monitoringStationHistory response
  * @param {string[]} [stationPollutants] display names the station measures
  * @param {string} period a graph page period: last24hours or last7days
- * @returns {{ period: string, title: string, verificationBanner: string, table: object } | null}
+ * @returns {{ period: string, title: string, table: object } | null}
  */
 function buildHourlyReadings(history, stationPollutants, period) {
   if (!config.get('featureFlags.viewGraphSummary')) {
@@ -24,11 +24,10 @@ function buildHourlyReadings(history, stationPollutants, period) {
     return null
   }
 
-  const { hourlyReadings, verificationBanner } = english.graphsummary
+  const { hourlyReadings } = english.graphsummary
   return {
     period,
     title: hourlyReadings.titles[period],
-    verificationBanner,
     table: { ...table, caption: hourlyReadings.captions[period] }
   }
 }

@@ -1,6 +1,5 @@
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
-{% from "verification-banner/macro.njk" import appVerificationBanner %}
 
 {#
   A collapsed section with one period's hourly readings as a table: the text
@@ -8,16 +7,11 @@
   station page.
 
   params:
-    title               summary text of the section
-    table               { caption, head, rows }, as govukTable takes them
-    verificationBanner  optional text, shown above the table for pages where
-                        the readings are not already under the page's banner
+    title  summary text of the section
+    table  { caption, head, rows }, as govukTable takes them
 #}
 {% macro hourlyReadingsDetails(params) %}
   {% set tableHtml %}
-    {% if params.verificationBanner %}
-      {{ appVerificationBanner({ text: params.verificationBanner }) }}
-    {% endif %}
     <div class="table-scroll-container">
       {{ govukTable({
         caption: params.table.caption,

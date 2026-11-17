@@ -26,8 +26,8 @@ const LAST_24_HOURS = {
   history: RAW_HISTORY
 }
 const LAST_7_DAYS = {
-  periodStart: '2026-09-14T00:00:00.000Z',
-  periodEnd: '2026-09-20T23:00:00.000Z',
+  periodStart: '2026-09-14T12:00:00.000Z',
+  periodEnd: '2026-09-21T11:00:00.000Z',
   pollutants: [ROW],
   history: RAW_HISTORY
 }
@@ -75,7 +75,7 @@ describe('graphSummaryController.handler', () => {
     expect(h.view).toHaveBeenCalledWith('graph-summary/index', {
       pageTitle: 'Last 24 hours: Birmingham A4540 Roadside',
       heading: 'Last 24 hours: Birmingham A4540 Roadside',
-      dates: '21 September 2026',
+      dates: '20 September to 21 September 2026',
       periodNavigationLabel: 'Time period',
       periodTabs: [
         {
@@ -125,7 +125,7 @@ describe('graphSummaryController.handler', () => {
       expect.objectContaining({
         pageTitle: 'Last 7 days: Birmingham A4540 Roadside',
         heading: 'Last 7 days: Birmingham A4540 Roadside',
-        dates: '14 September to 20 September 2026',
+        dates: '14 September to 21 September 2026',
         summary: expect.objectContaining({ period: '7d', rows: [ROW] }),
         periodTabs: [
           expect.objectContaining({ label: 'Last 24 hours', isCurrent: false }),
