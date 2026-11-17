@@ -60,7 +60,7 @@ const THREE_MINUTES_MS = DAYS_IN_THREE_DAYS * MINUTES_PER_HOUR * 1000
 const LAQM_CACHE_TTL_MS = TWELVE_HOURS_MS
 
 // Year and Data Constants
-const MIN_YEAR = 1973 // AURN data start year
+const MIN_YEAR = 1961 // AURN data start year
 const EXAMPLE_YEAR = 2009 // Used in validation messages
 const DATA_START_YEAR = 2018 // Air quality data collection start year
 const YEAR_DIGITS = 4 // Valid year format is 4 digits
