@@ -274,21 +274,34 @@ function resolveSelectedYear(request) {
  * Only fetches what the active tab shows. The year table is fetched server
  * side so a year page's first paint has real data - without it Yearlytab
  * has to fire a follow-up /rendertable request on load, costing an extra
- * round trip and flashing an empty table. The DAQI page never shows it.
+ * round trip and flashing an empty table. The DAQI and Last 24 hours pages
+ * never show it.
  * @param {object} request
  * @param {object} stationDetails
- * @param {boolean} isYearRoute
+ * @param {'year'|'daqi'|'last24hours'} activePeriod
  * @param {string|undefined} selectedYear
- * @returns {Promise<{tabledata: object|null, daqi: object}>}
+ * @returns {Promise<{tabledata: object|null, daqi: object, last24Hours: object}>}
  */
 async function fetchTabData(
   request,
   stationDetails,
-  isYearRoute,
+  activePeriod,
   selectedYear
 ) {
-  if (!isYearRoute) {
-    return { tabledata: null, daqi: await resolveDaqi(stationDetails) }
+  if (activePeriod === 'daqi') {
+    return {
+      tabledata: null,
+      daqi: await resolveDaqi(stationDetails),
+      last24Hours: {}
+    }
+  }
+
+  if (activePeriod === 'last24hours') {
+    return {
+      tabledata: null,
+      daqi: {},
+      last24Hours: await resolveLast24Hours(stationDetails)
+    }
   }
 
   const tabledata = await fetchYearTable({
@@ -296,91 +309,123 @@ async function fetchTabData(
     year: selectedYear
   })
   request.yar.set('tabledata', tabledata)
-  return { tabledata, daqi: {} }
+  return { tabledata, daqi: {}, last24Hours: {} }
 }
 
 /**
- * Hapi route handler for /stationdetails. Resolves the requested station,
- * optionally performs a download, and renders the station details view.
+ * Year and download routes always open the year tab; the Last 24 hours route
+ * opens that tab; every other route opens the DAQI tab, or the year tab when
+ * the DAQI tab is switched off.
+ * @param {object} request
+ * @param {'daqi'|'last24hours'} tabPeriod
+ * @param {boolean} viewDaqiTab
+ * @returns {'year'|'daqi'|'last24hours'}
+ */
+function resolveActivePeriod(request, tabPeriod, viewDaqiTab) {
+  if (request.params?.year || request.params?.download) {
+    return 'year'
+  }
+  if (tabPeriod === 'last24hours') {
+    return tabPeriod
+  }
+  return viewDaqiTab ? 'daqi' : 'year'
+}
+
+/**
+ * Resolves the requested station, optionally performs a download, and renders
+ * the station details view, opened on the tab chosen by resolveActivePeriod.
  * @param {object} request
  * @param {object} h
+ * @param {'daqi'|'last24hours'} [tabPeriod] the tab opened when the route is
+ *   not a year or download route
  * @returns {Promise<object>} Hapi response
  */
-const stationDetailsController = {
-  handler: async (request, h) => {
-    const accessDenied = checkAccessDenied(request, h)
-    if (accessDenied) {
-      return accessDenied
-    }
-
-    clearPreviousSessionValues(request)
-
-    const stationId = resolveStationId(request)
-    setDownloadSessionParams(request)
-
-    const { response: stationError, station } = resolveStation(
-      request,
-      stationId,
-      h
-    )
-    if (stationError) {
-      return stationError
-    }
-
-    request.yar.set('stationdetails', station)
-    const stationDetails = request.yar.get('stationdetails')
-
-    const updatedTime = resolveUpdatedTime(request)
-    const coordinates = stationDetails.location.coordinates
-    const apiParams = buildApiParams(request, stationDetails, coordinates)
-
-    const downloadError = await performDownloadIfRequested(
-      request,
-      apiParams,
-      h
-    )
-    if (downloadError) {
-      return downloadError
-    }
-
-    const selectedYear = resolveSelectedYear(request)
-    const viewDaqiTab = config.get('featureFlags.viewDaqiTab')
-    const isYearRoute =
-      !viewDaqiTab || Boolean(request.params?.year || request.params?.download)
-    const { tabledata, daqi } = await fetchTabData(
-      request,
-      stationDetails,
-      isYearRoute,
-      selectedYear
-    )
-
-    return h.view('stationdetails/index', {
-      pageTitle: english.stationdetails.pageTitle,
-      title: english.stationdetails.title,
-      serviceName: english.stationdetails.serviceName,
-      stationdetails: stationDetails,
-      maplocation: buildMapLocation(...coordinates),
-      updatedTime,
-      displayBacklink: true,
-      fullSearchQuery: request.yar.get('fullSearchQuery')?.value,
-      apiparams: apiParams,
-      years: buildYearsArray(),
-      currentdate: formatCurrentDate(),
-      currentYear: getCurrentYear(),
-      pollutantKeys: stationDetails.pollutants,
-      maptoggletips: getToggletip(stationDetails.siteType),
-      selectedYear,
-      tabledata,
-      finalyear: selectedYear,
-      activePeriod: isYearRoute ? 'year' : 'daqi',
-      viewDaqiTab,
-      daqi,
-      downloadresult: request.yar.get('downloadresult'),
-      hrefq: resolveStationHrefq(request),
-      mapViewUrl: getMapViewUrlIfEnabled(),
-      viewGraphSummary: buildViewGraphSummary(request)
-    })
+async function handleStationDetails(request, h, tabPeriod = 'daqi') {
+  const accessDenied = checkAccessDenied(request, h)
+  if (accessDenied) {
+    return accessDenied
   }
+
+  clearPreviousSessionValues(request)
+
+  const stationId = resolveStationId(request)
+  setDownloadSessionParams(request)
+
+  const { response: stationError, station } = resolveStation(
+    request,
+    stationId,
+    h
+  )
+  if (stationError) {
+    return stationError
+  }
+
+  request.yar.set('stationdetails', station)
+  const stationDetails = request.yar.get('stationdetails')
+
+  const updatedTime = resolveUpdatedTime(request)
+  const coordinates = stationDetails.location.coordinates
+  const apiParams = buildApiParams(request, stationDetails, coordinates)
+
+  const downloadError = await performDownloadIfRequested(request, apiParams, h)
+  if (downloadError) {
+    return downloadError
+  }
+
+  const selectedYear = resolveSelectedYear(request)
+  const viewDaqiTab = config.get('featureFlags.viewDaqiTab')
+  const activePeriod = resolveActivePeriod(request, tabPeriod, viewDaqiTab)
+  const { tabledata, daqi, last24Hours } = await fetchTabData(
+    request,
+    stationDetails,
+    activePeriod,
+    selectedYear
+  )
+
+  return h.view('stationdetails/index', {
+    pageTitle: english.stationdetails.pageTitle,
+    title: english.stationdetails.title,
+    serviceName: english.stationdetails.serviceName,
+    stationdetails: stationDetails,
+    maplocation: buildMapLocation(...coordinates),
+    updatedTime,
+    displayBacklink: true,
+    fullSearchQuery: request.yar.get('fullSearchQuery')?.value,
+    apiparams: apiParams,
+    years: buildYearsArray(),
+    currentdate: formatCurrentDate(),
+    currentYear: getCurrentYear(),
+    pollutantKeys: stationDetails.pollutants,
+    maptoggletips: getToggletip(stationDetails.siteType),
+    selectedYear,
+    tabledata,
+    finalyear: selectedYear,
+    activePeriod,
+    viewDaqiTab,
+    daqi,
+    last24Hours,
+    downloadresult: request.yar.get('downloadresult'),
+    hrefq: resolveStationHrefq(request),
+    mapViewUrl: getMapViewUrlIfEnabled(),
+    viewGraphSummary: buildViewGraphSummary(request)
+  })
+}
+
+/**
+ * Hapi route handler for /stationdetails, which opens on the Daily Air Quality
+ * Index tab (or the year tab for the year and download routes).
+ */
+const stationDetailsController = {
+  handler: (request, h) => handleStationDetails(request, h)
+}
+
+/**
+ * Hapi route handler for /stationdetails/last-24-hours, the same page opened
+ * on the Last 24 hours tab. This is the no-JavaScript fallback for the tab's
+ * link and makes the tab linkable.
+ */
+const last24HoursController = {
+  handler: (request, h) => handleStationDetails(request, h, 'last24hours')
 }
 
 /**
@@ -468,6 +513,30 @@ async function resolveLast7Days(station) {
 }
 
 /**
+ * Fetches and summarises the last 24 hours of pollutant history for a station,
+ * or returns an empty-state marker (`noMapping: true` when the station has no
+ * AURN siteId, or `{}` when the upstream call fails) - last24hourstable.njk
+ * reads these to show the right message instead of a generic error.
+ * @param {object} station
+ * @returns {Promise<object>}
+ */
+async function resolveLast24Hours(station) {
+  if (!station.siteId) {
+    return { noMapping: true }
+  }
+
+  const history = await fetchStationHistory({
+    siteId: station.siteId,
+    period: '24h'
+  })
+  if (!history) {
+    return {}
+  }
+
+  return summariseStationHistory(history, station.pollutants)
+}
+
+/**
  * Fetches and summarises the current DAQI figures for a station, or returns an
  * empty-state marker (`noMapping: true` when the station has no AURN siteId,
  * or `{}` when the upstream call fails).
@@ -509,8 +578,10 @@ const graphSummaryController = {
 
 export {
   stationDetailsController,
+  last24HoursController,
   last7DaysController,
   resolveLast7Days,
+  resolveLast24Hours,
   resolveDaqi,
   graphSummaryController,
   buildViewGraphSummary

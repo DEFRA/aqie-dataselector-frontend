@@ -138,4 +138,83 @@ describe('Yearlytab.njk', () => {
       expect(scripts.match(/aqTableToggletipsBound = true/g)).toHaveLength(1)
     })
   })
+
+  describe('Last 24 hours tab', () => {
+    const last24Hours = {
+      pollutants: [
+        {
+          pollutantName: 'PM2.5',
+          dataCapturePercentage: 100,
+          lowDataCapture: false,
+          average: 12,
+          dailyCount: 'no legal limit',
+          hourlyCount: 'no legal limit'
+        }
+      ]
+    }
+    const tabs = ($) =>
+      $('.moj-sub-navigation__link')
+        .map((_i, el) => $(el).text().trim())
+        .get()
+    const currentTab = ($) =>
+      $('.moj-sub-navigation__link[aria-current="page"]')
+        .map((_i, el) => $(el).text().trim())
+        .get()
+
+    it('sits between the DAQI and Last 7 days tabs and links to its own page', () => {
+      const $ = render({ activePeriod: 'daqi' })
+
+      expect(tabs($)).toEqual([
+        'Daily Air Quality Index',
+        'Last 24 hours',
+        'Last 7 days',
+        '2026',
+        '2025',
+        '2024'
+      ])
+      expect($('#link-last-24-hours').attr('href')).toBe(
+        '/stationdetails/last-24-hours'
+      )
+    })
+
+    it('is shown when the DAQI tab flag is off', () => {
+      const $ = render({ viewDaqiTab: false, activePeriod: 'last24hours' })
+
+      expect($('#link-daqi')).toHaveLength(0)
+      expect($('#link-last-24-hours')).toHaveLength(1)
+    })
+
+    describe('when active', () => {
+      const context = { activePeriod: 'last24hours', last24Hours }
+
+      it("sets the heading to 'Air pollution summary: last 24 hours'", () => {
+        const $ = render(context)
+
+        expect($('#airpollution-heading').text()).toBe(
+          'Air pollution summary: last 24 hours'
+        )
+      })
+
+      it('shows the current date as the date stamp', () => {
+        const $ = render(context)
+
+        expect($('#duration_current').text()).toBe('5 November 2026')
+      })
+
+      it('marks only the Last 24 hours tab as current', () => {
+        const $ = render({ ...context, selectedYear: 2025 })
+
+        expect(currentTab($)).toEqual(['Last 24 hours'])
+        expect($('#link-last-24-hours').attr('aria-selected')).toBe('true')
+      })
+
+      it('renders the 24 hour table, not the year or DAQI table', () => {
+        const $ = render(context)
+
+        expect($('#last24hourstable')).toHaveLength(1)
+        expect($('#daqitable')).toHaveLength(0)
+        expect($('#aqitable')).toHaveLength(0)
+      })
+    })
+  })
 })
