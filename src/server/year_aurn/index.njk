@@ -23,7 +23,7 @@
         }) }}
       {% endif %}
       <div class="govuk-form-group{% if errors.details.time %} govuk-form-group--error{% endif %}">
-        <fieldset class="govuk-fieldset" aria-describedby="time-hint{% if errors.details.time %} time-error{% endif %}">
+        <fieldset class="govuk-fieldset" {% if errors.details.time %}aria-describedby="time-error"{% endif %}>
           <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
             <h1 class="govuk-heading-l">Add time period</h1>
           </legend>
@@ -33,9 +33,6 @@
               <span class="govuk-visually-hidden">Error:</span> {{ errors.details.time }}
             </p>
           {% endif %}
-
-          {# <div id="time-hint" class="govuk-hint">Choose how you want to Add time periods</div> #}
-
           <div class="govuk-radios govuk-!-margin-top-0" data-module="govuk-radios">
             {# Last 7 days #}
             <div class="govuk-radios__item">
