@@ -1,6 +1,7 @@
 import { config } from '~/src/config/config.js'
 import {
   stationDetailsController,
+  last24HoursController,
   last7DaysController
 } from '~/src/server/stationdetails/controller.js'
 
@@ -21,6 +22,11 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/stationdetails/year/{year}',
       ...stationDetailsController
+    },
+    {
+      method: 'GET',
+      path: '/stationdetails/last-24-hours',
+      ...last24HoursController
     },
     {
       method: 'GET',

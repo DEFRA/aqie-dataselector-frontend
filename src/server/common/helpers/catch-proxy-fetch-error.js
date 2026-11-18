@@ -2,6 +2,18 @@ import { proxyFetch } from '~/src/server/common/helpers/proxy.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 const logger = createLogger()
 
+// fetch only says "fetch failed"; the real reason (e.g. proxy refused,
+// certificate or timeout) is in error.cause, so include it in the log
+function describeCause(error) {
+  const cause = error?.cause
+  if (!cause) {
+    return ''
+  }
+  const code = cause.code ? `${cause.code} ` : ''
+  const message = cause.message ?? String(cause)
+  return ` (cause: ${code}${message})`
+}
+
 async function catchProxyFetchError(url, options) {
   try {
     const startTime = performance.now()
@@ -22,7 +34,9 @@ async function catchProxyFetchError(url, options) {
     const data = await response.json()
     return [statusCode, data]
   } catch (error) {
-    logger.error(`Failed to proxyFetch data from ${url}: ${error.message}`)
+    logger.error(
+      `Failed to proxyFetch data from ${url}: ${error.message}${describeCause(error)}`
+    )
     return [error]
   }
 }
