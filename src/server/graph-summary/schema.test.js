@@ -79,6 +79,40 @@ describe('graphSummaryQuerySchema', () => {
     ).toBe(false)
   })
 
+  it.each(['last24hours', 'last7days', '2024'])(
+    'accepts the tab %s to return to',
+    (from) => {
+      const { value, error } = graphSummaryQuerySchema.validate({
+        stationId: 'site1',
+        from
+      })
+
+      expect(error).toBeUndefined()
+      expect(value.from).toBe(from)
+    }
+  )
+
+  it('has no tab to return to unless it is given one', () => {
+    expect(
+      graphSummaryQuerySchema.validate({ stationId: 'site1' }).value
+    ).not.toHaveProperty('from')
+  })
+
+  it.each([
+    'daqi',
+    '',
+    'abc',
+    '202',
+    '20245',
+    '/stationdetails/last-7-days',
+    'https://example.com',
+    '__proto__'
+  ])('rejects the tab %p to return to', (from) => {
+    expect(
+      graphSummaryQuerySchema.validate({ stationId: 'site1', from }).error
+    ).toBeDefined()
+  })
+
   it('rejects a no-JavaScript flag that is not a boolean', () => {
     expect(
       graphSummaryQuerySchema.validate({ stationId: 's', nojs: 'maybe' }).error

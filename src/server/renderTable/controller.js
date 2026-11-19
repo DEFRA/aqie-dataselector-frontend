@@ -33,7 +33,8 @@ async function renderLast24HoursPartial(request, h) {
     durationText,
     viewGraphSummary: buildViewGraphSummary({
       stationId: station?.id,
-      period: 'last24hours'
+      period: 'last24hours',
+      from: 'last24hours'
     })
   })
 
@@ -50,7 +51,11 @@ async function renderDaqiPartial(request, h) {
 
   const partialContent = nunjucks.render('partials/daqitable.njk', {
     daqi,
-    durationText
+    durationText,
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: station?.id,
+      period: 'last24hours'
+    })
   })
 
   return h.response(partialContent).code(HTTP_OK)
@@ -71,7 +76,8 @@ async function renderLast7DaysPartial(request, h) {
     durationText,
     viewGraphSummary: buildViewGraphSummary({
       stationId: station?.id,
-      period: 'last7days'
+      period: 'last7days',
+      from: 'last7days'
     })
   })
 
@@ -110,7 +116,8 @@ const rendertablecontroller = {
         tabledata,
         finalyear,
         viewGraphSummary: buildViewGraphSummary({
-          stationId: request.yar.get('stationdetails')?.id
+          stationId: request.yar.get('stationdetails')?.id,
+          from: finalyear
         }),
         // This response is injected with innerHTML, where <script> tags never
         // execute - so the template omits them rather than sending dead bytes.

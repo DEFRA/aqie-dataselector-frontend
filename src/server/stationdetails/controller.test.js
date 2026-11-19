@@ -402,7 +402,7 @@ describe('stationDetailsController.handler', () => {
     })
   })
 
-  it('should include the graph summary CTA, opening on the last 24 hours, for the station', async () => {
+  it('should include the graph summary CTA, opening on the last 24 hours, for the station, with no tab to return to as the DAQI tab is the default view', async () => {
     request.params.download = undefined
     config.set('featureFlags.viewGraphSummary', true)
 
@@ -411,9 +411,29 @@ describe('stationDetailsController.handler', () => {
     expect(h.view).toHaveBeenCalledWith(
       'stationdetails/index',
       expect.objectContaining({
+        activePeriod: 'daqi',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
           href: '/stationdetails/graph-summary?stationId=site123&period=last24hours'
+        }
+      })
+    )
+  })
+
+  it('should have the graph summary CTA return to the selected year on a year tab', async () => {
+    request.params.year = '2023'
+    axios.post.mockResolvedValue({ data: { some: 'data' } })
+    config.set('featureFlags.viewGraphSummary', true)
+
+    await stationDetailsController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'stationdetails/index',
+      expect.objectContaining({
+        activePeriod: 'year',
+        viewGraphSummary: {
+          buttonText: 'View graph and pollutant summary',
+          href: '/stationdetails/graph-summary?stationId=site123&period=last24hours&from=2023'
         }
       })
     )
@@ -1013,7 +1033,7 @@ describe('last24HoursController.handler', () => {
       config.set('featureFlags.viewGraphSummary', false)
     })
 
-    it('links the button to the last 24 hours of the station', async () => {
+    it('links the button to the last 24 hours of the station, and Back to this tab', async () => {
       await last24HoursController.handler(request, h)
 
       expect(h.view).toHaveBeenCalledWith(
@@ -1022,7 +1042,7 @@ describe('last24HoursController.handler', () => {
           activePeriod: 'last24hours',
           viewGraphSummary: {
             buttonText: 'View graph and pollutant summary',
-            href: '/stationdetails/graph-summary?stationId=site123&period=last24hours'
+            href: '/stationdetails/graph-summary?stationId=site123&period=last24hours&from=last24hours'
           }
         })
       )
@@ -1374,7 +1394,7 @@ describe('last7DaysController.handler', () => {
       config.set('featureFlags.viewGraphSummary', false)
     })
 
-    it('links the button to the last 7 days of the station', async () => {
+    it('links the button to the last 7 days of the station, and Back to this tab', async () => {
       await last7DaysController.handler(request, h)
 
       expect(h.view).toHaveBeenCalledWith(
@@ -1382,7 +1402,7 @@ describe('last7DaysController.handler', () => {
         expect.objectContaining({
           viewGraphSummary: {
             buttonText: 'View graph and pollutant summary',
-            href: '/stationdetails/graph-summary?stationId=site123&period=last7days'
+            href: '/stationdetails/graph-summary?stationId=site123&period=last7days&from=last7days'
           }
         })
       )

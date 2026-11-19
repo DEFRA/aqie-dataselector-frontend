@@ -8,6 +8,9 @@
   { measuredAt, latestReadingAt, pollutants: [{ pollutantName, average,
   daqiIndex, daqiBand, averagingPeriod }] }, mapped from aqie-back-end's
   GET /monitoringStationHistory `summary` by daqi-summary.js.
+
+  `viewGraphSummary` (optional) is the "View graph and pollutant summary"
+  button, shown under the table; see view-graph-summary.njk.
 #}
 
 {% if durationText %}
@@ -64,6 +67,8 @@
   </div>
 
   <p id="daqi-hint" class="govuk-hint">Learn more about the <a href="{{ daqiContent.learnMoreUrl }}" class="govuk-link">Daily Air Quality Index (DAQI)</a>.</p>
+
+  {% include "partials/view-graph-summary.njk" %}
 
 {% elif daqi.noMapping %}
 

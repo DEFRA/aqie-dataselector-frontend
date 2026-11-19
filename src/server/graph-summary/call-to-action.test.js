@@ -32,6 +32,24 @@ describe('buildViewGraphSummary', () => {
     ).toBe('/stationdetails/graph-summary?stationId=site1&period=last7days')
   })
 
+  it('passes on the station page tab the button is on, so Back returns to it', () => {
+    expect(
+      buildViewGraphSummary({
+        stationId: 'site1',
+        period: 'last7days',
+        from: 'last7days'
+      }).href
+    ).toBe(
+      '/stationdetails/graph-summary?stationId=site1&period=last7days&from=last7days'
+    )
+  })
+
+  it('leaves out a tab Back cannot return to, rather than make a link that fails', () => {
+    expect(
+      buildViewGraphSummary({ stationId: 'site1', from: 'not-a-year' }).href
+    ).toBe('/stationdetails/graph-summary?stationId=site1&period=last24hours')
+  })
+
   it('flags the link as the no-JavaScript journey on the no-JavaScript station page', () => {
     expect(buildViewGraphSummary({ stationId: 'site1', nojs: true }).href).toBe(
       '/stationdetails/graph-summary?stationId=site1&period=last24hours&nojs=true'

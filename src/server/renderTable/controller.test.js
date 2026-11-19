@@ -59,7 +59,7 @@ describe('rendertablecontroller.handler', () => {
       finalyear: 2024,
       viewGraphSummary: {
         buttonText: 'View graph and pollutant summary',
-        href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours'
+        href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=2024'
       },
       isPartial: true
     })
@@ -123,6 +123,7 @@ describe('rendertablecontroller.handler', () => {
     request.yar.get = jest.fn((key) => {
       if (key === 'stationdetails') {
         return {
+          id: 'BirminghamA4540Roadside',
           localSiteID: 'site123',
           siteId: 'UKA00315',
           pollutants: ['PM2.5']
@@ -165,7 +166,12 @@ describe('rendertablecontroller.handler', () => {
             })
           ]
         }),
-        durationText: '30 October 2026'
+        durationText: '30 October 2026',
+        // The DAQI tab is the default view, so Back needs no tab to return to.
+        viewGraphSummary: {
+          buttonText: 'View graph and pollutant summary',
+          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours'
+        }
       })
     )
     expect(h.response).toHaveBeenCalledWith('<table>content</table>')
@@ -209,7 +215,8 @@ describe('rendertablecontroller.handler', () => {
       'partials/daqitable.njk',
       expect.objectContaining({
         daqi: {},
-        durationText: expect.any(String)
+        durationText: expect.any(String),
+        viewGraphSummary: null
       })
     )
     expect(h.code).toHaveBeenCalledWith(200)
@@ -272,7 +279,7 @@ describe('rendertablecontroller.handler', () => {
         durationText: '3 November 2026',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours'
+          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=last24hours'
         }
       }
     )
@@ -345,7 +352,7 @@ describe('rendertablecontroller.handler', () => {
         durationText: '19 August to 25 August 2026',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days'
+          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days&from=last7days'
         }
       })
     )
@@ -371,6 +378,7 @@ describe('rendertablecontroller.handler', () => {
   })
 
   it.each([
+    ['daqi', 'partials/daqitable.njk'],
     ['last-24-hours', 'partials/last24hourstable.njk'],
     ['last-7-days', 'partials/last7daystable.njk']
   ])(

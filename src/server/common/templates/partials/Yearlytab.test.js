@@ -106,6 +106,38 @@ describe('Yearlytab.njk', () => {
     })
   })
 
+  describe('DAQI tab graph summary button', () => {
+    const daqi = {
+      pollutants: [
+        {
+          pollutantName: 'PM2.5',
+          average: 12,
+          daqiIndex: 2,
+          daqiBand: 'low',
+          averagingPeriod: '24 hour average'
+        }
+      ]
+    }
+    const viewGraphSummary = {
+      buttonText: 'View graph and pollutant summary',
+      href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+    }
+
+    it('has the button under the DAQI table when the page gives one', () => {
+      const $ = render({ activePeriod: 'daqi', daqi, viewGraphSummary })
+
+      const button = $('#daqi-hint').nextAll('.aq-js-only').find('a')
+      expect(button).toHaveLength(1)
+      expect(button.attr('href')).toBe(viewGraphSummary.href)
+    })
+
+    it('has no button when the page gives none', () => {
+      const $ = render({ activePeriod: 'daqi', daqi, viewGraphSummary: null })
+
+      expect($('a[href^="/stationdetails/graph-summary"]')).toHaveLength(0)
+    })
+  })
+
   describe('no-JavaScript message', () => {
     it('does not claim to show a year on the DAQI view', () => {
       const $ = render({ activePeriod: 'daqi', selectedYear: 2025 })

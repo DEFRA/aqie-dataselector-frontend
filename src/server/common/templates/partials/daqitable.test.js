@@ -129,6 +129,39 @@ describe('daqitable.njk', () => {
   })
 })
 
+describe('daqitable.njk graph summary button', () => {
+  const viewGraphSummary = {
+    buttonText: 'View graph and pollutant summary',
+    href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+  }
+  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+
+  it('has the button under the table and its hint, for users with JavaScript', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(1)
+    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
+    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($('#daqi-hint').nextAll('.aq-js-only')).toHaveLength(1)
+  })
+
+  it('has no button when there is no view model, as when the feature is off', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary: null })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+
+  it.each([
+    ['the station has no AURN siteId', { noMapping: true }],
+    ['there is no data', { pollutants: [] }]
+  ])('has no button when %s, as there is no table', (_name, daqi) => {
+    const $ = render(daqi, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+})
+
 describe('daqitable.njk hourly readings for users without JavaScript', () => {
   const HOURLY = {
     period: 'last24hours',

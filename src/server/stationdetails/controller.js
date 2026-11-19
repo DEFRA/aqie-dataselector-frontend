@@ -281,6 +281,21 @@ function resolveActivePeriod(request, tabPeriod, viewDaqiTab) {
 }
 
 /**
+ * The `from` value that makes the graph page's Back link return to the tab the
+ * button is on. The Daily Air Quality Index tab is the default view, so it
+ * needs none.
+ * @param {'year'|'daqi'|'last24hours'} activePeriod
+ * @param {string|number|undefined} selectedYear
+ * @returns {string|number|undefined}
+ */
+function graphSummaryOrigin(activePeriod, selectedYear) {
+  if (activePeriod === 'last24hours') {
+    return activePeriod
+  }
+  return activePeriod === 'year' ? selectedYear : undefined
+}
+
+/**
  * Resolves the requested station, optionally performs a download, and renders
  * the station details view, opened on the tab chosen by resolveActivePeriod.
  * @param {object} request
@@ -361,7 +376,10 @@ async function handleStationDetails(request, h, tabPeriod = 'daqi') {
     ),
     downloadresult: request.yar.get('downloadresult'),
     hrefq: resolveStationHrefq(request),
-    viewGraphSummary: buildViewGraphSummary({ stationId: stationDetails.id })
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: stationDetails.id,
+      from: graphSummaryOrigin(activePeriod, selectedYear)
+    })
   })
 }
 
@@ -443,7 +461,8 @@ const last7DaysController = {
       ),
       viewGraphSummary: buildViewGraphSummary({
         stationId: station.id,
-        period: 'last7days'
+        period: 'last7days',
+        from: 'last7days'
       }),
       hrefq: resolveStationHrefq(request)
     }

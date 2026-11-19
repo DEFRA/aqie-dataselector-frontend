@@ -28,11 +28,11 @@ function findSessionStation(request, stationId) {
   return stations.find((station) => station.id === stationId) ?? null
 }
 
-function buildPeriodTabs({ stationId, period, nojs }) {
+function buildPeriodTabs({ stationId, period, nojs, from }) {
   const { periods } = english.graphsummary
   return PERIOD_KEYS.map((key) => ({
     label: periods[key],
-    href: buildGraphSummaryHref({ stationId, period: key, nojs }),
+    href: buildGraphSummaryHref({ stationId, period: key, nojs, from }),
     isCurrent: key === period
   }))
 }
@@ -43,7 +43,7 @@ function buildPeriodTabs({ stationId, period, nojs }) {
  */
 const graphSummaryController = {
   handler: async (request, h) => {
-    const { stationId, period, nojs } = request.query
+    const { stationId, period, nojs, from } = request.query
     const station = findSessionStation(request, stationId)
     if (!station) {
       return renderNotFound(h)
@@ -65,12 +65,17 @@ const graphSummaryController = {
       heading,
       dates: formatPeriodDates(period, history),
       periodNavigationLabel: content.periodNavigationLabel,
-      periodTabs: buildPeriodTabs({ stationId: station.id, period, nojs }),
+      periodTabs: buildPeriodTabs({
+        stationId: station.id,
+        period,
+        nojs,
+        from
+      }),
       verificationBanner: content.verificationBanner,
       summary: buildPollutantSummary(history, historyPeriod),
       graph: buildPollutantGraph(history.history, station.pollutants),
       displayBacklink: true,
-      hrefq: buildStationPageHref({ stationId: station.id, nojs })
+      hrefq: buildStationPageHref({ stationId: station.id, nojs, from })
     })
   }
 }

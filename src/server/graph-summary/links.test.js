@@ -37,6 +37,52 @@ describe('buildGraphSummaryHref', () => {
       '/stationdetails/graph-summary?stationId=site1&period=last24hours&nojs=true'
     )
   })
+
+  it.each([
+    ['last24hours', 'last24hours'],
+    ['last7days', 'last7days'],
+    ['2024', '2024'],
+    [2024, '2024']
+  ])(
+    'passes on the tab it is on, %p, so Back returns to it',
+    (from, expected) => {
+      expect(buildGraphSummaryHref({ stationId: 'site1', from })).toBe(
+        `/stationdetails/graph-summary?stationId=site1&period=last24hours&from=${expected}`
+      )
+    }
+  )
+
+  it.each([
+    undefined,
+    null,
+    '',
+    'daqi',
+    'abc',
+    '202',
+    '20245',
+    '../x',
+    '2024/../x',
+    'LAST7DAYS',
+    '__proto__',
+    'constructor'
+  ])('leaves out a tab it cannot return to, such as %p', (from) => {
+    expect(buildGraphSummaryHref({ stationId: 'site1', from })).toBe(
+      '/stationdetails/graph-summary?stationId=site1&period=last24hours'
+    )
+  })
+
+  it('puts the tab before the no-JavaScript flag', () => {
+    expect(
+      buildGraphSummaryHref({
+        stationId: 'site1',
+        period: 'last7days',
+        from: 'last7days',
+        nojs: true
+      })
+    ).toBe(
+      '/stationdetails/graph-summary?stationId=site1&period=last7days&from=last7days&nojs=true'
+    )
+  })
 })
 
 describe('buildStationPageHref', () => {
@@ -48,5 +94,32 @@ describe('buildStationPageHref', () => {
     expect(buildStationPageHref({ stationId: 'a/b c', nojs: true })).toBe(
       '/stationDetailsNojs/a%2Fb%20c'
     )
+  })
+
+  it.each([
+    ['last24hours', '/stationdetails/last-24-hours'],
+    ['last7days', '/stationdetails/last-7-days'],
+    ['2024', '/stationdetails/year/2024']
+  ])('returns to the %s tab the user came from', (from, expected) => {
+    expect(buildStationPageHref({ stationId: 'site1', from })).toBe(expected)
+  })
+
+  it.each([undefined, '', 'daqi', 'abc', '20245', '../x', '__proto__'])(
+    'returns to the default view when the tab is %p',
+    (from) => {
+      expect(buildStationPageHref({ stationId: 'site1', from })).toBe(
+        '/stationdetails'
+      )
+    }
+  )
+
+  it('returns to the no-JavaScript station page whatever tab it is given', () => {
+    expect(
+      buildStationPageHref({
+        stationId: 'site1',
+        from: 'last7days',
+        nojs: true
+      })
+    ).toBe('/stationDetailsNojs/site1')
   })
 })

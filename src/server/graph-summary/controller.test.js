@@ -200,6 +200,48 @@ describe('graphSummaryController.handler', () => {
     ])
   })
 
+  it.each([
+    ['last24hours', '/stationdetails/last-24-hours'],
+    ['last7days', '/stationdetails/last-7-days'],
+    ['2024', '/stationdetails/year/2024']
+  ])(
+    'returns Back to the %s tab the user came from, and keeps it in the period tabs',
+    async (from, back) => {
+      await graphSummaryController.handler(
+        buildRequest({
+          stationId: station.id,
+          period: 'last7days',
+          from,
+          nojs: false
+        }),
+        h
+      )
+
+      const view = h.view.mock.calls[0][1]
+      expect(view.hrefq).toBe(back)
+      expect(view.periodTabs.map(({ href }) => href)).toEqual([
+        `/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=${from}`,
+        `/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days&from=${from}`
+      ])
+    }
+  )
+
+  it('returns Back to the no-JavaScript station page, whatever tab it is told the user came from', async () => {
+    await graphSummaryController.handler(
+      buildRequest({
+        stationId: station.id,
+        period: 'last24hours',
+        from: 'last7days',
+        nojs: true
+      }),
+      h
+    )
+
+    expect(h.view.mock.calls[0][1].hrefq).toBe(
+      '/stationDetailsNojs/BirminghamA4540Roadside'
+    )
+  })
+
   it('points the session at the station, so Back returns to the same station', async () => {
     const request = buildRequest({
       stationId: station.id,
