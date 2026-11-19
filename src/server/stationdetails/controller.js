@@ -6,6 +6,8 @@ import {
 } from '~/src/server/common/helpers/map-url.js'
 import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
+import { buildViewGraphSummary } from '~/src/server/graph-summary/call-to-action.js'
+import { buildHourlyReadings } from '~/src/server/graph-summary/hourly-readings.js'
 import {
   parseDateFormat,
   getToggletip,
@@ -15,9 +17,10 @@ import {
   formatCurrentDate,
   fetchYearTable,
   fetchStationHistory,
+  resolveStationHistory,
   getCurrentYear
 } from '~/src/server/common/helpers/station-helpers.js'
-import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
+import { HISTORY_PERIOD } from '~/src/server/common/constants/history-period.js'
 import { summariseDaqiHistory } from '~/src/server/common/helpers/daqi-summary.js'
 import {
   HTTP_BAD_REQUEST,
@@ -30,8 +33,6 @@ import {
 } from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
-
-const GRAPH_SUMMARY_TITLE = 'View graph and pollutant summary'
 
 /**
  * Resolves the station id from the POST payload or the session, persisting
@@ -104,53 +105,6 @@ function setDownloadSessionParams(request) {
   request.yar.set('selectedYear', request.params.download)
   request.yar.set('downloadPollutant', request.params.pollutant)
   request.yar.set('downloadFrequency', request.params.frequency)
-}
-
-function resolveGraphSummaryPeriod(request) {
-  const periodFromQuery = request.query?.period || request.payload?.period
-  if (
-    periodFromQuery === 'last24hours' ||
-    periodFromQuery === 'daily' ||
-    periodFromQuery === 'daqi'
-  ) {
-    return 'last24hours'
-  }
-
-  if (
-    periodFromQuery === 'last7days' ||
-    periodFromQuery === 'year' ||
-    request.yar.get('selectedYear')
-  ) {
-    return 'last7days'
-  }
-
-  return 'last24hours'
-}
-
-function resolveGraphSummaryHref(request) {
-  const stationId = resolveStationId(request) || request.yar.get('SiteId')
-  const period = resolveGraphSummaryPeriod(request)
-  const params = new URLSearchParams({
-    stationId: stationId || '',
-    period
-  })
-
-  return `/stationdetails/graph-summary?${params.toString()}`
-}
-
-/**
- * CTA view model, or null when the feature flag is off.
- * @param {object} request
- * @returns {{buttonText: string, href: string} | null}
- */
-function buildViewGraphSummary(request) {
-  if (!config.get('featureFlags.viewGraphSummary')) {
-    return null
-  }
-  return {
-    buttonText: GRAPH_SUMMARY_TITLE,
-    href: resolveGraphSummaryHref(request)
-  }
 }
 
 /**
@@ -300,7 +254,10 @@ async function fetchTabData(
     return {
       tabledata: null,
       daqi: {},
-      last24Hours: await resolveLast24Hours(stationDetails)
+      last24Hours: await resolveStationHistory(
+        stationDetails,
+        HISTORY_PERIOD.LAST_24_HOURS
+      )
     }
   }
 
@@ -329,6 +286,21 @@ function resolveActivePeriod(request, tabPeriod, viewDaqiTab) {
     return tabPeriod
   }
   return viewDaqiTab ? 'daqi' : 'year'
+}
+
+/**
+ * The `from` value that makes the graph page's Back link return to the tab the
+ * button is on. The Daily Air Quality Index tab is the default view, so it
+ * needs none.
+ * @param {'year'|'daqi'|'last24hours'} activePeriod
+ * @param {string|number|undefined} selectedYear
+ * @returns {string|number|undefined}
+ */
+function graphSummaryOrigin(activePeriod, selectedYear) {
+  if (activePeriod === 'last24hours') {
+    return activePeriod
+  }
+  return activePeriod === 'year' ? selectedYear : undefined
 }
 
 /**
@@ -404,10 +376,19 @@ async function handleStationDetails(request, h, tabPeriod = 'daqi') {
     viewDaqiTab,
     daqi,
     last24Hours,
+    // Only the active tab fetches a history, so one of these is undefined.
+    hourlyReadings: buildHourlyReadings(
+      daqi.history ?? last24Hours.history,
+      stationDetails.pollutants,
+      'last24hours'
+    ),
     downloadresult: request.yar.get('downloadresult'),
     hrefq: resolveStationHrefq(request),
     mapViewUrl: getMapViewUrlIfEnabled(),
-    viewGraphSummary: buildViewGraphSummary(request)
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: stationDetails.id,
+      from: graphSummaryOrigin(activePeriod, selectedYear)
+    })
   })
 }
 
@@ -460,7 +441,10 @@ const last7DaysController = {
     const lat = station.location.coordinates[0]
     const lon = station.location.coordinates[1]
 
-    const last7Days = await resolveLast7Days(station)
+    const last7Days = await resolveStationHistory(
+      station,
+      HISTORY_PERIOD.LAST_7_DAYS
+    )
     const updatedTime = parseDateFormat(
       last7Days.latestReadingAt ?? new Date().toISOString()
     )
@@ -479,6 +463,16 @@ const last7DaysController = {
       activePeriod: 'last7days',
       viewDaqiTab: config.get('featureFlags.viewDaqiTab'),
       last7Days,
+      hourlyReadings: buildHourlyReadings(
+        last7Days.history,
+        station.pollutants,
+        'last7days'
+      ),
+      viewGraphSummary: buildViewGraphSummary({
+        stationId: station.id,
+        period: 'last7days',
+        from: 'last7days'
+      }),
       hrefq: resolveStationHrefq(request),
       mapViewUrl: getMapViewUrlIfEnabled()
     }
@@ -488,58 +482,10 @@ const last7DaysController = {
 }
 
 /**
- * Fetches and summarises the 7-day pollutant history for a station, or
- * returns an empty-state marker when it can't: `noMapping` when the station
- * has no AURN siteId (so aqie-back-end can't be called at all), or neither
- * flag set when the call itself failed - last7daystable.njk reads these to
- * show the right message instead of a generic error.
- * @param {object} station
- * @returns {Promise<object>}
- */
-async function resolveLast7Days(station) {
-  if (!station.siteId) {
-    return { noMapping: true }
-  }
-
-  const history = await fetchStationHistory({
-    siteId: station.siteId,
-    period: '7d'
-  })
-  if (!history) {
-    return {}
-  }
-
-  return summariseStationHistory(history, station.pollutants)
-}
-
-/**
- * Fetches and summarises the last 24 hours of pollutant history for a station,
- * or returns an empty-state marker (`noMapping: true` when the station has no
- * AURN siteId, or `{}` when the upstream call fails) - last24hourstable.njk
- * reads these to show the right message instead of a generic error.
- * @param {object} station
- * @returns {Promise<object>}
- */
-async function resolveLast24Hours(station) {
-  if (!station.siteId) {
-    return { noMapping: true }
-  }
-
-  const history = await fetchStationHistory({
-    siteId: station.siteId,
-    period: '24h'
-  })
-  if (!history) {
-    return {}
-  }
-
-  return summariseStationHistory(history, station.pollutants)
-}
-
-/**
  * Fetches and summarises the current DAQI figures for a station, or returns an
  * empty-state marker (`noMapping: true` when the station has no AURN siteId,
- * or `{}` when the upstream call fails).
+ * or `{}` when the upstream call fails). `history` is the raw response, for the
+ * hourly readings.
  * @param {object} station
  * @returns {Promise<object>}
  */
@@ -556,33 +502,12 @@ async function resolveDaqi(station) {
     return {}
   }
 
-  return summariseDaqiHistory(history, station.pollutants)
-}
-
-const graphSummaryController = {
-  handler: (request, h) => {
-    const station = request.yar.get('stationdetails')
-    const stationId = request.query?.stationId || request.yar.get('SiteId')
-    const period = request.query?.period || 'last24hours'
-
-    return h.view('stationdetails/graph-summary', {
-      pageTitle: GRAPH_SUMMARY_TITLE,
-      title: GRAPH_SUMMARY_TITLE,
-      stationdetails: station,
-      stationId,
-      period,
-      periodLabel: period === 'last7days' ? 'last 7 days' : 'last 24 hours'
-    })
-  }
+  return { ...summariseDaqiHistory(history, station.pollutants), history }
 }
 
 export {
   stationDetailsController,
   last24HoursController,
   last7DaysController,
-  resolveLast7Days,
-  resolveLast24Hours,
-  resolveDaqi,
-  graphSummaryController,
-  buildViewGraphSummary
+  resolveDaqi
 }

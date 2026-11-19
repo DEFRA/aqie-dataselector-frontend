@@ -1,0 +1,110 @@
+@use "govuk-frontend" as *;
+
+.app-pollutant-graph__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: govuk-spacing(2) govuk-spacing(5);
+  margin: 0 0 govuk-spacing(3);
+  padding: 0;
+  list-style: none;
+}
+
+.app-pollutant-graph__legend-item {
+  @include govuk-font($size: 16);
+
+  display: inline-flex;
+  align-items: center;
+  gap: govuk-spacing(2);
+  color: $govuk-text-colour;
+}
+
+.app-pollutant-graph__swatch {
+  flex: 0 0 auto;
+}
+
+.app-pollutant-graph__canvas {
+  position: relative;
+}
+
+.app-pollutant-graph__canvas:focus {
+  outline: $govuk-focus-width solid $govuk-focus-colour;
+  outline-offset: 0;
+  box-shadow: inset 0 0 0 2px $govuk-focus-text-colour;
+}
+
+// Only the graph, not the line samples in the tooltip
+.app-pollutant-graph__canvas > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  // Lets the page scroll up and down while a finger moves along the graph
+  touch-action: pan-y;
+}
+
+.app-pollutant-graph__axis text,
+.app-pollutant-graph__axis-title {
+  fill: $govuk-text-colour;
+  font-family: $govuk-font-family;
+  font-size: 14px;
+}
+
+.app-pollutant-graph__axis .tick line,
+.app-pollutant-graph__axis .domain {
+  stroke: $govuk-border-colour;
+}
+
+.app-pollutant-graph__grid .tick line {
+  stroke: $govuk-border-colour;
+  stroke-opacity: 0.4;
+}
+
+.app-pollutant-graph__line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.app-pollutant-graph__guide {
+  stroke: $govuk-text-colour;
+  stroke-width: 1;
+  stroke-dasharray: 3, 3;
+  pointer-events: none;
+}
+
+.app-pollutant-graph__dot {
+  stroke: govuk-colour("white");
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.app-pollutant-graph__tooltip {
+  @include govuk-font($size: 16);
+
+  position: absolute;
+  z-index: 1;
+  max-width: 260px;
+  padding: govuk-spacing(2);
+  // Black rather than a grey: mid grey on white is under the 3:1 contrast
+  // minimum for a boundary that carries meaning.
+  border: 2px solid $govuk-text-colour;
+  background-color: govuk-colour("white");
+  box-shadow: 0 2px 4px rgba(govuk-colour("black"), 0.3);
+  color: $govuk-text-colour;
+  pointer-events: none;
+}
+
+.app-pollutant-graph__tooltip[hidden] {
+  display: none;
+}
+
+.app-pollutant-graph__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: govuk-spacing(1);
+  margin-top: govuk-spacing(1);
+}
+
+.app-pollutant-graph__tooltip-status {
+  margin-top: govuk-spacing(1);
+  color: $govuk-secondary-text-colour;
+}

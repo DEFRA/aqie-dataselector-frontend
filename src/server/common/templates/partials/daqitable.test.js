@@ -7,13 +7,16 @@ import * as globals from '~/src/config/nunjucks/globals/globals.js'
 const templates = path.resolve(process.cwd(), 'src/server/common/templates')
 const components = path.resolve(process.cwd(), 'src/server/common/components')
 
-function render(daqi, extra = {}) {
+function render(daqi, extra = {}, options) {
   const env = nunjucks.configure(
     [path.resolve('node_modules/govuk-frontend/dist/'), templates, components],
     { autoescape: true, trimBlocks: true, lstripBlocks: true, noCache: true }
   )
   Object.entries(globals).forEach(([name, value]) => env.addGlobal(name, value))
-  return cheerio.load(env.render('partials/daqitable.njk', { daqi, ...extra }))
+  return cheerio.load(
+    env.render('partials/daqitable.njk', { daqi, ...extra }),
+    options
+  )
 }
 
 const row = (overrides = {}) => ({
@@ -123,5 +126,87 @@ describe('daqitable.njk', () => {
     expect($('.govuk-inset-text').text().trim()).toBe(
       'Could not load Daily Air Quality Index data for this station.'
     )
+  })
+})
+
+describe('daqitable.njk graph summary button', () => {
+  const viewGraphSummary = {
+    buttonText: 'View graph and pollutant summary',
+    href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+  }
+  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+
+  it('has the button under the table and its hint, for users with JavaScript', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(1)
+    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
+    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($('#daqi-hint').nextAll('.aq-js-only')).toHaveLength(1)
+  })
+
+  it('has no button when there is no view model, as when the feature is off', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary: null })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+
+  it.each([
+    ['the station has no AURN siteId', { noMapping: true }],
+    ['there is no data', { pollutants: [] }]
+  ])('has no button when %s, as there is no table', (_name, daqi) => {
+    const $ = render(daqi, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+})
+
+describe('daqitable.njk hourly readings for users without JavaScript', () => {
+  const HOURLY = {
+    period: 'last24hours',
+    title: 'View hourly data for the last 24 hours',
+    table: {
+      caption: 'Hourly readings in µg/m³ for the last 24 hours',
+      head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
+      rows: [
+        [{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }]
+      ]
+    }
+  }
+  const daqi = { pollutants: [row()] }
+  const WITHOUT_JAVASCRIPT = { scriptingEnabled: false }
+
+  it('has a collapsed section with the hourly table when JavaScript is off', () => {
+    const $ = render(daqi, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    const section = $('noscript details')
+    expect(section).toHaveLength(1)
+    expect(section.attr('open')).toBeUndefined()
+    expect(section.children('summary').text().trim()).toBe(HOURLY.title)
+    expect(section.find('table caption').text().trim()).toBe(
+      HOURLY.table.caption
+    )
+    expect(section.find('.app-verification-banner')).toHaveLength(0)
+  })
+
+  it('puts the section after the DAQI table and its hint', () => {
+    const $ = render(daqi, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    expect($('#daqi-hint').nextAll('noscript')).toHaveLength(1)
+  })
+
+  it('keeps the section out of the page when JavaScript is on', () => {
+    const $ = render(daqi, { hourlyReadings: HOURLY })
+
+    expect($('noscript')).toHaveLength(1)
+    expect($('details')).toHaveLength(0)
+  })
+
+  it('has no section when there are no hourly readings, as when the tab is swapped in', () => {
+    const $ = render(daqi, {}, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
   })
 })

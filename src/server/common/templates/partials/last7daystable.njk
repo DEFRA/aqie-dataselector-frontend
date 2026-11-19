@@ -1,4 +1,6 @@
-{% from "partials/aq-table-macros.njk" import limitToggletip, aboveLimitTag, exceedanceCell %}
+{% from "partials/pollutant-summary-table.njk" import pollutantSummaryTable %}
+{% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
 
 {#
   Last 7 days air pollution levels table.
@@ -11,12 +13,14 @@
   data capture); a withheld average arrives as '-' and `lowDataCapture` is true,
   so the tag and the dash always agree.
 
-  The average, daily exceedances and hourly exceedances columns' toggletips
-  reuse pollutantToggletips[name].annual / .daily / .hourly
-  (src/server/data/en/pollutant-toggletips.js)
+  The table is partials/pollutant-summary-table.njk, shared with the other
+  periods; its comment covers the toggletip copy.
 
   The heading and date range are rendered by stationdetails/last-7-days.njk,
   above the period nav, so this partial starts at the notice banner.
+
+  `viewGraphSummary` (optional) is the "View graph and pollutant summary"
+  button, shown under the table; see view-graph-summary.njk.
 #}
 
 {% if durationText %}
@@ -25,58 +29,13 @@
 
 {% if last7Days.pollutants.length %}
 
-  <div class="govuk-inset-text not-verified">{{ last7DaysContent.notice }}</div>
+  {{ appVerificationBanner({ text: last7DaysContent.notice }) }}
 
-  <div class="table-scroll-container">
-    <table id="last7daystable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
-      <thead class="defra-aq-levels-table__head">
-        <tr class="defra-aq-levels-table__row">
-          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant defra-aq-levels-table__cell--pollutant-title">Pollutant</th>
-          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average defra-aq-levels-table__cell--average-title">Average</th>
-          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--daily defra-aq-levels-table__cell--daily-title">Daily exceedances</th>
-          <th scope="col" class="defra-aq-levels-table__cell defra-aq-levels-table__cell--hourly defra-aq-levels-table__cell--hourly-title">Hourly exceedances</th>
-        </tr>
-      </thead>
-
-      <tbody class="defra-aq-levels-table__body">
-        {% for data in last7Days.pollutants %}
-          {% set hourlyLimit = pollutantToggletips[data.pollutantName].hourly %}
-          {% set dailyLimit = pollutantToggletips[data.pollutantName].daily %}
-          {% set annualLimit = pollutantToggletips[data.pollutantName].annual %}
-          {% set lowDataCapture = data.lowDataCapture %}
-
-          <tr class="defra-aq-levels-table__row">
-            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--pollutant">
-              {{ data.pollutantName }}
-              {% if lowDataCapture %}
-                <span class="defra-aq-levels-table__cell--data">
-                  <strong class="govuk-tag govuk-tag--red govuk-!-font-size-16">Low data capture</strong>
-                </span>
-              {% endif %}
-              <span class="defra-aq-levels-table__cell--data defra-aq-levels-table__cell--data-capture">Data capture: {{ data.dataCapturePercentage }}%
-                {% if lowDataCapture %}
-                  <span class="defra-toggletip--datacapture">{{ limitToggletip(dataCaptureToggletip) }}</span>
-                {% endif %}
-              </span>
-            </td>
-
-            <td class="defra-aq-levels-table__cell defra-aq-levels-table__cell--average">
-              {% if data.average != '-' and annualLimit %}
-                <span class="defra-aq-value-with-tip">{{ data.average }} µg/m3{{ limitToggletip(annualLimit) }}</span>
-              {% else %}
-                {{ data.average }}
-              {% endif %}
-            </td>
-
-            {{ exceedanceCell('daily', data.dailyCount, dailyLimit) }}
-            {{ exceedanceCell('hourly', data.hourlyCount, hourlyLimit) }}
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {{ pollutantSummaryTable({ rows: last7Days.pollutants, period: '7d', id: 'last7daystable' }) }}
 
   <p id="last7days-hint" class="govuk-hint">{{ last7DaysContent.legalLimitsHint }}</p>
+
+  {% include "partials/view-graph-summary.njk" %}
 
 {% elif last7Days.noMapping %}
 
@@ -86,4 +45,15 @@
 
   <div class="govuk-inset-text">{{ last7DaysContent.noDataMessage }}</div>
 
+{% endif %}
+
+{# The graph needs JavaScript, so without it this stands in for the graph
+   button. <noscript> keeps it out of the page for everyone else. It is only
+   given on a full page load, not when the tab is swapped in with innerHTML. #}
+{% if hourlyReadings %}
+  <noscript>
+    <div class="govuk-!-margin-top-6">
+      {{ hourlyReadingsDetails(hourlyReadings) }}
+    </div>
+  </noscript>
 {% endif %}

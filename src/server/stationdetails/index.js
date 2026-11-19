@@ -1,10 +1,9 @@
+import { config } from '~/src/config/config.js'
 import {
   stationDetailsController,
   last24HoursController,
-  last7DaysController,
-  graphSummaryController
+  last7DaysController
 } from '~/src/server/stationdetails/controller.js'
-import { config } from '~/src/config/config.js'
 
 // Define the route configuration function
 const configureRoutes = (server) => {
@@ -46,14 +45,6 @@ const configureRoutes = (server) => {
       method: 'GET',
       path: '/stationdetails/daqi',
       ...stationDetailsController
-    })
-  }
-
-  if (config.get('featureFlags.viewGraphSummary')) {
-    server.route({
-      method: 'GET',
-      path: '/stationdetails/graph-summary',
-      ...graphSummaryController
     })
   }
 }
