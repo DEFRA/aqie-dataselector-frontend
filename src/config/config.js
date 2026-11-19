@@ -135,6 +135,29 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'SEARCH_ON_MAP_ENABLED'
+    },
+    mapInDataselector: {
+      doc: 'Serve the air quality map from this service (/map and its /api routes) instead of linking to aqie-maps-frontend. Off unless explicitly enabled for the environment',
+      format: Boolean,
+      default: false,
+      env: 'MAP_IN_DATASELECTOR_ENABLED'
+    }
+  },
+  aqieBackEnd: {
+    url: {
+      doc: 'Base URL for the AQIE back-end service, used by the map',
+      format: String,
+      default: 'http://localhost:3001',
+      env: 'AQIE_BACK_END_URL'
+    }
+  },
+  aqieForecastApi: {
+    url: {
+      doc: 'Base URL for the AQIE forecast API service, used by the map. Falls back to the back-end forecasts when unset',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'AQIE_FORECAST_API_URL'
     }
   },
   mapsFrontEnd: {

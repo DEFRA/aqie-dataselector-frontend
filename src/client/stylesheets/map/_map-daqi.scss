@@ -1,0 +1,111 @@
+// Official Defra DAQI colours, source: https://uk-air.defra.gov.uk/air-pollution/daqi?view=more-info
+// Keep in sync with map-daqi.js.
+//
+// SonarCloud rule css:S7924 (text/background contrast) is suppressed for this file
+// only, in sonar-project.properties. These colour pairs are legally defined, so
+// they cannot be changed. The band is never conveyed by colour alone: the key and
+// the tag always show its number and label.
+// Keep only DAQI colour pairs in this file so the suppression stays narrow.
+
+// Key
+.aq-daqi-scale__band {
+  &--1 {
+    background-color: #9cff9c;
+    color: #0b0c0c;
+  }
+
+  &--2 {
+    background-color: #31ff00;
+    color: #0b0c0c;
+  }
+
+  &--3 {
+    background-color: #31cf00;
+    color: #0b0c0c;
+  }
+
+  &--4 {
+    background-color: #ffff00;
+    color: #0b0c0c;
+  }
+
+  &--5 {
+    background-color: #ffcf00;
+    color: #0b0c0c;
+  }
+
+  &--6 {
+    background-color: #ff9a00;
+    color: #0b0c0c;
+  }
+
+  &--7 {
+    background-color: #ff9292;
+    color: #0b0c0c;
+  }
+
+  &--8 {
+    background-color: #ff0000;
+  }
+
+  &--9 {
+    background-color: #990000;
+  }
+
+  &--10 {
+    background-color: #ce30ff;
+  }
+}
+
+// Station panel tag
+.aq-daqi-tag {
+  &--1 {
+    background-color: #9cff9c;
+    color: #0b0c0c;
+  }
+
+  &--2 {
+    background-color: #31ff00;
+    color: #0b0c0c;
+  }
+
+  &--3 {
+    background-color: #31cf00;
+    color: #0b0c0c;
+  }
+
+  &--4 {
+    background-color: #ffff00;
+    color: #0b0c0c;
+  }
+
+  &--5 {
+    background-color: #ffcf00;
+    color: #0b0c0c;
+  }
+
+  &--6 {
+    background-color: #ff9a00;
+    color: #0b0c0c;
+  }
+
+  &--7 {
+    background-color: #ff9292;
+    color: #0b0c0c;
+  }
+
+  &--8 {
+    background-color: #ff0000;
+    color: #ffffff;
+  }
+
+  &--9 {
+    background-color: #990000;
+    color: #ffffff;
+  }
+
+  &--10 {
+    background-color: #ce30ff;
+    color: #ffffff;
+  }
+}

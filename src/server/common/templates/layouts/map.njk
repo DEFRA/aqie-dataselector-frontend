@@ -1,0 +1,24 @@
+{% extends "govuk/template.njk" %}
+
+{% block pageTitle %}{{ pageTitle }} | Get air pollution data - GOV.UK{% endblock %}
+
+{% block head %}
+  <link href="{{ getAssetPath('application.css') }}" rel="stylesheet">
+  <link href="{{ getAssetPath('map.css') }}" rel="stylesheet">
+  <link href="/map-assets/dist/css/index.css" rel="stylesheet">
+{% endblock %}
+
+{% block skipLink %}{% endblock %}
+{% block header %}
+  {% include 'partials/cookie-banner.njk' %}
+{% endblock %}
+{% block content %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block bodyEnd %}
+  <script src="/map-assets/dist/umd/index.js"></script>
+  <script src="/map-assets/providers/maplibre/dist/umd/index.js"></script>
+  <script src="{{ getAssetPath('station-list.js') }}" type="module"></script>
+  <script src="{{ getAssetPath('map.js') }}" type="module"></script>
+  <script src="{{ getAssetPath('application.js') }}" type="module"></script>
+{% endblock %}
