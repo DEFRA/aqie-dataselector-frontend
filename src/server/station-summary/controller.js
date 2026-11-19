@@ -36,6 +36,7 @@ const stationSummaryController = {
     request.yar.set('SiteId', station.id)
     request.yar.set('nooflocation', 'single')
     request.yar.set('deepLinkTrusted', true)
+    request.yar.set('mapReturnSiteId', station.id)
 
     // Deep links skip the home page, which is normally what seeds this -
     // without it the table API gets no year filter and returns every year's

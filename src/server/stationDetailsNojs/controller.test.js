@@ -1,5 +1,6 @@
 import { stationDetailsNojsController } from '~/src/server/stationDetailsNojs/controller.js'
 import { english } from '~/src/server/data/en/homecontent.js'
+import { config } from '~/src/config/config.js'
 import {
   parseDateFormat,
   getToggletip,
@@ -508,6 +509,37 @@ describe('stationDetailsNojsController', () => {
         'stationDetailsNojs/index',
         expect.objectContaining({
           hrefq: '/multiplelocations'
+        })
+      )
+    })
+
+    it('should set hrefq to the map when the station was opened from the map', async () => {
+      const originalMapsUrl = config.get('mapsFrontEnd.url')
+      const originalFlag = config.get('featureFlags.searchOnMap')
+      config.set('mapsFrontEnd.url', 'https://maps.example')
+      config.set('featureFlags.searchOnMap', true)
+      mockRequest.yar.get = jest.fn((key) => {
+        const session = {
+          MonitoringstResult: { getmonitoringstation: [mockStation] },
+          stationdetails: mockStation,
+          selectedYear: '2026',
+          nooflocation: 'single',
+          SiteId: 'site123',
+          mapReturnSiteId: 'site123',
+          tabledata: { rows: [] }
+        }
+        return session[key]
+      })
+
+      await stationDetailsNojsController.handler(mockRequest, mockH)
+      config.set('mapsFrontEnd.url', originalMapsUrl)
+      config.set('featureFlags.searchOnMap', originalFlag)
+
+      expect(mockH.view).toHaveBeenCalledWith(
+        'stationDetailsNojs/index',
+        expect.objectContaining({
+          hrefq: 'https://maps.example/map',
+          mapViewUrl: 'https://maps.example/map/view'
         })
       )
     })

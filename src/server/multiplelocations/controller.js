@@ -202,6 +202,7 @@ async function resolveMonitoringResult(request, searchValue, locationMiles) {
  */
 async function processLocationsSearch(ctx, searchValue) {
   const { request } = ctx
+  request.yar.set('mapReturnSiteId', null)
   const locations = await resolveLocations(request, searchValue)
   const monitoringResult = await resolveMonitoringResult(
     request,

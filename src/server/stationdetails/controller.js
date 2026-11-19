@@ -1,5 +1,9 @@
 import { english } from '~/src/server/data/en/homecontent.js'
 import { config } from '~/src/config/config.js'
+import {
+  getMapReturnUrl,
+  getMapViewUrlIfEnabled
+} from '~/src/server/common/helpers/map-url.js'
 import { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import {
@@ -51,6 +55,10 @@ function resolveStationId(request) {
  * @returns {string}
  */
 function resolveStationHrefq(request) {
+  const mapReturnUrl = getMapReturnUrl(request)
+  if (mapReturnUrl) {
+    return mapReturnUrl
+  }
   return request.yar.get('nooflocation') === 'single'
     ? `/multiplelocations`
     : `/location`
@@ -398,6 +406,7 @@ async function handleStationDetails(request, h, tabPeriod = 'daqi') {
     last24Hours,
     downloadresult: request.yar.get('downloadresult'),
     hrefq: resolveStationHrefq(request),
+    mapViewUrl: getMapViewUrlIfEnabled(),
     viewGraphSummary: buildViewGraphSummary(request)
   })
 }
@@ -470,7 +479,8 @@ const last7DaysController = {
       activePeriod: 'last7days',
       viewDaqiTab: config.get('featureFlags.viewDaqiTab'),
       last7Days,
-      hrefq: resolveStationHrefq(request)
+      hrefq: resolveStationHrefq(request),
+      mapViewUrl: getMapViewUrlIfEnabled()
     }
 
     return h.view('stationdetails/last-7-days', viewData)
