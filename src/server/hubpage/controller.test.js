@@ -1,5 +1,6 @@
 import { hubController } from './controller.js'
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { config } from '~/src/config/config.js'
 
 // Mock the content module
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
@@ -69,7 +70,8 @@ describe('hubController', () => {
     })
     expect(mockH.view).toHaveBeenCalledWith('hubpage/index', {
       pageTitle: englishNew.hub.pageTitle,
-      texts: englishNew.hub.texts
+      texts: englishNew.hub.texts,
+      mapUrl: null
     })
     expect(result).toBe('hub-view-response')
   })
@@ -113,7 +115,8 @@ describe('hubController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('hubpage/index', {
       pageTitle: 'Test Hub Page',
-      texts: 'Test hub page texts'
+      texts: 'Test hub page texts',
+      mapUrl: null
     })
   })
 
@@ -122,7 +125,8 @@ describe('hubController', () => {
 
     expect(mockH.view).toHaveBeenCalledWith('hubpage/index', {
       pageTitle: expect.any(String),
-      texts: expect.any(String)
+      texts: expect.any(String),
+      mapUrl: null
     })
   })
 
@@ -130,6 +134,50 @@ describe('hubController', () => {
     const result = hubController.handler(mockRequest, mockH)
 
     expect(result).toBe('hub-view-response')
+  })
+
+  describe('Map link', () => {
+    beforeEach(() => {
+      config.set('featureFlags.searchOnMap', true)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.searchOnMap', false)
+      config.set('mapsFrontEnd.url', null)
+    })
+
+    it('should pass the map page URL when the maps service is configured', () => {
+      config.set('mapsFrontEnd.url', 'https://maps.example')
+      hubController.handler(mockRequest, mockH)
+
+      expect(mockH.view.mock.calls[0][1].mapUrl).toBe(
+        'https://maps.example/map'
+      )
+    })
+
+    it('should not duplicate a trailing slash on the configured URL', () => {
+      config.set('mapsFrontEnd.url', 'https://maps.example/')
+      hubController.handler(mockRequest, mockH)
+
+      expect(mockH.view.mock.calls[0][1].mapUrl).toBe(
+        'https://maps.example/map'
+      )
+    })
+
+    it('should pass no map URL when the feature flag is off, even if the maps service is configured', () => {
+      config.set('featureFlags.searchOnMap', false)
+      config.set('mapsFrontEnd.url', 'https://maps.example')
+      hubController.handler(mockRequest, mockH)
+
+      expect(mockH.view.mock.calls[0][1].mapUrl).toBeNull()
+    })
+
+    it('should pass no map URL when the maps service is not configured', () => {
+      config.set('mapsFrontEnd.url', null)
+      hubController.handler(mockRequest, mockH)
+
+      expect(mockH.view.mock.calls[0][1].mapUrl).toBeNull()
+    })
   })
 
   describe('Session management', () => {
@@ -204,7 +252,8 @@ describe('hubController', () => {
 
       expect(mockH.view).toHaveBeenCalledWith('hubpage/index', {
         pageTitle: englishNew.hub.pageTitle,
-        texts: englishNew.hub.texts
+        texts: englishNew.hub.texts,
+        mapUrl: null
       })
     })
 
@@ -222,8 +271,7 @@ describe('hubController', () => {
 
       const viewCall = mockH.view.mock.calls[0][1]
 
-      // Should only have pageTitle and texts
-      expect(Object.keys(viewCall)).toEqual(['pageTitle', 'texts'])
+      expect(Object.keys(viewCall)).toEqual(['pageTitle', 'texts', 'mapUrl'])
       expect(viewCall).toHaveProperty('pageTitle')
       expect(viewCall).toHaveProperty('texts')
     })

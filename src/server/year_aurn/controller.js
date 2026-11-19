@@ -6,7 +6,6 @@
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
 import {
-  MIN_YEAR,
   EXAMPLE_YEAR,
   MAX_YEARS_RANGE,
   DAYS_IN_SEVEN_DAYS
@@ -21,6 +20,7 @@ const HREF_RANGE_START_YEAR = '#range-start-year'
 const HREF_RANGE_END_YEAR = '#range-end-year'
 const JANUARY_FIRST = '1 January'
 const DECEMBER_THIRTY_FIRST = '31 December'
+const MIN_VALIDATION_YEAR = 1973
 
 // Form field keys
 const FIELD_ANY_YEAR_INPUT = 'any-year-input'
@@ -63,7 +63,7 @@ function isFourDigitYear(value) {
 
 function withinRange(year) {
   const n = Number(year)
-  return n >= MIN_YEAR && n <= getCurrentYear()
+  return n >= MIN_VALIDATION_YEAR && n <= getCurrentYear()
 }
 
 function isValidYearRange(startYear, endYear) {
@@ -163,7 +163,7 @@ function validateAnyYear(payload, request, errors) {
   }
 
   if (!withinRange(year)) {
-    const msg = `Year must be between ${MIN_YEAR} and ${getCurrentYear()}.`
+    const msg = `Year must be between ${MIN_VALIDATION_YEAR} and ${getCurrentYear()}.`
     addError(errors, msg, HREF_ANY_YEAR_INPUT, ERROR_FIELD_ANY_YEAR, msg)
   }
 }
@@ -253,7 +253,7 @@ function validateRangeYears(payload, request, errors) {
     startYear,
     MSG_ENTER_START_YEAR,
     MSG_START_YEAR_FOUR_DIGITS,
-    `Start year must be between ${MIN_YEAR} and ${getCurrentYear()}.`,
+    `Start year must be between ${MIN_VALIDATION_YEAR} and ${getCurrentYear()}.`,
     HREF_RANGE_START_YEAR,
     ERROR_FIELD_RANGE_START,
     errors
@@ -263,7 +263,7 @@ function validateRangeYears(payload, request, errors) {
     endYear,
     MSG_ENTER_END_YEAR,
     MSG_END_YEAR_FOUR_DIGITS,
-    `End year must be between ${MIN_YEAR} and ${getCurrentYear()}.`,
+    `End year must be between ${MIN_VALIDATION_YEAR} and ${getCurrentYear()}.`,
     HREF_RANGE_END_YEAR,
     ERROR_FIELD_RANGE_END,
     errors

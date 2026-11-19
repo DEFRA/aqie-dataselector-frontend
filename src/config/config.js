@@ -129,6 +129,23 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'VIEW_DAQI_TAB_ENABLED'
+    },
+    searchOnMap: {
+      doc: 'Show the "Search on a map" link on the hub page. Off unless explicitly enabled for the environment, and only shown when MAPS_FRONT_END_URL is also set',
+      format: Boolean,
+      default: false,
+      env: 'SEARCH_ON_MAP_ENABLED'
+    }
+  },
+  mapsFrontEnd: {
+    url: {
+      doc: 'Base URL for the AQIE maps front-end service, used for links to the map. Defaults to the service in the current CDP environment (ENVIRONMENT); the links are hidden when neither is set',
+      format: String,
+      nullable: true,
+      default: process.env.ENVIRONMENT
+        ? `https://aqie-maps-frontend.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`
+        : null,
+      env: 'MAPS_FRONT_END_URL'
     }
   },
   session: {

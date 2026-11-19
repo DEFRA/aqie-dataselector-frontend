@@ -5,9 +5,11 @@
  */
 
 import { englishNew } from '~/src/server/data/en/content_aurn.js'
+import { getMapUrlIfEnabled } from '~/src/server/common/helpers/map-url.js'
 
 export const hubController = {
   handler(request, h) {
+    request.yar.set('mapReturnSiteId', null)
     request.yar.set('searchQuery', null)
     request.yar.set('fullSearchQuery', null)
     request.yar.set('searchLocation', '')
@@ -46,7 +48,8 @@ export const hubController = {
 
     return h.view('hubpage/index', {
       pageTitle: englishNew.hub.pageTitle,
-      texts: englishNew.hub.texts
+      texts: englishNew.hub.texts,
+      mapUrl: getMapUrlIfEnabled()
     })
   }
 }

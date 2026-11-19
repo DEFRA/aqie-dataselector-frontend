@@ -93,6 +93,7 @@ The application only injects the GTM script when a user has accepted analytics c
 | ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only. Users without JavaScript get the hourly readings in collapsed sections on the Daily Air Quality Index, Last 24 hours and Last 7 days tabs instead. It also registers the `/stationdetails/graph-summary` route. When unset or `false`, all of these are disabled. |
 | `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.                                                                                                                                                                  |
+| `SEARCH_ON_MAP_ENABLED`      | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden.                                                                                                                                                                 |
 
 Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
@@ -124,6 +125,14 @@ Without JavaScript the button is hidden, as the graph needs JavaScript. In its p
 Each pollutant has a colour and a line style (solid, dashed, dotted or dash and dot). Two pollutants share the solid style, so the key and the tooltip also name each one in text. They are set in `src/server/graph-summary/pollutant-styles.js`.
 
 Pointing at the graph, tapping it, or using the left and right arrow keys (Home, End and Escape too) once it has focus, shows the readings for the nearest hour in a tooltip, with a line and a dot on each pollutant. This is `src/client/javascripts/pollutant-graph-tooltip.js`. The verification status in the tooltip is fixed text, `graphsummary.graph.verificationStatus` in the page copy, not read from the data.
+
+### Returning to the map
+
+When a station page is opened from aqie-maps-frontend (via `/station-summary`), its Back link goes to `<MAPS_FRONT_END_URL>/map`, where the map restores the user's previous view. This works regardless of `SEARCH_ON_MAP_ENABLED`. The session remembers which station came from the map, so the Back link only points at the map while the user is on that station; starting a new search (hub, home or location search) clears it. When no maps URL is configured, the Back link keeps its usual search-journey target.
+
+### View map of nearby monitoring stations
+
+When `SEARCH_ON_MAP_ENABLED` is `true` and a maps URL is configured, station pages (summary, last 7 days and the no-JS view) show a "View map of nearby monitoring stations" link under the status line (`partials/map-nearby-link.njk`). It is a form button that POSTs the station's `lat`, `lng` and `siteId` (`localSiteID`) to `<MAPS_FRONT_END_URL>/map/view`, which opens the map zoomed in on the station with it selected. It uses a POST so no location data goes in the URL, and it works without JavaScript. The CSP `form-action` directive allows the maps origin when `MAPS_FRONT_END_URL` is set. The existing "View on Google Maps" link is unchanged.
 
 ## Using the graph: an accessibility guide
 
@@ -245,6 +254,11 @@ OS_NAMES_DEV_API_KEYS=<your-dev-api-key>
 
 # Google Tag Manager
 GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
+
+# Optional: the "Search on a map" link on the hub page needs the feature flag and the aqie-maps-frontend URL.
+# The URL defaults to https://aqie-maps-frontend.<ENVIRONMENT>.cdp-int.defra.cloud when ENVIRONMENT is set, so locally you need to set it
+MAPS_FRONT_END_URL=http://localhost:3000
+SEARCH_ON_MAP_ENABLED=true
 ```
 
 ### Setup
