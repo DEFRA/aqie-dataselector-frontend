@@ -1,37 +1,29 @@
-// The map library needs blob workers, vector tiles and inline styles, so the map
-// routes get their own policy instead of the site-wide one.
+import { contentSecurityPolicy } from '~/src/server/common/helpers/content-security-policy.js'
+import { cspDirectives } from '~/src/server/common/constants/csp-directives.js'
+
+const siteWide = contentSecurityPolicy.options
+const TILES = 'https://tiles.openfreemap.org'
+
+// The site-wide policy, plus what the map library needs: vector tiles, blob
+// workers, and the inline styles it injects (allowed by hash rather than
+// 'unsafe-inline'). A route-level policy replaces the site-wide one, so it
+// is built on top of it to avoid the two drifting apart.
 const mapContentSecurityPolicy = {
-  defaultSrc: ['self'],
-  fontSrc: ['self', 'data:'],
-  connectSrc: [
-    'self',
-    'data:',
-    'https://tiles.openfreemap.org',
-    'https://www.google.com',
-    'https://*.google-analytics.com',
-    'https://*.analytics.google.com',
-    'https://*.googletagmanager.com'
-  ],
-  mediaSrc: ['self'],
+  ...siteWide,
+  defaultSrc: [cspDirectives.self],
+  fontSrc: [...siteWide.fontSrc, 'data:'],
+  connectSrc: [...siteWide.connectSrc, 'data:', TILES],
+  imgSrc: [...siteWide.imgSrc, 'data:', TILES],
+  scriptSrc: [...siteWide.scriptSrc, 'blob:'],
+  workerSrc: [cspDirectives.self, 'blob:'],
   styleSrc: [
-    'self',
+    cspDirectives.self,
     "'sha256-2PZQPqAcY6IE7H879XiZ2Hm3cBUNVB41T1m3kjNvN6E='",
     "'sha256-2xbtINjVlLJj9ZoLtUvIDOoIknefI75gHwbH8jYZ+6E='"
   ],
-  scriptSrc: [
-    'self',
-    'blob:',
-    "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='",
-    'https://www.googletagmanager.com'
-  ],
-  workerSrc: ['self', 'blob:'],
-  imgSrc: ['self', 'data:', 'https://tiles.openfreemap.org'],
-  frameSrc: ['self', 'data:'],
+  frameSrc: [...siteWide.frameSrc, 'data:'],
   objectSrc: ['none'],
-  frameAncestors: ['self'],
-  formAction: ['self'],
-  manifestSrc: ['self'],
-  generateNonces: true
+  formAction: [cspDirectives.self]
 }
 
 export { mapContentSecurityPolicy }

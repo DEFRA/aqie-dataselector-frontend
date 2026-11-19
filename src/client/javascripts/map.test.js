@@ -1536,14 +1536,40 @@ describe('#map key overlay', () => {
     expect(selectedCall).toBeDefined()
   })
 
-  test('Should call history.back() when exit button is clicked', async () => {
+  test('Should call history.back() when exit button is clicked after arriving from this site', async () => {
     await loadAndIdle()
+    const referrerSpy = jest
+      .spyOn(document, 'referrer', 'get')
+      .mockReturnValue(`${globalThis.location.origin}/stationdetails`)
     const backSpy = jest.spyOn(globalThis, 'history', 'get').mockReturnValue({
       back: jest.fn()
     })
     document.getElementById('exit-map').click()
     expect(backSpy.mock.results[0].value.back).toHaveBeenCalledTimes(1)
     backSpy.mockRestore()
+    referrerSpy.mockRestore()
+  })
+
+  test('Should go to the home page when the map was opened directly', async () => {
+    await loadAndIdle()
+    const back = jest.fn()
+    const historySpy = jest
+      .spyOn(globalThis, 'history', 'get')
+      .mockReturnValue({ back })
+    const assign = jest.fn()
+    const original = globalThis.location
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: { origin: original.origin, assign }
+    })
+    document.getElementById('exit-map').click()
+    expect(assign).toHaveBeenCalledWith('/')
+    expect(back).not.toHaveBeenCalled()
+    Object.defineProperty(globalThis, 'location', {
+      configurable: true,
+      value: original
+    })
+    historySpy.mockRestore()
   })
 })
 

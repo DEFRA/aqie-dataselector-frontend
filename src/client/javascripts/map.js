@@ -75,7 +75,12 @@ async function initMap() {
   // Before the data loads, so the panels respond straight away
   initMapPanels({ closeStationPanel: () => closeStationPanel() })
   document.getElementById('exit-map')?.addEventListener('click', () => {
-    history.back()
+    // Opened directly (bookmark, shared link): there's no page to go back to
+    if (document.referrer.startsWith(globalThis.location.origin)) {
+      history.back()
+    } else {
+      globalThis.location.assign('/')
+    }
   })
   map.on('map:ready', ({ map: maplibreMap }) => {
     maplibreInstance = maplibreMap
