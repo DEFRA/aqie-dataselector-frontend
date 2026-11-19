@@ -1,5 +1,6 @@
 import {
   stationDetailsController,
+  stationDetailsPostController,
   last24HoursController,
   last7DaysController,
   graphSummaryController
@@ -17,7 +18,7 @@ const configureRoutes = (server) => {
     {
       method: 'POST',
       path: '/stationdetails',
-      ...stationDetailsController
+      ...stationDetailsPostController
     },
     {
       method: 'GET',

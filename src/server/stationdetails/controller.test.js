@@ -1,5 +1,6 @@
 import {
   stationDetailsController,
+  stationDetailsPostController,
   last24HoursController,
   last7DaysController,
   graphSummaryController,
@@ -727,6 +728,36 @@ describe('stationDetailsController.handler', () => {
         maptoggletips: null
       })
     )
+  })
+})
+
+describe('stationDetailsPostController.handler', () => {
+  const buildRequest = (payload) => ({
+    method: 'post',
+    payload,
+    yar: { get: jest.fn(), set: jest.fn() }
+  })
+  const h = { redirect: jest.fn((url) => url) }
+
+  it('stores the posted station and redirects to the GET page', () => {
+    const request = buildRequest({ stationId: 'OxfordCentreRoadside' })
+
+    const result = stationDetailsPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      'SiteId',
+      'OxfordCentreRoadside'
+    )
+    expect(result).toBe('/stationdetails')
+  })
+
+  it('keeps the session station when the post has no station id', () => {
+    const request = buildRequest(undefined)
+
+    const result = stationDetailsPostController.handler(request, h)
+
+    expect(request.yar.set).not.toHaveBeenCalled()
+    expect(result).toBe('/stationdetails')
   })
 })
 
