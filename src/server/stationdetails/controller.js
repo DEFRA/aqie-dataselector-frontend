@@ -353,8 +353,9 @@ async function handleStationDetails(request, h, tabPeriod = 'daqi') {
     viewDaqiTab,
     daqi,
     last24Hours,
+    // Only the active tab fetches a history, so one of these is undefined.
     hourlyReadings: buildHourlyReadings(
-      daqi.history,
+      daqi.history ?? last24Hours.history,
       stationDetails.pollutants,
       'last24hours'
     ),
@@ -440,6 +441,10 @@ const last7DaysController = {
         station.pollutants,
         'last7days'
       ),
+      viewGraphSummary: buildViewGraphSummary({
+        stationId: station.id,
+        period: 'last7days'
+      }),
       hrefq: resolveStationHrefq(request)
     }
 

@@ -215,6 +215,25 @@ describe('Yearlytab.njk', () => {
         expect($('#daqitable')).toHaveLength(0)
         expect($('#aqitable')).toHaveLength(0)
       })
+
+      it('has the graph summary button under the 24 hour table when the page gives one', () => {
+        const viewGraphSummary = {
+          buttonText: 'View graph and pollutant summary',
+          href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+        }
+
+        const $ = render({ ...context, viewGraphSummary })
+
+        const button = $('#last24hours-hint').nextAll('.aq-js-only').find('a')
+        expect(button).toHaveLength(1)
+        expect(button.attr('href')).toBe(viewGraphSummary.href)
+      })
+
+      it('has no graph summary button when the page gives none', () => {
+        const $ = render({ ...context, viewGraphSummary: null })
+
+        expect($('a[href^="/stationdetails/graph-summary"]')).toHaveLength(0)
+      })
     })
   })
 })

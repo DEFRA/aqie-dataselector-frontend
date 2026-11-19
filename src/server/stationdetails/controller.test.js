@@ -930,6 +930,115 @@ describe('last24HoursController.handler', () => {
     )
     expect(h.code).toHaveBeenCalledWith(404)
   })
+
+  describe('hourly readings for users without JavaScript', () => {
+    beforeEach(() => {
+      axios.get.mockResolvedValue({
+        data: {
+          from: '2026-11-02T12:00:00.000Z',
+          to: '2026-11-03T11:00:00.000Z',
+          pollutants: {
+            PM25: [{ time: '2026-11-03T10:00:00.000Z', value: 5.2 }]
+          },
+          summary: { pollutants: {} }
+        }
+      })
+      config.set('featureFlags.viewGraphSummary', true)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.viewGraphSummary', false)
+    })
+
+    it('gives the last 24 hours view its readings, from the history it already fetched', async () => {
+      await last24HoursController.handler(request, h)
+
+      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({
+          activePeriod: 'last24hours',
+          hourlyReadings: expect.objectContaining({
+            period: 'last24hours',
+            title: 'View hourly data for the last 24 hours',
+            table: expect.objectContaining({
+              caption: 'Hourly readings in µg/m³ for the last 24 hours'
+            })
+          })
+        })
+      )
+    })
+
+    it('gives none when the graph feature is off', async () => {
+      config.set('featureFlags.viewGraphSummary', false)
+
+      await last24HoursController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ hourlyReadings: null })
+      )
+    })
+
+    it('gives none for a station with no AURN siteId', async () => {
+      delete station.siteId
+
+      await last24HoursController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ hourlyReadings: null })
+      )
+    })
+
+    it('gives none when the history cannot be fetched', async () => {
+      axios.get.mockRejectedValue(new Error('network error'))
+
+      await last24HoursController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ last24Hours: {}, hourlyReadings: null })
+      )
+    })
+  })
+
+  describe('graph summary button', () => {
+    beforeEach(() => {
+      axios.get.mockResolvedValue({ data: { pollutants: {}, summary: {} } })
+      config.set('featureFlags.viewGraphSummary', true)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.viewGraphSummary', false)
+    })
+
+    it('links the button to the last 24 hours of the station', async () => {
+      await last24HoursController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({
+          activePeriod: 'last24hours',
+          viewGraphSummary: {
+            buttonText: 'View graph and pollutant summary',
+            href: '/stationdetails/graph-summary?stationId=site123&period=last24hours'
+          }
+        })
+      )
+    })
+
+    it('has no button when the graph feature is off', async () => {
+      config.set('featureFlags.viewGraphSummary', false)
+
+      await last24HoursController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/index',
+        expect.objectContaining({ viewGraphSummary: null })
+      )
+    })
+  })
 })
 
 describe('stationDetailsController tab selection', () => {
@@ -1251,6 +1360,42 @@ describe('last7DaysController.handler', () => {
       expect(h.view).toHaveBeenCalledWith(
         'stationdetails/last-7-days',
         expect.objectContaining({ hourlyReadings: null })
+      )
+    })
+  })
+
+  describe('graph summary button', () => {
+    beforeEach(() => {
+      axios.get.mockResolvedValue({ data: { pollutants: {}, summary: {} } })
+      config.set('featureFlags.viewGraphSummary', true)
+    })
+
+    afterEach(() => {
+      config.set('featureFlags.viewGraphSummary', false)
+    })
+
+    it('links the button to the last 7 days of the station', async () => {
+      await last7DaysController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/last-7-days',
+        expect.objectContaining({
+          viewGraphSummary: {
+            buttonText: 'View graph and pollutant summary',
+            href: '/stationdetails/graph-summary?stationId=site123&period=last7days'
+          }
+        })
+      )
+    })
+
+    it('has no button when the graph feature is off', async () => {
+      config.set('featureFlags.viewGraphSummary', false)
+
+      await last7DaysController.handler(request, h)
+
+      expect(h.view).toHaveBeenCalledWith(
+        'stationdetails/last-7-days',
+        expect.objectContaining({ viewGraphSummary: null })
       )
     })
   })

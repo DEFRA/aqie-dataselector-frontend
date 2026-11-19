@@ -196,6 +196,39 @@ describe('last7daystable.njk page content', () => {
   })
 })
 
+describe('last7daystable.njk graph summary button', () => {
+  const viewGraphSummary = {
+    buttonText: 'View graph and pollutant summary',
+    href: '/stationdetails/graph-summary?stationId=a&period=last7days'
+  }
+  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+
+  it('has the button under the table and its legal limits text, for users with JavaScript', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(1)
+    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
+    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($('#last7days-hint').nextAll('.aq-js-only')).toHaveLength(1)
+  })
+
+  it('has no button when there is no view model, as when the feature is off', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary: null })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+
+  it.each([
+    ['the station has no AURN siteId', { noMapping: true }],
+    ['there is no data', { pollutants: [] }]
+  ])('has no button when %s, as there is no table', (_name, last7Days) => {
+    const $ = render(last7Days, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+})
+
 describe('last7daystable.njk hourly readings for users without JavaScript', () => {
   const HOURLY = {
     period: 'last7days',

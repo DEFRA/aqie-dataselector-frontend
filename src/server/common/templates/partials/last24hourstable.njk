@@ -1,4 +1,6 @@
 {% from "partials/aq-table-macros.njk" import limitToggletip, exceedanceCell %}
+{% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
 
 {#
   Last 24 hours air pollution levels table. Takes the same approach as
@@ -10,6 +12,8 @@
     "Above limit" tag is drawn against a single day's count.
   - The heading and date are rendered by Yearlytab.njk; `durationText` is
     today's date.
+  - `viewGraphSummary` (optional) is the "View graph and pollutant summary"
+    button, shown under the table; see view-graph-summary.njk.
 #}
 
 {% if durationText %}
@@ -18,7 +22,7 @@
 
 {% if last24Hours.pollutants.length %}
 
-  <div class="govuk-inset-text not-verified">{{ last24HoursContent.notice }}</div>
+  {{ appVerificationBanner({ text: last24HoursContent.notice }) }}
 
   <div class="table-scroll-container">
     <table id="last24hourstable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
@@ -68,6 +72,8 @@
 
   <p id="last24hours-hint" class="govuk-hint">{{ last24HoursContent.legalLimitsHint }}</p>
 
+  {% include "partials/view-graph-summary.njk" %}
+
 {% elif last24Hours.noMapping %}
 
   <div class="govuk-inset-text">{{ last24HoursContent.noMappingMessage }}</div>
@@ -76,4 +82,15 @@
 
   <div class="govuk-inset-text">{{ last24HoursContent.noDataMessage }}</div>
 
+{% endif %}
+
+{# The graph needs JavaScript, so without it this stands in for the graph
+   button. <noscript> keeps it out of the page for everyone else. It is only
+   given on a full page load, not when the tab is swapped in with innerHTML. #}
+{% if hourlyReadings %}
+  <noscript>
+    <div class="govuk-!-margin-top-6">
+      {{ hourlyReadingsDetails(hourlyReadings) }}
+    </div>
+  </noscript>
 {% endif %}

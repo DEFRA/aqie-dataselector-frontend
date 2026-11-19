@@ -18,6 +18,9 @@
 
   The heading and date range are rendered by stationdetails/last-7-days.njk,
   above the period nav, so this partial starts at the notice banner.
+
+  `viewGraphSummary` (optional) is the "View graph and pollutant summary"
+  button, shown under the table; see view-graph-summary.njk.
 #}
 
 {% if durationText %}
@@ -31,6 +34,8 @@
   {{ pollutantSummaryTable({ rows: last7Days.pollutants, period: '7d', id: 'last7daystable' }) }}
 
   <p id="last7days-hint" class="govuk-hint">{{ last7DaysContent.legalLimitsHint }}</p>
+
+  {% include "partials/view-graph-summary.njk" %}
 
 {% elif last7Days.noMapping %}
 

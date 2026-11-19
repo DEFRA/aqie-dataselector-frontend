@@ -26,6 +26,12 @@ describe('buildViewGraphSummary', () => {
     })
   })
 
+  it('opens the graph page on the given period', () => {
+    expect(
+      buildViewGraphSummary({ stationId: 'site1', period: 'last7days' }).href
+    ).toBe('/stationdetails/graph-summary?stationId=site1&period=last7days')
+  })
+
   it('flags the link as the no-JavaScript journey on the no-JavaScript station page', () => {
     expect(buildViewGraphSummary({ stationId: 'site1', nojs: true }).href).toBe(
       '/stationdetails/graph-summary?stationId=site1&period=last24hours&nojs=true'

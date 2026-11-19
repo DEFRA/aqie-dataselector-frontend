@@ -30,7 +30,11 @@ async function renderLast24HoursPartial(request, h) {
 
   const partialContent = nunjucks.render('partials/last24hourstable.njk', {
     last24Hours,
-    durationText
+    durationText,
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: station?.id,
+      period: 'last24hours'
+    })
   })
 
   return h.response(partialContent).code(HTTP_OK)
@@ -64,7 +68,11 @@ async function renderLast7DaysPartial(request, h) {
 
   const partialContent = nunjucks.render('partials/last7daystable.njk', {
     last7Days,
-    durationText
+    durationText,
+    viewGraphSummary: buildViewGraphSummary({
+      stationId: station?.id,
+      period: 'last7days'
+    })
   })
 
   return h.response(partialContent).code(HTTP_OK)
