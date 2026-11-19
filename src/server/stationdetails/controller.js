@@ -420,6 +420,19 @@ const stationDetailsController = {
 }
 
 /**
+ * Hapi route handler for POST /stationdetails (the station list's form).
+ * Stores the chosen station and redirects to GET /stationdetails, so the
+ * page's history entry is a GET. Otherwise returning to it with the browser
+ * back button (e.g. aqie-maps-frontend's "Exit map") asks to resubmit the form.
+ */
+const stationDetailsPostController = {
+  handler: (request, h) => {
+    resolveStationId(request)
+    return h.redirect('/stationdetails')
+  }
+}
+
+/**
  * Hapi route handler for /stationdetails/last-24-hours, the same page opened
  * on the Last 24 hours tab. This is the no-JavaScript fallback for the tab's
  * link and makes the tab linkable.
@@ -578,6 +591,7 @@ const graphSummaryController = {
 
 export {
   stationDetailsController,
+  stationDetailsPostController,
   last24HoursController,
   last7DaysController,
   resolveLast7Days,
