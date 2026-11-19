@@ -1,9 +1,9 @@
 const ESCAPES = {
-  '<': '\\u003c',
-  '>': '\\u003e',
-  '&': '\\u0026',
-  '\u2028': '\\u2028',
-  '\u2029': '\\u2029'
+  '<': String.raw`\u003c`,
+  '>': String.raw`\u003e`,
+  '&': String.raw`\u0026`,
+  '\u2028': String.raw`\u2028`,
+  '\u2029': String.raw`\u2029`
 }
 
 /**

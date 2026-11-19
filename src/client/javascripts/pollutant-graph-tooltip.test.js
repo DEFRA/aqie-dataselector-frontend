@@ -97,7 +97,7 @@ const tooltipRows = () =>
 const tooltipTime = () =>
   tooltip().querySelector('.app-pollutant-graph__tooltip-time').textContent
 
-describe('GraphTooltip', () => {
+describe('PollutantGraphTooltip', () => {
   beforeEach(draw)
 
   describe('before the user points at the graph', () => {

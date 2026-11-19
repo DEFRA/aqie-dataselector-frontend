@@ -57,7 +57,7 @@ function createSwatch(colour, dash) {
  * user taps elsewhere. Keyboard users get the same from the left and right
  * arrow keys, as the canvas is a single tab stop.
  */
-class GraphTooltip {
+class PollutantGraphTooltip {
   /**
    * @param {object} options
    * @param {HTMLElement} options.$canvas element the graph is drawn in
@@ -202,7 +202,10 @@ class GraphTooltip {
 
     if (event.key === 'Escape') {
       this.hide()
-    } else if (event.key in moves) {
+      return
+    }
+
+    if (event.key in moves) {
       event.preventDefault()
       this.activate(Math.min(Math.max(moves[event.key], 0), last), 'keyboard')
     }
@@ -295,4 +298,4 @@ class GraphTooltip {
   }
 }
 
-export default GraphTooltip
+export default PollutantGraphTooltip

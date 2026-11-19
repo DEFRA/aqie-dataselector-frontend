@@ -3,7 +3,7 @@ import { scaleLinear, scaleUtc } from 'd3-scale'
 import { line } from 'd3-shape'
 import { axisBottom, axisLeft } from 'd3-axis'
 import { extent, max } from 'd3-array'
-import GraphTooltip from './pollutant-graph-tooltip.js'
+import PollutantGraphTooltip from './pollutant-graph-tooltip.js'
 
 const HEIGHT = 360
 const MARGIN = { top: 24, right: 18, bottom: 44, left: 44 }
@@ -143,7 +143,7 @@ class PollutantGraph {
     this.drawValueAxis(svg, y, unit)
     this.drawLines(svg, series, x, y)
 
-    new GraphTooltip({
+    new PollutantGraphTooltip({
       $canvas: this.$canvas,
       svg,
       x,
