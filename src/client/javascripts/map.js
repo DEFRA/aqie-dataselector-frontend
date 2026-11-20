@@ -61,6 +61,8 @@ async function initMap() {
     behaviour: 'inline',
     // Zoom buttons are on the page, as the built-in ones are hidden on touch
     enableZoomControls: false,
+    // Hides the library's "Map controls" move-and-zoom pad
+    enableMapControls: false,
     mapLabel: 'United Kingdom',
     zoom: restoredView?.zoom ?? defaultZoom,
     center: restoredView?.center ?? [ukCentreLng, ukCentreLat],

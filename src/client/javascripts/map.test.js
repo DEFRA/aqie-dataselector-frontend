@@ -1923,10 +1923,13 @@ describe('#map panels and zoom controls', () => {
     delete globalThis.matchMedia
   })
 
-  test('Should turn off the built-in zoom buttons in favour of the page controls', () => {
+  test('Should turn off the built-in zoom buttons and map controls in favour of the page controls', () => {
     expect(InteractiveMap).toHaveBeenCalledWith(
       'map',
-      expect.objectContaining({ enableZoomControls: false })
+      expect.objectContaining({
+        enableZoomControls: false,
+        enableMapControls: false
+      })
     )
   })
 
