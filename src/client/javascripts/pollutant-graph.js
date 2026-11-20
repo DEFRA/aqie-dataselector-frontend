@@ -6,7 +6,7 @@ import { extent, max } from 'd3-array'
 import PollutantGraphTooltip from './pollutant-graph-tooltip.js'
 
 const HEIGHT = 360
-const MARGIN = { top: 24, right: 18, bottom: 44, left: 44 }
+const MARGIN = { top: 24, right: 18, bottom: 58, left: 44 }
 const MIN_WIDTH = 320
 const DEFAULT_WIDTH = 640
 const NARROW_WIDTH = 500
@@ -14,6 +14,8 @@ const Y_TICK_COUNT = 6
 const Y_HEADROOM = 1.1
 const ISOLATED_POINT_RADIUS = 2.5
 const AXIS_TITLE_Y = 12
+const TIME_AXIS_TITLE = 'Time (UTC)'
+const TIME_AXIS_TITLE_GAP = 4
 
 const HOUR_MS = 60 * 60 * 1000
 const HALF_DAY_HOURS = 12
@@ -193,6 +195,17 @@ class PollutantGraph {
           }
         })
       )
+
+    svg
+      .append('text')
+      .attr(
+        'class',
+        'app-pollutant-graph__axis-title app-pollutant-graph__axis-title--time'
+      )
+      .attr('x', (MARGIN.left + width - MARGIN.right) / 2)
+      .attr('y', HEIGHT - TIME_AXIS_TITLE_GAP)
+      .attr('text-anchor', 'middle')
+      .text(TIME_AXIS_TITLE)
   }
 
   drawValueAxis(svg, y, unit) {

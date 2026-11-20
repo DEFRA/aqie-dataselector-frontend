@@ -83,7 +83,7 @@
   {% endif %}
   <noscript>
     <div class="no-js-warning">
-      <p>{% if isDaqi %}{{ daqiContent.noScriptMessage }}{% else %}JavaScript is disabled. You are viewing the default data for the selected year.{% endif %}</p>
+      <p>{% if isDaqi %}{{ daqiContent.noScriptMessage }}{% elif isLast24Hours %}{{ last24HoursContent.noScriptMessage }}{% else %}JavaScript is disabled. You are viewing the default data for the selected year.{% endif %}</p>
     </div>
   </noscript>
 </div>

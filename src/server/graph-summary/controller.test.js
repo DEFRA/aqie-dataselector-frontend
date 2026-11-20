@@ -65,8 +65,7 @@ describe('graphSummaryController.handler', () => {
     const result = await graphSummaryController.handler(
       buildRequest({
         stationId: station.id,
-        period: 'last24hours',
-        nojs: false
+        period: 'last24hours'
       }),
       h
     )
@@ -114,8 +113,7 @@ describe('graphSummaryController.handler', () => {
     await graphSummaryController.handler(
       buildRequest({
         stationId: station.id,
-        period: 'last7days',
-        nojs: false
+        period: 'last7days'
       }),
       h
     )
@@ -142,7 +140,7 @@ describe('graphSummaryController.handler', () => {
     'gets the history for the %s from the station in the session, as the %s period',
     async (period, historyPeriod) => {
       await graphSummaryController.handler(
-        buildRequest({ stationId: station.id, period, nojs: false }),
+        buildRequest({ stationId: station.id, period }),
         h
       )
 
@@ -163,8 +161,7 @@ describe('graphSummaryController.handler', () => {
       const result = await graphSummaryController.handler(
         buildRequest({
           stationId: station.id,
-          period: 'last7days',
-          nojs: false
+          period: 'last7days'
         }),
         h
       )
@@ -182,24 +179,6 @@ describe('graphSummaryController.handler', () => {
     }
   )
 
-  it('keeps the no-JavaScript journey in the tab links and links Back to the no-JavaScript station page', async () => {
-    await graphSummaryController.handler(
-      buildRequest({
-        stationId: station.id,
-        period: 'last24hours',
-        nojs: true
-      }),
-      h
-    )
-
-    const view = h.view.mock.calls[0][1]
-    expect(view.hrefq).toBe('/stationDetailsNojs/BirminghamA4540Roadside')
-    expect(view.periodTabs.map(({ href }) => href)).toEqual([
-      '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&nojs=true',
-      '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days&nojs=true'
-    ])
-  })
-
   it.each([
     ['last24hours', '/stationdetails/last-24-hours'],
     ['last7days', '/stationdetails/last-7-days'],
@@ -211,8 +190,7 @@ describe('graphSummaryController.handler', () => {
         buildRequest({
           stationId: station.id,
           period: 'last7days',
-          from,
-          nojs: false
+          from
         }),
         h
       )
@@ -226,27 +204,10 @@ describe('graphSummaryController.handler', () => {
     }
   )
 
-  it('returns Back to the no-JavaScript station page, whatever tab it is told the user came from', async () => {
-    await graphSummaryController.handler(
-      buildRequest({
-        stationId: station.id,
-        period: 'last24hours',
-        from: 'last7days',
-        nojs: true
-      }),
-      h
-    )
-
-    expect(h.view.mock.calls[0][1].hrefq).toBe(
-      '/stationDetailsNojs/BirminghamA4540Roadside'
-    )
-  })
-
   it('points the session at the station, so Back returns to the same station', async () => {
     const request = buildRequest({
       stationId: station.id,
-      period: 'last24hours',
-      nojs: false
+      period: 'last24hours'
     })
 
     await graphSummaryController.handler(request, h)
@@ -259,8 +220,7 @@ describe('graphSummaryController.handler', () => {
     it('renders the not found page for an unknown station, without asking for any history', async () => {
       const request = buildRequest({
         stationId: 'Unknown',
-        period: 'last24hours',
-        nojs: false
+        period: 'last24hours'
       })
 
       const result = await graphSummaryController.handler(request, h)
@@ -274,8 +234,7 @@ describe('graphSummaryController.handler', () => {
     it('leaves the session alone', async () => {
       const request = buildRequest({
         stationId: 'Unknown',
-        period: 'last24hours',
-        nojs: false
+        period: 'last24hours'
       })
 
       await graphSummaryController.handler(request, h)
@@ -293,8 +252,7 @@ describe('graphSummaryController.handler', () => {
       const result = await graphSummaryController.handler(
         buildRequest({
           stationId: station.id,
-          period: 'last24hours',
-          nojs: false
+          period: 'last24hours'
         }),
         h
       )

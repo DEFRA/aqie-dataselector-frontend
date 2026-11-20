@@ -11,12 +11,11 @@ describe('graphSummaryQuerySchema', () => {
     expect(error).toBeUndefined()
     expect(value).toEqual({
       stationId: 'site1',
-      period: 'last7days',
-      nojs: false
+      period: 'last7days'
     })
   })
 
-  it('defaults to the last 24 hours and the JavaScript journey', () => {
+  it('defaults to the last 24 hours', () => {
     const { value, error } = graphSummaryQuerySchema.validate({
       stationId: 'site1'
     })
@@ -24,8 +23,7 @@ describe('graphSummaryQuerySchema', () => {
     expect(error).toBeUndefined()
     expect(value).toEqual({
       stationId: 'site1',
-      period: 'last24hours',
-      nojs: false
+      period: 'last24hours'
     })
   })
 
@@ -68,17 +66,6 @@ describe('graphSummaryQuerySchema', () => {
     ).toBeUndefined()
   })
 
-  it('reads the no-JavaScript flag from its query string form', () => {
-    expect(
-      graphSummaryQuerySchema.validate({ stationId: 's', nojs: 'true' }).value
-        .nojs
-    ).toBe(true)
-    expect(
-      graphSummaryQuerySchema.validate({ stationId: 's', nojs: 'false' }).value
-        .nojs
-    ).toBe(false)
-  })
-
   it.each(['last24hours', 'last7days', '2024'])(
     'accepts the tab %s to return to',
     (from) => {
@@ -110,12 +97,6 @@ describe('graphSummaryQuerySchema', () => {
   ])('rejects the tab %p to return to', (from) => {
     expect(
       graphSummaryQuerySchema.validate({ stationId: 'site1', from }).error
-    ).toBeDefined()
-  })
-
-  it('rejects a no-JavaScript flag that is not a boolean', () => {
-    expect(
-      graphSummaryQuerySchema.validate({ stationId: 's', nojs: 'maybe' }).error
     ).toBeDefined()
   })
 })

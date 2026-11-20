@@ -52,6 +52,9 @@
    given on a full page load, not when the tab is swapped in with innerHTML. #}
 {% if hourlyReadings %}
   <noscript>
+    <div class="no-js-warning">
+      <p>{{ last7DaysContent.noScriptMessage }}</p>
+    </div>
     <div class="govuk-!-margin-top-6">
       {{ hourlyReadingsDetails(hourlyReadings) }}
     </div>

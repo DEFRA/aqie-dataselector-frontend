@@ -10,7 +10,7 @@ const POLLUTANT_STYLES = {
   PM10: { name: 'PM10', colour: '#28a197', dash: '6,4' },
   NO2: { name: 'Nitrogen dioxide', colour: '#801650', dash: null },
   O3: { name: 'Ozone', colour: '#1d70b8', dash: '1,4' },
-  SO2: { name: 'Sulphur dioxide', colour: '#f47738', dash: '10,4,2,4' }
+  SO2: { name: 'Sulphur dioxide', colour: '#d4571a', dash: '10,4,2,4' }
 }
 
 export { POLLUTANT_STYLES }

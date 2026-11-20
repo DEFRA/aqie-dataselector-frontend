@@ -18,8 +18,7 @@ const graphSummaryQuerySchema = Joi.object({
     .default(DEFAULT_PERIOD),
   from: Joi.string().custom((value, helpers) =>
     isStationTab(value) ? value : helpers.error('any.invalid')
-  ),
-  nojs: Joi.boolean().default(false)
+  )
 })
 
 export { graphSummaryQuerySchema }
