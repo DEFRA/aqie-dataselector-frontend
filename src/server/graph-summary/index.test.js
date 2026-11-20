@@ -65,14 +65,13 @@ describe('graph summary route', () => {
     )
   })
 
-  it('reads the no-JavaScript flag', async () => {
+  it('accepts a stale nojs parameter and ignores it', async () => {
     const response = await server.inject(
       `${PATH}?stationId=${STATION.id}&nojs=true`
     )
 
-    expect(response.result.context.hrefq).toBe(
-      '/stationDetailsNojs/BirminghamA4540Roadside'
-    )
+    expect(response.statusCode).toBe(200)
+    expect(response.result.context.hrefq).toBe('/stationdetails')
   })
 
   it('ignores query parameters it does not know about', async () => {
@@ -88,7 +87,6 @@ describe('graph summary route', () => {
     ['no station id', 'period=last24hours'],
     ['an empty station id', 'stationId='],
     ['an over-long station id', `stationId=${'a'.repeat(201)}`],
-    ['a malformed no-JavaScript flag', `stationId=${STATION.id}&nojs=maybe`],
     ['a station the user has not searched for', 'stationId=SomewhereElse']
   ])('renders the not found page for %s', async (_name, query) => {
     const response = await server.inject(`${PATH}?${query}`)

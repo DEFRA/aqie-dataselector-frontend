@@ -257,6 +257,14 @@ describe('last7daystable.njk hourly readings for users without JavaScript', () =
     expect(section.find('.app-verification-banner')).toHaveLength(0)
   })
 
+  it('tells users without JavaScript which data they are viewing', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript .no-js-warning').text()).toContain(
+      'JavaScript is disabled. You are viewing the last 7 days data.'
+    )
+  })
+
   it('puts the section after the 7-day table and its hint', () => {
     const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
 

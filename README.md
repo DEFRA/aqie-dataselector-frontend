@@ -110,7 +110,6 @@ It is off by default, so a release does not show the feature in an environment u
 | `stationId` | yes      | The station's `id` from the user's search results in the session. A station the user has not searched for, or an expired session, gives a 404.                                                                                                                            |
 | `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                                                                                                                                                    |
 | `from`      | no       | The station page tab Back returns to: `last24hours`, `last7days` or a four digit year for a year tab. Anything else gives a 404. Without it, Back opens the default view, which is the Daily Air Quality Index tab when that is switched on, so that tab does not set it. |
-| `nojs`      | no       | `true` makes Back return to the no-JavaScript station page. That page no longer links here, so nothing in the app sets it now. Defaults to `false`.                                                                                                                       |
 
 The page works without JavaScript: the tabs are links, and the graph is the only thing drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC). Both periods end at the latest hour with a reading and do not stop at midnight: the last 24 hours is that hour and the 23 before it (24 hourly readings), and the last 7 days is that hour and the 167 before it (168). With the latest hour ending at 10:00 on 13 November, the last 24 hours starts at 11:00 on 12 November and the last 7 days at 11:00 on 6 November. The line shows the first and last day, such as "12 November to 13 November 2026", or a single date when the window is within one day, which for the last 24 hours is only when the latest hour ends at midnight. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
 
@@ -171,7 +170,7 @@ Each pollutant has its own colour and line pattern. The key above the graph show
 | Ozone            | Blue      | Dotted       |
 | Sulphur dioxide  | Orange    | Dash and dot |
 
-PM2.5 and nitrogen dioxide are both solid lines, so use the box or the table to be sure which is which. The orange sulphur dioxide line is the palest. If it is hard to see, use the table.
+PM2.5 and nitrogen dioxide are both solid lines, so use the box or the table to be sure which is which. The orange sulphur dioxide line is a darker orange than GOV.UK orange, so that it keeps at least 3:1 contrast against the white background. If any line is hard to see, use the table.
 
 ### Times, gaps and status
 

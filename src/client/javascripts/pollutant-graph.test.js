@@ -190,9 +190,19 @@ describe('PollutantGraph', () => {
   })
 
   it('shows the unit at the top of the value axis', () => {
-    const $title = init().querySelector('.app-pollutant-graph__axis-title')
+    const $title = init().querySelector(
+      '.app-pollutant-graph__axis-title:not(.app-pollutant-graph__axis-title--time)'
+    )
 
     expect($title.textContent).toBe('µg/m³')
+  })
+
+  it('says the time axis is in UTC', () => {
+    const $title = init().querySelector(
+      '.app-pollutant-graph__axis-title--time'
+    )
+
+    expect($title.textContent).toBe('Time (UTC)')
   })
 
   it('draws a value axis that starts at zero and has room above the highest reading', () => {

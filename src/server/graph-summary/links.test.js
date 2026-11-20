@@ -29,15 +29,6 @@ describe('buildGraphSummaryHref', () => {
     )
   })
 
-  it('flags the no-JavaScript journey only when asked to', () => {
-    expect(
-      buildGraphSummaryHref({ stationId: 'site1', nojs: false })
-    ).not.toContain('nojs')
-    expect(buildGraphSummaryHref({ stationId: 'site1', nojs: true })).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last24hours&nojs=true'
-    )
-  })
-
   it.each([
     ['last24hours', 'last24hours'],
     ['last7days', 'last7days'],
@@ -70,30 +61,11 @@ describe('buildGraphSummaryHref', () => {
       '/stationdetails/graph-summary?stationId=site1&period=last24hours'
     )
   })
-
-  it('puts the tab before the no-JavaScript flag', () => {
-    expect(
-      buildGraphSummaryHref({
-        stationId: 'site1',
-        period: 'last7days',
-        from: 'last7days',
-        nojs: true
-      })
-    ).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last7days&from=last7days&nojs=true'
-    )
-  })
 })
 
 describe('buildStationPageHref', () => {
   it('returns to the station page for the JavaScript journey', () => {
     expect(buildStationPageHref({ stationId: 'site1' })).toBe('/stationdetails')
-  })
-
-  it('returns to the no-JavaScript station page, encoding the id, for the no-JavaScript journey', () => {
-    expect(buildStationPageHref({ stationId: 'a/b c', nojs: true })).toBe(
-      '/stationDetailsNojs/a%2Fb%20c'
-    )
   })
 
   it.each([
@@ -112,14 +84,4 @@ describe('buildStationPageHref', () => {
       )
     }
   )
-
-  it('returns to the no-JavaScript station page whatever tab it is given', () => {
-    expect(
-      buildStationPageHref({
-        stationId: 'site1',
-        from: 'last7days',
-        nojs: true
-      })
-    ).toBe('/stationDetailsNojs/site1')
-  })
 })

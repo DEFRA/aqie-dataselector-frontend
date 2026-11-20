@@ -13,10 +13,9 @@ import { buildGraphSummaryHref } from '~/src/server/graph-summary/links.js'
  * @param {string|number} [options.from] the station page tab the button is on,
  *   so Back returns to it: last24hours, last7days or a year. The Daily Air
  *   Quality Index tab is the default view, so it gives none.
- * @param {boolean} [options.nojs] the button is on the no-JavaScript station page
  * @returns {{ buttonText: string, href: string } | null}
  */
-function buildViewGraphSummary({ stationId, period, from, nojs = false }) {
+function buildViewGraphSummary({ stationId, period, from }) {
   if (!config.get('featureFlags.viewGraphSummary') || !stationId) {
     return null
   }
@@ -24,7 +23,7 @@ function buildViewGraphSummary({ stationId, period, from, nojs = false }) {
   const { buttonText } = english.graphsummary.callToAction
   return {
     buttonText,
-    href: buildGraphSummaryHref({ stationId, period, from, nojs })
+    href: buildGraphSummaryHref({ stationId, period, from })
   }
 }
 

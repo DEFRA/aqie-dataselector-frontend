@@ -41,21 +41,12 @@ function isStationTab(from) {
  * @param {string|number} [options.from] the station page tab the link is on, so
  *   Back returns to it: last24hours, last7days or a year. It is left out when it
  *   names no such tab, so a bad value in the session cannot break the link.
- * @param {boolean} [options.nojs] the user is on the no-JavaScript journey
  * @returns {string}
  */
-function buildGraphSummaryHref({
-  stationId,
-  period = DEFAULT_PERIOD,
-  from,
-  nojs = false
-}) {
+function buildGraphSummaryHref({ stationId, period = DEFAULT_PERIOD, from }) {
   const params = new URLSearchParams({ stationId, period })
   if (isStationTab(from)) {
     params.set('from', String(from))
-  }
-  if (nojs) {
-    params.set('nojs', 'true')
   }
   return `${GRAPH_SUMMARY_PATH}?${params.toString()}`
 }
@@ -64,15 +55,10 @@ function buildGraphSummaryHref({
  * Link back to the station page the user came from: the tab named by `from`,
  * or the default view when there is none.
  * @param {object} options
- * @param {string} options.stationId
  * @param {string} [options.from] as in buildGraphSummaryHref
- * @param {boolean} [options.nojs]
  * @returns {string}
  */
-function buildStationPageHref({ stationId, from, nojs = false }) {
-  if (nojs) {
-    return `/stationDetailsNojs/${encodeURIComponent(stationId)}`
-  }
+function buildStationPageHref({ from }) {
   return stationTabPath(from) ?? '/stationdetails'
 }
 

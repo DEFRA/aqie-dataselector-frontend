@@ -147,6 +147,14 @@ describe('Yearlytab.njk', () => {
       expect(message).not.toContain('selected year')
     })
 
+    it('does not claim to show a year on the Last 24 hours view', () => {
+      const $ = render({ activePeriod: 'last24hours', selectedYear: 2025 })
+
+      const message = $('noscript').text()
+      expect(message).toContain('last 24 hours')
+      expect(message).not.toContain('selected year')
+    })
+
     it('keeps the selected-year message on a year view', () => {
       const $ = render({ activePeriod: 'year', selectedYear: 2025 })
 

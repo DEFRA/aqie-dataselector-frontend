@@ -337,12 +337,6 @@ describe('graph summary page', () => {
     expect(back.text().trim()).toBe('Back')
   })
 
-  it('has a Back link to the no-JavaScript station page for the no-JavaScript journey', () => {
-    const $ = render({ hrefq: '/stationDetailsNojs/a' })
-
-    expect($('a.govuk-back-link').attr('href')).toBe('/stationDetailsNojs/a')
-  })
-
   it('escapes anything in the station name that looks like markup', () => {
     const $ = render({
       heading: 'Last 24 hours: <script>alert(1)</script>',

@@ -49,10 +49,4 @@ describe('buildViewGraphSummary', () => {
       buildViewGraphSummary({ stationId: 'site1', from: 'not-a-year' }).href
     ).toBe('/stationdetails/graph-summary?stationId=site1&period=last24hours')
   })
-
-  it('flags the link as the no-JavaScript journey on the no-JavaScript station page', () => {
-    expect(buildViewGraphSummary({ stationId: 'site1', nojs: true }).href).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last24hours&nojs=true'
-    )
-  })
 })
