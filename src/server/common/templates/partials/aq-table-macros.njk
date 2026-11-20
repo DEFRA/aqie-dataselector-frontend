@@ -2,10 +2,10 @@
 
 {#
   Shared macros for the pollutant-levels tables (yearlytable.njk and
-  last7daystable.njk). An entry is `{ limit, label, text }` from
+  pollutant-summary-table.njk). An entry is `{ limit, label, text }` from
   pollutant-toggletips.js or last-7-days.js; `limit` is optional - omitting it
-  suppresses the "Above limit" tag (used by last7daystable.njk, which has no
-  per-calendar-year allowance to compare a 7-day count against).
+  suppresses the "Above limit" tag (used for the 7-day hourly count, which has
+  no per-calendar-year allowance to compare a 7-day count against).
 #}
 
 {% macro limitToggletip(entry) %}

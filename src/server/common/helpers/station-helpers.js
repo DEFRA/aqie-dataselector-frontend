@@ -5,6 +5,7 @@ import { YEAR_2017 } from '~/src/server/common/constants/magic-numbers.js'
 import Wreck from '@hapi/wreck'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { getJson } from '~/src/server/common/helpers/api-client.js'
+import { summariseStationHistory } from '~/src/server/common/helpers/last-7-days-summary.js'
 
 const loggers = createLogger()
 const FORMAT_HOURS = 12
@@ -195,13 +196,12 @@ export async function fetchStationByLocation({ lat, lng, name }) {
 }
 
 /**
- * Fetches a station's pollutant history from aqie-back-end's
- * GET /monitoringStationHistory (requires the AURN-form siteId, e.g.
- * "UKA00315" - the short localSiteID form 400s). The response's `summary`
- * block carries the figures the DAQI and 7-day tables show (DAQI index,
- * average, data capture, exceedances); they are calculated by aqie-back-end,
- * not here.
- * @param {{ siteId: string, period: '24h'|'7d' }} params
+ * Fetches a station's hourly pollutant history for a period from
+ * aqie-back-end's GET /monitoringStationHistory (requires the AURN-form
+ * siteId, e.g. "UKA00315" - the short localSiteID form 400s). The response's
+ * `summary` block carries the figures the summary tables show (average, data
+ * capture, exceedances); they are calculated by aqie-back-end, not here.
+ * @param {{ siteId: string, period: string }} params period is a HISTORY_PERIOD value (common/constants/history-period.js)
  * @returns {Promise<{siteId: string, period: string, from: string, to: string,
  *   truncated: boolean,
  *   pollutants: Record<string, Array<{time: string, value: number|null}>>,
@@ -216,6 +216,33 @@ export async function fetchStationHistory({ siteId, period }) {
     label: 'Monitoring station history API'
   })
   return result ?? null
+}
+
+/**
+ * Fetches and summarises a station's history for a period, or returns an
+ * empty-state marker when it can't: `noMapping` when the station has no AURN
+ * siteId (so aqie-back-end can't be called at all), or an empty object when
+ * the call itself failed. The summary tables read these to show the right
+ * message instead of a generic error. `history` is the raw response, for
+ * callers that need the hourly series as well as the summary.
+ * @param {object} station a station from the session's search results
+ * @param {string} period a HISTORY_PERIOD value
+ * @returns {Promise<object>}
+ */
+export async function resolveStationHistory(station, period) {
+  if (!station.siteId) {
+    return { noMapping: true }
+  }
+
+  const history = await fetchStationHistory({
+    siteId: station.siteId,
+    period
+  })
+  if (!history) {
+    return {}
+  }
+
+  return { ...summariseStationHistory(history, station.pollutants), history }
 }
 
 /**

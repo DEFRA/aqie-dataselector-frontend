@@ -11,6 +11,13 @@ This service is to find air quality monitoring stations for the location provide
 - [Server-side Caching](#server-side-caching)
 - [Redis](#redis)
 - [Google Analytics](#google-analytics)
+- [Using the graph: an accessibility guide](#using-the-graph-an-accessibility-guide)
+  - [Read the readings without the graph](#read-the-readings-without-the-graph)
+  - [Use the graph with a keyboard](#use-the-graph-with-a-keyboard)
+  - [Use the graph with a mouse or a touchscreen](#use-the-graph-with-a-mouse-or-a-touchscreen)
+  - [Tell the pollutants apart](#tell-the-pollutants-apart)
+  - [Times, gaps and status](#times-gaps-and-status)
+  - [Zoom, small screens and no JavaScript](#zoom-small-screens-and-no-javascript)
 - [Local Development](#local-development)
   - [Dependent Services (`aqie-monitoringstation-backend` & `aqie-back-end`)](#dependent-services-aqie-monitoringstation-backend--aqie-back-end)
   - [Environment Variables](#environment-variables)
@@ -82,15 +89,41 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                                                                                 |
-| ---------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only, and registers the `/stationdetails/graph-summary` route. When unset or `false`, both are disabled. |
-| `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.   |
-| `SEARCH_ON_MAP_ENABLED`      | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden.  |
+| Environment variable         | Default | Description                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only. Users without JavaScript get the hourly readings in collapsed sections on the Daily Air Quality Index, Last 24 hours and Last 7 days tabs instead. It also registers the `/stationdetails/graph-summary` route. When unset or `false`, all of these are disabled. |
+| `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.                                                                                                                                                                  |
+| `SEARCH_ON_MAP_ENABLED`      | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden.                                                                                                                                                                 |
 
 Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
 The flag is read at startup, so restart the server after changing it.
+
+It is off by default, so a release does not show the feature in an environment until the variable is set to `true` there. Any value other than `false` turns it on, including `0`, `no` and an empty value, so leave the variable unset to keep it off. `.env.example` turns it on for local development.
+
+### Graph and pollutant summary page
+
+`GET /stationdetails/graph-summary` is reached from the "View graph and pollutant summary" button on a station page. The button is under the table on the Daily Air Quality Index, Last 24 hours, Last 7 days and year tabs. The Last 7 days tab opens the page on the last 7 days, and the other tabs open it on the last 24 hours. Back returns to the tab the button was on, and the page keeps that when you switch between its own Last 24 hours and Last 7 days tabs. It takes these query parameters:
+
+| Parameter   | Required | Description                                                                                                                                                                                                                                                               |
+| ----------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stationId` | yes      | The station's `id` from the user's search results in the session. A station the user has not searched for, or an expired session, gives a 404.                                                                                                                            |
+| `period`    | no       | `last24hours` (the default) or `last7days`. Anything else gives a 404.                                                                                                                                                                                                    |
+| `from`      | no       | The station page tab Back returns to: `last24hours`, `last7days` or a four digit year for a year tab. Anything else gives a 404. Without it, Back opens the default view, which is the Daily Air Quality Index tab when that is switched on, so that tab does not set it. |
+
+The page works without JavaScript: the tabs are links, and the graph is the only thing drawn client side. The date or date range under the heading is the window of readings that `aqie-back-end` returns from `GET /monitoringStationHistory` (in UTC). Both periods end at the latest hour with a reading and do not stop at midnight: the last 24 hours is that hour and the 23 before it (24 hourly readings), and the last 7 days is that hour and the 167 before it (168). With the latest hour ending at 10:00 on 13 November, the last 24 hours starts at 11:00 on 12 November and the last 7 days at 11:00 on 6 November. The line shows the first and last day, such as "12 November to 13 November 2026", or a single date when the window is within one day, which for the last 24 hours is only when the latest hour ends at midnight. It is left out, and the page still renders, when the station has no AURN `siteId` or the call fails. The page copy is in `graphsummary` in `src/server/data/en/homecontent.js`.
+
+The page makes one call to `GET /monitoringStationHistory` and uses the response three times:
+
+- **View pollutant summary:** a collapsed section with the shared summary table (`partials/pollutant-summary-table.njk`). It shows plain figures, without the limit toggletips of the station page.
+- **View graph: hourly data:** one line for each pollutant the station measures. The series are embedded in the page as JSON and drawn by `src/client/javascripts/pollutant-graph.js` using the `d3-*` modules. That code is a separate webpack chunk, so only this page downloads it. The graph stays hidden unless it can be drawn.
+- **View hourly data as a table:** the same readings in a collapsed table, in UTC. It is the text equivalent of the graph, and what users without JavaScript get.
+
+Without JavaScript the button is hidden, as the graph needs JavaScript. In its place the station page's Daily Air Quality Index, Last 24 hours and Last 7 days tabs each have a collapsed section with the hourly readings table for its period (the last 24 hours, or the last 7 days on the Last 7 days tab). The section has no verification banner of its own, as the tab already shows "Data has not been checked and verified" above its summary table. `src/server/graph-summary/hourly-readings.js` builds it from the history the tab has already fetched, so it costs no extra API call, and `partials/hourly-readings-table.njk` renders it, as it does on the graph page. The tab templates put it inside `<noscript>`, so only users without JavaScript get it, and it is only on a full page load, not when a tab is swapped in. It is left out when the history has no readings for the station or the flag is off. The Daily Air Quality Index tab is behind `VIEW_DAQI_TAB_ENABLED`, so its section needs that on too. The Last 24 hours tab has no flag of its own. The year tabs have no such section, and neither has the separate no-JavaScript station page (`/stationDetailsNojs/...`), which has only year tabs and no graph button.
+
+Each pollutant has a colour and a line style (solid, dashed, dotted or dash and dot). Two pollutants share the solid style, so the key and the tooltip also name each one in text. They are set in `src/server/graph-summary/pollutant-styles.js`.
+
+Pointing at the graph, tapping it, or using the left and right arrow keys (Home, End and Escape too) once it has focus, shows the readings for the nearest hour in a tooltip, with a line and a dot on each pollutant. This is `src/client/javascripts/pollutant-graph-tooltip.js`. The verification status in the tooltip is fixed text, `graphsummary.graph.verificationStatus` in the page copy, not read from the data.
 
 ### Returning to the map
 
@@ -99,6 +132,58 @@ When a station page is opened from aqie-maps-frontend (via `/station-summary`), 
 ### View map of nearby monitoring stations
 
 When `SEARCH_ON_MAP_ENABLED` is `true` and a maps URL is configured, station pages (summary, last 7 days and the no-JS view) show a "View map of nearby monitoring stations" link under the status line (`partials/map-nearby-link.njk`). It is a form button that POSTs the station's `lat`, `lng` and `siteId` (`localSiteID`) to `<MAPS_FRONT_END_URL>/map/view`, which opens the map zoomed in on the station with it selected. It uses a POST so no location data goes in the URL, and it works without JavaScript. The CSP `form-action` directive allows the maps origin when `MAPS_FRONT_END_URL` is set. The existing "View on Google Maps" link is unchanged.
+
+## Using the graph: an accessibility guide
+
+The graph shows a station's hourly readings for each pollutant it measures, for the last 24 hours or the last 7 days. Everything the graph shows is also on the page as text and tables.
+
+### Read the readings without the graph
+
+- Select **View hourly data as a table** under the graph. It opens a table with a row for each hour and a column for each pollutant. It has every reading the graph shows, and it works with a keyboard, a screen reader and without JavaScript.
+- On the station page without JavaScript, the Daily Air Quality Index and Last 24 hours tabs have **View hourly data for the last 24 hours** and the Last 7 days tab has **View hourly data for the last 7 days**. Each opens a table like the one above.
+- Select **View pollutant summary** above the graph for a short table for each pollutant: the average, how often it went over a legal limit (where there is one) and how much of the data was captured.
+
+### Use the graph with a keyboard
+
+1. Press Tab to move through the page. The graph comes after the "Last 24 hours" and "Last 7 days" tabs and the "View pollutant summary" section. When you reach it, it gets a yellow outline with a black inner edge, and a box shows the latest hour.
+2. Press the left arrow to go back an hour and the right arrow to go forward an hour.
+3. Press Home to jump to the first hour and End to jump to the last.
+4. Press Escape to hide the box. The next arrow key press brings it back and carries on from the hour you were on.
+5. Press Tab to move on.
+
+The box shows the date and time (in UTC), each pollutant's reading with its unit (µg/m³), and the status of the data. The graph is labelled "Use the left and right arrow keys to move between hours", and the box is set up so a screen reader can read it out as you move. If your screen reader does not read the box out, use the table instead.
+
+### Use the graph with a mouse or a touchscreen
+
+- **Mouse or trackpad:** move the pointer across the graph. A line follows it to the nearest hour, with a dot on each pollutant's line and a box with the readings. Move the pointer away to hide the box.
+- **Touchscreen:** tap the graph, or drag a finger along it. The box stays until you tap somewhere else. You can still scroll the page up and down with a finger over the graph.
+
+### Tell the pollutants apart
+
+Each pollutant has its own colour and line pattern. The key above the graph shows them, and the box names each pollutant in words.
+
+| Pollutant        | Colour    | Line pattern |
+| ---------------- | --------- | ------------ |
+| PM2.5            | Black     | Solid        |
+| PM10             | Turquoise | Dashed       |
+| Nitrogen dioxide | Dark pink | Solid        |
+| Ozone            | Blue      | Dotted       |
+| Sulphur dioxide  | Orange    | Dash and dot |
+
+PM2.5 and nitrogen dioxide are both solid lines, so use the box or the table to be sure which is which. The orange sulphur dioxide line is a darker orange than GOV.UK orange, so that it keeps at least 3:1 contrast against the white background. If any line is hard to see, use the table.
+
+### Times, gaps and status
+
+- All times are in UTC. In the UK summer, clocks are an hour ahead of UTC.
+- A break in a line means there is no reading for that hour. The box says "No data" for that pollutant.
+- The page says the data has not been checked and verified, and the box shows its status, currently "Unverified".
+
+### Zoom, small screens and no JavaScript
+
+- You can zoom the page in your browser. If you resize the window or turn your phone sideways, reload the page so the graph is redrawn to fit.
+- Without JavaScript the graph is not shown. On the graph page the tabs, the summary and the hourly table all still work. On the station page the hourly data is in collapsed sections on the Daily Air Quality Index, Last 24 hours and Last 7 days tabs.
+
+**Note for the team:** this guide describes how the page is built. It has not been checked with specific screen readers yet, so confirm the screen reader advice before sharing it outside the team. Keep it in step with `src/server/graph-summary/pollutant-styles.js` (colours and patterns) and `src/client/javascripts/pollutant-graph-tooltip.js` (keys and the box) if either changes.
 
 ## Proxy
 
@@ -139,8 +224,8 @@ When running `aqie-dataselector-frontend` locally (on `http://localhost:3010` vi
    docker compose up --build -d
    ```
 
-2. **`aqie-back-end` (Port `3001`)** — **Required for `/stationdetails/last-7-days`**
-   - Serves `GET /monitoringStationHistory?siteId=<AURN_siteId>&period=7d`, which provides the hourly pollutant readings and 7-day summary figures (averages, data capture %, and hourly/daily exceedances) for the **Last 7 days** tab.
+2. **`aqie-back-end` (Port `3001`)** — **Required for `/stationdetails/last-7-days`, and for the dates on `/stationdetails/graph-summary`**
+   - Serves `GET /monitoringStationHistory?siteId=<AURN_siteId>&period=<24h|7d>`, which provides the hourly pollutant readings and summary figures (averages, data capture %, and hourly/daily exceedances) for the **Last 7 days** tab, and the window of readings that the graph and pollutant summary page shows as its dates.
    - Requires the station's AURN `siteId` supplied by `aqie-monitoringstation-backend`.
 
    ```bash

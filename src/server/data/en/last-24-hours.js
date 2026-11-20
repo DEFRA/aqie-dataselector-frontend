@@ -34,6 +34,8 @@ const last24HoursContent = {
   heading: 'Air pollution summary: last 24 hours',
   notice: 'Data has not been checked and verified',
   noDataMessage: 'Could not load data for the last 24 hours.',
+  noScriptMessage:
+    'JavaScript is disabled. You are viewing the last 24 hours data.',
   noMappingMessage: 'The last 24 hours view is not available for this station.',
   legalLimitsHint:
     'The pollution levels shown are measured against UK legal limits.'

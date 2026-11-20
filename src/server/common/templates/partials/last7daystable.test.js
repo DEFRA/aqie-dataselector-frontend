@@ -7,13 +7,16 @@ import * as globals from '~/src/config/nunjucks/globals/globals.js'
 const templates = path.resolve(process.cwd(), 'src/server/common/templates')
 const components = path.resolve(process.cwd(), 'src/server/common/components')
 
-function render(last7Days) {
+function render(last7Days, extra = {}, options) {
   const env = nunjucks.configure(
     [path.resolve('node_modules/govuk-frontend/dist/'), templates, components],
     { autoescape: true, trimBlocks: true, lstripBlocks: true, noCache: true }
   )
   Object.entries(globals).forEach(([name, value]) => env.addGlobal(name, value))
-  return cheerio.load(env.render('partials/last7daystable.njk', { last7Days }))
+  return cheerio.load(
+    env.render('partials/last7daystable.njk', { last7Days, ...extra }),
+    options
+  )
 }
 
 const row = (overrides) => ({
@@ -30,6 +33,26 @@ const TOGGLETIP_TEXT =
   'Data capture under 75% is low. We do not calculate the average when data capture is low.'
 
 describe('last7daystable.njk low data capture behaviour', () => {
+  it('shows the data verification banner above the table, using the shared banner component', () => {
+    const $ = render({ pollutants: [row()] })
+
+    const banner = $('.app-verification-banner')
+    expect(banner).toHaveLength(1)
+    expect(banner.text().trim()).toBe('Data has not been checked and verified')
+    expect(banner.nextAll('.table-scroll-container')).toHaveLength(1)
+    expect($('.govuk-inset-text.not-verified')).toHaveLength(0)
+  })
+
+  it('shows the UK legal limits text without a link', () => {
+    const $ = render({ pollutants: [row()] })
+
+    const hint = $('#last7days-hint')
+    expect(hint.text().trim()).toBe(
+      'The pollution levels shown are measured against UK legal limits.'
+    )
+    expect(hint.find('a')).toHaveLength(0)
+  })
+
   it('uses table-scroll-container to match the year tables', () => {
     const $ = render({ pollutants: [row()] })
 
@@ -139,14 +162,6 @@ describe('last7daystable.njk page content', () => {
   const HINT =
     'The pollution levels shown are measured against UK legal limits.'
 
-  it('shows the not-verified notice above the table', () => {
-    const $ = render({ pollutants: [row()] })
-
-    expect($('.govuk-inset-text.not-verified').text().trim()).toBe(
-      'Data has not been checked and verified'
-    )
-  })
-
   it('shows the legal limits hint once, below the table, with its own id', () => {
     const $ = render({ pollutants: [row()] })
     const hint = $('#last7days-hint')
@@ -178,5 +193,96 @@ describe('last7daystable.njk page content', () => {
     )
     expect($('#last7daystable')).toHaveLength(0)
     expect($('#last7days-hint')).toHaveLength(0)
+  })
+})
+
+describe('last7daystable.njk graph summary button', () => {
+  const viewGraphSummary = {
+    buttonText: 'View graph and pollutant summary',
+    href: '/stationdetails/graph-summary?stationId=a&period=last7days'
+  }
+  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+
+  it('has the button under the table and its legal limits text, for users with JavaScript', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(1)
+    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
+    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($('#last7days-hint').nextAll('.aq-js-only')).toHaveLength(1)
+  })
+
+  it('has no button when there is no view model, as when the feature is off', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary: null })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+
+  it.each([
+    ['the station has no AURN siteId', { noMapping: true }],
+    ['there is no data', { pollutants: [] }]
+  ])('has no button when %s, as there is no table', (_name, last7Days) => {
+    const $ = render(last7Days, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+})
+
+describe('last7daystable.njk hourly readings for users without JavaScript', () => {
+  const HOURLY = {
+    period: 'last7days',
+    title: 'View hourly data for the last 7 days',
+    table: {
+      caption: 'Hourly readings in µg/m³ for the last 7 days',
+      head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
+      rows: [
+        [{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }]
+      ]
+    }
+  }
+  const last7Days = { pollutants: [row()] }
+  const WITHOUT_JAVASCRIPT = { scriptingEnabled: false }
+
+  it('has a collapsed section with the hourly table when JavaScript is off', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    const section = $('noscript details')
+    expect(section).toHaveLength(1)
+    expect(section.attr('open')).toBeUndefined()
+    expect(section.children('summary').text().trim()).toBe(HOURLY.title)
+    expect(section.find('table caption').text().trim()).toBe(
+      HOURLY.table.caption
+    )
+    expect(section.find('.app-verification-banner')).toHaveLength(0)
+  })
+
+  it('tells users without JavaScript which data they are viewing', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript .no-js-warning').text()).toContain(
+      'JavaScript is disabled. You are viewing the last 7 days data.'
+    )
+  })
+
+  it('puts the section after the 7-day table and its hint', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY }, WITHOUT_JAVASCRIPT)
+
+    expect($('#last7days-hint').nextAll('noscript')).toHaveLength(1)
+  })
+
+  it('keeps the section out of the page when JavaScript is on', () => {
+    const $ = render(last7Days, { hourlyReadings: HOURLY })
+
+    expect($('noscript')).toHaveLength(1)
+    expect($('noscript details')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
+  })
+
+  it('has no section when there are no hourly readings, as when the tab is swapped in', () => {
+    const $ = render(last7Days, {}, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
   })
 })

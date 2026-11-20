@@ -1,0 +1,19 @@
+{# Link to the graph and pollutant summary page, shared by the station pages. It is styled as a button but is deliberately a plain link with no heading and no role="button", so that screen readers announce it once, as a link. The graph needs JavaScript, so aq-js-only hides the link when JavaScript is off. It is done in CSS because this markup is also swapped in with innerHTML, where scripts never run. viewGraphSummary is null when the feature is off. #}
+{% if viewGraphSummary %}
+  <div class="aq-js-only govuk-!-margin-top-6 govuk-!-margin-bottom-6">
+    <a
+      href="{{ viewGraphSummary.href }}"
+      class="aq-button-secondary aq-button-secondary--icon govuk-!-margin-bottom-0"
+      draggable="false"
+    >
+      <span class="aq-button-secondary__icon">
+        <svg focusable="false" aria-hidden="true" width="16" height="20" viewBox="0 0 16 20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 15.5H15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M3 13V9.5M6.5 13V5.5M10 13V8M13 13V10.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2 2.5H14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="aq-button-secondary__text">{{ viewGraphSummary.buttonText }}</span>
+    </a>
+  </div>
+{% endif %}

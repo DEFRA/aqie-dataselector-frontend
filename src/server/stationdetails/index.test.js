@@ -1,11 +1,9 @@
 import { config } from '~/src/config/config.js'
 import { configureRoutes } from '~/src/server/stationdetails/index.js'
 
-const GRAPH_SUMMARY_PATH = '/stationdetails/graph-summary'
 const DAQI_PATH = '/stationdetails/daqi'
 
 describe('stationdetails routes', () => {
-  const originalGraphSummaryFlag = config.get('featureFlags.viewGraphSummary')
   const originalDaqiFlag = config.get('featureFlags.viewDaqiTab')
 
   function registeredRoutes() {
@@ -15,29 +13,7 @@ describe('stationdetails routes', () => {
   }
 
   afterEach(() => {
-    config.set('featureFlags.viewGraphSummary', originalGraphSummaryFlag)
     config.set('featureFlags.viewDaqiTab', originalDaqiFlag)
-  })
-
-  it('does not register the graph summary page when the feature flag is off', () => {
-    config.set('featureFlags.viewGraphSummary', false)
-
-    const paths = registeredRoutes().map(({ path }) => path)
-
-    expect(paths).toContain('/stationdetails')
-    expect(paths).not.toContain(GRAPH_SUMMARY_PATH)
-  })
-
-  it('registers the graph summary page when the feature flag is on', () => {
-    config.set('featureFlags.viewGraphSummary', true)
-
-    const route = registeredRoutes().find(
-      ({ path }) => path === GRAPH_SUMMARY_PATH
-    )
-
-    expect(route).toEqual(
-      expect.objectContaining({ method: 'GET', handler: expect.any(Function) })
-    )
   })
 
   it('does not register the DAQI page when the DAQI tab flag is off', () => {

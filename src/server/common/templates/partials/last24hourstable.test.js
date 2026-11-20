@@ -7,14 +7,15 @@ import * as globals from '~/src/config/nunjucks/globals/globals.js'
 const templates = path.resolve(process.cwd(), 'src/server/common/templates')
 const components = path.resolve(process.cwd(), 'src/server/common/components')
 
-function render(last24Hours, extra = {}) {
+function render(last24Hours, extra = {}, options) {
   const env = nunjucks.configure(
     [path.resolve('node_modules/govuk-frontend/dist/'), templates, components],
     { autoescape: true, trimBlocks: true, lstripBlocks: true, noCache: true }
   )
   Object.entries(globals).forEach(([name, value]) => env.addGlobal(name, value))
   return cheerio.load(
-    env.render('partials/last24hourstable.njk', { last24Hours, ...extra })
+    env.render('partials/last24hourstable.njk', { last24Hours, ...extra }),
+    options
   )
 }
 
@@ -45,18 +46,34 @@ const TOGGLETIP_TEXT = {
 }
 
 describe('last24hourstable.njk', () => {
-  it('renders the notice and the Pollutant, 24 hour average and Hourly exceedances columns', () => {
+  it('renders the Pollutant, 24 hour average and Hourly exceedances columns', () => {
     const $ = render({ pollutants: [row()] })
 
-    expect($('.govuk-inset-text.not-verified').text().trim()).toBe(
-      'Data has not been checked and verified'
-    )
     expect($('.table-scroll-container')).toHaveLength(1)
     expect(
       $('#last24hourstable thead th')
         .map((_, el) => $(el).text().trim())
         .get()
     ).toEqual(['Pollutant', '24 hour average', 'Hourly exceedances'])
+  })
+
+  it('shows the data verification banner above the table, using the shared banner component', () => {
+    const $ = render({ pollutants: [row()] })
+
+    const banner = $('.app-verification-banner')
+    expect(banner).toHaveLength(1)
+    expect(banner.text().trim()).toBe('Data has not been checked and verified')
+    expect(banner.nextAll('.table-scroll-container')).toHaveLength(1)
+    expect($('.govuk-inset-text.not-verified')).toHaveLength(0)
+  })
+
+  it('shows no banner when there is no table to describe', () => {
+    expect(
+      render({ noMapping: true })('.app-verification-banner')
+    ).toHaveLength(0)
+    expect(render({ pollutants: [] })('.app-verification-banner')).toHaveLength(
+      0
+    )
   })
 
   it('shows each pollutant with its data capture percentage', () => {
@@ -183,5 +200,96 @@ describe('last24hourstable.njk', () => {
       'Could not load data for the last 24 hours.'
     )
     expect($('#last24hourstable')).toHaveLength(0)
+  })
+})
+
+describe('last24hourstable.njk graph summary button', () => {
+  const viewGraphSummary = {
+    buttonText: 'View graph and pollutant summary',
+    href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+  }
+  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+
+  it('has the button under the table and its legal limits text, for users with JavaScript', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(1)
+    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
+    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($('#last24hours-hint').nextAll('.aq-js-only')).toHaveLength(1)
+  })
+
+  it('has no button when there is no view model, as when the feature is off', () => {
+    const $ = render({ pollutants: [row()] }, { viewGraphSummary: null })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+
+  it.each([
+    ['the station has no AURN siteId', { noMapping: true }],
+    ['there is no data', { pollutants: [] }]
+  ])('has no button when %s, as there is no table', (_name, last24Hours) => {
+    const $ = render(last24Hours, { viewGraphSummary })
+
+    expect($(BUTTON)).toHaveLength(0)
+  })
+})
+
+describe('last24hourstable.njk hourly readings for users without JavaScript', () => {
+  const HOURLY = {
+    period: 'last24hours',
+    title: 'View hourly data for the last 24 hours',
+    table: {
+      caption: 'Hourly readings in µg/m³ for the last 24 hours',
+      head: [{ text: 'Time (UTC)' }, { text: 'PM2.5', format: 'numeric' }],
+      rows: [
+        [{ text: '10:00, 3 Nov 2026' }, { text: '5.2', format: 'numeric' }]
+      ]
+    }
+  }
+  const last24Hours = { pollutants: [row()] }
+  const WITHOUT_JAVASCRIPT = { scriptingEnabled: false }
+
+  it('has a collapsed section with the hourly table when JavaScript is off', () => {
+    const $ = render(
+      last24Hours,
+      { hourlyReadings: HOURLY },
+      WITHOUT_JAVASCRIPT
+    )
+
+    const section = $('noscript details')
+    expect(section).toHaveLength(1)
+    expect(section.attr('open')).toBeUndefined()
+    expect(section.children('summary').text().trim()).toBe(HOURLY.title)
+    expect(section.find('table caption').text().trim()).toBe(
+      HOURLY.table.caption
+    )
+    expect(section.find('.app-verification-banner')).toHaveLength(0)
+  })
+
+  it('puts the section after the 24 hour table and its hint', () => {
+    const $ = render(
+      last24Hours,
+      { hourlyReadings: HOURLY },
+      WITHOUT_JAVASCRIPT
+    )
+
+    expect($('#last24hours-hint').nextAll('noscript')).toHaveLength(1)
+  })
+
+  it('keeps the section out of the page when JavaScript is on', () => {
+    const $ = render(last24Hours, { hourlyReadings: HOURLY })
+
+    expect($('noscript')).toHaveLength(1)
+    expect($('noscript details')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
+  })
+
+  it('has no section when there are no hourly readings, as when the tab is swapped in', () => {
+    const $ = render(last24Hours, {}, WITHOUT_JAVASCRIPT)
+
+    expect($('noscript')).toHaveLength(0)
+    expect($('details')).toHaveLength(0)
   })
 })

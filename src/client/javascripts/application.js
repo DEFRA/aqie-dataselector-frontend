@@ -65,4 +65,22 @@ if ($cookiesPage) {
 globalThis.accessibleAutocomplete = accessibleAutocomplete
 globalThis.AccessibleAutoComplete = AccessibleAutoComplete
 
+// The graph code and d3 are only downloaded on pages that have a graph. This is
+// a function, rather than a top-level await, so the download never holds up the
+// rest of the page.
+function loadPollutantGraph($graph) {
+  import('./pollutant-graph.js')
+    .then(({ default: PollutantGraph }) => new PollutantGraph($graph).init())
+    .catch(() => {
+      // The graph stays hidden; the hourly data table is still on the page
+    })
+}
+
+const $pollutantGraph = document.querySelector(
+  '[data-module="app-pollutant-graph"]'
+)
+if ($pollutantGraph) {
+  loadPollutantGraph($pollutantGraph)
+}
+
 // initAll()

@@ -1,0 +1,51 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
+{% from "pollutant-graph/macro.njk" import appPollutantGraph %}
+{% from "partials/pollutant-summary-table.njk" import pollutantSummaryTable %}
+{% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-{{ 2 if dates else 4 }}">{{ heading }}</h1>
+
+      {% if dates %}
+        <p class="govuk-body govuk-!-margin-bottom-4">{{ dates }}</p>
+      {% endif %}
+
+      <nav class="moj-sub-navigation" aria-label="{{ periodNavigationLabel }}">
+        <ul class="moj-sub-navigation__list">
+          {% for tab in periodTabs %}
+            <li class="moj-sub-navigation__item">
+              <a class="moj-sub-navigation__link" href="{{ tab.href }}"{% if tab.isCurrent %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      {{ appVerificationBanner({ text: verificationBanner }) }}
+
+      {% set summaryHtml %}
+        {% if summary.rows.length %}
+          {{ pollutantSummaryTable({ rows: summary.rows, period: summary.period, id: 'pollutant-summary-table', limitToggletips: false }) }}
+          <p class="govuk-body-s">{{ summary.legalLimits }}</p>
+        {% else %}
+          <p class="govuk-body">{{ summary.message }}</p>
+        {% endif %}
+      {% endset %}
+
+      {{ govukDetails({ summaryText: summary.title, html: summaryHtml }) }}
+
+      <h2 class="govuk-heading-l govuk-!-margin-top-6">{{ graph.heading }}</h2>
+
+      {% if graph.chart %}
+        {{ appPollutantGraph(graph.chart) }}
+
+        {{ hourlyReadingsDetails({ title: graph.table.title, table: graph.table }) }}
+      {% else %}
+        <p class="govuk-body">{{ graph.message }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

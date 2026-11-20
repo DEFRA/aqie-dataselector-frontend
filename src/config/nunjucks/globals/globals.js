@@ -8,6 +8,8 @@ export { last7DaysContent } from '~/src/server/data/en/last-7-days.js'
 
 export { daqiContent, daqiColumnToggletip } from '~/src/server/data/en/daqi.js'
 
+export { summaryTableColumns } from '~/src/server/data/en/pollutant-summary.js'
+
 export {
   last24HoursContent,
   last24HoursLimits

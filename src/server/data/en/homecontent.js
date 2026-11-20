@@ -199,6 +199,52 @@ export const english = {
       d: 'Pollutants'
     }
   },
+  graphsummary: {
+    callToAction: {
+      buttonText: 'View graph and pollutant summary'
+    },
+    periods: {
+      last24hours: 'Last 24 hours',
+      last7days: 'Last 7 days'
+    },
+    periodNavigationLabel: 'Time period',
+    verificationBanner: 'Data has not been checked and verified',
+    legalLimits:
+      'The pollution levels shown are measured against UK legal limits.',
+    summary: {
+      title: 'View pollutant summary',
+      noData: 'Could not load the pollutant summary for this period.',
+      noMapping: 'The pollutant summary is not available for this station.'
+    },
+    graph: {
+      heading: 'View graph: hourly data',
+      unitText:
+        'The unit µg/m³ stands for micrograms (one millionth of a gram) per cubic metre of air.',
+      legalLimits: 'Pollution levels are measured against UK legal limits.',
+      legendLabel: 'Pollutants in the graph',
+      chartLabel: 'Line chart of hourly readings in µg/m³ for',
+      chartHint: 'The same readings are in the table below the graph.',
+      keyboardHint: 'Use the left and right arrow keys to move between hours.',
+      verificationStatus: 'Unverified',
+      noData: 'There are no hourly readings to show for this period.',
+      table: {
+        title: 'View hourly data as a table',
+        caption: 'Hourly readings in µg/m³',
+        timeHeading: 'Time (UTC)',
+        noReading: 'No data'
+      }
+    },
+    hourlyReadings: {
+      titles: {
+        last24hours: 'View hourly data for the last 24 hours',
+        last7days: 'View hourly data for the last 7 days'
+      },
+      captions: {
+        last24hours: 'Hourly readings in µg/m³ for the last 24 hours',
+        last7days: 'Hourly readings in µg/m³ for the last 7 days'
+      }
+    }
+  },
   phaseBanner: {
     paragraphs: {
       a: 'Beta',
