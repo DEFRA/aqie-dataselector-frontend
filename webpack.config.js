@@ -22,6 +22,12 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    map: {
+      import: ['./javascripts/map.js', './stylesheets/map.scss']
+    },
+    'station-list': {
+      import: ['./javascripts/station-list.js']
     }
   },
   experiments: {

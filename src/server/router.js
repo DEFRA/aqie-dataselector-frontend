@@ -1,3 +1,5 @@
+import { config } from '~/src/config/config.js'
+import { map } from '~/src/server/map/index.js'
 import inert from '@hapi/inert'
 import { fileURLToPath } from 'node:url'
 import { health } from '~/src/server/health/index.js'
@@ -102,6 +104,10 @@ export const router = {
         downloadEmailreq,
         stationcountUkeap
       ])
+
+      if (config.get('featureFlags.mapInDataselector')) {
+        await server.register([map])
+      }
 
       // Static assets
       await server.register([serveStaticFiles])

@@ -1,0 +1,528 @@
+@use 'govuk-frontend' as *;
+
+// Mobile is below this width. Keep in sync with MOBILE_MEDIA_QUERY in
+// map-panels.js.
+$aq-mobile-breakpoint: 32.5em; // 520px
+$aq-panel-shadow: rgba(0, 0, 0, 0.1) 0 0 3px 2px;
+$aq-focus-shadow:
+  0 0 0 2px #ffffff,
+  0 0 0 5px #0b0c0c,
+  0 0 0 8px #ffdd00;
+
+// Keeps the map attribution (312px x 24px, bottom-right) uncovered
+$aq-attribution-clearance: 34px;
+$aq-attribution-overlap-max-width: 51.9375em; // 831px
+
+// Space above the mobile bottom sheets for the Exit and zoom buttons
+$aq-top-controls-clearance: 150px;
+
+// Space below the top-right filter panel for the zoom buttons
+$aq-bottom-controls-clearance: 134px;
+
+// Right edge kept clear of the bottom panels for the icon-only Menu and Key
+// buttons (10px + 40px button + 10px)
+$aq-reopen-gutter: 60px;
+
+@mixin aq-above-mobile {
+  @media (min-width: $aq-mobile-breakpoint) {
+    @content;
+  }
+}
+
+// Shared by the map key and the station panel, which occupy the same place
+@mixin aq-bottom-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  box-sizing: border-box;
+  max-height: calc(100vh - #{$aq-top-controls-clearance});
+  max-height: calc(100dvh - #{$aq-top-controls-clearance});
+  overflow-y: auto;
+  background-color: #ffffff;
+  box-shadow: $aq-panel-shadow;
+
+  @include aq-above-mobile {
+    bottom: 10px;
+    left: 10px;
+    right: $aq-reopen-gutter;
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  @media (min-width: $aq-mobile-breakpoint) and (max-width: $aq-attribution-overlap-max-width) {
+    bottom: $aq-attribution-clearance;
+    max-height: calc(100vh - #{$aq-attribution-clearance} - 10px);
+    max-height: calc(100dvh - #{$aq-attribution-clearance} - 10px);
+  }
+
+  @include govuk-media-query($from: tablet) {
+    right: auto;
+    width: 500px;
+  }
+}
+
+// Close button shared by the key, menu and station panels
+.aq-map-key__close,
+.aq-filter-panel__close,
+.aq-map-info__close {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background-color: #ffffff;
+  color: #0b0c0c;
+
+  svg {
+    display: block;
+    margin: 10px;
+  }
+
+  &:hover {
+    background-color: #f3f2f1;
+  }
+
+  &:focus-visible {
+    outline: 3px solid transparent;
+    box-shadow: $aq-focus-shadow;
+  }
+}
+
+// .app-map-container is fixed and covers the full viewport, so any
+// non-positioned content (e.g. the GOV.UK cookie banner) painted before it
+// in the DOM gets visually hidden underneath it unless raised above it here.
+.govuk-cookie-banner {
+  position: relative;
+  z-index: 1000;
+}
+
+.app-map-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  svg[tabindex='0'] {
+    &:focus-visible {
+      outline: 3px solid transparent;
+      box-shadow:
+        0 0 0 2px #ffffff,
+        0 0 0 5px #0b0c0c,
+        0 0 0 8px #ffdd00;
+      border-radius: 50%;
+      position: relative;
+      z-index: 1;
+    }
+  }
+}
+
+.app-map {
+  width: 100%;
+  height: 100%;
+}
+
+.aq-map-key {
+  @include aq-bottom-panel;
+
+  font-family: 'GDS Transport', Arial, sans-serif;
+
+  &:focus-visible {
+    outline: 3px solid #ffdd00;
+  }
+}
+
+// Their display values would otherwise override the hidden attribute
+.aq-map-key[hidden],
+.aq-filter-panel[hidden],
+.aq-map__menu[hidden] {
+  display: none;
+}
+
+.aq-map-key__body {
+  margin-right: 36px;
+  padding: 15px;
+}
+
+// Menu and Key buttons, shown while their panel is closed
+.reopen-stack {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+
+  @include aq-above-mobile {
+    top: auto;
+    bottom: $aq-attribution-clearance;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  // Above the zoom buttons, which are bottom-right from here
+  @include govuk-media-query($from: tablet) {
+    bottom: $aq-attribution-clearance + 90px;
+  }
+}
+
+.aq-map__menu {
+  height: 40px;
+  border: 0;
+  background-color: #ffffff;
+  box-shadow: $aq-panel-shadow;
+  cursor: pointer;
+  font-family: 'GDS Transport', Arial, sans-serif;
+
+  &:hover {
+    background-color: #f3f2f1;
+  }
+
+  &:focus-visible {
+    outline: 3px solid transparent;
+    box-shadow: $aq-focus-shadow;
+  }
+}
+
+// A link, styled as an .aq-map__menu button. Icon only below desktop.
+.aq-map__exit {
+  box-sizing: border-box;
+  text-decoration: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 11;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  padding: 0;
+  font-size: 16px;
+  white-space: nowrap;
+
+  // Beats govuk-frontend's global a:link colour
+  &:link,
+  &:visited {
+    color: $govuk-text-colour;
+  }
+
+  svg {
+    display: block;
+    flex-shrink: 0;
+    margin: 10px;
+  }
+
+  span {
+    @include govuk-media-query($until: desktop) {
+      @include govuk-visually-hidden;
+    }
+  }
+
+  @include govuk-media-query($from: desktop) {
+    width: auto;
+    padding-right: 11px;
+  }
+}
+
+.reopen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  white-space: nowrap;
+
+  svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  @include aq-above-mobile {
+    padding: 0 10px;
+  }
+}
+
+.reopen-text {
+  font-size: 16px;
+  line-height: 40px;
+
+  // Icon only above mobile and below tablet
+  @media (min-width: $aq-mobile-breakpoint) and (max-width: 40.0525em) {
+    @include govuk-visually-hidden;
+  }
+}
+
+// Under the Exit button on small screens, where the bottom sheets span the
+// full width
+.aq-map-zoom {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 60px;
+  left: 10px;
+  z-index: 3;
+
+  @include govuk-media-query($from: tablet) {
+    top: auto;
+    left: auto;
+    right: 10px;
+    bottom: $aq-attribution-clearance;
+  }
+}
+
+// DAQI 1–10 colour scale
+.aq-daqi-scale {
+  width: 100%;
+}
+
+.aq-daqi-scale__bands {
+  display: flex;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 36px;
+}
+
+.aq-daqi-scale__band {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.aq-daqi-scale__labels {
+  display: flex;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.aq-daqi-scale__label-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  &--low {
+    flex: 3;
+  }
+
+  &--moderate {
+    flex: 3;
+  }
+
+  &--high {
+    flex: 3;
+  }
+
+  &--veryhigh {
+    flex: 1;
+  }
+}
+
+.aq-daqi-scale__level {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0b0c0c;
+  line-height: 1.2;
+}
+
+.aq-daqi-scale__range {
+  font-size: 15px;
+  color: #505a5f;
+  line-height: 1.2;
+}
+
+// A bottom sheet on mobile
+.aq-filter-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-height: calc(100vh - #{$aq-top-controls-clearance});
+  max-height: calc(100dvh - #{$aq-top-controls-clearance});
+  background-color: #ffffff;
+  box-shadow: $aq-panel-shadow;
+  overflow: hidden;
+
+  &:focus-visible {
+    outline: 3px solid #ffdd00;
+  }
+
+  @include aq-above-mobile {
+    top: 10px;
+    bottom: auto;
+    left: auto;
+    right: 10px;
+    width: 454px;
+    max-height: calc(100vh - 10px - #{$aq-bottom-controls-clearance});
+    max-height: calc(100dvh - 10px - #{$aq-bottom-controls-clearance});
+    border: 2px solid #0b0c0c;
+    box-shadow: none;
+  }
+}
+
+.aq-filter-panel__close {
+  z-index: 5;
+}
+
+// More top padding on mobile, where the heading sits below the close button
+.aq-filter-panel__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 34px 18px 18px;
+  font-family: 'GDS Transport', Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.25;
+
+  @include aq-above-mobile {
+    padding-top: 22px;
+  }
+}
+
+.aq-filter-panel__tabs {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.aq-filter-panel__tab {
+  height: 40px;
+  width: 50%;
+  background-color: transparent;
+  padding: 0 5px;
+  border: none;
+  cursor: pointer;
+  font-family: 'GDS Transport', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+
+  &[aria-pressed='true'] {
+    border: 2px solid #0b0c0c;
+  }
+
+  &[aria-pressed='false'] {
+    background-color: #f8f8f8;
+    border: 1px solid #e7e7e7;
+    color: #505a5f;
+  }
+
+  &:focus-visible {
+    outline: 3px solid transparent;
+    box-shadow: $aq-focus-shadow;
+    position: relative;
+    z-index: 5;
+  }
+}
+
+// The negative margin stops focus rings being clipped without indenting the
+// content
+.aq-filter-panel__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 2px -10px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 10px;
+}
+
+.aq-filter-panel__mount {
+  margin-top: 12px;
+
+  .govuk-form-group {
+    margin-bottom: 0;
+  }
+}
+
+// Station info panel (bottom-left, shown when a station is selected)
+.aq-map-info {
+  @include aq-bottom-panel;
+
+  display: none;
+
+  &.visible {
+    display: block;
+  }
+
+  &__container {
+    margin-right: 36px;
+    padding: 15px;
+  }
+}
+
+// Station name header with status tag
+.aq-station-header {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.aq-station-tag {
+  display: inline-block;
+  font-family: 'GDS Transport', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+
+  &--active {
+    background-color: #bbd4ea;
+    color: #0b0c0c;
+    font-weight: 400;
+  }
+
+  &--closed {
+    background-color: #0b0c0c;
+    color: #ffffff;
+  }
+}
+
+// DAQI value tag shown in station panel
+.aq-daqi-tag {
+  display: inline-block;
+  font-weight: 400;
+  padding: 1px 6px;
+}
+
+// Station info inline definition list
+.aq-station-info-list {
+  margin: 0;
+
+  dt {
+    font-weight: 700;
+    display: inline;
+  }
+
+  dd {
+    display: inline;
+    margin: 0;
+  }
+}
+
+.aq-station-info-row {
+  margin-bottom: 8px;
+
+  &::after {
+    content: '';
+    display: block;
+  }
+}

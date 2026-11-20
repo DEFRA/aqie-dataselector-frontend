@@ -50,6 +50,15 @@ describe('map-nearby-link.njk', () => {
     )
   })
 
+  it('is hidden without JavaScript, as the map needs it', () => {
+    const $ = render({
+      mapViewUrl: 'https://maps.example/map/view',
+      stationdetails
+    })
+
+    expect($('form').hasClass('aq-js-only')).toBe(true)
+  })
+
   it('omits siteId when the station has no local site id', () => {
     const $ = render({
       mapViewUrl: 'https://maps.example/map/view',

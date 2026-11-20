@@ -89,11 +89,12 @@ The application only injects the GTM script when a user has accepted analytics c
 
 ## Feature toggles
 
-| Environment variable         | Default | Description                                                                                                                                                                                                                                                                                                                                                                                |
-| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `VIEW_GRAPH_SUMMARY_ENABLED` | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only. Users without JavaScript get the hourly readings in collapsed sections on the Daily Air Quality Index, Last 24 hours and Last 7 days tabs instead. It also registers the `/stationdetails/graph-summary` route. When unset or `false`, all of these are disabled. |
-| `VIEW_DAQI_TAB_ENABLED`      | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.                                                                                                                                                                  |
-| `SEARCH_ON_MAP_ENABLED`      | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden.                                                                                                                                                                 |
+| Environment variable          | Default | Description                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `VIEW_GRAPH_SUMMARY_ENABLED`  | `false` | Shows the "View graph and pollutant summary" button on the station details page, for users with JavaScript enabled only. Users without JavaScript get the hourly readings in collapsed sections on the Daily Air Quality Index, Last 24 hours and Last 7 days tabs instead. It also registers the `/stationdetails/graph-summary` route. When unset or `false`, all of these are disabled. |
+| `VIEW_DAQI_TAB_ENABLED`       | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.                                                                                                                                                                  |
+| `SEARCH_ON_MAP_ENABLED`       | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden. It is also hidden without JavaScript, as the map needs it.                                                                                                      |
+| `MAP_IN_DATASELECTOR_ENABLED` | `false` | Serves the air quality map from this service (`/map` and its `/api` routes) instead of linking to `aqie-maps-frontend`. Needs `AQIE_BACK_END_URL` (and optionally `AQIE_FORECAST_API_URL`) for the map's station, AURN and forecast data. When unset or `false`, links to the map go to `MAPS_FRONT_END_URL` instead.                                                                      |
 
 Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
@@ -131,7 +132,18 @@ When a station page is opened from aqie-maps-frontend (via `/station-summary`), 
 
 ### View map of nearby monitoring stations
 
-When `SEARCH_ON_MAP_ENABLED` is `true` and a maps URL is configured, station pages (summary, last 7 days and the no-JS view) show a "View map of nearby monitoring stations" link under the status line (`partials/map-nearby-link.njk`). It is a form button that POSTs the station's `lat`, `lng` and `siteId` (`localSiteID`) to `<MAPS_FRONT_END_URL>/map/view`, which opens the map zoomed in on the station with it selected. It uses a POST so no location data goes in the URL, and it works without JavaScript. The CSP `form-action` directive allows the maps origin when `MAPS_FRONT_END_URL` is set. The existing "View on Google Maps" link is unchanged.
+When `SEARCH_ON_MAP_ENABLED` is `true` and a maps URL is configured, station pages (summary, last 7 days and the no-JS view) show a "View map of nearby monitoring stations" link under the status line (`partials/map-nearby-link.njk`). It is a form button that POSTs the station's `lat`, `lng` and `siteId` (`localSiteID`) to `<MAPS_FRONT_END_URL>/map/view`, which opens the map zoomed in on the station with it selected. It uses a POST so no location data goes in the URL. The map needs JavaScript, so the link is hidden without it (`aq-js-only`). The CSP `form-action` directive allows the maps origin when `MAPS_FRONT_END_URL` is set. The existing "View on Google Maps" link is unchanged.
+
+### Air quality map served from this service
+
+When `MAP_IN_DATASELECTOR_ENABLED` is `true`, this service serves the air quality map itself at `/map`, with its data from `/api` routes, instead of linking to `aqie-maps-frontend`. All links to the map then go to `/map`, so `MAPS_FRONT_END_URL` is not used.
+
+The map gets its data from these services. They are only used when the flag is on:
+
+| Environment variable    | Default                 | Description                                                                                                              |
+| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `AQIE_BACK_END_URL`     | `http://localhost:3001` | Base URL for `aqie-back-end`, used by the map for monitoring stations, station info, AURN and (as a fallback) forecasts. |
+| `AQIE_FORECAST_API_URL` | unset                   | Base URL for the forecast API, used by the map. Falls back to `aqie-back-end`'s `/forecasts` when unset.                 |
 
 ## Using the graph: an accessibility guide
 
@@ -258,6 +270,11 @@ GOOGLE_TAG_MANAGER_KEYS=GTM-XXXXXXXX
 # The URL defaults to https://aqie-maps-frontend.<ENVIRONMENT>.cdp-int.defra.cloud when ENVIRONMENT is set, so locally you need to set it
 MAPS_FRONT_END_URL=http://localhost:3000
 SEARCH_ON_MAP_ENABLED=true
+
+# Optional: serve the map from this service instead (see "Air quality map served from this service" above).
+# Needs aqie-back-end running; use host.docker.internal when running via Docker Compose, or localhost when running via npm run dev
+MAP_IN_DATASELECTOR_ENABLED=true
+AQIE_BACK_END_URL=http://host.docker.internal:3001
 ```
 
 ### Setup

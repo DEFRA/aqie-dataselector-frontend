@@ -45,7 +45,7 @@ services:
 
 ################################################################################
 
-  your-frontend:
+  aqie-dataselector-frontend:
     build: ./
     container_name: aqie-dataselector-frontend
     ports:

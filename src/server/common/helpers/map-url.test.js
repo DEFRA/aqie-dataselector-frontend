@@ -14,8 +14,10 @@ const requestWith = (session) => ({
 describe('map-url helpers', () => {
   const originalUrl = config.get('mapsFrontEnd.url')
   const originalFlag = config.get('featureFlags.searchOnMap')
+  const originalMapFlag = config.get('featureFlags.mapInDataselector')
 
   afterEach(() => {
+    config.set('featureFlags.mapInDataselector', originalMapFlag)
     config.set('mapsFrontEnd.url', originalUrl)
     config.set('featureFlags.searchOnMap', originalFlag)
   })
@@ -95,6 +97,30 @@ describe('map-url helpers', () => {
       config.set('mapsFrontEnd.url', null)
       const request = requestWith({ mapReturnSiteId: 'ABC', SiteId: 'ABC' })
       expect(getMapReturnUrl(request)).toBeNull()
+    })
+  })
+
+  describe('when the map is served by the dataselector', () => {
+    beforeEach(() => {
+      config.set('mapsFrontEnd.url', 'https://maps.example')
+      config.set('featureFlags.searchOnMap', true)
+      config.set('featureFlags.mapInDataselector', true)
+    })
+
+    it('links to the internal map and nearby-map form target', () => {
+      expect(getMapUrlIfEnabled()).toBe('/map')
+      expect(getMapViewUrlIfEnabled()).toBe('/map/view')
+    })
+
+    it('uses the internal map as the Back link from a station', () => {
+      expect(
+        getMapReturnUrl(requestWith({ mapReturnSiteId: 'A1', SiteId: 'A1' }))
+      ).toBe('/map')
+    })
+
+    it('still hides the links while searchOnMap is off', () => {
+      config.set('featureFlags.searchOnMap', false)
+      expect(getMapUrlIfEnabled()).toBeNull()
     })
   })
 })

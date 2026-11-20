@@ -1,5 +1,12 @@
 @use "govuk-frontend" as *;
 
+// govuk-frontend 5.14 no longer exposes the sass-mq `mq` mixin
+@mixin mq($from: null, $until: null) {
+  @include govuk-media-query($from: $from, $until: $until) {
+    @content;
+  }
+}
+
 .related-content-border {
   border-top: 2px solid #1d70b8;
   margin-bottom: 10px;

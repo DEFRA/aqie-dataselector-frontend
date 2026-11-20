@@ -2,11 +2,15 @@
 // Generates nonces for inline scripts (more secure than 'unsafe-inline').
 
 import Blankie from 'blankie'
+import { config } from '~/src/config/config.js'
 import { cspDirectives } from '~/src/server/common/constants/csp-directives.js'
 import { getMapsFrontEndBaseUrl } from '~/src/server/common/helpers/map-url.js'
 
-// The station page's "View map of nearby monitoring stations" form posts to aqie-maps-frontend
-const mapsFrontEndUrl = getMapsFrontEndBaseUrl()
+// The station page's "View map of nearby monitoring stations" form posts to
+// aqie-maps-frontend, unless the map is served by the dataselector itself
+const mapsFrontEndUrl = config.get('featureFlags.mapInDataselector')
+  ? null
+  : getMapsFrontEndBaseUrl()
 
 export const contentSecurityPolicy = {
   plugin: Blankie,

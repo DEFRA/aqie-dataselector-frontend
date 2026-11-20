@@ -1,12 +1,14 @@
 {#
-  "View map of nearby monitoring stations" - opens aqie-maps-frontend centred
+  "View map of nearby monitoring stations" - opens the map centred
   on this station with it selected. A form POST (not a link) so the
-  coordinates and station id aren't put in a URL, and it works without JavaScript.
+  coordinates and station id aren't put in a URL. The map needs JavaScript, so
+  aq-js-only hides it without; CSS rather than a script because this markup is
+  also swapped in with innerHTML.
   Expects: mapViewUrl (null hides it), stationdetails.
 #}
 {% set nearbyCoordinates = stationdetails.location.coordinates if stationdetails.location else null %}
 {% if mapViewUrl and nearbyCoordinates %}
-<form class="aq-map-nearby govuk-!-margin-top-4 govuk-!-margin-bottom-2" method="post" action="{{ mapViewUrl }}">
+<form class="aq-map-nearby aq-js-only govuk-!-margin-top-4 govuk-!-margin-bottom-2" method="post" action="{{ mapViewUrl }}">
   <input type="hidden" name="lat" value="{{ nearbyCoordinates[0] }}">
   <input type="hidden" name="lng" value="{{ nearbyCoordinates[1] }}">
   {% if stationdetails.localSiteID %}
