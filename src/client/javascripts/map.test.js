@@ -206,7 +206,7 @@ function resetDom() {
       <button id="zoom-in" type="button" aria-label="Zoom in"></button>
       <button id="zoom-out" type="button" aria-label="Zoom out"></button>
     </div>
-    <button id="exit-map" type="button">Exit map</button>
+    <a id="exit-map" href="/hubpage">Exit map</a>
     <div id="station-panel" data-dataselector-url="https://aqie-dataselector-frontend.example">
       <button id="sp-close"></button>
       <h2 id="sp-name"></h2>
@@ -1534,42 +1534,6 @@ describe('#map key overlay', () => {
         call[0] === 'ms-UKA001' && call[2].svgContent.includes('#0b0c0c')
     )
     expect(selectedCall).toBeDefined()
-  })
-
-  test('Should call history.back() when exit button is clicked after arriving from this site', async () => {
-    await loadAndIdle()
-    const referrerSpy = jest
-      .spyOn(document, 'referrer', 'get')
-      .mockReturnValue(`${globalThis.location.origin}/stationdetails`)
-    const backSpy = jest.spyOn(globalThis, 'history', 'get').mockReturnValue({
-      back: jest.fn()
-    })
-    document.getElementById('exit-map').click()
-    expect(backSpy.mock.results[0].value.back).toHaveBeenCalledTimes(1)
-    backSpy.mockRestore()
-    referrerSpy.mockRestore()
-  })
-
-  test('Should go to the home page when the map was opened directly', async () => {
-    await loadAndIdle()
-    const back = jest.fn()
-    const historySpy = jest
-      .spyOn(globalThis, 'history', 'get')
-      .mockReturnValue({ back })
-    const assign = jest.fn()
-    const original = globalThis.location
-    Object.defineProperty(globalThis, 'location', {
-      configurable: true,
-      value: { origin: original.origin, assign }
-    })
-    document.getElementById('exit-map').click()
-    expect(assign).toHaveBeenCalledWith('/')
-    expect(back).not.toHaveBeenCalled()
-    Object.defineProperty(globalThis, 'location', {
-      configurable: true,
-      value: original
-    })
-    historySpy.mockRestore()
   })
 })
 

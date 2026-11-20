@@ -136,7 +136,9 @@ When `SEARCH_ON_MAP_ENABLED` is `true` and a maps URL is configured, station pag
 
 ### Air quality map served from this service
 
-When `MAP_IN_DATASELECTOR_ENABLED` is `true`, this service serves the air quality map itself at `/map` (and its `/api` routes) instead of linking out to `aqie-maps-frontend`. `getMapUrl()` and the other helpers in `src/server/common/helpers/map-url.js` then point the "Search on a map" link, the "View map of nearby monitoring stations" form and the station page's map Back link at `/map` rather than `<MAPS_FRONT_END_URL>/map`; `MAPS_FRONT_END_URL` and the other `MAP_IN_DATASELECTOR_ENABLED`-only variables are unused when the flag is off. The map needs its own backend data, configured separately from the rest of this service:
+When `MAP_IN_DATASELECTOR_ENABLED` is `true`, this service serves the air quality map itself at `/map`, with its data from `/api` routes, instead of linking to `aqie-maps-frontend`. All links to the map then go to `/map`, so `MAPS_FRONT_END_URL` is not used.
+
+The map gets its data from these services. They are only used when the flag is on:
 
 | Environment variable    | Default                 | Description                                                                                                              |
 | ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |

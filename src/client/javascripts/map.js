@@ -1,4 +1,4 @@
-/* global defra, history */
+/* global defra */
 
 import {
   stationMarkerId,
@@ -64,18 +64,6 @@ function createInteractiveMap(restoredView) {
       url: 'https://tiles.openfreemap.org/styles/liberty',
       attribution: 'OpenFreeMap \u00a9 OpenMapTiles Data from OpenStreetMap',
       backgroundColor: '#f5f5f0'
-    }
-  })
-}
-
-/** Wires up the "Exit map" button. */
-function initExitMapButton() {
-  document.getElementById('exit-map')?.addEventListener('click', () => {
-    // Opened directly (bookmark, shared link): there's no page to go back to
-    if (document.referrer.startsWith(globalThis.location.origin)) {
-      history.back()
-    } else {
-      globalThis.location.assign('/')
     }
   })
 }
@@ -356,7 +344,6 @@ async function initMap() {
 
   // Before the data loads, so the panels respond straight away
   initMapPanels({ closeStationPanel: () => ctx.closeStationPanel() })
-  initExitMapButton()
   ctx.map.on('map:ready', ({ map: maplibreMap }) => {
     ctx.maplibreInstance = maplibreMap
     initZoomControls(maplibreMap)

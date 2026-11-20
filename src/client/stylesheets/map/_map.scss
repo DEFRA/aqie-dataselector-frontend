@@ -1,10 +1,13 @@
-@use "govuk-frontend" as *;
+@use 'govuk-frontend' as *;
 
 // Mobile is below this width. Keep in sync with MOBILE_MEDIA_QUERY in
 // map-panels.js.
 $aq-mobile-breakpoint: 32.5em; // 520px
 $aq-panel-shadow: rgba(0, 0, 0, 0.1) 0 0 3px 2px;
-$aq-focus-shadow: 0 0 0 2px #ffffff, 0 0 0 5px #0b0c0c, 0 0 0 8px #ffdd00;
+$aq-focus-shadow:
+  0 0 0 2px #ffffff,
+  0 0 0 5px #0b0c0c,
+  0 0 0 8px #ffdd00;
 
 // Keeps the map attribution (312px x 24px, bottom-right) uncovered
 $aq-attribution-clearance: 34px;
@@ -107,7 +110,10 @@ $aq-reopen-gutter: 60px;
   svg[tabindex='0'] {
     &:focus-visible {
       outline: 3px solid transparent;
-      box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px #0b0c0c, 0 0 0 8px #ffdd00;
+      box-shadow:
+        0 0 0 2px #ffffff,
+        0 0 0 5px #0b0c0c,
+        0 0 0 8px #ffdd00;
       border-radius: 50%;
       position: relative;
       z-index: 1;
@@ -123,7 +129,7 @@ $aq-reopen-gutter: 60px;
 .aq-map-key {
   @include aq-bottom-panel;
 
-  font-family: "GDS Transport", Arial, sans-serif;
+  font-family: 'GDS Transport', Arial, sans-serif;
 
   &:focus-visible {
     outline: 3px solid #ffdd00;
@@ -176,7 +182,7 @@ $aq-reopen-gutter: 60px;
   background-color: #ffffff;
   box-shadow: $aq-panel-shadow;
   cursor: pointer;
-  font-family: "GDS Transport", Arial, sans-serif;
+  font-family: 'GDS Transport', Arial, sans-serif;
 
   &:hover {
     background-color: #f3f2f1;
@@ -188,9 +194,10 @@ $aq-reopen-gutter: 60px;
   }
 }
 
-// Also an .aq-map__menu, which supplies the button styles. Icon only below
-// desktop.
+// A link, styled as an .aq-map__menu button. Icon only below desktop.
 .aq-map__exit {
+  box-sizing: border-box;
+  text-decoration: none;
   position: absolute;
   top: 10px;
   left: 10px;
@@ -202,6 +209,12 @@ $aq-reopen-gutter: 60px;
   padding: 0;
   font-size: 16px;
   white-space: nowrap;
+
+  // Beats govuk-frontend's global a:link colour
+  &:link,
+  &:visited {
+    color: $govuk-text-colour;
+  }
 
   svg {
     display: block;
@@ -374,7 +387,7 @@ $aq-reopen-gutter: 60px;
   flex-direction: column;
   min-height: 0;
   padding: 34px 18px 18px;
-  font-family: "GDS Transport", Arial, sans-serif;
+  font-family: 'GDS Transport', Arial, sans-serif;
   font-size: 1rem;
   line-height: 1.25;
 
@@ -396,15 +409,15 @@ $aq-reopen-gutter: 60px;
   padding: 0 5px;
   border: none;
   cursor: pointer;
-  font-family: "GDS Transport", Arial, sans-serif;
+  font-family: 'GDS Transport', Arial, sans-serif;
   font-size: 16px;
   font-weight: 700;
 
-  &[aria-pressed="true"] {
+  &[aria-pressed='true'] {
     border: 2px solid #0b0c0c;
   }
 
-  &[aria-pressed="false"] {
+  &[aria-pressed='false'] {
     background-color: #f8f8f8;
     border: 1px solid #e7e7e7;
     color: #505a5f;
@@ -464,7 +477,7 @@ $aq-reopen-gutter: 60px;
 
 .aq-station-tag {
   display: inline-block;
-  font-family: "GDS Transport", Arial, sans-serif;
+  font-family: 'GDS Transport', Arial, sans-serif;
   font-size: 14px;
   font-weight: 700;
   padding: 2px 8px;
@@ -509,7 +522,7 @@ $aq-reopen-gutter: 60px;
   margin-bottom: 8px;
 
   &::after {
-    content: "";
+    content: '';
     display: block;
   }
 }
