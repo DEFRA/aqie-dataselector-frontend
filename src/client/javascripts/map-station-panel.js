@@ -8,7 +8,6 @@ import {
 } from './map-station-data.js'
 import { daqiBand, daqiMarkerOptions, toSafeDaqiIndex } from './map-daqi.js'
 import {
-  escapeHtml,
   formatDate,
   NOT_AVAILABLE,
   pollutantLabels,
@@ -17,9 +16,28 @@ import {
 import { setStationPanelOpen } from './map-panels.js'
 
 /**
+ * Creates an element with the given class and text. Station data only ever
+ * goes in as text, never as HTML.
+ * @param {string} tagName
+ * @param {string} [className]
+ * @param {string} [text]
+ * @returns {HTMLElement}
+ */
+function createElement(tagName, className, text) {
+  const element = document.createElement(tagName)
+  if (className) {
+    element.className = className
+  }
+  if (text !== undefined) {
+    element.textContent = text
+  }
+  return element
+}
+
+/**
  * Builds a DAQI tag span for use in the station panel.
  * @param {number} daqiValue
- * @returns {string}
+ * @returns {HTMLElement}
  */
 function buildDaqiTag(daqiValue) {
   const band = daqiBand[daqiValue] || ''
@@ -28,7 +46,7 @@ function buildDaqiTag(daqiValue) {
     : 'aq-daqi-tag'
   const bandSuffix = band ? ` (${band.toLowerCase()})` : ''
 
-  return `<span class="${daqiClass}">${daqiValue}${bandSuffix}</span>`
+  return createElement('span', daqiClass, `${daqiValue}${bandSuffix}`)
 }
 
 /**
@@ -49,7 +67,7 @@ function buildDaqiRow(station, daqiContext) {
     if (aurnDaqi == null) {
       return ['DAQI (observed)', NOT_AVAILABLE]
     }
-    return ['DAQI (observed)', buildDaqiTag(aurnDaqi), true]
+    return ['DAQI (observed)', buildDaqiTag(aurnDaqi)]
   }
   const forecast = forecastForStation(forecasts, station)
   if (
@@ -65,7 +83,7 @@ function buildDaqiRow(station, daqiContext) {
   if (forecastDaqi == null) {
     return ['DAQI (forecast)', NOT_AVAILABLE]
   }
-  return ['DAQI (forecast)', buildDaqiTag(forecastDaqi), true]
+  return ['DAQI (forecast)', buildDaqiTag(forecastDaqi)]
 }
 
 /**
@@ -122,8 +140,12 @@ function buildPanelRows(station, isClosed, daqiContext) {
  * @param {boolean} isClosed
  */
 function renderStationHeading(station, status, isClosed) {
-  document.getElementById('sp-name').innerHTML =
-    escapeHtml(station.name || '') + stationStatusTag(status, isClosed)
+  const tag = stationStatusTag(status, isClosed)
+  const heading = document.getElementById('sp-name')
+  heading.textContent = station.name || ''
+  if (tag) {
+    heading.append(' ', tag)
+  }
 }
 
 /**
@@ -133,16 +155,16 @@ function renderStationHeading(station, status, isClosed) {
  * @param {object} daqiContext - see {@link buildDaqiRow} for shape
  */
 function renderStationDetails(station, isClosed, daqiContext) {
-  document.getElementById('sp-details').innerHTML = buildPanelRows(
-    station,
-    isClosed,
-    daqiContext
+  const rows = buildPanelRows(station, isClosed, daqiContext).map(
+    ([label, value]) => {
+      const row = createElement('div', 'aq-station-info-row')
+      const dd = createElement('dd')
+      dd.append(value instanceof Node ? value : String(value))
+      row.append(createElement('dt', '', `${label}:`), ' ', dd)
+      return row
+    }
   )
-    .map(
-      ([label, value, isHtml]) =>
-        `<div class="aq-station-info-row"><dt>${escapeHtml(label)}:</dt> <dd>${isHtml ? value : escapeHtml(String(value))}</dd></div>`
-    )
-    .join('')
+  document.getElementById('sp-details').replaceChildren(...rows)
 }
 
 /**

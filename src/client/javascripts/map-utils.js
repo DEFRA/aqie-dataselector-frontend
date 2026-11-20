@@ -9,19 +9,6 @@ const pollutantLabels = {
 }
 
 /**
- * Prevents XSS when setting innerHTML with user-sourced station data.
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-}
-
-/**
  * Formats an ISO date string to a human-readable en-GB date.
  * @param {string} dateStr
  * @returns {string}
@@ -42,30 +29,22 @@ function formatDate(dateStr) {
 }
 
 /**
- * Returns an HTML status tag string for the station name heading, or '' if no tag is needed.
+ * Returns the status tag element for the station name heading, or null if no tag is needed.
  * @param {string} status - lowercased station status
  * @param {boolean} isClosed
- * @returns {string}
+ * @returns {HTMLElement|null}
  */
 function stationStatusTag(status, isClosed) {
-  const tagLabel =
+  if (status !== 'current' && !isClosed) {
+    return null
+  }
+  const tag = document.createElement('strong')
+  tag.className = `aq-station-tag aq-station-tag--${status === 'current' ? 'active' : 'closed'}`
+  tag.textContent =
     status === 'current'
       ? 'Active'
       : status.charAt(0).toUpperCase() + status.slice(1)
-
-  if (status === 'current') {
-    return ` <strong class="aq-station-tag aq-station-tag--active">${escapeHtml(tagLabel)}</strong>`
-  }
-  if (isClosed) {
-    return ` <strong class="aq-station-tag aq-station-tag--closed">${escapeHtml(tagLabel)}</strong>`
-  }
-  return ''
+  return tag
 }
 
-export {
-  NOT_AVAILABLE,
-  pollutantLabels,
-  escapeHtml,
-  formatDate,
-  stationStatusTag
-}
+export { NOT_AVAILABLE, pollutantLabels, formatDate, stationStatusTag }

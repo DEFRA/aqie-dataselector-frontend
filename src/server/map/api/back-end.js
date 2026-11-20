@@ -25,23 +25,28 @@ async function getJson(baseUrl, path, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return body.json()
 }
 
-const getMonitoringStations = () =>
-  getJson(config.get('aqieBackEnd.url'), '/monitoringStations')
+// Read on each call rather than at import, so config changes are picked up
+function getBackEndJson(path, timeoutMs) {
+  return getJson(config.get('aqieBackEnd.url'), path, timeoutMs)
+}
 
-const getMonitoringStationInfo = () =>
-  getJson(
-    config.get('aqieBackEnd.url'),
-    '/monitoringStationInfo',
-    STATION_INFO_TIMEOUT_MS
-  )
+function getMonitoringStations() {
+  return getBackEndJson('/monitoringStations')
+}
 
-const getAurnData = () => getJson(config.get('aqieBackEnd.url'), '/aurnData')
+function getMonitoringStationInfo() {
+  return getBackEndJson('/monitoringStationInfo', STATION_INFO_TIMEOUT_MS)
+}
 
-const getForecasts = () => {
+function getAurnData() {
+  return getBackEndJson('/aurnData')
+}
+
+function getForecasts() {
   const forecastApiUrl = config.get('aqieForecastApi.url')
   return forecastApiUrl
     ? getJson(forecastApiUrl, '/forecast')
-    : getJson(config.get('aqieBackEnd.url'), '/forecasts')
+    : getBackEndJson('/forecasts')
 }
 
 export {
