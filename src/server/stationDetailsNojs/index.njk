@@ -3,6 +3,7 @@
 {% from "govuk/components/table/macro.njk" import govukTable %}
  {% from "govuk/components/tabs/macro.njk" import govukTabs %}
    {% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
 <script src="/path/to/govuk-frontend/govuk/all.js"></script>
 
   <script nonce="{{ nonce }}">
@@ -243,9 +244,7 @@
 {% if tabledata !== null %}
 
   <div id="yeartabble">
-  <p class="govuk-heading-s"> {{tabledata[0].dataVerifiedTag }} 
-   
-  </p>
+  {{ appVerificationBanner(yearVerificationBanner(tabledata[0].dataVerifiedTag, finalyear)) }}
              
 
 <div class="table-scroll-container">

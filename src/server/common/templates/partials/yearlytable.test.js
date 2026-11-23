@@ -50,3 +50,44 @@ describe('yearlytable.njk graph summary button', () => {
     expect($('.aq-js-only')).toHaveLength(0)
   })
 })
+
+describe('yearlytable.njk verification banner', () => {
+  const withTag = (dataVerifiedTag) => [{ ...tabledata[0], dataVerifiedTag }]
+
+  it.each([
+    [
+      'Data has not been verified',
+      2026,
+      'app-verification-banner',
+      'Data has not been checked and verified'
+    ],
+    [
+      'Data has been verified until 30 September',
+      2025,
+      'app-verification-banner app-verification-banner--partial',
+      'Data has been checked and verified until 30 September 2025'
+    ],
+    [
+      'Data has been verified',
+      2024,
+      'app-verification-banner app-verification-banner--verified',
+      'Data has been checked and verified'
+    ]
+  ])(
+    'maps "%s" for %s to the right banner',
+    (tag, finalyear, classes, text) => {
+      const $ = render({ tabledata: withTag(tag), finalyear })
+      const banner = $('#yeartabble > .app-verification-banner')
+
+      expect(banner).toHaveLength(1)
+      expect(banner.attr('class')).toBe(classes)
+      expect(banner.text().trim()).toBe(text)
+    }
+  )
+
+  it('shows no banner when there is no data for the year', () => {
+    const $ = render({ tabledata: null, finalyear: 2025 })
+
+    expect($('.app-verification-banner')).toHaveLength(0)
+  })
+})

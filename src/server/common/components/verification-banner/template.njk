@@ -1,3 +1,4 @@
-<div class="app-verification-banner" data-testid="app-verification-banner">
+{% set modifier = " app-verification-banner--" + params.status if params.status in ["partial", "verified"] else "" %}
+<div class="app-verification-banner{{ modifier }}" data-testid="app-verification-banner">
   <p class="govuk-body govuk-!-margin-bottom-0">{{ params.text }}</p>
 </div>

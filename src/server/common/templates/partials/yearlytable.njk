@@ -1,4 +1,5 @@
 {% from "partials/aq-table-macros.njk" import limitToggletip, aboveLimitTag, exceedanceCell %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
 
 {#
   Yearly air pollution levels table + download links.
@@ -54,7 +55,7 @@
 {% if tabledata !== null %}
 
   <div id="yeartabble">
-    <p class="govuk-heading-s">{{ tabledata[0].dataVerifiedTag }}</p>
+    {{ appVerificationBanner(yearVerificationBanner(tabledata[0].dataVerifiedTag, finalyear)) }}
 
     <div class="table-scroll-container">
       <table id="aqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">

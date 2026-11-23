@@ -44,9 +44,9 @@ describe('daqitable.njk', () => {
     })
 
     expect($('.table-scroll-container')).toHaveLength(1)
-    expect($('.govuk-inset-text.not-verified').text().trim()).toBe(
-      'Data has not been checked and verified'
-    )
+    const banner = $('.app-verification-banner')
+    expect(banner.text().trim()).toBe('Data has not been checked and verified')
+    expect(banner.attr('class')).toBe('app-verification-banner')
 
     const headers = $('#daqitable thead th')
       .map((_, el) => $(el).text().trim())

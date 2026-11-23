@@ -28,3 +28,21 @@ describe('Verification banner component', () => {
     )
   })
 })
+
+describe('Verification banner component status', () => {
+  test.each([
+    ['partial', 'app-verification-banner app-verification-banner--partial'],
+    ['verified', 'app-verification-banner app-verification-banner--verified'],
+    ['unverified', 'app-verification-banner'],
+    [undefined, 'app-verification-banner']
+  ])('status %s renders classes "%s"', (status, classes) => {
+    const $banner = renderComponent('verification-banner', {
+      text: 'Data has been checked and verified',
+      status
+    })
+
+    expect(
+      $banner('[data-testid="app-verification-banner"]').attr('class')
+    ).toBe(classes)
+  })
+})
