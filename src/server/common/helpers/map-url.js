@@ -18,11 +18,15 @@ function getMapsFrontEndBaseUrl() {
 }
 
 /**
- * Returns the map page URL for this environment, or null when the maps
- * service is not configured.
+ * Returns the map page URL: the dataselector's own /map while
+ * featureFlags.mapInDataselector is on, otherwise the aqie-maps-frontend map
+ * for this environment, or null when that service is not configured.
  * @returns {string|null}
  */
 function getMapUrl() {
+  if (config.get('featureFlags.mapInDataselector')) {
+    return '/map'
+  }
   const baseUrl = getMapsFrontEndBaseUrl()
   return baseUrl ? `${baseUrl}/map` : null
 }
