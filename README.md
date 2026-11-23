@@ -95,6 +95,7 @@ The application only injects the GTM script when a user has accepted analytics c
 | `VIEW_DAQI_TAB_ENABLED`       | `false` | Shows the DAQI tab on the station details page, makes it the default view and registers the `/stationdetails/daqi` route. When unset or `false`, the year tables are the default view and the tab and route are disabled.                                                                                                                                                                  |
 | `SEARCH_ON_MAP_ENABLED`       | `false` | Shows the "Search on a map" link on the hub page. The link also needs a maps URL, which defaults to the CDP service for `ENVIRONMENT`; set `MAPS_FRONT_END_URL` to override it. When unset or `false`, the link is hidden. It is also hidden without JavaScript, as the map needs it.                                                                                                      |
 | `MAP_IN_DATASELECTOR_ENABLED` | `false` | Serves the air quality map from this service (`/map` and its `/api` routes) instead of linking to `aqie-maps-frontend`. Needs `AQIE_BACK_END_URL` (and optionally `AQIE_FORECAST_API_URL`) for the map's station, AURN and forecast data. When unset or `false`, links to the map go to `MAPS_FRONT_END_URL` instead.                                                                      |
+| `MAP_FORECASTS_ENABLED`       | `false` | Lets the map's `/api/forecasts` route fetch forecasts from the forecast API (`AQIE_FORECAST_API_URL`, or aqie-back-end's `/forecasts`). Turn it on once that API is live. When unset or `false`, the route returns an empty list without calling upstream, so the map shows no forecast data instead of logging a 500.                                                                     |
 
 Feature toggles are off by default, so a feature is only enabled in an environment by explicitly setting its variable to `true` there.
 
@@ -144,6 +145,8 @@ The map gets its data from these services. They are only used when the flag is o
 | ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `AQIE_BACK_END_URL`     | `http://localhost:3001` | Base URL for `aqie-back-end`, used by the map for monitoring stations, station info, AURN and (as a fallback) forecasts. |
 | `AQIE_FORECAST_API_URL` | unset                   | Base URL for the forecast API, used by the map. Falls back to `aqie-back-end`'s `/forecasts` when unset.                 |
+
+`/api/forecasts` only calls one of the above while `MAP_FORECASTS_ENABLED` is also `true`; while it is off, the route returns an empty list and the map shows no forecast data.
 
 ## Using the graph: an accessibility guide
 
@@ -275,6 +278,9 @@ SEARCH_ON_MAP_ENABLED=true
 # Needs aqie-back-end running; use host.docker.internal when running via Docker Compose, or localhost when running via npm run dev
 MAP_IN_DATASELECTOR_ENABLED=true
 AQIE_BACK_END_URL=http://host.docker.internal:3001
+
+# Optional: once the forecast API is live, fetch forecasts for the map (needs MAP_IN_DATASELECTOR_ENABLED above)
+MAP_FORECASTS_ENABLED=true
 ```
 
 ### Setup
