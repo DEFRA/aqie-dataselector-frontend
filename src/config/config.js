@@ -151,9 +151,12 @@ export const config = convict({
   },
   aqieBackEnd: {
     url: {
-      doc: 'Base URL for the AQIE back-end service, used by the map',
+      doc: 'Base URL for the AQIE back-end service, used by the map. Defaults to the service in the current CDP environment (ENVIRONMENT); set it locally, as the map API routes fail when neither is set',
       format: String,
-      default: 'http://localhost:3001',
+      nullable: true,
+      default: process.env.ENVIRONMENT
+        ? `https://aqie-back-end.${process.env.ENVIRONMENT}.cdp-int.defra.cloud`
+        : null,
       env: 'AQIE_BACK_END_URL'
     }
   },

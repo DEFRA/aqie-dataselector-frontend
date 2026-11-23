@@ -141,10 +141,10 @@ When `MAP_IN_DATASELECTOR_ENABLED` is `true`, this service serves the air qualit
 
 The map gets its data from these services. They are only used when the flag is on:
 
-| Environment variable    | Default                 | Description                                                                                                              |
-| ----------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `AQIE_BACK_END_URL`     | `http://localhost:3001` | Base URL for `aqie-back-end`, used by the map for monitoring stations, station info, AURN and (as a fallback) forecasts. |
-| `AQIE_FORECAST_API_URL` | unset                   | Base URL for the forecast API, used by the map. Falls back to `aqie-back-end`'s `/forecasts` when unset.                 |
+| Environment variable    | Default                                                                                           | Description                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AQIE_BACK_END_URL`     | `https://aqie-back-end.<ENVIRONMENT>.cdp-int.defra.cloud`, or unset when `ENVIRONMENT` is not set | Base URL for `aqie-back-end`, used by the map for monitoring stations, station info, AURN and (as a fallback) forecasts. Set it locally, as the map's `/api` routes fail without it. |
+| `AQIE_FORECAST_API_URL` | unset                                                                                             | Base URL for the forecast API, used by the map. Falls back to `aqie-back-end`'s `/forecasts` when unset.                                                                             |
 
 `/api/forecasts` only calls one of the above while `MAP_FORECASTS_ENABLED` is also `true`; while it is off, the route returns an empty list and the map shows no forecast data.
 
