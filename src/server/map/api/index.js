@@ -1,3 +1,4 @@
+import { config } from '~/src/config/config.js'
 import {
   getAurnData,
   getForecasts,
@@ -24,6 +25,11 @@ function proxy(fetchData, failureMessage) {
 
 const UPSTREAM_FAILED = 'Failed to fetch data from upstream API'
 
+// Until the forecast API is live, answer with no forecasts rather than a 500
+function getForecastsIfEnabled() {
+  return config.get('featureFlags.mapForecasts') ? getForecasts() : []
+}
+
 /**
  * JSON endpoints the map's client code calls.
  */
@@ -45,7 +51,7 @@ const mapApi = {
         {
           method: 'GET',
           path: '/api/forecasts',
-          ...proxy(getForecasts, UPSTREAM_FAILED)
+          ...proxy(getForecastsIfEnabled, UPSTREAM_FAILED)
         },
         {
           method: 'GET',

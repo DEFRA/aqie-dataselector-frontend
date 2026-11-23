@@ -141,6 +141,12 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'MAP_IN_DATASELECTOR_ENABLED'
+    },
+    mapForecasts: {
+      doc: 'Fetch forecasts for the map from the upstream forecast API. While off, /api/forecasts returns an empty list and the map shows no forecast data',
+      format: Boolean,
+      default: false,
+      env: 'MAP_FORECASTS_ENABLED'
     }
   },
   aqieBackEnd: {

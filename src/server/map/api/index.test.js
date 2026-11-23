@@ -1,4 +1,5 @@
 import Hapi from '@hapi/hapi'
+import { config } from '~/src/config/config.js'
 import { mapApi } from '~/src/server/map/api/index.js'
 import * as backEnd from '~/src/server/map/api/back-end.js'
 
@@ -16,6 +17,7 @@ describe('map api routes', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks()
+    config.set('featureFlags.mapForecasts', true)
     server = Hapi.server()
     server.decorate('request', 'logger', () => ({ error: jest.fn() }), {
       apply: true
@@ -38,4 +40,14 @@ describe('map api routes', () => {
       message: 'Failed to fetch data from upstream API'
     })
   })
+
+  it('/api/forecasts returns no forecasts without calling upstream while the flag is off', async () => {
+    config.set('featureFlags.mapForecasts', false)
+    const res = await server.inject('/api/forecasts')
+    expect(res.statusCode).toBe(200)
+    expect(res.result).toEqual([])
+    expect(backEnd.getForecasts).not.toHaveBeenCalled()
+  })
+
+  afterAll(() => config.set('featureFlags.mapForecasts', false))
 })
