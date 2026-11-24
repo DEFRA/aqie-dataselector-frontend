@@ -5,6 +5,7 @@
 {% block content %}
 
 <div id="download-loading-container"></div>
+<div id="download-loading-announcer" class="govuk-visually-hidden" aria-live="polite" aria-atomic="true"></div>
  
 
 
@@ -657,7 +658,9 @@ function showLoadingIndicator(message) {
     const indicator = document.createElement('div');
     indicator.id = 'download-loading';
     indicator.className = 'govuk-notification-banner';
-    indicator.setAttribute('role', 'region');
+  indicator.setAttribute('role', 'status');
+  indicator.setAttribute('aria-live', 'polite');
+  indicator.setAttribute('aria-atomic', 'true');
     indicator.setAttribute('aria-labelledby', 'download-loading-title');
     indicator.innerHTML = `
         <div class="govuk-notification-banner__header">
@@ -670,6 +673,11 @@ function showLoadingIndicator(message) {
                 ${message}
             </p>
         </div>`;
+
+      const announcer = document.getElementById('download-loading-announcer');
+      if (announcer) {
+        announcer.textContent = message;
+      }
 
       const container = document.getElementById('download-loading-container');
       if (container) {
@@ -689,6 +697,11 @@ function updateLoadingMessage(message) {
     if (messageElement) {
         messageElement.textContent = message;
     }
+
+  const announcer = document.getElementById('download-loading-announcer');
+  if (announcer) {
+    announcer.textContent = message;
+  }
 }
 
 function hideLoadingIndicator() {

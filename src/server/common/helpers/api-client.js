@@ -5,6 +5,33 @@ import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 
+const MAX_LOG_VALUE_LENGTH = 2000
+
+function safeSerialize(value) {
+  try {
+    const text = JSON.stringify(value)
+    if (typeof text !== 'string') {
+      return String(text)
+    }
+    return text.length > MAX_LOG_VALUE_LENGTH
+      ? `${text.slice(0, MAX_LOG_VALUE_LENGTH)}…[truncated]`
+      : text
+  } catch {
+    return '[unserializable]'
+  }
+}
+
+function toErrorDetails(error) {
+  return {
+    message: error?.message || 'Unknown error',
+    code: error?.code,
+    status: error?.response?.status,
+    statusText: error?.response?.statusText,
+    cause: error?.cause?.message || error?.cause,
+    responseData: error?.response?.data
+  }
+}
+
 /**
  * POSTs a JSON payload to one of the platform APIs.
  *
@@ -24,8 +51,10 @@ const logger = createLogger()
  */
 export async function postJson({ devUrlKey, urlKey, payload, label }) {
   if (config.get('isDevelopment')) {
+    const url = String(config.get(devUrlKey))
+    logger.info(`[${label}] POST ${url} | payload=${safeSerialize(payload)}`)
     try {
-      const { payload: body } = await Wreck.post(config.get(devUrlKey), {
+      const { payload: body } = await Wreck.post(url, {
         payload: JSON.stringify(payload),
         headers: {
           'Content-Type': 'application/json',
@@ -36,16 +65,23 @@ export async function postJson({ devUrlKey, urlKey, payload, label }) {
       return JSON.parse(body.toString())
     } catch (error) {
       // Error objects hold circular refs (e.g. sockets) that can't be stored in the session, so return null instead
-      logger.warn(`${label} error: ${error.message}`)
+      logger.warn(
+        `[${label}] POST failed | url=${url} | payload=${safeSerialize(payload)} | error=${safeSerialize(toErrorDetails(error))}`
+      )
       return null
     }
   }
 
+  const url = String(config.get(urlKey))
+  logger.info(`[${label}] POST ${url} | payload=${safeSerialize(payload)}`)
+
   try {
-    const response = await axios.post(config.get(urlKey), payload)
+    const response = await axios.post(url, payload)
     return response.data
   } catch (error) {
-    logger.error(`${label} error: ${error.message}`)
+    logger.error(
+      `[${label}] POST failed | url=${url} | payload=${safeSerialize(payload)} | error=${safeSerialize(toErrorDetails(error))}`
+    )
     throw error
   }
 }
@@ -65,27 +101,31 @@ export async function getJson({ devUrlKey, urlKey, path, params, label }) {
   const query = new URLSearchParams(params).toString()
 
   if (config.get('isDevelopment')) {
+    const url = `${String(config.get(devUrlKey))}${path}?${query}`
+    logger.info(`[${label}] GET ${url}`)
     try {
-      const { payload: body } = await Wreck.get(
-        `${String(config.get(devUrlKey))}${path}?${query}`,
-        {
-          headers: { 'x-api-key': config.get('DevApiKey') }
-        }
-      )
+      const { payload: body } = await Wreck.get(url, {
+        headers: { 'x-api-key': config.get('DevApiKey') }
+      })
       return JSON.parse(body.toString())
     } catch (error) {
-      logger.warn(`${label} error: ${error.message}`)
+      logger.warn(
+        `[${label}] GET failed | url=${url} | error=${safeSerialize(toErrorDetails(error))}`
+      )
       return null
     }
   }
 
+  const url = `${String(config.get(urlKey))}${path}?${query}`
+  logger.info(`[${label}] GET ${url}`)
+
   try {
-    const response = await axios.get(
-      `${String(config.get(urlKey))}${path}?${query}`
-    )
+    const response = await axios.get(url)
     return response.data
   } catch (error) {
-    logger.error(`${label} error: ${error.message}`)
+    logger.error(
+      `[${label}] GET failed | url=${url} | error=${safeSerialize(toErrorDetails(error))}`
+    )
     return null
   }
 }

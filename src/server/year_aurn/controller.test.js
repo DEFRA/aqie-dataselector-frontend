@@ -73,7 +73,7 @@ describe('yearController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'year_aurn/index',
         expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
+          pageTitle: 'Add time period',
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           displayBacklink: true,

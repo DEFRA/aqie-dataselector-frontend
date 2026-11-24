@@ -5,6 +5,7 @@ import {
 } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { postJson } from '~/src/server/common/helpers/api-client.js'
+import { config } from '~/src/config/config.js'
 
 import {
   HTTP_BAD_REQUEST,
@@ -12,6 +13,8 @@ import {
 } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
+const OS_NAMES_LOG_KEYWORD = 'OSN_API_DEBUG'
+const SEARCH_CONTEXT_LOG_KEYWORD = 'SEARCH_CTX_DEBUG'
 
 const SEARCH_LOCATION_URL = '/search-location'
 
@@ -159,6 +162,12 @@ async function resolveLocations(request, searchValue) {
 
   let result
   try {
+    const endpoint = config.get('isDevelopment')
+      ? config.get('osLocationDevUrl')
+      : config.get('OS_NAMES_API_URL')
+    logger.info(
+      `[${OS_NAMES_LOG_KEYWORD}] POST ${endpoint} | payload=${JSON.stringify({ userLocation: searchValue })} | pathHint=/osnameplaces/userLocation='${searchValue}'`
+    )
     result = await invokeOsNameAPI(searchValue)
   } catch (error) {
     // Unmatched queries (e.g. nonsense, Ireland) come back as client errors
@@ -203,6 +212,9 @@ async function resolveMonitoringResult(request, searchValue, locationMiles) {
 async function processLocationsSearch(ctx, searchValue) {
   const { request } = ctx
   request.yar.set('mapReturnSiteId', null)
+  logger.info(
+    `[${SEARCH_CONTEXT_LOG_KEYWORD}] userLocation='${searchValue}' | locationMiles='${ctx.locationMiles}' | osNamesPathHint=/osnameplaces/userLocation='${searchValue}' | monitoringPayload=${JSON.stringify({ userLocation: searchValue, usermiles: ctx.locationMiles })}`
+  )
   const locations = await resolveLocations(request, searchValue)
   const monitoringResult = await resolveMonitoringResult(
     request,

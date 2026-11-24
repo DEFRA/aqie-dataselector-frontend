@@ -92,7 +92,7 @@ export const verifyController = {
     // You can add validation logic here
     if (!id || !timestamp) {
       return h.view('verify/index', {
-        pageTitle: 'Download',
+        pageTitle: 'Invalid Request',
         heading: 'Invalid Request',
         error: 'Missing required parameters: id and timestamp',
         id: null,
@@ -161,7 +161,7 @@ export const verifyController = {
       }
 
       return h.view('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl

@@ -14,6 +14,33 @@ import {
 } from '~/src/server/common/helpers/navigation-helpers.js'
 
 const logger = createLogger()
+
+const MAX_LOG_VALUE_LENGTH = 2000
+
+function safeSerialize(value) {
+  try {
+    const text = JSON.stringify(value)
+    if (typeof text !== 'string') {
+      return String(text)
+    }
+    return text.length > MAX_LOG_VALUE_LENGTH
+      ? `${text.slice(0, MAX_LOG_VALUE_LENGTH)}…[truncated]`
+      : text
+  } catch {
+    return '[unserializable]'
+  }
+}
+
+function toErrorDetails(error) {
+  return {
+    message: error?.message || 'Unknown error',
+    code: error?.code,
+    status: error?.response?.status,
+    statusText: error?.response?.statusText,
+    cause: error?.cause?.message || error?.cause,
+    responseData: error?.response?.data
+  }
+}
 const getLocationDetailsController = {
   handler: async (request, h) => {
     // If accessed directly (no valid referer), return 404 page not found
@@ -117,6 +144,9 @@ async function fetchMonitoringStations(location, miles) {
     // localhost: use Wreck with dev API URL and key
     try {
       const url = config.get('osMonitoringStationDevUrl')
+      logger.info(
+        `[Monitoring Station API] POST ${url} | payload=${safeSerialize(locationvalues)}`
+      )
       const { payload } = await Wreck.post(url, {
         payload: JSON.stringify(locationvalues),
         headers: {
@@ -127,19 +157,24 @@ async function fetchMonitoringStations(location, miles) {
       })
       return payload
     } catch (error) {
-      logger.error(`Monitoring station API error (local): ${error.message}`)
+      logger.error(
+        `[Monitoring Station API] POST failed | url=${config.get('osMonitoringStationDevUrl')} | payload=${safeSerialize(locationvalues)} | error=${safeSerialize(toErrorDetails(error))}`
+      )
       return null
     }
   } else {
     // dev / test / prod environments: use axios with config URL
     try {
-      const response = await axios.post(
-        config.get('OS_NAMES_API_URL_1'),
-        locationvalues
+      const url = config.get('OS_NAMES_API_URL_1')
+      logger.info(
+        `[Monitoring Station API] POST ${url} | payload=${safeSerialize(locationvalues)}`
       )
+      const response = await axios.post(url, locationvalues)
       return response.data
     } catch (error) {
-      logger.error(`Location ID API error: ${error.message}`)
+      logger.error(
+        `[Monitoring Station API] POST failed | url=${config.get('OS_NAMES_API_URL_1')} | payload=${safeSerialize(locationvalues)} | error=${safeSerialize(toErrorDetails(error))}`
+      )
       return null
     }
   }

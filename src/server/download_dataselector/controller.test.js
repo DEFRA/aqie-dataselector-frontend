@@ -420,7 +420,7 @@ describe('downloadDataselectorController', () => {
       expect(request.yar.set).toHaveBeenCalledWith(
         'downloadViewData',
         expect.objectContaining({
-          pageTitle: 'Test Page Title',
+          pageTitle: 'Download your data',
           heading: 'Test Heading',
           hrefq: '/customdataset'
         })

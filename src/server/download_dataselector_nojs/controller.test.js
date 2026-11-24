@@ -58,7 +58,7 @@ describe('downloadDataselectornojsController', () => {
       expect(h.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
         expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
+          pageTitle: 'Download your data',
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           downloadaurnresult: 'https://example.com/file.csv',
@@ -256,7 +256,7 @@ describe('downloadDataselectornojsController', () => {
       expect(h.view).toHaveBeenCalledWith(
         'download_dataselector_nojs/index',
         expect.objectContaining({
-          pageTitle: englishNew.custom.pageTitle,
+          pageTitle: 'Download your data',
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts,
           downloadaurnresult: 'https://example.com/file.csv',

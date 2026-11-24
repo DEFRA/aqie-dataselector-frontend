@@ -15,7 +15,7 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
-      pageTitle: 'Test Page Title',
+      pageTitle: 'Request data',
       heading: 'Test Heading',
       texts: 'Test Texts'
     }
@@ -332,7 +332,7 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/requestconfirm.njk',
         {
-          pageTitle: englishNew.custom.pageTitle,
+          pageTitle: 'Request complete',
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts
         }
@@ -376,7 +376,7 @@ describe('emailrequestController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/requestconfirm.njk',
         {
-          pageTitle: englishNew.custom.pageTitle,
+          pageTitle: 'Request complete',
           heading: englishNew.custom.heading,
           texts: englishNew.custom.texts
         }
@@ -430,7 +430,7 @@ describe('emailrequestController', () => {
         expect(mockRequest.yar.set).toHaveBeenCalledWith('email', email)
         expect(mockH.view).toHaveBeenCalledWith(
           'emailrequest/requestconfirm.njk',
-          expect.objectContaining({ pageTitle: 'Test Page Title' })
+          expect.objectContaining({ pageTitle: 'Request complete' })
         )
       }
     })
@@ -915,7 +915,7 @@ describe('emailrequestController', () => {
       )
       expect(mockH.view).toHaveBeenCalledWith(
         'emailrequest/requestconfirm.njk',
-        expect.objectContaining({ pageTitle: 'Test Page Title' })
+        expect.objectContaining({ pageTitle: 'Request complete' })
       )
     })
   })
