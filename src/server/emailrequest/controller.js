@@ -20,6 +20,8 @@ const logger = createLogger()
 const PROBLEM_WITH_SERVICE = '/problem-with-service'
 
 const EMAIL_REQUEST_VIEW = 'emailrequest/index'
+const EMAIL_REQUEST_PAGE_TITLE = 'Request data'
+const EMAIL_REQUEST_CONFIRM_PAGE_TITLE = 'Request complete'
 
 // A response is invalid if it is empty or an XML error document
 function isInvalidEmailResponse(data) {
@@ -95,7 +97,7 @@ const isValidEmail = (emailAddress) => {
 // Render the email request form, optionally with an error/preserved value.
 const renderEmailForm = (h, backUrl, extra = {}) =>
   h.view(EMAIL_REQUEST_VIEW, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: EMAIL_REQUEST_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,
@@ -334,7 +336,7 @@ const handleConfirm = async (request, h, backUrl) => {
 
   if (result === 'Success') {
     return h.view('emailrequest/requestconfirm.njk', {
-      pageTitle: englishNew.custom.pageTitle,
+      pageTitle: EMAIL_REQUEST_CONFIRM_PAGE_TITLE,
       heading: englishNew.custom.heading,
       texts: englishNew.custom.texts
     })

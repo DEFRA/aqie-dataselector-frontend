@@ -21,6 +21,7 @@ const ANCHOR_MY_AUTOCOMPLETE = '#my-autocomplete'
 
 // Route constants
 const CUSTOMDATASET_URL = '/customdataset'
+const AIRPOLLUTANT_PAGE_TITLE = 'Add pollutant(s)'
 
 // Extract a human-readable message from a thrown value.
 const errMsg = (error) =>
@@ -255,7 +256,7 @@ const handleValidationErrors = (
     selectedMode === 'group' ? modePollutants.gr : modePollutants.sp
 
   return h.view(templatePath, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: AIRPOLLUTANT_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,
@@ -526,7 +527,7 @@ const handleGetRequest = async (request, h) => {
     : 'add_pollutant/index'
 
   return h.view(templatePath, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: AIRPOLLUTANT_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,

@@ -21,6 +21,7 @@ const HREF_RANGE_END_YEAR = '#range-end-year'
 const JANUARY_FIRST = '1 January'
 const DECEMBER_THIRTY_FIRST = '31 December'
 const MIN_VALIDATION_YEAR = 1973
+const YEAR_AURN_PAGE_TITLE = 'Add time period'
 
 // Form field keys
 const FIELD_ANY_YEAR_INPUT = 'any-year-input'
@@ -113,7 +114,7 @@ function getGetFormData(request) {
 
 function renderYearView(h, backUrl, errors, formData) {
   return h.view(VIEW_PATH, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: YEAR_AURN_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,

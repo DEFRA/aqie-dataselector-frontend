@@ -15,6 +15,7 @@ const OTHER_ONLY = 'other-only'
 const CATEGORY_NEAR_REALTIME = 'Near real-time data from Defra'
 const CHANGE_LOCATION_URL = '/location-aurn/nojs'
 const CHANGE_TIME_PERIOD_URL = '/year-aurn/change'
+const DOWNLOAD_PAGE_TITLE = 'Download your data'
 
 function normalizeNetworkName(name) {
   return String(name || '')
@@ -226,7 +227,7 @@ const buildViewData = (request, backUrl) => {
   )
 
   return {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: DOWNLOAD_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     downloadaurnresult: request.yar.get('downloadaurnresult'),

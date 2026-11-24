@@ -29,6 +29,7 @@ import {
 import { handleStationCountCalculation } from '~/src/server/customdataset/station-count-workflow.js'
 
 const CUSTOMDATASET_VIEW = 'customdataset/index'
+const CUSTOMDATASET_PAGE_TITLE = englishNew.custom.heading
 const LAST7DAYS_WARNING_TEXT =
   'Only near real-time data from Defra is available for 7 days'
 // const ZONE_WARNING_TEXT =
@@ -83,7 +84,7 @@ function clearAllSessionData(request) {
 function handleClearPath(request, h, backUrl) {
   clearAllSessionData(request)
   return h.view(CUSTOMDATASET_VIEW, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: CUSTOMDATASET_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     selectedpollutant: request.yar.get('selectedpollutant'),
@@ -118,7 +119,7 @@ function handleNullPollutantsError(request, h) {
     ? 'add_pollutant/index_nojs'
     : 'add_pollutant/index'
   return h.view(templatePath, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: CUSTOMDATASET_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     errors,
@@ -155,7 +156,7 @@ function shouldShowLast7DaysDatasourceWarning(request) {
 // Zone + NON-AURN is handled separately by renderZoneNonAurnView.
 function renderBothZeroView(request, h, backUrl) {
   return h.view(CUSTOMDATASET_VIEW, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: CUSTOMDATASET_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     selectedpollutant: request.yar.get('selectedpollutant'),
@@ -199,7 +200,7 @@ function renderCustomDatasetView(request, h, backUrl) {
     shouldShowLast7DaysDatasourceWarning(request)
 
   return h.view(CUSTOMDATASET_VIEW, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: CUSTOMDATASET_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     selectedpollutant: request.yar.get('selectedpollutant'),
@@ -228,7 +229,7 @@ function renderZoneNonAurnView(request, h, backUrl) {
   request.yar.set('nooflocationukeap', [])
 
   return h.view(CUSTOMDATASET_VIEW, {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: CUSTOMDATASET_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     selectedpollutant: request.yar.get('selectedpollutant'),

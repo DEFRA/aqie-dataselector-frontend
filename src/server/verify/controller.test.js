@@ -70,7 +70,7 @@ describe('verifyController', () => {
 
   describe('Missing parameters', () => {
     const missingPayload = {
-      pageTitle: 'Download',
+      pageTitle: 'Invalid Request',
       heading: 'Invalid Request',
       error: 'Missing required parameters: id and timestamp',
       id: null,
@@ -184,7 +184,7 @@ describe('verifyController', () => {
         }
       )
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -202,7 +202,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -222,7 +222,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -240,7 +240,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -256,7 +256,7 @@ describe('verifyController', () => {
 
       expect(axios.post).toHaveBeenCalled()
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -379,7 +379,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -399,7 +399,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -415,7 +415,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -456,7 +456,7 @@ describe('verifyController', () => {
         }
       )
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -472,7 +472,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: mockUrl
@@ -509,7 +509,7 @@ describe('verifyController', () => {
       await verifyController.handler(mockRequest, mockH)
 
       expect(mockH.view).toHaveBeenCalledWith('verify/index', {
-        pageTitle: 'Verification',
+        pageTitle: 'Your file is downloading',
         heading: 'Request Received',
         message: 'Your download request has been received successfully.',
         downloadEmailUrl: 'https://example.com/download/file.csv'

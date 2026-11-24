@@ -14,6 +14,7 @@ import {
 const OTHER_ONLY = 'other-only'
 const CHANGE_LOCATION_URL = '/location-aurn/change'
 const CHANGE_TIME_PERIOD_URL = '/year-aurn/change'
+const DOWNLOAD_PAGE_TITLE = 'Download your data'
 
 function normalizeNetworkName(name) {
   return String(name || '')
@@ -321,7 +322,7 @@ function buildSuccessViewData(
   const nearRealtime = getDownloadNearRealtimeNetworks(request)
 
   return {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: DOWNLOAD_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     downloadaurnresult: null,

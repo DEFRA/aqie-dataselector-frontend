@@ -22,7 +22,7 @@ jest.mock('~/src/server/common/helpers/logging/logger.js', () => ({
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
-      pageTitle: 'Test Add Pollutant Page',
+      pageTitle: 'Add pollutant(s)',
       heading: 'Test Heading',
       texts: ['Test text 1', 'Test text 2']
     }
@@ -137,7 +137,7 @@ describe('airpollutantController GET requests', () => {
     expect(mockH.view).toHaveBeenCalledWith(
       'add_pollutant/index',
       expect.objectContaining({
-        pageTitle: 'Test Add Pollutant Page',
+        pageTitle: 'Add pollutant(s)',
         heading: 'Test Heading',
         displayBacklink: true,
         hrefq: '/customdataset',

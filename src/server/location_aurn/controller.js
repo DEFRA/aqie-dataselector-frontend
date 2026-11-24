@@ -27,6 +27,7 @@ const LAQM_CACHE_TTL_MS = MONTHS_PER_YEAR * 60 * 60 * 1000
 const LOCATION_AURN_VIEW = 'location_aurn/index'
 const LOCATION_AURN_VIEW_NOJS = 'location_aurn/index_nojs'
 const CUSTOMDATASET_URL = '/customdataset'
+const LOCATION_AURN_PAGE_TITLE = 'Add location(s)'
 
 // Session keys
 const SESSION_LOCATION = 'Location'
@@ -264,7 +265,7 @@ function buildViewContext(
   errors = null
 ) {
   const context = {
-    pageTitle: englishNew.custom.pageTitle,
+    pageTitle: LOCATION_AURN_PAGE_TITLE,
     heading: englishNew.custom.heading,
     texts: englishNew.custom.texts,
     displayBacklink: true,

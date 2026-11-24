@@ -5,6 +5,8 @@ import {
 } from '~/src/server/common/helpers/errors_message.js'
 import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
 import { postJson } from '~/src/server/common/helpers/api-client.js'
+import { buildPollutantMap } from '~/src/server/common/helpers/monitoring-station-pollutants.js'
+import { config } from '~/src/config/config.js'
 
 import {
   HTTP_BAD_REQUEST,
@@ -12,37 +14,13 @@ import {
 } from '~/src/server/common/constants/magic-numbers.js'
 
 const logger = createLogger()
+const OS_NAMES_LOG_KEYWORD = 'OSN_API_DEBUG'
+const SEARCH_CONTEXT_LOG_KEYWORD = 'SEARCH_CTX_DEBUG'
 
 const SEARCH_LOCATION_URL = '/search-location'
 
 // Anything outside this set makes the search query invalid.
 const DISALLOWED_SEARCH_CHARACTERS = /[^a-zA-Z0-9 \-_.',]/
-
-// Pollutant keys the monitoring station API can use, mapped to the name the
-// rest of the service displays. Anything not listed is passed through as-is.
-const POLLUTANT_ALIASES = {
-  PM25: 'PM2.5',
-  GR25: 'PM2.5',
-  MP10: 'PM10',
-  GE10: 'PM10',
-  GR10: 'PM10'
-}
-
-/** Maps each station name to its de-duplicated list of pollutant names. */
-function buildPollutantMap(monitoringStations) {
-  return new Map(
-    monitoringStations.map((station) => [
-      station.name,
-      [
-        ...new Set(
-          Object.keys(station.pollutants).map(
-            (key) => POLLUTANT_ALIASES[key] ?? key
-          )
-        )
-      ]
-    ])
-  )
-}
 
 const invokeOsNameAPI = (userLocation) =>
   postJson({
@@ -159,6 +137,12 @@ async function resolveLocations(request, searchValue) {
 
   let result
   try {
+    const endpoint = config.get('isDevelopment')
+      ? config.get('osLocationDevUrl')
+      : config.get('OS_NAMES_API_URL')
+    logger.info(
+      `[${OS_NAMES_LOG_KEYWORD}] POST ${endpoint} | payload=${JSON.stringify({ userLocation: searchValue })} | pathHint=/osnameplaces/userLocation='${searchValue}'`
+    )
     result = await invokeOsNameAPI(searchValue)
   } catch (error) {
     // Unmatched queries (e.g. nonsense, Ireland) come back as client errors
@@ -203,6 +187,9 @@ async function resolveMonitoringResult(request, searchValue, locationMiles) {
 async function processLocationsSearch(ctx, searchValue) {
   const { request } = ctx
   request.yar.set('mapReturnSiteId', null)
+  logger.info(
+    `[${SEARCH_CONTEXT_LOG_KEYWORD}] userLocation='${searchValue}' | locationMiles='${ctx.locationMiles}' | osNamesPathHint=/osnameplaces/userLocation='${searchValue}' | monitoringPayload=${JSON.stringify({ userLocation: searchValue, usermiles: ctx.locationMiles })}`
+  )
   const locations = await resolveLocations(request, searchValue)
   const monitoringResult = await resolveMonitoringResult(
     request,

@@ -65,7 +65,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 {% endblock %}
 
 {% block pageTitle %}
-  {{ pageTitle }} | Get air pollution data - GOV.UK 
+  {% set hasPageError = false %}
+  {% set effectivePageTitle = pageTitle %}
+
+  {# Many journey pages currently pass the generic service name as pageTitle.
+     Use H1 text when available so browser titles are specific per page. #}
+  {% if pageTitle == 'Get air pollution data' and heading %}
+    {% set effectivePageTitle = heading %}
+  {% endif %}
+
+  {% if error or errorMessage %}
+    {% set hasPageError = true %}
+  {% elif errors and errors.list and (errors.list | length) > 0 %}
+    {% set hasPageError = true %}
+  {% elif errors and errors.details and (errors.details | length) > 0 %}
+    {% set hasPageError = true %}
+  {% endif %}
+
+  {% if hasPageError %}Error- {% endif %}{{ effectivePageTitle }} | Get air pollution data - GOV.UK 
 {% endblock %}
 
 {% block beforeContent %}

@@ -25,7 +25,8 @@ export const english = {
       h: 'health advice to reduce your exposure to pollutants',
       i: 'check air quality',
       j: 'to look up:',
-      k: 'To get air pollution data, you can:'
+      k: 'To get air pollution data, you can:',
+      l: 'Search on a map'
     },
     links: {
       a: 'Check air quality',

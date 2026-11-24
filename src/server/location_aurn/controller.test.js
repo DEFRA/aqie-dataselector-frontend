@@ -5,7 +5,7 @@ jest.mock('~/src/config/config.js', () => ({
 jest.mock('~/src/server/data/en/content_aurn.js', () => ({
   englishNew: {
     custom: {
-      pageTitle: 'Test Location Page',
+      pageTitle: 'Add location(s)',
       heading: 'Test Heading',
       texts: ['Test text 1', 'Test text 2']
     }
@@ -108,7 +108,7 @@ describe('locationaurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          pageTitle: 'Test Location Page',
+          pageTitle: 'Add location(s)',
           heading: 'Test Heading',
           texts: ['Test text 1', 'Test text 2'],
           displayBacklink: true,
@@ -227,7 +227,7 @@ describe('locationaurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index_nojs',
         expect.objectContaining({
-          pageTitle: 'Test Location Page',
+          pageTitle: 'Add location(s)',
           localAuthorityNames: [
             'City of London',
             'Westminster',
@@ -244,7 +244,7 @@ describe('locationaurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index_nojs',
         expect.objectContaining({
-          pageTitle: 'Test Location Page'
+          pageTitle: 'Add location(s)'
         })
       )
     })
@@ -255,7 +255,7 @@ describe('locationaurnController', () => {
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
         expect.objectContaining({
-          pageTitle: 'Test Location Page'
+          pageTitle: 'Add location(s)'
         })
       )
     })
@@ -687,7 +687,7 @@ describe('locationaurnController', () => {
       const result = await locationaurnController.handler(mockRequest, mockH)
       expect(mockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
-        expect.objectContaining({ pageTitle: 'Test Location Page' })
+        expect.objectContaining({ pageTitle: 'Add location(s)' })
       )
       expect(result).toBe('location-aurn-view-response')
     })
@@ -819,7 +819,7 @@ describe('locationaurnController', () => {
       await locationaurnChangeController.handler(mockRequest, changeMockH)
       expect(changeMockH.view).toHaveBeenCalledWith(
         'location_aurn/index',
-        expect.objectContaining({ pageTitle: 'Test Location Page' })
+        expect.objectContaining({ pageTitle: 'Add location(s)' })
       )
       expect(codeMock).not.toHaveBeenCalled()
     })
