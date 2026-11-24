@@ -9,3 +9,15 @@
   background-color: #f9e2d7;
   color: $govuk-text-colour;
 }
+
+// Year has been checked and verified up to a date part-way through it.
+.app-verification-banner--partial {
+  border-left-color: #ecd228;
+  background-color: #fff7bf;
+}
+
+// Year has been fully checked and verified.
+.app-verification-banner--verified {
+  border-left-color: govuk-colour("green");
+  background-color: #d4fae2;
+}

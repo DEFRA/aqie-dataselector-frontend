@@ -15,6 +15,8 @@ export {
   last24HoursLimits
 } from '~/src/server/data/en/last-24-hours.js'
 
+export { yearVerificationBanner } from '~/src/server/common/helpers/year-verification.js'
+
 const govukRebrand = true
 
 export { govukRebrand }

@@ -1,5 +1,6 @@
 {% from "partials/aq-table-macros.njk" import limitToggletip %}
 {% from "partials/hourly-readings-table.njk" import hourlyReadingsDetails %}
+{% from "verification-banner/macro.njk" import appVerificationBanner %}
 
 {#
   Daily Air Quality Index (DAQI) air pollution summary table.
@@ -19,7 +20,7 @@
 
 {% if daqi.pollutants.length %}
 
-  <div class="govuk-inset-text not-verified">{{ daqiContent.notice }}</div>
+  {{ appVerificationBanner({ text: daqiContent.notice }) }}
 
   <div class="table-scroll-container">
     <table id="daqitable" class="govuk-table defra-aq-levels-table govuk-!-margin-bottom-2">
