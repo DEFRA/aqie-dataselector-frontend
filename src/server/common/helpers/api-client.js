@@ -51,8 +51,7 @@ function logHttpRequest(label, method, url, payload) {
 function logHttpFailure({ label, method, url, payload, error, level }) {
   const payloadPart =
     payload === undefined ? '' : ` | payload=${safeSerialize(payload)}`
-  const message =
-    `[${label}] ${method} failed | url=${url}${payloadPart} | error=${safeSerialize(toErrorDetails(error))}`
+  const message = `[${label}] ${method} failed | url=${url}${payloadPart} | error=${safeSerialize(toErrorDetails(error))}`
 
   if (level === 'warn') {
     logger.warn(message)
