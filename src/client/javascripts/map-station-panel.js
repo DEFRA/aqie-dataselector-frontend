@@ -185,15 +185,18 @@ function renderStationDetails(station, isClosed, daqiContext) {
 
 /**
  * Shows or hides the station data-selector link, wiring up its hidden form
- * when the station has a usable location.
+ * when the station is active and has a usable location. Inactive and closed
+ * stations often have no station summary page, so the link is hidden.
  * @param {object} station
  * @param {HTMLElement} stationPanelElement
  * @param {HTMLFormElement} stationFormElement
+ * @param {boolean} isActive
  */
 function updateStationLinkForm(
   station,
   stationPanelElement,
-  stationFormElement
+  stationFormElement,
+  isActive
 ) {
   const stationLink = document.getElementById('sp-station-link')
   if (!stationLink) {
@@ -202,8 +205,9 @@ function updateStationLinkForm(
   const [lat, lng] = station.location?.coordinates ?? []
   const dataSelectorUrl = stationPanelElement.dataset.dataselectorUrl
   const canLink = Boolean(
-    // An empty URL means same origin, as when the map is served by the dataselector
-    dataSelectorUrl !== undefined &&
+    isActive &&
+      // An empty URL means same origin, as when the map is served by the dataselector
+      dataSelectorUrl !== undefined &&
       hasValidCoords(station) &&
       stationFormElement
   )
@@ -277,15 +281,16 @@ function showStationPanel(
   ).toLowerCase()
   const isClosed = status === 'closed'
   const daqiContext = getDaqiContext()
+  const isInactive = isInactiveStation(station, daqiContext)
 
-  renderStationHeading(
-    station,
-    status,
-    isClosed,
-    isInactiveStation(station, daqiContext)
-  )
+  renderStationHeading(station, status, isClosed, isInactive)
   renderStationDetails(station, isClosed, daqiContext)
-  updateStationLinkForm(station, stationPanelElement, stationFormElement)
+  updateStationLinkForm(
+    station,
+    stationPanelElement,
+    stationFormElement,
+    status === 'current' && !isInactive
+  )
 
   panelState.panelTrigger = document.activeElement
   stationPanelElement.classList.add('visible')

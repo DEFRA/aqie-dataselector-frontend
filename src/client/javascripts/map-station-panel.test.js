@@ -13,9 +13,15 @@ const station = {
 
 function showPanel(daqiContext, stationOverrides = {}) {
   document.body.innerHTML = `
-    <div id="station-panel" tabindex="-1">
+    <div id="station-panel" tabindex="-1" data-dataselector-url="">
       <h2 id="sp-name"></h2>
       <dl id="sp-details"></dl>
+      <form id="sp-station-form" method="post">
+        <input type="hidden" name="lat">
+        <input type="hidden" name="lng">
+        <input type="hidden" name="name">
+      </form>
+      <a href="#" id="sp-station-link" hidden>View full station summary</a>
     </div>`
   const controller = createStationPanelController({
     map: { addMarker: jest.fn() },
@@ -62,5 +68,30 @@ describe('station panel status tag', () => {
 
     expect(tag.textContent).toBe('Closed')
     expect(tag.classList.contains('aq-station-tag--closed')).toBe(true)
+  })
+})
+
+describe('View full station summary link', () => {
+  const link = () => document.getElementById('sp-station-link')
+
+  it('is shown for an active station', () => {
+    showPanel({ mapMode: 'aurn', aurnDataByStation: new Map([['BIRR', 3]]) })
+
+    expect(link().hidden).toBe(false)
+  })
+
+  it('is hidden for an inactive station', () => {
+    showPanel({ mapMode: 'aurn', aurnDataByStation: new Map() })
+
+    expect(link().hidden).toBe(true)
+  })
+
+  it('is hidden for a closed station', () => {
+    showPanel(
+      { mapMode: 'aurn', aurnDataByStation: new Map([['BIRR', 3]]) },
+      { stationStatus: 'Closed' }
+    )
+
+    expect(link().hidden).toBe(true)
   })
 })

@@ -620,13 +620,13 @@ async function loadWithForecasts(stations, forecasts) {
   mapReadyCallback()
 }
 
-async function loadStationsAndIdle(stationList) {
+async function loadStationsAndIdle(stationList, measurements = []) {
   resetDom()
   stubGlobal(
     'fetch',
     jest.fn().mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({ stations: stationList })
+      json: jest.fn().mockResolvedValue({ stations: stationList, measurements })
     })
   )
   jest.resetModules()
@@ -750,7 +750,10 @@ describe('#station panel', () => {
   })
 
   test('Should set and unhide the station summary link when coordinates and dataselector URL are present', async () => {
-    await loadStationsAndIdle([station])
+    await loadStationsAndIdle(
+      [station],
+      [{ localSiteID: 'UKA001', daqiIndex: 2 }]
+    )
     mapClickCallback({ coords: [-0.1, 51.5] })
     const link = document.getElementById('sp-station-link')
     const form = document.getElementById('sp-station-form')
