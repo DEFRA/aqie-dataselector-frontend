@@ -157,11 +157,16 @@ function isInactiveStation(station, { mapMode, aurnDataByStation }) {
  */
 function renderStationHeading(station, status, isClosed, isInactive) {
   const tag = stationStatusTag(status, isClosed, isInactive)
-  const heading = document.getElementById('sp-name')
-  heading.textContent = station.name || ''
+  const heading = createElement(
+    'h2',
+    'govuk-heading-m govuk-!-margin-bottom-0',
+    station.name || ''
+  )
+  heading.id = 'sp-name'
   if (tag) {
     heading.append(' ', tag)
   }
+  document.getElementById('sp-heading').replaceChildren(heading)
 }
 
 /**

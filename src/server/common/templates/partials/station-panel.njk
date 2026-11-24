@@ -8,9 +8,8 @@
     <span class="govuk-visually-hidden">Close</span>
   </button>
   <div class="aq-map-info__container">
-    <div class="aq-station-header">
-      <h2 class="govuk-heading-m govuk-!-margin-bottom-0" id="sp-name"></h2>
-    </div>
+    {# The heading is added by map-station-panel.js when a station is selected, so the page never has an empty heading #}
+    <div class="aq-station-header" id="sp-heading"></div>
     <dl class="aq-station-info-list govuk-body-s govuk-!-margin-top-2" id="sp-details"></dl>
     <div class="govuk-!-margin-top-4 govuk-!-border-top-1 govuk-!-border-top-grey-2 govuk-!-padding-top-2">
       <!-- POSTed (not a plain GET link) so lat/lng/name aren't exposed in the URL, browser history or server logs -->
