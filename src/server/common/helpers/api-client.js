@@ -32,6 +32,40 @@ function toErrorDetails(error) {
   }
 }
 
+function getBaseUrl(isDevelopment, devUrlKey, urlKey) {
+  const key = isDevelopment ? devUrlKey : urlKey
+  return String(config.get(key))
+}
+
+function buildGetUrl(baseUrl, path, params) {
+  const query = new URLSearchParams(params || {}).toString()
+  return `${baseUrl}${path}?${query}`
+}
+
+function logHttpRequest(label, method, url, payload) {
+  const payloadPart =
+    payload === undefined ? '' : ` | payload=${safeSerialize(payload)}`
+  logger.info(`[${label}] ${method} ${url}${payloadPart}`)
+}
+
+function logHttpFailure({ label, method, url, payload, error, level }) {
+  const payloadPart =
+    payload === undefined ? '' : ` | payload=${safeSerialize(payload)}`
+  const message =
+    `[${label}] ${method} failed | url=${url}${payloadPart} | error=${safeSerialize(toErrorDetails(error))}`
+
+  if (level === 'warn') {
+    logger.warn(message)
+    return
+  }
+
+  logger.error(message)
+}
+
+function parseWreckJson(body) {
+  return JSON.parse(body.toString())
+}
+
 /**
  * POSTs a JSON payload to one of the platform APIs.
  *
@@ -50,9 +84,11 @@ function toErrorDetails(error) {
  * @returns {Promise<any>} the response body, or the error on localhost
  */
 export async function postJson({ devUrlKey, urlKey, payload, label }) {
-  if (config.get('isDevelopment')) {
-    const url = String(config.get(devUrlKey))
-    logger.info(`[${label}] POST ${url} | payload=${safeSerialize(payload)}`)
+  const isDevelopment = config.get('isDevelopment')
+  const url = getBaseUrl(isDevelopment, devUrlKey, urlKey)
+  logHttpRequest(label, 'POST', url, payload)
+
+  if (isDevelopment) {
     try {
       const { payload: body } = await Wreck.post(url, {
         payload: JSON.stringify(payload),
@@ -62,26 +98,33 @@ export async function postJson({ devUrlKey, urlKey, payload, label }) {
         }
       })
       // Wreck doesn't parse the body itself
-      return JSON.parse(body.toString())
+      return parseWreckJson(body)
     } catch (error) {
       // Error objects hold circular refs (e.g. sockets) that can't be stored in the session, so return null instead
-      logger.warn(
-        `[${label}] POST failed | url=${url} | payload=${safeSerialize(payload)} | error=${safeSerialize(toErrorDetails(error))}`
-      )
+      logHttpFailure({
+        label,
+        method: 'POST',
+        url,
+        payload,
+        error,
+        level: 'warn'
+      })
       return null
     }
   }
-
-  const url = String(config.get(urlKey))
-  logger.info(`[${label}] POST ${url} | payload=${safeSerialize(payload)}`)
 
   try {
     const response = await axios.post(url, payload)
     return response.data
   } catch (error) {
-    logger.error(
-      `[${label}] POST failed | url=${url} | payload=${safeSerialize(payload)} | error=${safeSerialize(toErrorDetails(error))}`
-    )
+    logHttpFailure({
+      label,
+      method: 'POST',
+      url,
+      payload,
+      error,
+      level: 'error'
+    })
     throw error
   }
 }
@@ -98,34 +141,40 @@ export async function postJson({ devUrlKey, urlKey, payload, label }) {
  * @returns {Promise<any>} the response body, or null on failure
  */
 export async function getJson({ devUrlKey, urlKey, path, params, label }) {
-  const query = new URLSearchParams(params).toString()
+  const isDevelopment = config.get('isDevelopment')
+  const baseUrl = getBaseUrl(isDevelopment, devUrlKey, urlKey)
+  const url = buildGetUrl(baseUrl, path, params)
+  logHttpRequest(label, 'GET', url)
 
-  if (config.get('isDevelopment')) {
-    const url = `${String(config.get(devUrlKey))}${path}?${query}`
-    logger.info(`[${label}] GET ${url}`)
+  if (isDevelopment) {
     try {
       const { payload: body } = await Wreck.get(url, {
         headers: { 'x-api-key': config.get('DevApiKey') }
       })
-      return JSON.parse(body.toString())
+      return parseWreckJson(body)
     } catch (error) {
-      logger.warn(
-        `[${label}] GET failed | url=${url} | error=${safeSerialize(toErrorDetails(error))}`
-      )
+      logHttpFailure({
+        label,
+        method: 'GET',
+        url,
+        error,
+        level: 'warn'
+      })
       return null
     }
   }
-
-  const url = `${String(config.get(urlKey))}${path}?${query}`
-  logger.info(`[${label}] GET ${url}`)
 
   try {
     const response = await axios.get(url)
     return response.data
   } catch (error) {
-    logger.error(
-      `[${label}] GET failed | url=${url} | error=${safeSerialize(toErrorDetails(error))}`
-    )
+    logHttpFailure({
+      label,
+      method: 'GET',
+      url,
+      error,
+      level: 'error'
+    })
     return null
   }
 }

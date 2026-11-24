@@ -1,8 +1,6 @@
 import { english } from '~/src/server/data/en/homecontent.js'
-import { config } from '~/src/config/config.js'
-import { createLogger } from '~/src/server/common/helpers/logging/logger.js'
-import axios from 'axios'
-import Wreck from '@hapi/wreck'
+import { postJson } from '~/src/server/common/helpers/api-client.js'
+import { buildPollutantMap } from '~/src/server/common/helpers/monitoring-station-pollutants.js'
 import {
   HTTP_BAD_REQUEST,
   HTTP_NOT_FOUND,
@@ -13,34 +11,6 @@ import {
   renderNotFound
 } from '~/src/server/common/helpers/navigation-helpers.js'
 
-const logger = createLogger()
-
-const MAX_LOG_VALUE_LENGTH = 2000
-
-function safeSerialize(value) {
-  try {
-    const text = JSON.stringify(value)
-    if (typeof text !== 'string') {
-      return String(text)
-    }
-    return text.length > MAX_LOG_VALUE_LENGTH
-      ? `${text.slice(0, MAX_LOG_VALUE_LENGTH)}…[truncated]`
-      : text
-  } catch {
-    return '[unserializable]'
-  }
-}
-
-function toErrorDetails(error) {
-  return {
-    message: error?.message || 'Unknown error',
-    code: error?.code,
-    status: error?.response?.status,
-    statusText: error?.response?.statusText,
-    cause: error?.cause?.message || error?.cause,
-    responseData: error?.response?.data
-  }
-}
 const getLocationDetailsController = {
   handler: async (request, h) => {
     // If accessed directly (no valid referer), return 404 page not found
@@ -73,7 +43,6 @@ const getLocationDetailsController = {
     )
 
     if (monitoringResult === null) {
-      logger.error('Monitoring stations API returned null')
       return h
         .response('Error retrieving monitoring stations')
         .code(HTTP_INTERNAL_SERVER_ERROR)
@@ -140,68 +109,16 @@ async function fetchMonitoringStations(location, miles) {
     usermiles: miles
   }
 
-  if (config.get('isDevelopment')) {
-    // localhost: use Wreck with dev API URL and key
-    try {
-      const url = config.get('osMonitoringStationDevUrl')
-      logger.info(
-        `[Monitoring Station API] POST ${url} | payload=${safeSerialize(locationvalues)}`
-      )
-      const { payload } = await Wreck.post(url, {
-        payload: JSON.stringify(locationvalues),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': config.get('DevApiKey')
-        },
-        json: true
-      })
-      return payload
-    } catch (error) {
-      logger.error(
-        `[Monitoring Station API] POST failed | url=${config.get('osMonitoringStationDevUrl')} | payload=${safeSerialize(locationvalues)} | error=${safeSerialize(toErrorDetails(error))}`
-      )
-      return null
-    }
-  } else {
-    // dev / test / prod environments: use axios with config URL
-    try {
-      const url = config.get('OS_NAMES_API_URL_1')
-      logger.info(
-        `[Monitoring Station API] POST ${url} | payload=${safeSerialize(locationvalues)}`
-      )
-      const response = await axios.post(url, locationvalues)
-      return response.data
-    } catch (error) {
-      logger.error(
-        `[Monitoring Station API] POST failed | url=${config.get('OS_NAMES_API_URL_1')} | payload=${safeSerialize(locationvalues)} | error=${safeSerialize(toErrorDetails(error))}`
-      )
-      return null
-    }
+  try {
+    return await postJson({
+      devUrlKey: 'osMonitoringStationDevUrl',
+      urlKey: 'OS_NAMES_API_URL_1',
+      payload: locationvalues,
+      label: 'Monitoring Station API'
+    })
+  } catch {
+    return null
   }
-}
-
-function buildPollutantMap(stations) {
-  if (!Array.isArray(stations)) {
-    return new Map()
-  }
-  const map = new Map()
-  const pollutantMap = {
-    PM25: 'PM2.5',
-    GR25: 'PM2.5',
-    MP10: 'PM10',
-    GE10: 'PM10',
-    GR10: 'PM10'
-  }
-
-  for (const station of stations) {
-    const pollutants = Object.keys(station.pollutants).map(
-      (p) => pollutantMap[p] || p
-    )
-    const uniquePollutants = [...new Set(pollutants)]
-    map.set(station.name, uniquePollutants)
-  }
-
-  return map
 }
 
 function renderMonitoringStation(
