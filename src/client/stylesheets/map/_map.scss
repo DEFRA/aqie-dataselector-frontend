@@ -490,6 +490,13 @@ $aq-reopen-gutter: 60px;
     font-weight: 400;
   }
 
+  // Matches the prototype, which uses the GOV.UK grey tag
+  &--inactive {
+    background-color: govuk-tint(govuk-colour("dark-grey"), 85%);
+    color: govuk-shade(govuk-colour("dark-grey"), 50%);
+    font-weight: 400;
+  }
+
   &--closed {
     background-color: #0b0c0c;
     color: #ffffff;

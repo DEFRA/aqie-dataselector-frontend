@@ -134,13 +134,29 @@ function buildPanelRows(station, isClosed, daqiContext) {
 }
 
 /**
+ * True when the observed (AURN) map shows the station as a grey marker because
+ * it has no current reading. Forecast markers can also be grey, but that only
+ * means there is no forecast, not that the station has stopped reporting.
+ * @param {object} station
+ * @param {object} daqiContext - see {@link buildDaqiRow} for shape
+ * @returns {boolean}
+ */
+function isInactiveStation(station, { mapMode, aurnDataByStation }) {
+  return (
+    mapMode === 'aurn' &&
+    toSafeDaqiIndex(aurnDataByStation.get(station.localSiteID)) == null
+  )
+}
+
+/**
  * Sets the station panel heading (name + status tag).
  * @param {object} station
  * @param {string} status
  * @param {boolean} isClosed
+ * @param {boolean} isInactive
  */
-function renderStationHeading(station, status, isClosed) {
-  const tag = stationStatusTag(status, isClosed)
+function renderStationHeading(station, status, isClosed, isInactive) {
+  const tag = stationStatusTag(status, isClosed, isInactive)
   const heading = document.getElementById('sp-name')
   heading.textContent = station.name || ''
   if (tag) {
@@ -169,15 +185,18 @@ function renderStationDetails(station, isClosed, daqiContext) {
 
 /**
  * Shows or hides the station data-selector link, wiring up its hidden form
- * when the station has a usable location.
+ * when the station is active and has a usable location. Inactive and closed
+ * stations often have no station summary page, so the link is hidden.
  * @param {object} station
  * @param {HTMLElement} stationPanelElement
  * @param {HTMLFormElement} stationFormElement
+ * @param {boolean} isActive
  */
 function updateStationLinkForm(
   station,
   stationPanelElement,
-  stationFormElement
+  stationFormElement,
+  isActive
 ) {
   const stationLink = document.getElementById('sp-station-link')
   if (!stationLink) {
@@ -186,8 +205,9 @@ function updateStationLinkForm(
   const [lat, lng] = station.location?.coordinates ?? []
   const dataSelectorUrl = stationPanelElement.dataset.dataselectorUrl
   const canLink = Boolean(
-    // An empty URL means same origin, as when the map is served by the dataselector
-    dataSelectorUrl !== undefined &&
+    isActive &&
+      // An empty URL means same origin, as when the map is served by the dataselector
+      dataSelectorUrl !== undefined &&
       hasValidCoords(station) &&
       stationFormElement
   )
@@ -260,10 +280,17 @@ function showStationPanel(
     ''
   ).toLowerCase()
   const isClosed = status === 'closed'
+  const daqiContext = getDaqiContext()
+  const isInactive = isInactiveStation(station, daqiContext)
 
-  renderStationHeading(station, status, isClosed)
-  renderStationDetails(station, isClosed, getDaqiContext())
-  updateStationLinkForm(station, stationPanelElement, stationFormElement)
+  renderStationHeading(station, status, isClosed, isInactive)
+  renderStationDetails(station, isClosed, daqiContext)
+  updateStationLinkForm(
+    station,
+    stationPanelElement,
+    stationFormElement,
+    status === 'current' && !isInactive
+  )
 
   panelState.panelTrigger = document.activeElement
   stationPanelElement.classList.add('visible')
