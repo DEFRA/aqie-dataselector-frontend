@@ -55,17 +55,25 @@
   color: #505a5f !important;
 }
 
-// "View map of nearby monitoring stations" - a form button styled as a boxed link
+// "View map of nearby monitoring stations" - a form button styled as a boxed link.
+// govuk-link colours links via :link/:visited, which a button never matches, so
+// the colour is set here; govuk-link still supplies hover and focus states.
 .aq-map-nearby__link {
   @include govuk-font($size: 19);
   display: inline-flex;
   align-items: center;
   gap: govuk-spacing(2);
+  min-height: 44px;
+  margin: 0;
   padding: govuk-spacing(2) govuk-spacing(3);
   border: 1px solid $govuk-border-colour;
+  border-radius: 0;
   background: none;
+  color: $govuk-link-colour;
   cursor: pointer;
   text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .aq-map-nearby__icon {
@@ -93,7 +101,9 @@
     flex-wrap: wrap;
 }
 margin: 0 0 15px 0;
+padding-top: govuk-spacing(4);
 padding-bottom: 0px;
+border-top: 1px solid $govuk-border-colour;
 box-shadow: inset 0 -1px 0 #b1b4b6;
 width: 100%;
     }
