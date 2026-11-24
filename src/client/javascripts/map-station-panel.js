@@ -134,13 +134,29 @@ function buildPanelRows(station, isClosed, daqiContext) {
 }
 
 /**
+ * True when the observed (AURN) map shows the station as a grey marker because
+ * it has no current reading. Forecast markers can also be grey, but that only
+ * means there is no forecast, not that the station has stopped reporting.
+ * @param {object} station
+ * @param {object} daqiContext - see {@link buildDaqiRow} for shape
+ * @returns {boolean}
+ */
+function isInactiveStation(station, { mapMode, aurnDataByStation }) {
+  return (
+    mapMode === 'aurn' &&
+    toSafeDaqiIndex(aurnDataByStation.get(station.localSiteID)) == null
+  )
+}
+
+/**
  * Sets the station panel heading (name + status tag).
  * @param {object} station
  * @param {string} status
  * @param {boolean} isClosed
+ * @param {boolean} isInactive
  */
-function renderStationHeading(station, status, isClosed) {
-  const tag = stationStatusTag(status, isClosed)
+function renderStationHeading(station, status, isClosed, isInactive) {
+  const tag = stationStatusTag(status, isClosed, isInactive)
   const heading = document.getElementById('sp-name')
   heading.textContent = station.name || ''
   if (tag) {
@@ -260,9 +276,15 @@ function showStationPanel(
     ''
   ).toLowerCase()
   const isClosed = status === 'closed'
+  const daqiContext = getDaqiContext()
 
-  renderStationHeading(station, status, isClosed)
-  renderStationDetails(station, isClosed, getDaqiContext())
+  renderStationHeading(
+    station,
+    status,
+    isClosed,
+    isInactiveStation(station, daqiContext)
+  )
+  renderStationDetails(station, isClosed, daqiContext)
   updateStationLinkForm(station, stationPanelElement, stationFormElement)
 
   panelState.panelTrigger = document.activeElement

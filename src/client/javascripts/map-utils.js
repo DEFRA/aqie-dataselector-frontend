@@ -32,18 +32,24 @@ function formatDate(dateStr) {
  * Returns the status tag element for the station name heading, or null if no tag is needed.
  * @param {string} status - lowercased station status
  * @param {boolean} isClosed
+ * @param {boolean} [isInactive] - an open station that is not currently providing data
  * @returns {HTMLElement|null}
  */
-function stationStatusTag(status, isClosed) {
-  if (status !== 'current' && !isClosed) {
+function stationStatusTag(status, isClosed, isInactive = false) {
+  let modifier
+  let label
+  if (isClosed) {
+    modifier = 'closed'
+    label = 'Closed'
+  } else if (status === 'current') {
+    modifier = isInactive ? 'inactive' : 'active'
+    label = isInactive ? 'Inactive' : 'Active'
+  } else {
     return null
   }
   const tag = document.createElement('strong')
-  tag.className = `aq-station-tag aq-station-tag--${status === 'current' ? 'active' : 'closed'}`
-  tag.textContent =
-    status === 'current'
-      ? 'Active'
-      : status.charAt(0).toUpperCase() + status.slice(1)
+  tag.className = `aq-station-tag aq-station-tag--${modifier}`
+  tag.textContent = label
   return tag
 }
 
