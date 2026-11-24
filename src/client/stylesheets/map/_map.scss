@@ -43,6 +43,19 @@ $aq-reopen-gutter: 60px;
   }
 }
 
+// Below 400px high (including desktops at 400% zoom) there is no room for a
+// panel beside the map controls, so panels fill the map. Keep in sync with
+// FULL_SCREEN_MEDIA_QUERY in map-panels.js.
+@mixin aq-full-screen-panel {
+  @media not all and (min-height: 25em) {
+    inset: 0;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    border: 0;
+  }
+}
+
 // Shared by the map key and the station panel, which occupy the same place
 @mixin aq-bottom-panel {
   position: absolute;
@@ -88,6 +101,8 @@ $aq-reopen-gutter: 60px;
     right: auto;
     width: 500px;
   }
+
+  @include aq-full-screen-panel;
 }
 
 // Close button shared by the key, menu and station panels
@@ -408,6 +423,16 @@ $aq-reopen-gutter: 60px;
     max-height: calc(100vh - 10px - #{$aq-bottom-controls-clearance-tablet});
     max-height: calc(100dvh - 10px - #{$aq-bottom-controls-clearance-tablet});
   }
+
+  @include aq-full-screen-panel;
+
+  // The whole panel scrolls, as the heading and tabs leave little room for
+  // the inner scroll area
+  @media not all and (min-height: 25em) {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
 }
 
 .aq-filter-panel__close {
@@ -437,7 +462,7 @@ $aq-reopen-gutter: 60px;
 }
 
 .aq-filter-panel__tab {
-  height: 40px;
+  min-height: 40px;
   width: 50%;
   background-color: transparent;
   padding: 0 5px;
@@ -474,6 +499,10 @@ $aq-reopen-gutter: 60px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 10px;
+
+  @media not all and (min-height: 25em) {
+    overflow: visible;
+  }
 }
 
 .aq-filter-panel__mount {
