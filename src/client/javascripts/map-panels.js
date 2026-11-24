@@ -1,6 +1,7 @@
-// Below 520px the filter panel and map key are bottom sheets, so only one can
-// be open. The complement of `aq-above-mobile` in _map.scss.
-const MOBILE_MEDIA_QUERY = 'not all and (min-width: 32.5em)'
+// Below 1008px (including desktops at 200% zoom) the filter panel cannot sit
+// beside the map key or station panel without overlapping them, so only one
+// can be open. Keep in sync with the panel widths in _map.scss.
+const SINGLE_PANEL_MEDIA_QUERY = 'not all and (min-width: 63em)'
 
 const FILTER_PANEL_ID = 'filter-panel'
 const FILTER_PANEL_CLOSE_ID = 'filter-panel-close'
@@ -19,8 +20,8 @@ const panelState = {
 
 const callbacks = { closeStationPanel: null }
 
-function isMobileView() {
-  return globalThis.matchMedia?.(MOBILE_MEDIA_QUERY).matches ?? false
+function isSinglePanelView() {
+  return globalThis.matchMedia?.(SINGLE_PANEL_MEDIA_QUERY).matches ?? false
 }
 
 function setHidden(id, hidden) {
@@ -32,12 +33,12 @@ function setHidden(id, hidden) {
 
 /**
  * A button only shows while its panel is closed. The station panel covers the
- * map key, and the filter panel on mobile, without changing what is wanted
+ * map key, and the filter panel on smaller screens, without changing what is wanted
  * open.
  */
 function updatePanelVisibility() {
   const { filterPanelOpen, mapKeyOpen, stationPanelOpen } = panelState
-  const filterPanelCovered = stationPanelOpen && isMobileView()
+  const filterPanelCovered = stationPanelOpen && isSinglePanelView()
 
   setHidden(FILTER_PANEL_ID, !filterPanelOpen || filterPanelCovered)
   setHidden(MAP_KEY_OVERLAY_ID, !mapKeyOpen || stationPanelOpen)
@@ -57,7 +58,7 @@ function closeStationPanelIfOpen() {
 }
 
 function openFilterPanel() {
-  if (isMobileView()) {
+  if (isSinglePanelView()) {
     panelState.mapKeyOpen = false
     closeStationPanelIfOpen()
   }
@@ -73,7 +74,7 @@ function closeFilterPanel() {
 }
 
 function openMapKey() {
-  if (isMobileView()) {
+  if (isSinglePanelView()) {
     panelState.filterPanelOpen = false
   }
   // The station panel sits where the map key does
@@ -89,13 +90,17 @@ function closeMapKey() {
   moveFocusTo(KEY_BUTTON_ID)
 }
 
-function handleMobileViewChange() {
+function handleSinglePanelViewChange() {
   const mapKey = document.getElementById(MAP_KEY_OVERLAY_ID)
   const filterPanel = document.getElementById(FILTER_PANEL_ID)
   const mapKeyHadFocus = mapKey?.contains(document.activeElement)
   const filterPanelHadFocus = filterPanel?.contains(document.activeElement)
 
-  if (isMobileView() && panelState.filterPanelOpen && panelState.mapKeyOpen) {
+  if (
+    isSinglePanelView() &&
+    panelState.filterPanelOpen &&
+    panelState.mapKeyOpen
+  ) {
     panelState.mapKeyOpen = false
   }
   updatePanelVisibility()
@@ -111,8 +116,8 @@ function handleMobileViewChange() {
 
 /**
  * Sets the initial panel state and wires the panel and button clicks.
- * Mobile starts with the filter panel open and the map key closed, larger
- * screens with both open.
+ * Smaller screens start with the filter panel open and the map key closed,
+ * larger screens with both open.
  * @param {object} params
  * @param {() => void} params.closeStationPanel - called when a button needs the
  *   space the station panel uses
@@ -120,7 +125,7 @@ function handleMobileViewChange() {
 function initMapPanels({ closeStationPanel }) {
   callbacks.closeStationPanel = closeStationPanel
   panelState.filterPanelOpen = true
-  panelState.mapKeyOpen = !isMobileView()
+  panelState.mapKeyOpen = !isSinglePanelView()
   panelState.stationPanelOpen = false
 
   document
@@ -134,8 +139,8 @@ function initMapPanels({ closeStationPanel }) {
     ?.addEventListener('click', closeMapKey)
   document.getElementById(KEY_BUTTON_ID)?.addEventListener('click', openMapKey)
   globalThis
-    .matchMedia?.(MOBILE_MEDIA_QUERY)
-    .addEventListener?.('change', handleMobileViewChange)
+    .matchMedia?.(SINGLE_PANEL_MEDIA_QUERY)
+    .addEventListener?.('change', handleSinglePanelViewChange)
 
   updatePanelVisibility()
 }

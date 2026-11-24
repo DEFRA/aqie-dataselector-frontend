@@ -3,6 +3,13 @@
 // Mobile is below this width. Keep in sync with MOBILE_MEDIA_QUERY in
 // map-panels.js.
 $aq-mobile-breakpoint: 32.5em; // 520px
+
+// From 63em (1008px) the filter panel fits beside the map key and station
+// panel (10px + 500px + 10px + 454px + 10px, plus 24px for a page scrollbar).
+// Below it, SINGLE_PANEL_MEDIA_QUERY in map-panels.js keeps only one open.
+
+// Below tablet, where the zoom buttons sit under the Exit button
+$aq-below-tablet-max-width: 40.0525em;
 $aq-panel-shadow: rgba(0, 0, 0, 0.1) 0 0 3px 2px;
 $aq-focus-shadow:
   0 0 0 2px #ffffff,
@@ -13,11 +20,18 @@ $aq-focus-shadow:
 $aq-attribution-clearance: 34px;
 $aq-attribution-overlap-max-width: 51.9375em; // 831px
 
-// Space above the mobile bottom sheets for the Exit and zoom buttons
+// Space above the bottom panels for the Exit and zoom buttons
 $aq-top-controls-clearance: 150px;
 
-// Space below the top-right filter panel for the zoom buttons
+// Space above the bottom-left panels for the Exit button
+$aq-exit-clearance: 60px;
+
+// Space below the top-right filter panel for the Key button
 $aq-bottom-controls-clearance: 134px;
+
+// From tablet, where the Key button sits above the zoom buttons
+// (34px + 90px + 40px button + 10px)
+$aq-bottom-controls-clearance-tablet: 174px;
 
 // Right edge kept clear of the bottom panels for the icon-only Menu and Key
 // buttons (10px + 40px button + 10px)
@@ -47,14 +61,27 @@ $aq-reopen-gutter: 60px;
     bottom: 10px;
     left: 10px;
     right: $aq-reopen-gutter;
-    max-height: calc(100vh - 20px);
-    max-height: calc(100dvh - 20px);
+    max-height: calc(100vh - 10px - #{$aq-exit-clearance});
+    max-height: calc(100dvh - 10px - #{$aq-exit-clearance});
   }
 
   @media (min-width: $aq-mobile-breakpoint) and (max-width: $aq-attribution-overlap-max-width) {
     bottom: $aq-attribution-clearance;
-    max-height: calc(100vh - #{$aq-attribution-clearance} - 10px);
-    max-height: calc(100dvh - #{$aq-attribution-clearance} - 10px);
+    max-height: calc(
+      100vh - #{$aq-attribution-clearance} - #{$aq-exit-clearance}
+    );
+    max-height: calc(
+      100dvh - #{$aq-attribution-clearance} - #{$aq-exit-clearance}
+    );
+  }
+
+  @media (min-width: $aq-mobile-breakpoint) and (max-width: $aq-below-tablet-max-width) {
+    max-height: calc(
+      100vh - #{$aq-attribution-clearance} - #{$aq-top-controls-clearance}
+    );
+    max-height: calc(
+      100dvh - #{$aq-attribution-clearance} - #{$aq-top-controls-clearance}
+    );
   }
 
   @include govuk-media-query($from: tablet) {
@@ -256,7 +283,7 @@ $aq-reopen-gutter: 60px;
   line-height: 40px;
 
   // Icon only above mobile and below tablet
-  @media (min-width: $aq-mobile-breakpoint) and (max-width: 40.0525em) {
+  @media (min-width: $aq-mobile-breakpoint) and (max-width: $aq-below-tablet-max-width) {
     @include govuk-visually-hidden;
   }
 }
@@ -369,10 +396,17 @@ $aq-reopen-gutter: 60px;
     left: auto;
     right: 10px;
     width: 454px;
+    // Keeps the Exit and zoom buttons uncovered on narrow screens
+    max-width: calc(100% - #{$aq-reopen-gutter} - 10px);
     max-height: calc(100vh - 10px - #{$aq-bottom-controls-clearance});
     max-height: calc(100dvh - 10px - #{$aq-bottom-controls-clearance});
     border: 2px solid #0b0c0c;
     box-shadow: none;
+  }
+
+  @include govuk-media-query($from: tablet) {
+    max-height: calc(100vh - 10px - #{$aq-bottom-controls-clearance-tablet});
+    max-height: calc(100dvh - 10px - #{$aq-bottom-controls-clearance-tablet});
   }
 }
 

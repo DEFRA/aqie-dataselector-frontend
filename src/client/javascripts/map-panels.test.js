@@ -25,7 +25,7 @@ function unstubAllGlobals() {
 
 afterEach(unstubAllGlobals)
 
-const MOBILE_MEDIA_QUERY = 'not all and (min-width: 32.5em)'
+const SINGLE_PANEL_MEDIA_QUERY = 'not all and (min-width: 63em)'
 
 let view
 
@@ -105,10 +105,10 @@ describe('#initMapPanels', () => {
     expect(byId('key-button').hidden).toBe(false)
   })
 
-  test('Should use the mobile media query that complements the stylesheet breakpoint', () => {
+  test('Should show one panel at a time below the width where the panels fit side by side', () => {
     stubView(false)
     startMapPanels()
-    expect(globalThis.matchMedia).toHaveBeenCalledWith(MOBILE_MEDIA_QUERY)
+    expect(globalThis.matchMedia).toHaveBeenCalledWith(SINGLE_PANEL_MEDIA_QUERY)
   })
 
   test('Should listen for the viewport crossing the mobile breakpoint', () => {
