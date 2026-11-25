@@ -35,4 +35,25 @@ describe('map page template', () => {
     expect(exit.attr('href')).toBe('/hubpage')
     expect(exit.text().trim()).toBe('Exit map')
   })
+
+  test('Has one h1 and a logical heading outline for screen readers', () => {
+    const $ = load(
+      environment.render('map/index.njk', {
+        pageTitle: 'Air quality map',
+        dataSelectorUrl: '',
+        getAssetPath: (asset) => `/public/${asset}`
+      })
+    )
+    expect($('h1')).toHaveLength(1)
+    const headings = $('.app-map-container')
+      .find('h1, h2, h3, h4, h5, h6')
+      .map((_, el) => `${el.tagName} ${$(el).text().trim()}`)
+      .get()
+    expect(headings).toEqual([
+      'h1 Air Quality Monitoring Stations Map',
+      'h2 Key',
+      'h2 Search by pollutant',
+      'h3 Data sources'
+    ])
+  })
 })
