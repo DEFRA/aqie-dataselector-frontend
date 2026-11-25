@@ -25,21 +25,28 @@ function unstubAllGlobals() {
 
 afterEach(unstubAllGlobals)
 
-const MOBILE_MEDIA_QUERY = 'not all and (min-width: 32.5em)'
+const SINGLE_PANEL_MEDIA_QUERY =
+  'not all and (min-width: 63em) and (min-height: 25em)'
+const FULL_SCREEN_MEDIA_QUERY = 'not all and (min-height: 25em)'
 
 let view
 
 // Matches the server-rendered state: map key and Menu button hidden
 function buildDom() {
   document.body.innerHTML = `
+    <a id="exit-map" href="/hubpage"></a>
+    <div id="map"></div>
     <div id="filter-panel" tabindex="-1">
       <button id="filter-panel-close"></button>
     </div>
     <div id="map-key-overlay" tabindex="-1" hidden>
       <button id="map-key-close"></button>
     </div>
-    <button id="filter-button" hidden></button>
-    <button id="key-button"></button>
+    <div class="reopen-stack">
+      <button id="filter-button" hidden></button>
+      <button id="key-button"></button>
+    </div>
+    <div class="aq-map-zoom"></div>
   `
 }
 
@@ -47,21 +54,54 @@ function byId(id) {
   return document.getElementById(id)
 }
 
-function stubView(isMobile) {
+function stubMediaQueryList(matches) {
   const listeners = []
-  view = {
-    mediaQueryList: {
-      matches: isMobile,
-      addEventListener: jest.fn((_type, listener) => listeners.push(listener))
-    },
-    changeTo(isMobileNow) {
-      view.mediaQueryList.matches = isMobileNow
+  return {
+    matches,
+    addEventListener: jest.fn((_type, listener) => listeners.push(listener)),
+    changeTo(matchesNow) {
+      this.matches = matchesNow
       listeners.forEach((listener) => listener())
+    }
+  }
+}
+
+// A full-screen view is always a single-panel view too, as in the browser
+function stubView(isMobile, isFullScreen = false) {
+  const singlePanel = stubMediaQueryList(isMobile || isFullScreen)
+  const fullScreen = stubMediaQueryList(isFullScreen)
+  view = {
+    mediaQueryList: singlePanel,
+    changeTo: (isMobileNow) => singlePanel.changeTo(isMobileNow),
+    changeFullScreenTo(isFullScreenNow) {
+      fullScreen.matches = isFullScreenNow
+      singlePanel.changeTo(singlePanel.matches || isFullScreenNow)
+      fullScreen.changeTo(isFullScreenNow)
     }
   }
   stubGlobal(
     'matchMedia',
-    jest.fn(() => view.mediaQueryList)
+    jest.fn((query) =>
+      query === FULL_SCREEN_MEDIA_QUERY ? fullScreen : singlePanel
+    )
+  )
+}
+
+function isMapCovered() {
+  return (
+    ['exit-map', 'map'].every((id) => byId(id).inert) &&
+    ['.reopen-stack', '.aq-map-zoom'].every(
+      (selector) => document.querySelector(selector).inert
+    )
+  )
+}
+
+function isMapUncovered() {
+  return (
+    ['exit-map', 'map'].every((id) => !byId(id).inert) &&
+    ['.reopen-stack', '.aq-map-zoom'].every(
+      (selector) => !document.querySelector(selector).inert
+    )
   )
 }
 
@@ -105,10 +145,10 @@ describe('#initMapPanels', () => {
     expect(byId('key-button').hidden).toBe(false)
   })
 
-  test('Should use the mobile media query that complements the stylesheet breakpoint', () => {
+  test('Should show one panel at a time below the width where the panels fit side by side', () => {
     stubView(false)
     startMapPanels()
-    expect(globalThis.matchMedia).toHaveBeenCalledWith(MOBILE_MEDIA_QUERY)
+    expect(globalThis.matchMedia).toHaveBeenCalledWith(SINGLE_PANEL_MEDIA_QUERY)
   })
 
   test('Should listen for the viewport crossing the mobile breakpoint', () => {
@@ -463,5 +503,77 @@ describe('#initMapPanels — focus when the viewport changes', () => {
     byId('filter-panel-close').focus()
     view.changeTo(false)
     expect(document.activeElement).toBe(byId('filter-panel-close'))
+  })
+})
+
+describe('#initMapPanels — short screens, such as 400% zoom', () => {
+  beforeEach(() => {
+    stubView(false, true)
+  })
+
+  test('Should start with both panels closed so the map is not covered', () => {
+    startMapPanels()
+    expect(byId('filter-panel').hidden).toBe(true)
+    expect(byId('map-key-overlay').hidden).toBe(true)
+    expect(byId('filter-button').hidden).toBe(false)
+    expect(byId('key-button').hidden).toBe(false)
+    expect(isMapUncovered()).toBe(true)
+  })
+
+  test('Should make the map and its controls inert while the filter panel covers them', () => {
+    startMapPanels()
+    byId('filter-button').click()
+    expect(isMapCovered()).toBe(true)
+    expect(document.activeElement).toBe(byId('filter-panel'))
+  })
+
+  test('Should make the map and its controls inert while the station panel covers them', () => {
+    startMapPanels()
+    setStationPanelOpen(true)
+    expect(isMapCovered()).toBe(true)
+    setStationPanelOpen(false)
+    expect(isMapUncovered()).toBe(true)
+  })
+
+  test('Should close the filter panel and return focus to the Menu button on Escape', () => {
+    startMapPanels()
+    byId('filter-button').click()
+    byId('filter-panel-close').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    )
+    expect(byId('filter-panel').hidden).toBe(true)
+    expect(isMapUncovered()).toBe(true)
+    expect(document.activeElement).toBe(byId('filter-button'))
+  })
+
+  test('Should close the map key and return focus to the Key button on Escape', () => {
+    startMapPanels()
+    byId('key-button').click()
+    expect(isMapCovered()).toBe(true)
+    byId('map-key-overlay').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    )
+    expect(byId('map-key-overlay').hidden).toBe(true)
+    expect(document.activeElement).toBe(byId('key-button'))
+  })
+
+  test('Should cover the map when the viewport becomes short with a panel open', () => {
+    stubView(false)
+    startMapPanels()
+    expect(isMapUncovered()).toBe(true)
+    view.changeFullScreenTo(true)
+    expect(isMapCovered()).toBe(true)
+  })
+})
+
+describe('#initMapPanels — Escape on larger screens', () => {
+  test('Should leave the filter panel open, as it does not cover the map', () => {
+    stubView(false)
+    startMapPanels()
+    byId('filter-panel').dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    )
+    expect(byId('filter-panel').hidden).toBe(false)
+    expect(isMapUncovered()).toBe(true)
   })
 })
