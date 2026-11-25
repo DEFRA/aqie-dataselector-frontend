@@ -2,6 +2,8 @@
  * @jest-environment jsdom
  */
 
+import nunjucks from 'nunjucks'
+
 import { createStationPanelController } from './map-station-panel.js'
 
 const station = {
@@ -14,7 +16,7 @@ const station = {
 function showPanel(daqiContext, stationOverrides = {}) {
   document.body.innerHTML = `
     <div id="station-panel" tabindex="-1" data-dataselector-url="">
-      <h2 id="sp-name"></h2>
+      <div id="sp-heading"></div>
       <dl id="sp-details"></dl>
       <form id="sp-station-form" method="post">
         <input type="hidden" name="lat">
@@ -93,5 +95,31 @@ describe('View full station summary link', () => {
     )
 
     expect(link().hidden).toBe(true)
+  })
+})
+
+describe('station panel heading', () => {
+  it('has no empty heading before a station is selected', () => {
+    const html = nunjucks
+      .configure('src/server/common/templates')
+      .render('partials/station-panel.njk', { dataSelectorUrl: '' })
+    document.body.innerHTML = html
+
+    expect(document.querySelectorAll('#station-panel h2')).toHaveLength(0)
+  })
+
+  it('adds a single heading each time a station is selected', () => {
+    const context = { mapMode: 'aurn', aurnDataByStation: new Map() }
+    showPanel(context)
+    const controller = createStationPanelController({
+      map: { addMarker: jest.fn() },
+      getSortedStations: () => [],
+      getDaqiContext: () => ({ forecasts: [], ...context })
+    })
+    controller.showStationPanel({ ...station, name: 'York Bootham' })
+
+    const headings = document.querySelectorAll('#sp-heading h2')
+    expect(headings).toHaveLength(1)
+    expect(headings[0].textContent).toBe('York Bootham Inactive')
   })
 })

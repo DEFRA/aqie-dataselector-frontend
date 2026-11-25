@@ -173,7 +173,7 @@ function resetDom() {
               </div>
             </div>
             <div id="filter-other-content" hidden>
-              <p class="govuk-body-s govuk-!-margin-top-2">We will add more pollutants and data sources during 2026.</p>
+              <p class="govuk-body-s govuk-!-margin-top-2">We will add more pollutants and data sources during 2027.</p>
             </div>
           </div>
           <div id="filter-sections">
@@ -209,7 +209,7 @@ function resetDom() {
     <a id="exit-map" href="/hubpage">Exit map</a>
     <div id="station-panel" data-dataselector-url="https://aqie-dataselector-frontend.example">
       <button id="sp-close"></button>
-      <h2 id="sp-name"></h2>
+      <div id="sp-heading"></div>
       <dl id="sp-details"></dl>
       <form id="sp-station-form">
         <input name="lat">

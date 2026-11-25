@@ -23,8 +23,7 @@ export const englishNew = {
       b: 'View and download data by town or postcode',
       c: 'Create a custom dataset',
       d: 'View and download data by pollutant, year and location',
-      e: 'Search on a map',
-      f: 'Find monitoring stations and view their data on a map'
+      e: 'Search on a map'
     }
   },
   custom: {
