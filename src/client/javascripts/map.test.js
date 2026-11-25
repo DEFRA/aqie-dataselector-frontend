@@ -656,8 +656,9 @@ describe('#DAQI markers', () => {
   test.each([
     ['1–3', 2, '#31ff00', 'fill="#0b0c0c"'],
     ['4–6', 5, '#ffcf00', 'fill="#0b0c0c"'],
-    ['7–9', 8, '#ff0000', 'fill="#ffffff"'],
-    ['10', 10, '#ce30ff', 'fill="#ffffff"']
+    ['8', 8, '#ff0000', 'fill="#0b0c0c"'],
+    ['9', 9, '#990000', 'fill="#ffffff"'],
+    ['10', 10, '#ce30ff', 'fill="#0b0c0c"']
   ])(
     'Should colour marker for DAQI %s',
     async (_, daqiValue, backgroundColour, textColour) => {

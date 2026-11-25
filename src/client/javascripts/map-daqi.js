@@ -14,7 +14,7 @@ const daqiBg = [
   '#ce30ff'
 ]
 
-// Colours light enough to require dark text on the marker label.
+// Backgrounds where dark text meets WCAG 4.5:1. Only #990000 needs white.
 const DAQI_LIGHT_BG = new Set([
   '#9cff9c',
   '#31ff00',
@@ -22,7 +22,9 @@ const DAQI_LIGHT_BG = new Set([
   '#ffff00',
   '#ffcf00',
   '#ff9a00',
-  '#ff9292'
+  '#ff9292',
+  '#ff0000',
+  '#ce30ff'
 ])
 
 const daqiBand = [
