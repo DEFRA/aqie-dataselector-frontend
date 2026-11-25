@@ -56,4 +56,29 @@ describe('map page template', () => {
       'h3 Data sources'
     ])
   })
+
+  test('Data source radios sit inside a group named Data sources, so screen readers announce it on entry', () => {
+    const $ = load(
+      environment.render('map/index.njk', {
+        pageTitle: 'Air quality map',
+        dataSelectorUrl: '',
+        getAssetPath: (asset) => `/public/${asset}`
+      })
+    )
+    const group = $('input[name="filter-data-source"]').closest(
+      '[role="group"]'
+    )
+    expect(
+      $(`#${group.attr('aria-labelledby')}`)
+        .text()
+        .trim()
+    ).toBe('Data sources')
+    expect(
+      $('input[name="filter-data-source"]')
+        .closest('fieldset')
+        .find('legend')
+        .text()
+        .trim()
+    ).toBe('Near real-time Defra data')
+  })
 })
