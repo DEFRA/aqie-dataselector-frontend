@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { HTTP_SEE_OTHER } from '~/src/server/common/constants/magic-numbers.js'
 import { renderNotFound } from '~/src/server/common/helpers/navigation-helpers.js'
 import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
 import {
@@ -55,7 +56,7 @@ const graphSummaryPostController = {
     }
 
     request.yar.set(GRAPH_SUMMARY_SESSION_KEY, { stationId, period, from })
-    return h.redirect(GRAPH_SUMMARY_PATH).code(303)
+    return h.redirect(GRAPH_SUMMARY_PATH).code(HTTP_SEE_OTHER)
   }
 }
 
