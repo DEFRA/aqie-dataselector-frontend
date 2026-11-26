@@ -1,4 +1,4 @@
-{# Button that opens the graph and pollutant summary page, shared by the station pages. A form POST, so the station and period are kept out of the URL. The graph needs JavaScript, so aq-js-only hides it when JavaScript is off. It is done in CSS because this markup is also swapped in with innerHTML, where scripts never run. viewGraphSummary is null when the feature is off. #}
+{# Button that opens the graph and pollutant summary page, shared by the station pages. A form POST, so the station and period are kept out of the URL. It is a real button, not a link with role="button", so screen readers still announce it once. The graph needs JavaScript, so aq-js-only hides it when JavaScript is off. It is done in CSS because this markup is also swapped in with innerHTML, where scripts never run. viewGraphSummary is null when the feature is off. #}
 {% if viewGraphSummary %}
   <div class="aq-js-only govuk-!-margin-top-6 govuk-!-margin-bottom-6">
     <form method="post" action="{{ viewGraphSummary.action }}">

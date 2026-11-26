@@ -73,8 +73,9 @@ const graphSummaryController = {
     }
 
     // The station pages work from the session, so point it at this station:
-    // that is what the Back link returns to, even if the user has since opened
-    // another station in a second tab.
+    // that is what the Back link returns to. The station and period are now
+    // posted rather than read from the URL, so they come from the session
+    // too; a second browser tab sharing that session is not catered for.
     request.yar.set('SiteId', station.id)
     request.yar.set('stationdetails', station)
 
