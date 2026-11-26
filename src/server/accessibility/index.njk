@@ -1,44 +1,71 @@
 {% extends 'layouts/page.njk' %}
 
 {% block content %}
- 
-<!-- Paragraph A -->
-   <div class="govuk-grid-row">
-      <div class="govuk-grid-column-two-thirds-from-desktop">
-<h1 class="govuk-heading-xl odd-page">{{ title }}</h1>
-<p class="govuk-body">{{ paragraphs.a }}</p>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds-from-desktop">
+      <h1 class="govuk-heading-xl">{{ title }}</h1>
 
-<!-- Paragraph B with Link -->
-<p class="govuk-body">
-  {{ paragraphs.b }} 
-  <a href="/hubpage"> Get air pollution data </a> website.
-</p>
+      <p class="govuk-body">
+        This accessibility statement applies to the
+        <a class="govuk-link" href="/hubpage">Get air pollution data</a>
+        website.
+      </p>
 
-<!-- Heading A -->
-<h2 class="govuk-heading-m">{{ headings.a }}</h2>
+      <p class="govuk-body">{{ texts.a }} {{ texts.b }}</p>
+      <p class="govuk-body">{{ texts.c }}</p>
 
-<!-- Paragraph C -->
-<p class="govuk-body">{{ paragraphs.c }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ texts.d }}</li>
+        <li>{{ texts.e }}</li>
+        <li>{{ texts.f }}</li>
+        <li>{{ texts.g }}</li>
+        <li>{{ texts.h }}</li>
+      </ul>
 
-<!-- Heading B -->
-<h2 class="govuk-heading-m">{{ headings.b }}</h2>
+      <p class="govuk-body">{{ texts.i }}</p>
+      <p class="govuk-body">
+        <a class="govuk-link" href="https://mcmw.abilitynet.org.uk/">AbilityNet</a>
+        has advice on making your device easier to use if you have a disability.
+      </p>
+      <p class="govuk-body">{{ texts.k }}</p>
 
-<!-- Paragraphs D, E, F -->
-<p class="govuk-body">{{ paragraphs.e }}</p>
-<p class="govuk-body">{{ paragraphs.f }}</p>
+      <h2 class="govuk-heading-l">{{ texts.l }}</h2>
+      <p class="govuk-body">
+        {{ texts.m | replace('Web Content Accessibility Guidelines version 2.2 AA standard.', '') }}
+        <a class="govuk-link" href="https://www.w3.org/TR/WCAG22/">Web Content Accessibility Guidelines version 2.2 AA standard</a>.
+      </p>
+      <p class="govuk-body">{{ texts.n }}</p>
+      <p class="govuk-body">{{ texts.o }}</p>
 
-<h2 class="govuk-heading-m">{{ headings.c }}</h2>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ texts.p }}</li>
+        <li>{{ texts.q }}</li>
+      </ul>
 
-<!-- Paragraphs D, E, F -->
-<p class="govuk-body">{{ paragraphs.g }} 
- <a href="mailto:accessibility@defra.gov.uk"> accessibility@defra.gov.uk.</a>
-</p>
-<h2 class="govuk-heading-m">{{ headings.d }}</h2>
+      <h2 class="govuk-heading-l">{{ texts.r }}</h2>
+      <p class="govuk-body">{{ texts.s }}</p>
+      <p class="govuk-body">{{ texts.t }}</p>
+      <p class="govuk-body">{{ texts.u }}</p>
 
-<!-- Paragraphs D, E, F -->
-<p class="govuk-body">{{ paragraphs.h }}</p>
-<p class="govuk-body">{{ paragraphs.i }} <a href="https://www.equalityadvisoryservice.com/"> {{ paragraphs.i1 }}</a> </p>
-</div>
-</div>
+      <h2 class="govuk-heading-l">{{ texts.v }}</h2>
+      <p class="govuk-body">{{ texts.w }}</p>
+      <p class="govuk-body">{{ texts.x }}</p>
+      <p class="govuk-body">{{ texts.y }}</p>
+
+      <h2 class="govuk-heading-l">{{ texts.z }}</h2>
+      <p class="govuk-body">
+        If you notice any compliance failures or need to request information and
+        content that is not provided in this document, email
+        <a class="govuk-link" href="mailto:accessibility@defra.gov.uk">accessibility@defra.gov.uk</a>.
+      </p>
+
+      <h2 class="govuk-heading-l">{{ texts.ab }}</h2>
+      <p class="govuk-body">{{ texts.ac }}</p>
+      <p class="govuk-body">
+        If you are not happy with how Defra responds to your complaint, contact the
+        <a class="govuk-link" href="https://www.equalityadvisoryservice.com/">Equality Advisory and Support Service (EASS)</a>.
+      </p>
+    </div>
+  </div>
 
 {% endblock %}
