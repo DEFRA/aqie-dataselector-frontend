@@ -1,32 +1,25 @@
 import {
   GRAPH_SUMMARY_PATH,
-  buildGraphSummaryHref,
+  buildGraphSummaryFields,
   buildStationPageHref
 } from '~/src/server/graph-summary/links.js'
 
-describe('buildGraphSummaryHref', () => {
-  it('links to the graph summary page', () => {
+describe('buildGraphSummaryFields', () => {
+  it('posts to the graph summary page', () => {
     expect(GRAPH_SUMMARY_PATH).toBe('/stationdetails/graph-summary')
   })
 
   it('opens on the last 24 hours by default', () => {
-    expect(buildGraphSummaryHref({ stationId: 'site1' })).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last24hours'
-    )
+    expect(buildGraphSummaryFields({ stationId: 'site1' })).toEqual({
+      stationId: 'site1',
+      period: 'last24hours'
+    })
   })
 
   it('uses the given period', () => {
     expect(
-      buildGraphSummaryHref({ stationId: 'site1', period: 'last7days' })
-    ).toBe('/stationdetails/graph-summary?stationId=site1&period=last7days')
-  })
-
-  it('url-encodes the station id', () => {
-    const href = buildGraphSummaryHref({ stationId: 'A&B C/d?e=f#g' })
-
-    expect(href).toBe(
-      '/stationdetails/graph-summary?stationId=A%26B+C%2Fd%3Fe%3Df%23g&period=last24hours'
-    )
+      buildGraphSummaryFields({ stationId: 'site1', period: 'last7days' })
+    ).toEqual({ stationId: 'site1', period: 'last7days' })
   })
 
   it.each([
@@ -37,9 +30,11 @@ describe('buildGraphSummaryHref', () => {
   ])(
     'passes on the tab it is on, %p, so Back returns to it',
     (from, expected) => {
-      expect(buildGraphSummaryHref({ stationId: 'site1', from })).toBe(
-        `/stationdetails/graph-summary?stationId=site1&period=last24hours&from=${expected}`
-      )
+      expect(buildGraphSummaryFields({ stationId: 'site1', from })).toEqual({
+        stationId: 'site1',
+        period: 'last24hours',
+        from: expected
+      })
     }
   )
 
@@ -57,9 +52,10 @@ describe('buildGraphSummaryHref', () => {
     '__proto__',
     'constructor'
   ])('leaves out a tab it cannot return to, such as %p', (from) => {
-    expect(buildGraphSummaryHref({ stationId: 'site1', from })).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last24hours'
-    )
+    expect(buildGraphSummaryFields({ stationId: 'site1', from })).toEqual({
+      stationId: 'site1',
+      period: 'last24hours'
+    })
   })
 })
 

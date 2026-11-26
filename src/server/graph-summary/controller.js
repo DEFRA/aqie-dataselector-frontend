@@ -1,4 +1,5 @@
 import { english } from '~/src/server/data/en/homecontent.js'
+import { HTTP_SEE_OTHER } from '~/src/server/common/constants/magic-numbers.js'
 import { renderNotFound } from '~/src/server/common/helpers/navigation-helpers.js'
 import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
 import {
@@ -9,9 +10,13 @@ import {
 import { buildPollutantSummary } from '~/src/server/graph-summary/summary.js'
 import { buildPollutantGraph } from '~/src/server/graph-summary/graph.js'
 import {
-  buildGraphSummaryHref,
+  GRAPH_SUMMARY_PATH,
+  buildGraphSummaryFields,
   buildStationPageHref
 } from '~/src/server/graph-summary/links.js'
+
+// Session key for the station and period last posted to the graph page.
+const GRAPH_SUMMARY_SESSION_KEY = 'graphSummary'
 
 /**
  * Finds a station among the user's search results. The station pages work from
@@ -32,26 +37,46 @@ function buildPeriodTabs({ stationId, period, from }) {
   const { periods } = english.graphsummary
   return PERIOD_KEYS.map((key) => ({
     label: periods[key],
-    href: buildGraphSummaryHref({ stationId, period: key, from }),
+    fields: buildGraphSummaryFields({ stationId, period: key, from }),
     isCurrent: key === period
   }))
 }
 
 /**
- * Hapi route handler for the graph and pollutant summary page. The query has
- * already been validated and defaulted by graphSummaryQuerySchema.
+ * Receives the station and period from the station pages and the period tabs,
+ * then redirects to the page (post/redirect/get), so they stay out of the URL
+ * and the page can still be refreshed. The payload has already been validated
+ * and defaulted by graphSummaryPayloadSchema.
+ */
+const graphSummaryPostController = {
+  handler: (request, h) => {
+    const { stationId, period, from } = request.payload
+    if (!findSessionStation(request, stationId)) {
+      return renderNotFound(h)
+    }
+
+    request.yar.set(GRAPH_SUMMARY_SESSION_KEY, { stationId, period, from })
+    return h.redirect(GRAPH_SUMMARY_PATH).code(HTTP_SEE_OTHER)
+  }
+}
+
+/**
+ * Renders the graph and pollutant summary page for the station and period last
+ * posted to it.
  */
 const graphSummaryController = {
   handler: async (request, h) => {
-    const { stationId, period, from } = request.query
-    const station = findSessionStation(request, stationId)
+    const { stationId, period, from } =
+      request.yar.get(GRAPH_SUMMARY_SESSION_KEY) ?? {}
+    const station = stationId ? findSessionStation(request, stationId) : null
     if (!station) {
       return renderNotFound(h)
     }
 
     // The station pages work from the session, so point it at this station:
-    // that is what the Back link returns to, even if the user has since opened
-    // another station in a second tab.
+    // that is what the Back link returns to. The station and period are now
+    // posted rather than read from the URL, so they come from the session
+    // too; a second browser tab sharing that session is not catered for.
     request.yar.set('SiteId', station.id)
     request.yar.set('stationdetails', station)
 
@@ -65,6 +90,7 @@ const graphSummaryController = {
       heading,
       dates: formatPeriodDates(period, history),
       periodNavigationLabel: content.periodNavigationLabel,
+      periodFormAction: GRAPH_SUMMARY_PATH,
       periodTabs: buildPeriodTabs({
         stationId: station.id,
         period,
@@ -79,4 +105,8 @@ const graphSummaryController = {
   }
 }
 
-export { graphSummaryController }
+export {
+  graphSummaryController,
+  graphSummaryPostController,
+  GRAPH_SUMMARY_SESSION_KEY
+}

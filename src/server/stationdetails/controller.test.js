@@ -414,7 +414,8 @@ describe('stationDetailsController.handler', () => {
         activePeriod: 'daqi',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=site123&period=last24hours'
+          action: '/stationdetails/graph-summary',
+          fields: { stationId: 'site123', period: 'last24hours' }
         }
       })
     )
@@ -433,7 +434,8 @@ describe('stationDetailsController.handler', () => {
         activePeriod: 'year',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=site123&period=last24hours&from=2023'
+          action: '/stationdetails/graph-summary',
+          fields: { stationId: 'site123', period: 'last24hours', from: '2023' }
         }
       })
     )
@@ -1084,7 +1086,12 @@ describe('last24HoursController.handler', () => {
           activePeriod: 'last24hours',
           viewGraphSummary: {
             buttonText: 'View graph and pollutant summary',
-            href: '/stationdetails/graph-summary?stationId=site123&period=last24hours&from=last24hours'
+            action: '/stationdetails/graph-summary',
+            fields: {
+              stationId: 'site123',
+              period: 'last24hours',
+              from: 'last24hours'
+            }
           }
         })
       )
@@ -1461,7 +1468,12 @@ describe('last7DaysController.handler', () => {
         expect.objectContaining({
           viewGraphSummary: {
             buttonText: 'View graph and pollutant summary',
-            href: '/stationdetails/graph-summary?stationId=site123&period=last7days&from=last7days'
+            action: '/stationdetails/graph-summary',
+            fields: {
+              stationId: 'site123',
+              period: 'last7days',
+              from: 'last7days'
+            }
           }
         })
       )

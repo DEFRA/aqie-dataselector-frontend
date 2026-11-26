@@ -19,17 +19,18 @@ describe('buildViewGraphSummary', () => {
     }
   )
 
-  it('links to the last 24 hours for the station', () => {
+  it('posts the last 24 hours for the station to the graph page', () => {
     expect(buildViewGraphSummary({ stationId: 'site1' })).toEqual({
       buttonText: 'View graph and pollutant summary',
-      href: '/stationdetails/graph-summary?stationId=site1&period=last24hours'
+      action: '/stationdetails/graph-summary',
+      fields: { stationId: 'site1', period: 'last24hours' }
     })
   })
 
   it('opens the graph page on the given period', () => {
     expect(
-      buildViewGraphSummary({ stationId: 'site1', period: 'last7days' }).href
-    ).toBe('/stationdetails/graph-summary?stationId=site1&period=last7days')
+      buildViewGraphSummary({ stationId: 'site1', period: 'last7days' }).fields
+    ).toEqual({ stationId: 'site1', period: 'last7days' })
   })
 
   it('passes on the station page tab the button is on, so Back returns to it', () => {
@@ -38,15 +39,13 @@ describe('buildViewGraphSummary', () => {
         stationId: 'site1',
         period: 'last7days',
         from: 'last7days'
-      }).href
-    ).toBe(
-      '/stationdetails/graph-summary?stationId=site1&period=last7days&from=last7days'
-    )
+      }).fields
+    ).toEqual({ stationId: 'site1', period: 'last7days', from: 'last7days' })
   })
 
-  it('leaves out a tab Back cannot return to, rather than make a link that fails', () => {
+  it('leaves out a tab Back cannot return to, rather than post one that fails', () => {
     expect(
-      buildViewGraphSummary({ stationId: 'site1', from: 'not-a-year' }).href
-    ).toBe('/stationdetails/graph-summary?stationId=site1&period=last24hours')
+      buildViewGraphSummary({ stationId: 'site1', from: 'not-a-year' }).fields
+    ).toEqual({ stationId: 'site1', period: 'last24hours' })
   })
 })

@@ -147,6 +147,10 @@ width: 100%;
 
 
 .aq-button-secondary {
+    // Resets so this also looks right when applied to a <button>, not just a
+    // link: browsers otherwise add their own rounding and system styling.
+    appearance: none;
+    border-radius: 0;
     position: relative;
     display: inline-block;
     @include govuk-font($size: 16);
@@ -463,6 +467,21 @@ width: 100%;
       height: 5px;
     }
   }
+}
+
+// Sub navigation tabs that post a form are buttons; make them look like the links.
+.aq-sub-navigation__button {
+  appearance: none;
+  border-radius: 0;
+  width: 100%;
+  margin: 0;
+  padding-right: 0;
+  border: 0;
+  background: none;
+  color: $govuk-link-colour;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .moj-sub-navigation__link[aria-current="page"] {

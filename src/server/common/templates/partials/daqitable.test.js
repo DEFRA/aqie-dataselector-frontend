@@ -132,17 +132,21 @@ describe('daqitable.njk', () => {
 describe('daqitable.njk graph summary button', () => {
   const viewGraphSummary = {
     buttonText: 'View graph and pollutant summary',
-    href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+    action: '/stationdetails/graph-summary',
+    fields: { stationId: 'a', period: 'last24hours' }
   }
-  const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+  const FORM = 'form[action="/stationdetails/graph-summary"]'
+  const BUTTON = `${FORM} button[type="submit"]`
 
   it('has the button under the table and its hint, for users with JavaScript', () => {
     const $ = render({ pollutants: [row()] }, { viewGraphSummary })
 
     expect($(BUTTON)).toHaveLength(1)
-    expect($(BUTTON).attr('href')).toBe(viewGraphSummary.href)
+    expect($(FORM).attr('method')).toBe('post')
+    expect($(`${FORM} input[name="stationId"]`).val()).toBe('a')
+    expect($(`${FORM} input[name="period"]`).val()).toBe('last24hours')
     expect($(BUTTON).text().trim()).toBe('View graph and pollutant summary')
-    expect($(BUTTON).parent().hasClass('aq-js-only')).toBe(true)
+    expect($(FORM).parent().hasClass('aq-js-only')).toBe(true)
     expect($('#daqi-hint').nextAll('.aq-js-only')).toHaveLength(1)
   })
 
