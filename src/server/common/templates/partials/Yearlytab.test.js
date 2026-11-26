@@ -1,6 +1,7 @@
 import path from 'node:path'
 import nunjucks from 'nunjucks'
 import * as cheerio from 'cheerio'
+import { JSDOM } from 'jsdom'
 
 import * as globals from '~/src/config/nunjucks/globals/globals.js'
 import { formatDate } from '~/src/config/nunjucks/filters/format-date.js'
@@ -281,5 +282,89 @@ describe('Yearlytab.njk', () => {
         )
       })
     })
+  })
+})
+
+const panel = (period) => `
+  <table></table>
+  <div class="aq-js-only">
+    <form method="post" action="/stationdetails/graph-summary">
+      <input type="hidden" name="period" value="${period}">
+      <button type="submit">View graph and pollutant summary</button>
+    </form>
+  </div>`
+
+describe('Yearlytab.njk tab script', () => {
+  let pending
+  let document
+
+  beforeEach(() => {
+    pending = {}
+    const html = render({
+      activePeriod: 'daqi',
+      daqi: {
+        pollutants: [
+          {
+            pollutantName: 'PM2.5',
+            average: 12,
+            daqiIndex: 2,
+            daqiBand: 'low',
+            averagingPeriod: '24 hour average'
+          }
+        ]
+      },
+      viewGraphSummary: {
+        buttonText: 'View graph and pollutant summary',
+        action: '/stationdetails/graph-summary',
+        fields: { stationId: 'a', period: 'last24hours' }
+      }
+    }).html()
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      beforeParse(window) {
+        window.fetch = (url) =>
+          new Promise((resolve) => {
+            pending[url] = (body) => resolve({ ok: true, text: () => body })
+          })
+      }
+    })
+    document = dom.window.document
+  })
+
+  const postedPeriods = () =>
+    [
+      ...document.querySelectorAll(
+        '#yearlytable-container form[action="/stationdetails/graph-summary"]'
+      )
+    ].map((form) => form.querySelector('[name="period"]').value)
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+  it('removes the previous tab’s graph summary button as soon as another tab is chosen', () => {
+    expect(postedPeriods()).toEqual(['last24hours'])
+
+    document.getElementById('link-last-7-days').click()
+
+    expect(postedPeriods()).toEqual([])
+  })
+
+  it('shows the button for the chosen tab once its table has loaded', async () => {
+    document.getElementById('link-last-7-days').click()
+    pending['/rendertable/last-7-days'](panel('last7days'))
+    await flush()
+
+    expect(postedPeriods()).toEqual(['last7days'])
+  })
+
+  it('ignores a slower response from a tab that is no longer selected', async () => {
+    document.getElementById('link-last-24-hours').click()
+    document.getElementById('link-last-7-days').click()
+
+    pending['/rendertable/last-7-days'](panel('last7days'))
+    await flush()
+    pending['/rendertable/last-24-hours'](panel('last24hours'))
+    await flush()
+
+    expect(postedPeriods()).toEqual(['last7days'])
   })
 })

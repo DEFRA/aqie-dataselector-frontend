@@ -126,6 +126,26 @@
       }
     }
 
+    /* Each tab click starts a new table request. The previous tab's graph
+       summary button is removed straight away so it cannot post the wrong
+       period while the new table loads, and older responses are ignored. */
+    var latestTableRequest = 0;
+
+    function startTableRequest() {
+      latestTableRequest += 1;
+      var container = document.getElementById('yearlytable-container');
+      if (container) {
+        container.querySelectorAll('form[action$="/graph-summary"]').forEach(function(form) {
+          (form.closest('.aq-js-only') || form).remove();
+        });
+      }
+      return latestTableRequest;
+    }
+
+    function isLatestTableRequest(requestId) {
+      return requestId === latestTableRequest;
+    }
+
     function updateYear(year) {
       document.getElementById('airpollution-heading').textContent = `Air pollution levels in ${year}`;
 
@@ -138,10 +158,12 @@
       durationEl.style.display = '';
 
       setActiveTab(document.getElementById('link-' + year));
+      var requestId = startTableRequest();
 
       fetch(`/rendertable/${year}`)
           .then(response => response.text())
           .then(data => {
+              if (!isLatestTableRequest(requestId)) return;
               document.getElementById('yearlytable-container').innerHTML = data;
           })
           .catch(error => console.error('Error fetching partial content:', error));
@@ -161,6 +183,7 @@
     function loadTab(options) {
       document.getElementById('airpollution-heading').textContent = options.heading;
       setActiveTab(document.getElementById(options.linkId));
+      var requestId = startTableRequest();
 
       fetch(options.url)
           .then(response => {
@@ -170,6 +193,7 @@
               return response.text();
           })
           .then(data => {
+              if (!isLatestTableRequest(requestId)) return;
               document.getElementById('yearlytable-container').innerHTML = data;
               var durationValue = document.getElementById(options.durationValueId);
               var durationEl = document.getElementById('duration_current');
@@ -180,6 +204,7 @@
           })
           .catch(error => {
               console.error('Error fetching partial content:', error);
+              if (!isLatestTableRequest(requestId)) return;
               if (options.durationOnError) {
                 var durationEl = document.getElementById('duration_current');
                 if (durationEl) {
