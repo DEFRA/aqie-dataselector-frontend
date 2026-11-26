@@ -65,9 +65,9 @@ function buildDaqiRow(station, daqiContext) {
   if (mapMode === 'aurn') {
     const aurnDaqi = toSafeDaqiIndex(aurnDataByStation.get(station.localSiteID))
     if (aurnDaqi == null) {
-      return ['DAQI (observed)', NOT_AVAILABLE]
+      return ['Overall DAQI', NOT_AVAILABLE]
     }
-    return ['DAQI (observed)', buildDaqiTag(aurnDaqi)]
+    return ['Overall DAQI', buildDaqiTag(aurnDaqi)]
   }
   const forecast = forecastForStation(forecasts, station)
   if (

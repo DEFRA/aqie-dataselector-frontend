@@ -1145,19 +1145,19 @@ describe('#AURN mode station panel', () => {
     location: { coordinates: [51.5, -0.1] }
   }
 
-  test('Should show DAQI (observed) as Not available when station has no AURN data', async () => {
+  test('Should show Overall DAQI as Not available when station has no AURN data', async () => {
     // stubFetch returns empty measurements by default — AURN mode, no data for this station
     await loadStationsAndIdle([station])
     mapClickCallback({ coords: [-0.1, 51.5] })
     expect(document.getElementById('sp-details').textContent).toContain(
-      'DAQI (observed)'
+      'Overall DAQI'
     )
     expect(document.getElementById('sp-details').textContent).toContain(
       'Not available'
     )
   })
 
-  test('Should show DAQI (observed) tag with correct band when station has AURN data', async () => {
+  test('Should show Overall DAQI tag with correct band when station has AURN data', async () => {
     const measurements = [{ localSiteID: 'UKA00651', daqiIndex: 2 }]
     resetDom()
     stubFetch({ stations: [station], forecasts: [] })
@@ -1184,7 +1184,7 @@ describe('#AURN mode station panel', () => {
     mapReadyCallback()
     mapClickCallback({ coords: [-0.1, 51.5] })
     expect(document.getElementById('sp-details').textContent).toContain(
-      'DAQI (observed)'
+      'Overall DAQI'
     )
     expect(document.getElementById('sp-details').textContent).toContain('2')
     expect(document.getElementById('sp-details').textContent).toContain('low')
