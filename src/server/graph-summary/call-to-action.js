@@ -1,6 +1,9 @@
 import { config } from '~/src/config/config.js'
 import { english } from '~/src/server/data/en/homecontent.js'
-import { buildGraphSummaryHref } from '~/src/server/graph-summary/links.js'
+import {
+  GRAPH_SUMMARY_PATH,
+  buildGraphSummaryFields
+} from '~/src/server/graph-summary/links.js'
 
 /**
  * View model for the "View graph and pollutant summary" button on the station
@@ -13,7 +16,7 @@ import { buildGraphSummaryHref } from '~/src/server/graph-summary/links.js'
  * @param {string|number} [options.from] the station page tab the button is on,
  *   so Back returns to it: last24hours, last7days or a year. The Daily Air
  *   Quality Index tab is the default view, so it gives none.
- * @returns {{ buttonText: string, href: string } | null}
+ * @returns {{ buttonText: string, action: string, fields: object } | null}
  */
 function buildViewGraphSummary({ stationId, period, from }) {
   if (!config.get('featureFlags.viewGraphSummary') || !stationId) {
@@ -23,7 +26,8 @@ function buildViewGraphSummary({ stationId, period, from }) {
   const { buttonText } = english.graphsummary.callToAction
   return {
     buttonText,
-    href: buildGraphSummaryHref({ stationId, period, from })
+    action: GRAPH_SUMMARY_PATH,
+    fields: buildGraphSummaryFields({ stationId, period, from })
   }
 }
 

@@ -18,7 +18,13 @@
         <ul class="moj-sub-navigation__list">
           {% for tab in periodTabs %}
             <li class="moj-sub-navigation__item">
-              <a class="moj-sub-navigation__link" href="{{ tab.href }}"{% if tab.isCurrent %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+              {# Each tab posts the station and period, so they are kept out of the URL #}
+              <form method="post" action="{{ periodFormAction }}">
+                {% for name, value in tab.fields %}
+                  <input type="hidden" name="{{ name }}" value="{{ value }}">
+                {% endfor %}
+                <button type="submit" class="moj-sub-navigation__link aq-sub-navigation__button"{% if tab.isCurrent %} aria-current="page"{% endif %}>{{ tab.label }}</button>
+              </form>
             </li>
           {% endfor %}
         </ul>

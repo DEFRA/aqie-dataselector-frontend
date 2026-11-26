@@ -7,7 +7,7 @@ import * as globals from '~/src/config/nunjucks/globals/globals.js'
 const templates = path.resolve(process.cwd(), 'src/server/common/templates')
 const components = path.resolve(process.cwd(), 'src/server/common/components')
 
-const GRAPH_SUMMARY_LINK = 'a[href^="/stationdetails/graph-summary"]'
+const GRAPH_SUMMARY_FORM = 'form[action="/stationdetails/graph-summary"]'
 
 function render(context) {
   const env = nunjucks.configure(
@@ -30,23 +30,26 @@ const tabledata = [
 
 const viewGraphSummary = {
   buttonText: 'View graph and pollutant summary',
-  href: '/stationdetails/graph-summary?stationId=site1&period=last7days'
+  action: '/stationdetails/graph-summary',
+  fields: { stationId: 'site1', period: 'last7days' }
 }
 
 describe('yearlytable.njk graph summary button', () => {
   it('is wrapped in aq-js-only so users without JavaScript do not see it', () => {
     const $ = render({ tabledata, finalyear: 2025, viewGraphSummary })
-    const link = $(GRAPH_SUMMARY_LINK)
+    const form = $(GRAPH_SUMMARY_FORM)
 
-    expect(link).toHaveLength(1)
-    expect(link.text()).toContain('View graph and pollutant summary')
-    expect(link.closest('.aq-js-only')).toHaveLength(1)
+    expect(form).toHaveLength(1)
+    expect(form.find('button').text()).toContain(
+      'View graph and pollutant summary'
+    )
+    expect(form.closest('.aq-js-only')).toHaveLength(1)
   })
 
   it('is not rendered when the feature flag is off', () => {
     const $ = render({ tabledata, finalyear: 2025, viewGraphSummary: null })
 
-    expect($(GRAPH_SUMMARY_LINK)).toHaveLength(0)
+    expect($(GRAPH_SUMMARY_FORM)).toHaveLength(0)
     expect($('.aq-js-only')).toHaveLength(0)
   })
 })

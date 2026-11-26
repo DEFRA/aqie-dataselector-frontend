@@ -120,21 +120,22 @@ describe('Yearlytab.njk', () => {
     }
     const viewGraphSummary = {
       buttonText: 'View graph and pollutant summary',
-      href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+      action: '/stationdetails/graph-summary',
+      fields: { stationId: 'a', period: 'last24hours' }
     }
 
     it('has the button under the DAQI table when the page gives one', () => {
       const $ = render({ activePeriod: 'daqi', daqi, viewGraphSummary })
 
-      const button = $('#daqi-hint').nextAll('.aq-js-only').find('a')
+      const button = $('#daqi-hint').nextAll('.aq-js-only').find('form')
       expect(button).toHaveLength(1)
-      expect(button.attr('href')).toBe(viewGraphSummary.href)
+      expect(button.attr('action')).toBe(viewGraphSummary.action)
     })
 
     it('has no button when the page gives none', () => {
       const $ = render({ activePeriod: 'daqi', daqi, viewGraphSummary: null })
 
-      expect($('a[href^="/stationdetails/graph-summary"]')).toHaveLength(0)
+      expect($('form[action="/stationdetails/graph-summary"]')).toHaveLength(0)
     })
   })
 
@@ -259,20 +260,25 @@ describe('Yearlytab.njk', () => {
       it('has the graph summary button under the 24 hour table when the page gives one', () => {
         const viewGraphSummary = {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=a&period=last24hours'
+          action: '/stationdetails/graph-summary',
+          fields: { stationId: 'a', period: 'last24hours' }
         }
 
         const $ = render({ ...context, viewGraphSummary })
 
-        const button = $('#last24hours-hint').nextAll('.aq-js-only').find('a')
+        const button = $('#last24hours-hint')
+          .nextAll('.aq-js-only')
+          .find('form')
         expect(button).toHaveLength(1)
-        expect(button.attr('href')).toBe(viewGraphSummary.href)
+        expect(button.attr('action')).toBe(viewGraphSummary.action)
       })
 
       it('has no graph summary button when the page gives none', () => {
         const $ = render({ ...context, viewGraphSummary: null })
 
-        expect($('a[href^="/stationdetails/graph-summary"]')).toHaveLength(0)
+        expect($('form[action="/stationdetails/graph-summary"]')).toHaveLength(
+          0
+        )
       })
     })
   })

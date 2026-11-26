@@ -56,15 +56,16 @@ function render(overrides = {}) {
       heading: HEADING,
       dates: '21 September 2026',
       periodNavigationLabel: 'Time period',
+      periodFormAction: '/stationdetails/graph-summary',
       periodTabs: [
         {
           label: 'Last 24 hours',
-          href: '/stationdetails/graph-summary?stationId=a&period=last24hours',
+          fields: { stationId: 'a', period: 'last24hours', from: '2024' },
           isCurrent: true
         },
         {
           label: 'Last 7 days',
-          href: '/stationdetails/graph-summary?stationId=a&period=last7days',
+          fields: { stationId: 'a', period: 'last7days', from: '2024' },
           isCurrent: false
         }
       ],
@@ -111,25 +112,52 @@ describe('graph summary page', () => {
     expect($('h1 + nav[aria-label="Time period"]')).toHaveLength(1)
   })
 
-  it('offers the last 24 hours and the last 7 days as links in a labelled navigation', () => {
+  it('offers the last 24 hours and the last 7 days as buttons in a labelled navigation', () => {
     const $ = render()
 
     expect($('nav[aria-label="Time period"]')).toHaveLength(1)
-    const links = $('nav[aria-label="Time period"] a')
-    expect(links.map((_i, link) => $(link).text().trim()).get()).toEqual([
+    const buttons = $('nav[aria-label="Time period"] button[type="submit"]')
+    expect(buttons.map((_i, button) => $(button).text().trim()).get()).toEqual([
       'Last 24 hours',
       'Last 7 days'
     ])
-    expect(links.map((_i, link) => $(link).attr('href')).get()).toEqual([
-      '/stationdetails/graph-summary?stationId=a&period=last24hours',
-      '/stationdetails/graph-summary?stationId=a&period=last7days'
+  })
+
+  it("posts each tab's station, period and origin tab, keeping them out of the URL", () => {
+    const $ = render()
+
+    const forms = $('nav[aria-label="Time period"] form')
+    const posted = forms
+      .map((_i, form) => ({
+        method: $(form).attr('method'),
+        action: $(form).attr('action'),
+        fields: Object.fromEntries(
+          $(form)
+            .find('input[type="hidden"]')
+            .map((_j, input) => [[$(input).attr('name'), $(input).val()]])
+            .get()
+        )
+      }))
+      .get()
+    expect(posted).toEqual([
+      {
+        method: 'post',
+        action: '/stationdetails/graph-summary',
+        fields: { stationId: 'a', period: 'last24hours', from: '2024' }
+      },
+      {
+        method: 'post',
+        action: '/stationdetails/graph-summary',
+        fields: { stationId: 'a', period: 'last7days', from: '2024' }
+      }
     ])
+    expect($('nav[aria-label="Time period"] a')).toHaveLength(0)
   })
 
   it('highlights the selected tab, and only that one', () => {
     const $ = render()
 
-    const current = $('nav[aria-label="Time period"] a[aria-current="page"]')
+    const current = $('nav[aria-label="Time period"] [aria-current="page"]')
     expect(current).toHaveLength(1)
     expect(current.text().trim()).toBe('Last 24 hours')
   })
@@ -137,13 +165,13 @@ describe('graph summary page', () => {
   it('highlights the other tab when it is the selected one', () => {
     const $ = render({
       periodTabs: [
-        { label: 'Last 24 hours', href: '/a', isCurrent: false },
-        { label: 'Last 7 days', href: '/b', isCurrent: true }
+        { label: 'Last 24 hours', fields: {}, isCurrent: false },
+        { label: 'Last 7 days', fields: {}, isCurrent: true }
       ]
     })
 
     expect(
-      $('nav[aria-label="Time period"] a[aria-current="page"]').text().trim()
+      $('nav[aria-label="Time period"] [aria-current="page"]').text().trim()
     ).toBe('Last 7 days')
   })
 

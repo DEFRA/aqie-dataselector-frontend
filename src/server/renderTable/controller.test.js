@@ -59,7 +59,12 @@ describe('rendertablecontroller.handler', () => {
       finalyear: 2024,
       viewGraphSummary: {
         buttonText: 'View graph and pollutant summary',
-        href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=2024'
+        action: '/stationdetails/graph-summary',
+        fields: {
+          stationId: 'BirminghamA4540Roadside',
+          period: 'last24hours',
+          from: '2024'
+        }
       },
       isPartial: true
     })
@@ -170,7 +175,11 @@ describe('rendertablecontroller.handler', () => {
         // The DAQI tab is the default view, so Back needs no tab to return to.
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours'
+          action: '/stationdetails/graph-summary',
+          fields: {
+            stationId: 'BirminghamA4540Roadside',
+            period: 'last24hours'
+          }
         }
       })
     )
@@ -279,7 +288,12 @@ describe('rendertablecontroller.handler', () => {
         durationText: '3 November 2026',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=last24hours'
+          action: '/stationdetails/graph-summary',
+          fields: {
+            stationId: 'BirminghamA4540Roadside',
+            period: 'last24hours',
+            from: 'last24hours'
+          }
         }
       }
     )
@@ -352,7 +366,12 @@ describe('rendertablecontroller.handler', () => {
         durationText: '19 August to 25 August 2026',
         viewGraphSummary: {
           buttonText: 'View graph and pollutant summary',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days&from=last7days'
+          action: '/stationdetails/graph-summary',
+          fields: {
+            stationId: 'BirminghamA4540Roadside',
+            period: 'last7days',
+            from: 'last7days'
+          }
         }
       })
     )

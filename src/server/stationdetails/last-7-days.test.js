@@ -23,9 +23,11 @@ Object.entries(filters).forEach(([name, filter]) =>
 
 const viewGraphSummary = {
   buttonText: 'View graph and pollutant summary',
-  href: '/stationdetails/graph-summary?stationId=a&period=last7days'
+  action: '/stationdetails/graph-summary',
+  fields: { stationId: 'a', period: 'last7days' }
 }
-const BUTTON = 'a[href^="/stationdetails/graph-summary"]'
+const FORM = 'form[action="/stationdetails/graph-summary"]'
+const BUTTON = `${FORM} button[type="submit"]`
 
 function render(overrides = {}) {
   return load(
@@ -69,9 +71,10 @@ describe('last 7 days page', () => {
   it('has the graph summary button under the 7 day table, for users with JavaScript', () => {
     const $ = render()
 
-    const button = $('#last7days-hint').nextAll('.aq-js-only').find('a')
+    const button = $('#last7days-hint').nextAll('.aq-js-only').find('button')
     expect(button).toHaveLength(1)
-    expect(button.attr('href')).toBe(viewGraphSummary.href)
+    expect($(FORM).attr('method')).toBe('post')
+    expect($(`${FORM} input[name="period"]`).val()).toBe('last7days')
     expect(button.text().trim()).toBe('View graph and pollutant summary')
   })
 

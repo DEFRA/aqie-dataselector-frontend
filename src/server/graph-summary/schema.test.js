@@ -1,9 +1,9 @@
-import { graphSummaryQuerySchema } from '~/src/server/graph-summary/schema.js'
+import { graphSummaryPayloadSchema } from '~/src/server/graph-summary/schema.js'
 import { MAX_STATION_NAME_LENGTH } from '~/src/server/common/constants/magic-numbers.js'
 
-describe('graphSummaryQuerySchema', () => {
+describe('graphSummaryPayloadSchema', () => {
   it('accepts a station id and a period', () => {
-    const { value, error } = graphSummaryQuerySchema.validate({
+    const { value, error } = graphSummaryPayloadSchema.validate({
       stationId: 'site1',
       period: 'last7days'
     })
@@ -16,7 +16,7 @@ describe('graphSummaryQuerySchema', () => {
   })
 
   it('defaults to the last 24 hours', () => {
-    const { value, error } = graphSummaryQuerySchema.validate({
+    const { value, error } = graphSummaryPayloadSchema.validate({
       stationId: 'site1'
     })
 
@@ -29,7 +29,7 @@ describe('graphSummaryQuerySchema', () => {
 
   it.each(['last24hours', 'last7days'])('accepts the %s period', (period) => {
     expect(
-      graphSummaryQuerySchema.validate({ stationId: 'site1', period }).error
+      graphSummaryPayloadSchema.validate({ stationId: 'site1', period }).error
     ).toBeUndefined()
   })
 
@@ -37,18 +37,20 @@ describe('graphSummaryQuerySchema', () => {
     'rejects the period %p',
     (period) => {
       expect(
-        graphSummaryQuerySchema.validate({ stationId: 'site1', period }).error
+        graphSummaryPayloadSchema.validate({ stationId: 'site1', period }).error
       ).toBeDefined()
     }
   )
 
   it.each([undefined, '', '   '])('rejects the station id %p', (stationId) => {
-    expect(graphSummaryQuerySchema.validate({ stationId }).error).toBeDefined()
+    expect(
+      graphSummaryPayloadSchema.validate({ stationId }).error
+    ).toBeDefined()
   })
 
   it('trims the station id', () => {
     expect(
-      graphSummaryQuerySchema.validate({ stationId: '  site1  ' }).value
+      graphSummaryPayloadSchema.validate({ stationId: '  site1  ' }).value
         .stationId
     ).toBe('site1')
   })
@@ -57,10 +59,10 @@ describe('graphSummaryQuerySchema', () => {
     const tooLong = 'a'.repeat(MAX_STATION_NAME_LENGTH + 1)
 
     expect(
-      graphSummaryQuerySchema.validate({ stationId: tooLong }).error
+      graphSummaryPayloadSchema.validate({ stationId: tooLong }).error
     ).toBeDefined()
     expect(
-      graphSummaryQuerySchema.validate({
+      graphSummaryPayloadSchema.validate({
         stationId: 'a'.repeat(MAX_STATION_NAME_LENGTH)
       }).error
     ).toBeUndefined()
@@ -69,7 +71,7 @@ describe('graphSummaryQuerySchema', () => {
   it.each(['last24hours', 'last7days', '2024'])(
     'accepts the tab %s to return to',
     (from) => {
-      const { value, error } = graphSummaryQuerySchema.validate({
+      const { value, error } = graphSummaryPayloadSchema.validate({
         stationId: 'site1',
         from
       })
@@ -81,7 +83,7 @@ describe('graphSummaryQuerySchema', () => {
 
   it('has no tab to return to unless it is given one', () => {
     expect(
-      graphSummaryQuerySchema.validate({ stationId: 'site1' }).value
+      graphSummaryPayloadSchema.validate({ stationId: 'site1' }).value
     ).not.toHaveProperty('from')
   })
 
@@ -96,7 +98,7 @@ describe('graphSummaryQuerySchema', () => {
     '__proto__'
   ])('rejects the tab %p to return to', (from) => {
     expect(
-      graphSummaryQuerySchema.validate({ stationId: 'site1', from }).error
+      graphSummaryPayloadSchema.validate({ stationId: 'site1', from }).error
     ).toBeDefined()
   })
 })

@@ -1,4 +1,7 @@
-import { graphSummaryController } from '~/src/server/graph-summary/controller.js'
+import {
+  graphSummaryController,
+  graphSummaryPostController
+} from '~/src/server/graph-summary/controller.js'
 import { renderNotFound } from '~/src/server/common/helpers/navigation-helpers.js'
 import { resolveStationHistory } from '~/src/server/common/helpers/station-helpers.js'
 
@@ -44,10 +47,11 @@ describe('graphSummaryController.handler', () => {
   let h
   let session
 
-  const buildRequest = (query) => ({
-    query,
-    yar: { get: jest.fn((key) => session[key]), set: jest.fn() }
-  })
+  // The page renders the station and period last posted to it, from the session.
+  const buildRequest = (posted) => {
+    session.graphSummary = posted
+    return { yar: { get: jest.fn((key) => session[key]), set: jest.fn() } }
+  }
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -76,15 +80,16 @@ describe('graphSummaryController.handler', () => {
       heading: 'Last 24 hours: Birmingham A4540 Roadside',
       dates: '20 September to 21 September 2026',
       periodNavigationLabel: 'Time period',
+      periodFormAction: '/stationdetails/graph-summary',
       periodTabs: [
         {
           label: 'Last 24 hours',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours',
+          fields: { stationId: station.id, period: 'last24hours' },
           isCurrent: true
         },
         {
           label: 'Last 7 days',
-          href: '/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days',
+          fields: { stationId: station.id, period: 'last7days' },
           isCurrent: false
         }
       ],
@@ -197,9 +202,9 @@ describe('graphSummaryController.handler', () => {
 
       const view = h.view.mock.calls[0][1]
       expect(view.hrefq).toBe(back)
-      expect(view.periodTabs.map(({ href }) => href)).toEqual([
-        `/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last24hours&from=${from}`,
-        `/stationdetails/graph-summary?stationId=BirminghamA4540Roadside&period=last7days&from=${from}`
+      expect(view.periodTabs.map(({ fields }) => fields)).toEqual([
+        { stationId: station.id, period: 'last24hours', from },
+        { stationId: station.id, period: 'last7days', from }
       ])
     }
   )
@@ -242,6 +247,16 @@ describe('graphSummaryController.handler', () => {
       expect(request.yar.set).not.toHaveBeenCalled()
     })
 
+    it('renders the not found page when nothing has been posted', async () => {
+      const result = await graphSummaryController.handler(
+        buildRequest(undefined),
+        h
+      )
+
+      expect(result).toBe('not-found-response')
+      expect(resolveStationHistory).not.toHaveBeenCalled()
+    })
+
     it.each([
       ['no search results in the session', undefined],
       ['no stations in the search results', {}],
@@ -259,5 +274,51 @@ describe('graphSummaryController.handler', () => {
 
       expect(result).toBe('not-found-response')
     })
+  })
+})
+
+describe('graphSummaryPostController.handler', () => {
+  const station = { id: 'BirminghamA4540Roadside' }
+  let h
+  let redirect
+
+  const buildRequest = (payload) => ({
+    payload,
+    yar: {
+      get: jest.fn(() => ({ getmonitoringstation: [station] })),
+      set: jest.fn()
+    }
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    redirect = { code: jest.fn().mockReturnValue('redirect-response') }
+    h = { redirect: jest.fn().mockReturnValue(redirect) }
+    renderNotFound.mockReturnValue('not-found-response')
+  })
+
+  it('stores the posted station and period, then redirects to the page with a GET', () => {
+    const payload = { stationId: station.id, period: 'last7days', from: '2024' }
+    const request = buildRequest(payload)
+
+    const result = graphSummaryPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith('graphSummary', payload)
+    expect(h.redirect).toHaveBeenCalledWith('/stationdetails/graph-summary')
+    expect(redirect.code).toHaveBeenCalledWith(303)
+    expect(result).toBe('redirect-response')
+  })
+
+  it('renders the not found page for a station the user has not searched for, leaving the session alone', () => {
+    const request = buildRequest({
+      stationId: 'Unknown',
+      period: 'last24hours'
+    })
+
+    const result = graphSummaryPostController.handler(request, h)
+
+    expect(result).toBe('not-found-response')
+    expect(request.yar.set).not.toHaveBeenCalled()
+    expect(h.redirect).not.toHaveBeenCalled()
   })
 })
