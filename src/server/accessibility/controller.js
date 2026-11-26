@@ -1,23 +1,15 @@
 /* eslint-disable prettier/prettier */
 
-import { english } from '~/src/server/data/en/homecontent.js'
+import { accessibilityContent } from '~/src/server/data/en/accessibilitycontent.js'
 const accessibilityController = {
   handler: (_request, h) => {
-    const {
-      footer: {
-        accessibility: { title, pageTitle, heading, headings, paragraphs }
-      }
-    } = english
-    /* eslint-disable camelcase */
-    const cleanPageTitle = pageTitle
-      ? pageTitle.replaceAll(/['"]/g, '')
-      : pageTitle
+    const title = 'Accessibility statement'
+    const pageTitle = `${title} - Get air pollution data`
+
     return h.view('accessibility/index', {
-      pageTitle: cleanPageTitle,
+      pageTitle,
       title,
-      heading,
-      headings,
-      paragraphs
+      texts: accessibilityContent.texts
     })
   }
 }
