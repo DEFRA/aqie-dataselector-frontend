@@ -7,6 +7,7 @@
     {% include "partials/station-list.njk" %}
   </div>
   <div class="app-map-container">
+    <h1 class="govuk-visually-hidden">Air Quality Monitoring Stations Map</h1>
     <a class="aq-map__menu aq-map__exit" id="exit-map" href="/hubpage">
       <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 20 20">
         <path d="M4.828,11L12.314,18.485L10.899,19.899L1,10L10.899,0.101L12.314,1.515L4.828,9L19,9L19,11L4.828,11Z"/>
@@ -68,7 +69,7 @@
         <span class="govuk-visually-hidden">Close filter panel</span>
       </button>
       <div class="aq-filter-panel__body">
-        <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">Search by pollutant</p>
+        <h2 class="govuk-heading-s govuk-!-margin-bottom-0">Search by pollutant</h2>
         <div id="pollutant-filter-controls">
           <div class="aq-filter-panel__tabs" role="group" aria-label="Pollutant category">
             <button class="aq-filter-panel__tab aq-filter-panel__tab--active" id="filter-tab-daqi" aria-pressed="true"><span>DAQI pollutants</span></button>
@@ -101,9 +102,9 @@
               <p class="govuk-body-s govuk-!-margin-top-2">We will add more pollutants and data sources during 2027.</p>
             </div>
           </div>
-          <div id="filter-sections">
+          <div id="filter-sections" role="group" aria-labelledby="filter-data-sources-heading">
             <hr class="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-3">
-            <h3 class="govuk-heading-s govuk-!-margin-bottom-3">Data sources</h3>
+            <h3 class="govuk-heading-s govuk-!-margin-bottom-3" id="filter-data-sources-heading">Data sources</h3>
             {{ govukRadios({
               classes: "govuk-radios--small",
               idPrefix: "filter-data-source",
