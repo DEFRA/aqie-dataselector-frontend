@@ -44,5 +44,5 @@ export const networkDescriptions = {
   'Black Carbon Network': 'Black carbon (BC) and UVPM measurements.',
   'Black Smoke & SO2':
     'Closed network. Historic daily measurements of black smoke and sulphur dioxide, growing out of UK National Survey that began in 1961.',
-  'MARGA network': 'Measures aerosols and gases in ambient air.'
+  'UKEAP: MARGA network': 'Measures aerosols and gases in ambient air.'
 }
